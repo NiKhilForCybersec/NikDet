@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Alert Triage | SOC Compendium</title>
+    <title>Email Security Alert Triage | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
         <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
@@ -18,119 +16,166 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Email Triage</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-TRI-004</div>
+                    <div class="playbook-id">PB-TRIAGE-004</div>
                     <h1>Email Security Alert Triage</h1>
-                    <p class="lead">Triage email security alerts including phishing, malware attachments, and suspicious links.</p>
-                    <div class="playbook-meta">
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
-                    </div>
+                    <p class="lead">Rapid triage for email gateway alerts, user-reported phishing, and suspicious email activity.</p>
                 </div>
 
-                <h2>Common Email Alert Types</h2>
+                <h2>Email Alert Categories</h2>
                 <table>
-                    <thead><tr><th>Alert Type</th><th>Description</th><th>Severity</th></tr></thead>
+                    <thead><tr><th>Category</th><th>Examples</th><th>Priority</th><th>Key Actions</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Phishing Detected</strong></td><td>Email identified as phishing attempt</td><td>Medium-High</td></tr>
-                        <tr><td><strong>Malware Attachment</strong></td><td>Attachment contains malware</td><td>High</td></tr>
-                        <tr><td><strong>Suspicious Link</strong></td><td>URL to known malicious or suspicious site</td><td>Medium</td></tr>
-                        <tr><td><strong>Impersonation</strong></td><td>Sender spoofing executive/vendor</td><td>High</td></tr>
-                        <tr><td><strong>BEC Attempt</strong></td><td>Business email compromise patterns</td><td>High</td></tr>
-                        <tr><td><strong>Spam/Bulk</strong></td><td>Unsolicited bulk email</td><td>Low</td></tr>
+                        <tr><td><strong>Malware Attachment</strong></td><td>Macro-enabled docs, executables, archives</td><td>High</td><td>Check if opened, block hash</td></tr>
+                        <tr><td><strong>Credential Phishing</strong></td><td>Fake login pages, OAuth consent</td><td>High</td><td>Check clicks, reset if submitted</td></tr>
+                        <tr><td><strong>BEC/Impersonation</strong></td><td>Executive impersonation, vendor fraud</td><td>High</td><td>Verify with sender, stop payment</td></tr>
+                        <tr><td><strong>Spam/Scam</strong></td><td>419 scams, fake invoices</td><td>Low</td><td>Block sender, user awareness</td></tr>
+                        <tr><td><strong>User Report</strong></td><td>Phish button submission</td><td>Medium</td><td>Validate and respond to user</td></tr>
+                        <tr><td><strong>Account Compromise</strong></td><td>Outbound spam, impossible travel</td><td>Critical</td><td>Disable account, investigate</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 1: Initial Assessment</h2>
-                <ul>
-                    <li><strong>Was it delivered or blocked?</strong> ZAP'd? Quarantined?</li>
-                    <li><strong>Who received it?</strong> Single user? Multiple? VIPs?</li>
-                    <li><strong>Did anyone click?</strong> Check URL click logs.</li>
-                    <li><strong>Did anyone open attachment?</strong> Check endpoint activity.</li>
-                </ul>
+                <h2>Email Analysis Checklist</h2>
+                <h3>Header Analysis</h3>
+                <table>
+                    <thead><tr><th>Field</th><th>What to Check</th><th>Red Flags</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>From</strong></td><td>Display name vs actual address</td><td>Mismatch, typosquatting, free email for business</td></tr>
+                        <tr><td><strong>Reply-To</strong></td><td>Different from From address</td><td>Points to different domain</td></tr>
+                        <tr><td><strong>Return-Path</strong></td><td>Bounce address</td><td>Different domain from From</td></tr>
+                        <tr><td><strong>Received</strong></td><td>Mail server chain</td><td>Unusual paths, foreign servers</td></tr>
+                        <tr><td><strong>X-Originating-IP</strong></td><td>Sender's IP</td><td>VPN/TOR, foreign IP</td></tr>
+                        <tr><td><strong>Authentication-Results</strong></td><td>SPF, DKIM, DMARC</td><td>Fail results</td></tr>
+                    </tbody>
+                </table>
 
-                <h2>Step 2: Email Analysis</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Get email details</span>
-EmailEvents
-| where NetworkMessageId == "message-id-here"
-| project TimeGenerated, SenderFromAddress, SenderMailFromAddress,
-    RecipientEmailAddress, Subject, DeliveryAction, ThreatTypes,
-    AuthenticationDetails, SenderIPv4
+                <h3>Content Analysis</h3>
+                <table>
+                    <thead><tr><th>Element</th><th>Check For</th><th>Red Flags</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Subject</strong></td><td>Urgency, threat, reward</td><td>"Urgent", "Action Required", "Your account"</td></tr>
+                        <tr><td><strong>Body</strong></td><td>Grammar, tone, requests</td><td>Poor grammar, unusual requests, pressure tactics</td></tr>
+                        <tr><td><strong>Links</strong></td><td>Hover to see actual URL</td><td>URL shorteners, typosquatting, suspicious TLDs</td></tr>
+                        <tr><td><strong>Attachments</strong></td><td>File type, name</td><td>.exe, .js, .scr, double extensions</td></tr>
+                        <tr><td><strong>Images</strong></td><td>Logos, formatting</td><td>Blurry logos, formatting issues</td></tr>
+                    </tbody>
+                </table>
 
-<span style="color: #a78bf6;">// KQL: Check who received the same email</span>
+                <h2>Investigation Queries</h2>
+                <h3>Microsoft Defender for Office 365</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find all recipients of phishing email</span>
 EmailEvents
-| where Subject == "Suspicious Subject Line"
 | where TimeGenerated > ago(24h)
-| summarize Recipients = make_set(RecipientEmailAddress), 
-    Count = count() by SenderFromAddress, Subject
+| where SenderFromAddress == "phisher@malicious-domain.com"
+    or Subject == "Suspicious Subject Line"
+    or NetworkMessageId == "message-id-here"
+| project TimeGenerated, RecipientEmailAddress, SenderFromAddress, 
+    Subject, DeliveryAction, DeliveryLocation
 
-<span style="color: #a78bf6;">// KQL: Check if anyone clicked links</span>
-EmailUrlInfo
-| where NetworkMessageId == "message-id-here"
-| join kind=leftouter (
-    UrlClickEvents
-    | where TimeGenerated > ago(24h)
-) on Url
-| project Url, UrlLocation, ClickTime = TimeGenerated1, 
-    ClickedBy = AccountUpn</pre>
+<span style="color: #6aa3f7;">// Check who clicked the link</span>
+UrlClickEvents
+| where TimeGenerated > ago(24h)
+| where Url contains "malicious-domain.com"
+| project TimeGenerated, AccountUpn, Url, ActionType, IsClickedThrough
+
+<span style="color: #6aa3f7;">// Find similar emails (campaign detection)</span>
+EmailEvents
+| where TimeGenerated > ago(7d)
+| where SenderFromDomain == "malicious-domain.com"
+    or SenderMailFromDomain == "malicious-domain.com"
+| summarize Recipients=make_set(RecipientEmailAddress), 
+    Count=count() by SenderFromAddress, Subject
+| where Count > 5
+
+<span style="color: #6aa3f7;">// Check for malicious attachment</span>
+EmailAttachmentInfo
+| where TimeGenerated > ago(24h)
+| where SHA256 == "malicious-hash"
+| project TimeGenerated, RecipientEmailAddress, FileName, FileType, 
+    ThreatTypes, DetectionMethods</pre>
                 </div>
 
-                <h2>Step 3: Header Analysis</h2>
+                <h3>Proofpoint</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Search by sender or subject</span>
+index=proofpoint sender="phisher@domain.com" earliest=-24h
+| table _time, recipient, sender, subject, threatType, classification
+
+<span style="color: #6aa3f7;">// Find click activity</span>
+index=proofpoint_tap sourcetype=tap:click earliest=-24h
+| where url="*malicious-domain*"
+| table _time, recipient, url, clickTime, threatStatus</pre>
+                </div>
+
+                <h2>Phishing Indicators</h2>
                 <table>
-                    <thead><tr><th>Check</th><th>What to Look For</th><th>Suspicious If</th></tr></thead>
+                    <thead><tr><th>Indicator</th><th>Weight</th><th>Example</th></tr></thead>
                     <tbody>
-                        <tr><td>SPF</td><td>Sender Policy Framework result</td><td>Fail or SoftFail</td></tr>
-                        <tr><td>DKIM</td><td>DomainKeys signature</td><td>Fail or None</td></tr>
-                        <tr><td>DMARC</td><td>Domain alignment</td><td>Fail</td></tr>
-                        <tr><td>Reply-To</td><td>Where replies go</td><td>Different from From address</td></tr>
-                        <tr><td>Return-Path</td><td>Bounce address</td><td>Different domain than From</td></tr>
-                        <tr><td>X-Originating-IP</td><td>Sending server</td><td>Unusual location for sender</td></tr>
+                        <tr><td><strong>Domain age < 30 days</strong></td><td>High</td><td>Newly registered for campaign</td></tr>
+                        <tr><td><strong>Typosquatting domain</strong></td><td>High</td><td>micros0ft.com, arnazon.com</td></tr>
+                        <tr><td><strong>Free email for business comms</strong></td><td>Medium</td><td>ceo.company@gmail.com</td></tr>
+                        <tr><td><strong>SPF/DKIM/DMARC fail</strong></td><td>High</td><td>Authentication failure</td></tr>
+                        <tr><td><strong>URL shortener in link</strong></td><td>Medium</td><td>bit.ly, tinyurl.com</td></tr>
+                        <tr><td><strong>Mismatched display name</strong></td><td>High</td><td>"IT Support" &lt;hacker@evil.com&gt;</td></tr>
+                        <tr><td><strong>Urgency language</strong></td><td>Medium</td><td>"Act now", "Immediate action"</td></tr>
+                        <tr><td><strong>Generic greeting</strong></td><td>Low</td><td>"Dear Customer" vs name</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 4: Decision Tree</h2>
-                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                    <p><strong>Q1: Was the email blocked/quarantined?</strong></p>
-                    <ul>
-                        <li><strong>YES</strong> → Good. Check for other recipients, may close.</li>
-                        <li><strong>NO (Delivered)</strong> → Continue. Need remediation.</li>
-                    </ul>
-                    <p><strong>Q2: Did anyone interact with the email?</strong></p>
-                    <ul>
-                        <li><strong>NO</strong> → Delete from mailboxes, close.</li>
-                        <li><strong>YES (Clicked/Opened)</strong> → Escalate. Check for compromise.</li>
-                    </ul>
-                    <p><strong>Q3: Was it targeted or mass campaign?</strong></p>
-                    <ul>
-                        <li><strong>Mass (many recipients, generic)</strong> → Lower risk, commodity phishing.</li>
-                        <li><strong>Targeted (specific individual, personalized)</strong> → Higher risk, possible spearphishing.</li>
-                    </ul>
-                </div>
-
-                <h2>Common False Positives</h2>
+                <h2>URL Analysis</h2>
                 <table>
-                    <thead><tr><th>Scenario</th><th>How to Identify</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Check</th><th>Tool</th><th>What to Look For</th></tr></thead>
                     <tbody>
-                        <tr><td>Marketing emails</td><td>Known marketing platform, opt-in</td><td>User education, unsubscribe</td></tr>
-                        <tr><td>Legitimate vendor</td><td>Known business relationship</td><td>Whitelist if appropriate</td></tr>
-                        <tr><td>Internal testing</td><td>Phishing simulation campaign</td><td>Verify with security team</td></tr>
-                        <tr><td>Forwarded email</td><td>User forwarded suspicious to IT</td><td>Thank user, analyze original</td></tr>
+                        <tr><td><strong>URL reputation</strong></td><td>VirusTotal, URLScan.io</td><td>Detection ratio, category</td></tr>
+                        <tr><td><strong>Domain WHOIS</strong></td><td>whois.domaintools.com</td><td>Registration date, registrant</td></tr>
+                        <tr><td><strong>Visual inspection</strong></td><td>URLScan.io screenshot</td><td>Fake login page, brand impersonation</td></tr>
+                        <tr><td><strong>Redirect chain</strong></td><td>wheregoes.com</td><td>Multiple redirects to hide final URL</td></tr>
+                        <tr><td><strong>SSL certificate</strong></td><td>crt.sh</td><td>Free cert, recently issued</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Escalation Criteria</h2>
-                <ul>
-                    <li>User clicked malicious link</li>
-                    <li>User opened malicious attachment</li>
-                    <li>User submitted credentials</li>
-                    <li>VIP/executive targeted</li>
-                    <li>BEC attack requesting wire transfer</li>
-                    <li>Same campaign hitting multiple users</li>
-                </ul>
+                <h2>Triage Decision Matrix</h2>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Verdict</th><th>Actions</th></tr></thead>
+                    <tbody>
+                        <tr><td>Phishing + blocked + no clicks</td><td>Contained</td><td>Block IOCs, close</td></tr>
+                        <tr><td>Phishing + delivered + no clicks</td><td>Needs remediation</td><td>Delete from mailboxes, notify users</td></tr>
+                        <tr><td>Phishing + clicks + no credential entry</td><td>Low risk</td><td>User awareness, block IOCs</td></tr>
+                        <tr><td>Phishing + credential entry</td><td>Compromised</td><td>Reset password, revoke sessions, investigate</td></tr>
+                        <tr><td>Malware attachment + not opened</td><td>Contained</td><td>Delete, block hash</td></tr>
+                        <tr><td>Malware attachment + opened</td><td>Compromised</td><td>Endpoint investigation, isolate if needed</td></tr>
+                        <tr><td>BEC + no action taken</td><td>Contained</td><td>Notify user, block sender</td></tr>
+                        <tr><td>BEC + wire transfer initiated</td><td>Critical</td><td>Contact bank, legal, law enforcement</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Response Actions</h2>
+                <table>
+                    <thead><tr><th>Action</th><th>When to Use</th><th>How</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Delete from mailboxes</strong></td><td>Phishing delivered to multiple users</td><td>M365 Content Search, Purge</td></tr>
+                        <tr><td><strong>Block sender</strong></td><td>Malicious sender identified</td><td>Transport rule or block list</td></tr>
+                        <tr><td><strong>Block domain</strong></td><td>Domain used in campaign</td><td>Block list, DNS sinkhole</td></tr>
+                        <tr><td><strong>Block URL</strong></td><td>Malicious URL identified</td><td>Web proxy, Safe Links</td></tr>
+                        <tr><td><strong>Reset password</strong></td><td>Credentials likely compromised</td><td>Azure AD, force change</td></tr>
+                        <tr><td><strong>Revoke sessions</strong></td><td>Account compromise confirmed</td><td>Azure AD, revoke refresh tokens</td></tr>
+                        <tr><td><strong>Report for takedown</strong></td><td>Phishing site impersonating brand</td><td>PhishTank, Google Safe Browsing</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>User Communication Templates</h2>
+                <h3>Confirmed Phishing (User Did Not Click)</h3>
+                <p style="font-style: italic; font-size: 0.85rem; color: var(--text-secondary);">"Thank you for reporting this email. We've confirmed it's a phishing attempt and have removed it from all mailboxes. No action is needed from you. Great catch!"</p>
+
+                <h3>User Clicked But Did Not Submit Credentials</h3>
+                <p style="font-style: italic; font-size: 0.85rem; color: var(--text-secondary);">"Thank you for reporting. We've confirmed this was a phishing attempt. Our records show you may have clicked the link. Since you didn't enter any credentials, no immediate action is needed, but please be vigilant for similar emails."</p>
+
+                <h3>User Submitted Credentials</h3>
+                <p style="font-style: italic; font-size: 0.85rem; color: var(--text-secondary);">"We've confirmed you may have entered credentials on a phishing site. Your password has been reset for your protection. Please check your account for any unauthorized activity and enable MFA if not already active. Contact the helpdesk if you notice anything unusual."</p>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../../js/main.js"></script>
 </body>

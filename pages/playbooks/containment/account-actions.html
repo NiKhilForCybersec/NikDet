@@ -16,120 +16,210 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Account Actions</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-CON-002</div>
+                    <div class="playbook-id">PB-CONTAIN-002</div>
                     <h1>Account Containment Actions</h1>
-                    <p class="lead">Procedures for securing compromised or suspicious accounts in Azure AD and on-premises Active Directory.</p>
+                    <p class="lead">Procedures for containing compromised accounts across Active Directory, Azure AD, and service accounts.</p>
                 </div>
 
-                <h2>Action Selection Guide</h2>
+                <h2>Account Containment Decision Matrix</h2>
                 <table>
-                    <thead><tr><th>Scenario</th><th>Recommended Action</th><th>Urgency</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>Priority</th><th>Considerations</th></tr></thead>
                     <tbody>
-                        <tr><td>Credential phishing (submitted password)</td><td>Reset password + revoke sessions</td><td>Immediate</td></tr>
-                        <tr><td>Active account compromise</td><td>Disable account + revoke sessions</td><td>Immediate</td></tr>
-                        <tr><td>Suspected compromise (investigating)</td><td>Revoke sessions + require MFA</td><td>High</td></tr>
-                        <tr><td>Insider threat investigation</td><td>Coordinate with HR/Legal first</td><td>Varies</td></tr>
-                        <tr><td>MFA bypass suspected</td><td>Clear MFA methods + re-register</td><td>High</td></tr>
-                        <tr><td>Service account abuse</td><td>Rotate credentials + review permissions</td><td>High</td></tr>
+                        <tr><td><strong>Confirmed credential theft</strong></td><td>Disable + Reset</td><td>Immediate</td><td>User loses all access</td></tr>
+                        <tr><td><strong>Active session hijack</strong></td><td>Revoke sessions + Reset</td><td>Immediate</td><td>Active attacker may notice</td></tr>
+                        <tr><td><strong>Suspicious login only</strong></td><td>Force MFA re-enrollment</td><td>High</td><td>Less disruptive</td></tr>
+                        <tr><td><strong>Service account compromise</strong></td><td>Rotate credentials</td><td>High</td><td>Coordinate with app owners</td></tr>
+                        <tr><td><strong>Privileged account</strong></td><td>Disable immediately</td><td>Critical</td><td>High impact, high risk</td></tr>
+                        <tr><td><strong>Insider threat</strong></td><td>Coordinate with HR/Legal first</td><td>Variable</td><td>Legal implications</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Azure AD / Entra ID Actions</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;"># Connect to Azure AD PowerShell</span>
-Connect-AzureAD
+                <h2>Active Directory Containment</h2>
+                <h3>User Account Actions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Disable account (immediate)</span>
+Disable-ADAccount -Identity "compromised.user"
 
-<span style="color: #a78bf6;"># Reset password (forces change on next login)</span>
-$newPassword = ConvertTo-SecureString -String "TempP@ssw0rd123!" -AsPlainText -Force
-Set-AzureADUserPassword -ObjectId "user@company.com" -Password $newPassword -ForceChangePasswordNextLogin $true
+<span style="color: #6aa3f7;">// Reset password</span>
+Set-ADAccountPassword -Identity "compromised.user" -Reset `
+    -NewPassword (ConvertTo-SecureString "TempP@ss123!" -AsPlainText -Force)
+Set-ADUser -Identity "compromised.user" -ChangePasswordAtLogon $true
 
-<span style="color: #a78bf6;"># Revoke all refresh tokens (kills active sessions)</span>
-Revoke-AzureADUserAllRefreshToken -ObjectId "user@company.com"
+<span style="color: #6aa3f7;">// Remove from all groups (preserve list first)</span>
+$groups = Get-ADPrincipalGroupMembership -Identity "compromised.user"
+$groups | Export-Csv "C:\IR\user-groups-backup.csv"
+$groups | Where-Object {$_.Name -ne "Domain Users"} | ForEach-Object {
+    Remove-ADGroupMember -Identity $_.Name -Members "compromised.user" -Confirm:$false
+}
 
-<span style="color: #a78bf6;"># Disable account (block sign-in)</span>
-Set-AzureADUser -ObjectId "user@company.com" -AccountEnabled $false
+<span style="color: #6aa3f7;">// Move to quarantine OU</span>
+Move-ADObject -Identity "CN=compromised.user,OU=Users,DC=company,DC=com" `
+    -TargetPath "OU=Quarantine,DC=company,DC=com"
 
-<span style="color: #a78bf6;"># Re-enable account when ready</span>
-Set-AzureADUser -ObjectId "user@company.com" -AccountEnabled $true
+<span style="color: #6aa3f7;">// Clear service principal names (if any)</span>
+Set-ADUser -Identity "compromised.user" -ServicePrincipalNames @{}
 
-<span style="color: #a78bf6;"># Remove from all groups (nuclear option)</span>
-$user = Get-AzureADUser -ObjectId "user@company.com"
-$groups = Get-AzureADUserMembership -ObjectId $user.ObjectId
-foreach ($group in $groups) {
-    if ($group.ObjectType -eq "Group") {
-        Remove-AzureADGroupMember -ObjectId $group.ObjectId -MemberId $user.ObjectId
+<span style="color: #6aa3f7;">// Expire account immediately</span>
+Set-ADAccountExpiration -Identity "compromised.user" -DateTime (Get-Date)</pre>
+                </div>
+
+                <h3>Force Logoff Active Sessions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find active sessions</span>
+$computers = Get-ADComputer -Filter * -SearchBase "OU=Workstations,DC=company,DC=com"
+foreach ($computer in $computers) {
+    $sessions = query user /server:$computer.Name 2>$null
+    if ($sessions -match "compromised.user") {
+        Write-Host "User logged into: $($computer.Name)"
+    }
+}
+
+<span style="color: #6aa3f7;">// Force logoff remotely</span>
+Invoke-Command -ComputerName "WORKSTATION01" -ScriptBlock {
+    $sessionId = ((quser | Where-Object {$_ -match "compromised.user"}) -split ' +')[2]
+    logoff $sessionId
+}
+
+<span style="color: #6aa3f7;">// Kill Kerberos tickets (on DC)</span>
+klist purge -li 0x3e7</pre>
+                </div>
+
+                <h2>Azure AD / Entra ID Containment</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Connect to Microsoft Graph</span>
+Connect-MgGraph -Scopes "User.ReadWrite.All", "Directory.AccessAsUser.All"
+
+<span style="color: #6aa3f7;">// Block sign-in</span>
+Update-MgUser -UserId "user@company.com" -AccountEnabled:$false
+
+<span style="color: #6aa3f7;">// Revoke all refresh tokens (invalidates all sessions)</span>
+Revoke-MgUserSignInSession -UserId "user@company.com"
+
+<span style="color: #6aa3f7;">// Reset password</span>
+$passwordProfile = @{
+    Password = "NewTempP@ss456!"
+    ForceChangePasswordNextSignIn = $true
+    ForceChangePasswordNextSignInWithMfa = $true
+}
+Update-MgUser -UserId "user@company.com" -PasswordProfile $passwordProfile
+
+<span style="color: #6aa3f7;">// Remove all group memberships</span>
+$memberships = Get-MgUserMemberOf -UserId "user@company.com"
+foreach ($group in $memberships) {
+    if ($group.AdditionalProperties.'@odata.type' -eq '#microsoft.graph.group') {
+        Remove-MgGroupMemberByRef -GroupId $group.Id -DirectoryObjectId (Get-MgUser -UserId "user@company.com").Id
+    }
+}
+
+<span style="color: #6aa3f7;">// Remove all app role assignments</span>
+$appRoles = Get-MgUserAppRoleAssignment -UserId "user@company.com"
+foreach ($role in $appRoles) {
+    Remove-MgUserAppRoleAssignment -UserId "user@company.com" -AppRoleAssignmentId $role.Id
+}
+
+<span style="color: #6aa3f7;">// Revoke all OAuth consents</span>
+$consents = Get-MgUserOauth2PermissionGrant -UserId "user@company.com"
+foreach ($consent in $consents) {
+    Remove-MgOauth2PermissionGrant -OAuth2PermissionGrantId $consent.Id
+}
+
+<span style="color: #6aa3f7;">// Remove registered devices</span>
+$devices = Get-MgUserRegisteredDevice -UserId "user@company.com"
+foreach ($device in $devices) {
+    Remove-MgDevice -DeviceId $device.Id
+}</pre>
+                </div>
+
+                <h2>Service Account Containment</h2>
+                <table>
+                    <thead><tr><th>Account Type</th><th>Containment Steps</th><th>Coordination Required</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Windows Service Account</strong></td><td>1. Disable account<br>2. Stop dependent services<br>3. Rotate password<br>4. Update services<br>5. Re-enable</td><td>Application owners, Change management</td></tr>
+                        <tr><td><strong>gMSA</strong></td><td>1. Remove from PrincipalsAllowedToRetrieve<br>2. Reset password (automatic)<br>3. Re-add principals</td><td>Application owners</td></tr>
+                        <tr><td><strong>SQL Service Account</strong></td><td>1. Change SQL service credentials<br>2. Restart SQL services<br>3. Update linked servers</td><td>DBA team</td></tr>
+                        <tr><td><strong>Application Pool Identity</strong></td><td>1. Stop app pool<br>2. Change identity password<br>3. Update IIS config<br>4. Start app pool</td><td>Web team</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Service Account Password Rotation</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find services using the account</span>
+Get-WmiObject Win32_Service | Where-Object {$_.StartName -like "*svc_account*"} | 
+    Select-Object Name, DisplayName, StartName, State, SystemName
+
+<span style="color: #6aa3f7;">// Reset service account password in AD</span>
+$newPassword = ConvertTo-SecureString "NewServiceP@ss789!" -AsPlainText -Force
+Set-ADAccountPassword -Identity "svc_account" -Reset -NewPassword $newPassword
+
+<span style="color: #6aa3f7;">// Update service on target servers</span>
+$servers = @("SERVER01", "SERVER02")
+$credential = Get-Credential -UserName "DOMAIN\svc_account"
+foreach ($server in $servers) {
+    Invoke-Command -ComputerName $server -ScriptBlock {
+        $service = Get-WmiObject Win32_Service -Filter "Name='ServiceName'"
+        $service.Change($null,$null,$null,$null,$null,$null,$using:credential.UserName,$using:credential.GetNetworkCredential().Password)
+        Restart-Service -Name "ServiceName"
     }
 }</pre>
                 </div>
 
-                <h2>On-Premises Active Directory Actions</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;"># Reset password</span>
-Set-ADAccountPassword -Identity "username" -Reset -NewPassword (ConvertTo-SecureString "TempP@ssw0rd123!" -AsPlainText -Force)
-Set-ADUser -Identity "username" -ChangePasswordAtLogon $true
-
-<span style="color: #a78bf6;"># Disable account</span>
-Disable-ADAccount -Identity "username"
-
-<span style="color: #a78bf6;"># Enable account</span>
-Enable-ADAccount -Identity "username"
-
-<span style="color: #a78bf6;"># Force logoff (requires remote access)</span>
-Invoke-Command -ComputerName "WORKSTATION" -ScriptBlock { logoff }
-
-<span style="color: #a78bf6;"># Check group memberships</span>
-Get-ADPrincipalGroupMembership -Identity "username" | Select Name
-
-<span style="color: #a78bf6;"># Remove from sensitive groups</span>
-Remove-ADGroupMember -Identity "Domain Admins" -Members "username" -Confirm:$false</pre>
-                </div>
-
-                <h2>Post-Compromise Checks</h2>
+                <h2>Privileged Account Emergency Procedures</h2>
                 <table>
-                    <thead><tr><th>Check</th><th>Why</th><th>How</th></tr></thead>
+                    <thead><tr><th>Account Type</th><th>Immediate Actions</th><th>Post-Containment</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Inbox rules</strong></td><td>Attackers create forwarding/hiding rules</td><td><code>Get-InboxRule -Mailbox user@company.com</code></td></tr>
-                        <tr><td><strong>Mail forwarding</strong></td><td>Data exfiltration via email</td><td><code>Get-Mailbox user | FL ForwardingAddress,ForwardingSmtpAddress</code></td></tr>
-                        <tr><td><strong>OAuth apps</strong></td><td>Malicious app consent grants</td><td>Azure AD → Enterprise Apps → User consent</td></tr>
-                        <tr><td><strong>MFA methods</strong></td><td>Attacker may have added their device</td><td>Azure AD → User → Authentication methods</td></tr>
-                        <tr><td><strong>Recent sent mail</strong></td><td>BEC, phishing sent from account</td><td>Review sent items, message trace</td></tr>
-                        <tr><td><strong>Delegated access</strong></td><td>Persistence via delegation</td><td><code>Get-MailboxPermission -Identity user</code></td></tr>
+                        <tr><td><strong>Domain Admin</strong></td><td>Disable, reset krbtgt (2x), check for persistence</td><td>Full AD security review</td></tr>
+                        <tr><td><strong>Global Admin (Azure)</strong></td><td>Disable, revoke sessions, review audit logs</td><td>Review all admin actions</td></tr>
+                        <tr><td><strong>Root/AWS Admin</strong></td><td>Rotate keys, disable console access</td><td>Review CloudTrail</td></tr>
+                        <tr><td><strong>Database Admin</strong></td><td>Revoke permissions, change password</td><td>Audit data access</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Remediation Commands</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;"># Remove all inbox rules</span>
-Get-InboxRule -Mailbox "user@company.com" | Remove-InboxRule -Confirm:$false
+                <h3>Domain Admin Compromise Response</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// CRITICAL: Reset krbtgt password TWICE (24 hours apart)</span>
+# First reset
+Set-ADAccountPassword -Identity krbtgt -Reset -NewPassword (ConvertTo-SecureString "RandomPass1!" -AsPlainText -Force)
 
-<span style="color: #a78bf6;"># Remove forwarding</span>
-Set-Mailbox -Identity "user@company.com" -ForwardingAddress $null -ForwardingSmtpAddress $null
+# Wait 24 hours for replication, then:
+Set-ADAccountPassword -Identity krbtgt -Reset -NewPassword (ConvertTo-SecureString "RandomPass2!" -AsPlainText -Force)
 
-<span style="color: #a78bf6;"># Check and remove delegates</span>
-Get-MailboxPermission -Identity "user@company.com" | Where {$_.User -ne "NT AUTHORITY\SELF"}
-Remove-MailboxPermission -Identity "user@company.com" -User "attacker@company.com" -AccessRights FullAccess
+<span style="color: #6aa3f7;">// Check for Golden Ticket indicators</span>
+# Look for TGTs with unusually long lifetimes
+# Check for Kerberos events with encryption type mismatches
 
-<span style="color: #a78bf6;"># Revoke OAuth app consent (Azure AD Portal or Graph API)</span>
-<span style="color: #a78bf6;"># Navigate to: Azure AD → Enterprise Apps → filter by user → Revoke</span></pre>
+<span style="color: #6aa3f7;">// Review AdminSDHolder ACL</span>
+Get-ACL "AD:CN=AdminSDHolder,CN=System,DC=company,DC=com" | Format-List
+
+<span style="color: #6aa3f7;">// Check for DCSync permissions</span>
+Get-ADPermission -Identity "DC=company,DC=com" | Where-Object {
+    $_.ExtendedRights -like "*Replicating*"
+}</pre>
                 </div>
 
-                <h2>User Communication Template</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md);">
-                    <p><strong>Subject:</strong> Security Action Required - Account Password Reset</p>
-                    <p><strong>Body:</strong> Your account password has been reset as a security precaution. This was done because [brief, non-alarming reason].</p>
-                    <p>Your temporary password is: [provide securely]</p>
-                    <p>You will be required to change this password on your next login. If you have any questions, please contact the IT Help Desk.</p>
-                </div>
-
-                <h2>Documentation Requirements</h2>
+                <h2>Verification Checklist</h2>
                 <ul>
-                    <li>Account affected (UPN/SAM)</li>
-                    <li>Actions taken (reset, disable, revoke)</li>
-                    <li>Time of each action</li>
-                    <li>Who performed the action</li>
-                    <li>Incident ticket reference</li>
-                    <li>User notification status</li>
+                    <li>☐ Account disabled in all directories (AD, Azure AD)</li>
+                    <li>☐ Password reset with strong random password</li>
+                    <li>☐ All active sessions terminated</li>
+                    <li>☐ Group memberships removed/documented</li>
+                    <li>☐ OAuth app consents revoked</li>
+                    <li>☐ Registered devices removed</li>
+                    <li>☐ Inbox rules checked and removed</li>
+                    <li>☐ Email forwarding disabled</li>
+                    <li>☐ No VPN/remote access tokens active</li>
+                    <li>☐ Service dependencies identified and coordinated</li>
                 </ul>
+
+                <h2>Account Restoration Process</h2>
+                <p>After investigation complete and cleared:</p>
+                <ol>
+                    <li>Verify all persistence mechanisms removed</li>
+                    <li>Re-enable account with new password</li>
+                    <li>Re-enroll MFA on new device</li>
+                    <li>Restore necessary group memberships</li>
+                    <li>Brief user on incident and prevention</li>
+                    <li>Enhanced monitoring for 30 days</li>
+                </ol>
 
             </div>
         </div>

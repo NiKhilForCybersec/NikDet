@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splunk | SOC Compendium</title>
+    <title>Splunk Security Operations | SOC Compendium</title>
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -15,82 +15,173 @@
         <div class="content-page">
             <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Splunk</span></div>
             <div class="content">
-                <h1>Splunk for Security Operations</h1>
-                <p class="lead">Master Splunk and SPL for security monitoring, threat detection, and incident investigation.</p>
+                <h1>Splunk Security Operations</h1>
+                <p class="lead">Advanced SPL techniques, security-focused searches, and Enterprise Security operations for threat detection and investigation.</p>
 
-                <h2>Splunk Learning Path</h2>
                 <div class="card-grid">
-                    <a href="spl-fundamentals.html" class="card">
-                        <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
-                        <h3>SPL Fundamentals</h3>
-                        <p>Search basics, filtering, field extraction, and essential commands.</p>
-                    </a>
-                    <a href="spl-intermediate.html" class="card">
-                        <div class="card-icon"><i class="fas fa-code"></i></div>
-                        <h3>SPL Intermediate</h3>
-                        <p>Stats, eval, timechart, subsearches, lookups, and transaction.</p>
-                    </a>
-                    <a href="spl-advanced.html" class="card">
-                        <div class="card-icon"><i class="fas fa-brain"></i></div>
-                        <h3>SPL Advanced</h3>
-                        <p>Eventstats, streamstats, data models, tstats, and ML commands.</p>
-                    </a>
+                    <a href="spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>SPL Fundamentals</h3><p>Core search commands, filtering, time ranges, field extraction.</p></a>
+                    <a href="spl-intermediate.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>SPL Intermediate</h3><p>Stats, eval, transactions, subsearches, lookups.</p></a>
+                    <a href="spl-advanced.html" class="card"><div class="card-icon"><i class="fas fa-rocket"></i></div><h3>SPL Advanced</h3><p>Machine learning, anomaly detection, advanced correlation.</p></a>
                 </div>
 
-                <h2>SPL Quick Reference</h2>
+                <h2>Splunk Architecture for Security</h2>
                 <table>
-                    <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
+                    <thead><tr><th>Component</th><th>Role</th><th>Security Considerations</th></tr></thead>
                     <tbody>
-                        <tr><td><code>search</code></td><td>Filter events</td><td><code>index=security sourcetype=WinEventLog</code></td></tr>
-                        <tr><td><code>stats</code></td><td>Aggregate data</td><td><code>stats count by src_ip</code></td></tr>
-                        <tr><td><code>table</code></td><td>Display fields</td><td><code>table _time, user, action</code></td></tr>
-                        <tr><td><code>eval</code></td><td>Calculate/transform</td><td><code>eval mb = bytes/1024/1024</code></td></tr>
-                        <tr><td><code>where</code></td><td>Filter results</td><td><code>where count > 100</code></td></tr>
-                        <tr><td><code>sort</code></td><td>Order results</td><td><code>sort -count</code></td></tr>
-                        <tr><td><code>dedup</code></td><td>Remove duplicates</td><td><code>dedup src_ip, dest_ip</code></td></tr>
-                        <tr><td><code>rex</code></td><td>Extract with regex</td><td><code>rex field=_raw "user=(?&lt;user&gt;\w+)"</code></td></tr>
+                        <tr><td><strong>Indexers</strong></td><td>Store and search data</td><td>Encryption at rest, retention policies, access control</td></tr>
+                        <tr><td><strong>Search Heads</strong></td><td>Run searches, host dashboards</td><td>Role-based access, search quotas, audit logging</td></tr>
+                        <tr><td><strong>Forwarders</strong></td><td>Collect and send data</td><td>TLS encryption, certificate auth, deployment server</td></tr>
+                        <tr><td><strong>Heavy Forwarders</strong></td><td>Parse, filter, route data</td><td>Data masking, routing rules, intermediate storage</td></tr>
+                        <tr><td><strong>Deployment Server</strong></td><td>Manage forwarder configs</td><td>Centralized app deployment, version control</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Security-Focused Searches</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Failed logins by user</span>
-index=security EventCode=4625
-| stats count by Account_Name
-| sort -count
+                <h2>Critical Security Indexes</h2>
+                <table>
+                    <thead><tr><th>Index</th><th>Data Source</th><th>Key Fields</th><th>Retention</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>wineventlog</code></td><td>Windows Security, System, Application</td><td>EventCode, Account_Name, ComputerName</td><td>90-365 days</td></tr>
+                        <tr><td><code>sysmon</code></td><td>Sysmon endpoint telemetry</td><td>EventID, Image, CommandLine, ParentImage</td><td>90-180 days</td></tr>
+                        <tr><td><code>firewall</code></td><td>Network firewall logs</td><td>src_ip, dest_ip, dest_port, action</td><td>30-90 days</td></tr>
+                        <tr><td><code>proxy</code></td><td>Web proxy logs</td><td>src_ip, url, category, user</td><td>30-90 days</td></tr>
+                        <tr><td><code>dns</code></td><td>DNS query logs</td><td>query, query_type, src_ip, answer</td><td>30-90 days</td></tr>
+                        <tr><td><code>email</code></td><td>Email gateway logs</td><td>sender, recipient, subject, action</td><td>90-365 days</td></tr>
+                        <tr><td><code>auth</code></td><td>Authentication logs</td><td>user, src_ip, action, app</td><td>365+ days</td></tr>
+                    </tbody>
+                </table>
 
-<span style="color: #6aa3f7;">// Process creation with command line</span>
+                <h2>Essential Security Searches</h2>
+                <h3>Authentication Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Brute force detection - failed logins followed by success</span>
+index=wineventlog EventCode=4625 OR EventCode=4624
+| transaction Account_Name maxspan=10m
+| where eventcount > 5
+| search EventCode=4624
+| table _time, Account_Name, src_ip, eventcount
+
+<span style="color: #6aa3f7;">// Password spray detection - same password across accounts</span>
+index=wineventlog EventCode=4625 
+| bucket _time span=5m
+| stats dc(Account_Name) as unique_accounts values(Account_Name) as accounts by _time, Source_Network_Address
+| where unique_accounts > 10
+| sort -unique_accounts
+
+<span style="color: #6aa3f7;">// After-hours privileged access</span>
+index=wineventlog EventCode=4624 Logon_Type=10
+| eval hour=strftime(_time, "%H")
+| where hour < 6 OR hour > 22
+| lookup privileged_users user as Account_Name OUTPUT is_privileged
+| where is_privileged="true"
+| table _time, Account_Name, Source_Network_Address, ComputerName</pre>
+                </div>
+
+                <h3>Endpoint Threat Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Suspicious process execution from Office apps</span>
 index=sysmon EventCode=1
-| table _time, Computer, User, Image, CommandLine
-| sort -_time
+| where match(ParentImage, "(?i)(winword|excel|powerpnt|outlook)\.exe")
+| where match(Image, "(?i)(cmd|powershell|wscript|cscript|mshta|regsvr32)\.exe")
+| table _time, ComputerName, User, ParentImage, Image, CommandLine
 
-<span style="color: #6aa3f7;">// Network connections to external IPs</span>
-index=firewall action=allowed dest_ip!=10.0.0.0/8 dest_ip!=172.16.0.0/12 dest_ip!=192.168.0.0/16
-| stats sum(bytes) as total_bytes by src_ip, dest_ip
-| sort -total_bytes
+<span style="color: #6aa3f7;">// LSASS access detection (credential dumping)</span>
+index=sysmon EventCode=10 TargetImage="*\\lsass.exe"
+| where NOT match(SourceImage, "(?i)(MsMpEng|csrss|services|svchost)\.exe$")
+| table _time, ComputerName, SourceImage, GrantedAccess, CallTrace
 
-<span style="color: #6aa3f7;">// Alert volume over time</span>
-index=alerts
-| timechart span=1h count by severity</pre>
+<span style="color: #6aa3f7;">// Encoded PowerShell execution</span>
+index=sysmon EventCode=1 Image="*powershell.exe"
+| where match(CommandLine, "(?i)(-enc|-encodedcommand|-e\s+[A-Za-z0-9+/=]{20,})")
+| table _time, ComputerName, User, ParentImage, CommandLine
+| eval decoded=base64decode(mvindex(split(CommandLine, " "), -1))</pre>
+                </div>
+
+                <h3>Network Threat Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Beaconing detection - regular interval connections</span>
+index=firewall action=allowed dest_port=443 OR dest_port=80
+| bucket _time span=1m
+| stats count by src_ip, dest_ip, _time
+| stats stdev(count) as stdev avg(count) as avg count as intervals by src_ip, dest_ip
+| where stdev < 1 AND intervals > 60
+| sort -intervals
+
+<span style="color: #6aa3f7;">// DNS tunneling detection - high volume queries</span>
+index=dns
+| rex field=query "(?<subdomain>[^\.]+)\.(?<domain>.+)"
+| stats count dc(subdomain) as unique_subdomains avg(len(subdomain)) as avg_len by domain
+| where unique_subdomains > 100 OR avg_len > 30
+| sort -unique_subdomains
+
+<span style="color: #6aa3f7;">// Data exfiltration - large outbound transfers</span>
+index=firewall direction=outbound
+| stats sum(bytes_out) as total_bytes by src_ip, dest_ip
+| where total_bytes > 100000000
+| eval GB=round(total_bytes/1024/1024/1024, 2)
+| sort -total_bytes</pre>
                 </div>
 
                 <h2>Splunk Enterprise Security (ES)</h2>
-                <p>Splunk ES provides premium security capabilities built on the Splunk platform:</p>
-                <ul>
-                    <li><strong>Notable Events:</strong> Correlated alerts from correlation searches</li>
-                    <li><strong>Risk-Based Alerting:</strong> Aggregate risk scores to reduce alert fatigue</li>
-                    <li><strong>Asset & Identity:</strong> Context enrichment for users and devices</li>
-                    <li><strong>Threat Intelligence:</strong> IOC matching and threat context</li>
-                    <li><strong>Investigation Workbench:</strong> Visual investigation tool</li>
-                </ul>
+                <table>
+                    <thead><tr><th>Feature</th><th>Purpose</th><th>Key Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Notable Events</strong></td><td>Correlated security alerts</td><td>Correlation searches, risk scoring, aggregation</td></tr>
+                        <tr><td><strong>Risk-Based Alerting</strong></td><td>Accumulate risk scores</td><td>Risk objects, risk factors, thresholds</td></tr>
+                        <tr><td><strong>Asset & Identity</strong></td><td>Context enrichment</td><td>Asset database, identity correlation, criticality</td></tr>
+                        <tr><td><strong>Threat Intelligence</strong></td><td>IOC matching</td><td>TAXII feeds, STIX import, threat lists</td></tr>
+                        <tr><td><strong>Investigation Workbench</strong></td><td>Incident investigation</td><td>Timeline, artifacts, collaboration</td></tr>
+                        <tr><td><strong>Glass Tables</strong></td><td>Visual investigation</td><td>Entity relationships, kill chain mapping</td></tr>
+                    </tbody>
+                </table>
 
-                <h2>Best Practices</h2>
+                <h3>ES Correlation Search Example</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Multiple authentication failures from single source</span>
+| tstats summariesonly=t count from datamodel=Authentication 
+  where Authentication.action="failure" 
+  by _time, Authentication.src, Authentication.user span=5m
+| rename Authentication.* as *
+| where count > 10
+| sendalert notable_event 
+  param.rule_name="Brute Force Attack"
+  param.security_domain="access"
+  param.severity="high"</pre>
+                </div>
+
+                <h2>Performance Optimization</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>When to Use</th><th>Impact</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>tstats</strong></td><td>Searching data models</td><td>10-100x faster than raw search</td></tr>
+                        <tr><td><strong>summary indexing</strong></td><td>Pre-computed statistics</td><td>Instant results for common queries</td></tr>
+                        <tr><td><strong>accelerated data models</strong></td><td>Frequent dashboard queries</td><td>Significant speed improvement</td></tr>
+                        <tr><td><strong>bloom filters</strong></td><td>Rare term searches</td><td>Skip buckets without matches</td></tr>
+                        <tr><td><strong>search-time field extraction</strong></td><td>Rarely used fields</td><td>Reduce index size</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Common Data Models for Security</h2>
+                <table>
+                    <thead><tr><th>Data Model</th><th>Use Case</th><th>Key Fields</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Authentication</strong></td><td>Login analysis</td><td>action, app, src, dest, user</td></tr>
+                        <tr><td><strong>Network_Traffic</strong></td><td>Connection analysis</td><td>src_ip, dest_ip, bytes, action</td></tr>
+                        <tr><td><strong>Endpoint</strong></td><td>Process/file events</td><td>process, file_path, user, action</td></tr>
+                        <tr><td><strong>Email</strong></td><td>Email security</td><td>src_user, recipient, subject, action</td></tr>
+                        <tr><td><strong>Web</strong></td><td>Web traffic</td><td>url, http_method, status, user</td></tr>
+                        <tr><td><strong>Malware</strong></td><td>Malware detection</td><td>file_hash, file_name, signature</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Splunk Security Best Practices</h2>
                 <ul>
-                    <li>Always specify index and time range for performance</li>
-                    <li>Use field extraction at search time sparingly</li>
-                    <li>Leverage data models for faster searches</li>
-                    <li>Use lookups for enrichment instead of subsearches</li>
-                    <li>Schedule expensive searches during off-peak hours</li>
+                    <li><strong>Always specify index and time range</strong> - Never search all indexes without limits</li>
+                    <li><strong>Use data models for dashboards</strong> - tstats is dramatically faster</li>
+                    <li><strong>Limit real-time searches</strong> - They consume significant resources</li>
+                    <li><strong>Create summary indexes</strong> - For frequent aggregate queries</li>
+                    <li><strong>Use event sampling</strong> - For initial query development</li>
+                    <li><strong>Schedule searches during off-peak</strong> - Reduce impact on ad-hoc searches</li>
+                    <li><strong>Monitor search performance</strong> - Use Job Inspector to optimize</li>
                 </ul>
 
             </div>

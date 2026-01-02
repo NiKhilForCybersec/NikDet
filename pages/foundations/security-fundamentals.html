@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Fundamentals | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Foundations</a><span class="separator">/</span><span>Security Fundamentals</span></div>
+            <div class="content">
+                <h1>Security Fundamentals</h1>
+                <p class="lead">Core security concepts every SOC analyst must understand. These principles underpin everything you'll do in security operations.</p>
+
+                <h2>The CIA Triad</h2>
+                <p>The three pillars of information security. Every security control exists to protect one or more of these:</p>
+                <table>
+                    <thead><tr><th>Principle</th><th>Meaning</th><th>Threat Example</th><th>Protection Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Confidentiality</strong></td><td>Only authorized people can access information</td><td>Data breach exposes customer records</td><td>Encryption, access controls, DLP</td></tr>
+                        <tr><td><strong>Integrity</strong></td><td>Information hasn't been tampered with</td><td>Attacker modifies financial records</td><td>Hashing, digital signatures, audit logs</td></tr>
+                        <tr><td><strong>Availability</strong></td><td>Systems and data are accessible when needed</td><td>DDoS attack takes website offline</td><td>Redundancy, backups, DDoS protection</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Authentication vs Authorization</h2>
+                <p>These are commonly confused but fundamentally different:</p>
+                <table>
+                    <thead><tr><th>Concept</th><th>Question It Answers</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Authentication</strong></td><td>"Who are you?"</td><td>Entering username and password to prove you're John Smith</td></tr>
+                        <tr><td><strong>Authorization</strong></td><td>"What are you allowed to do?"</td><td>John Smith can read files but not delete them</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Authentication Factors</h3>
+                <table>
+                    <thead><tr><th>Factor</th><th>Type</th><th>Examples</th><th>Strength</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Something you know</strong></td><td>Knowledge</td><td>Password, PIN, security question</td><td>Weak (can be guessed, phished, stolen)</td></tr>
+                        <tr><td><strong>Something you have</strong></td><td>Possession</td><td>Phone, security key, smart card</td><td>Medium (can be stolen, but harder)</td></tr>
+                        <tr><td><strong>Something you are</strong></td><td>Inherence</td><td>Fingerprint, face, iris</td><td>Strong (hard to fake, but not impossible)</td></tr>
+                        <tr><td><strong>Somewhere you are</strong></td><td>Location</td><td>GPS, IP address, network</td><td>Supplemental (easy to spoof)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Multi-Factor Authentication (MFA)</h3>
+                <p>MFA requires two or more different factors. This is crucial because:</p>
+                <ul>
+                    <li>If password is stolen, attacker still needs your phone</li>
+                    <li>If phone is stolen, attacker still needs your password</li>
+                    <li>Dramatically reduces successful account compromises (by 99%+ according to Microsoft)</li>
+                </ul>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> MFA Bypass Techniques</div>
+                    <p style="margin: 0.5rem 0 0 0;">Attackers can still bypass MFA through: SIM swapping (stealing phone number), real-time phishing (Evilginx, Modlishka), MFA fatigue (spamming push notifications), session hijacking (stealing cookies after MFA). SOC analysts must understand these to detect them.</p>
+                </div>
+
+                <h2>Defense in Depth</h2>
+                <p>Never rely on a single security control. Layer multiple defenses so if one fails, others still protect you:</p>
+                <table>
+                    <thead><tr><th>Layer</th><th>Examples</th><th>What It Stops</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Perimeter</strong></td><td>Firewall, WAF, email gateway</td><td>Attacks from outside the network</td></tr>
+                        <tr><td><strong>Network</strong></td><td>Segmentation, IDS/IPS, NAC</td><td>Lateral movement, internal attacks</td></tr>
+                        <tr><td><strong>Endpoint</strong></td><td>EDR, antivirus, host firewall</td><td>Malware, unauthorized software</td></tr>
+                        <tr><td><strong>Application</strong></td><td>Input validation, secure coding</td><td>SQL injection, XSS, app-level attacks</td></tr>
+                        <tr><td><strong>Data</strong></td><td>Encryption, DLP, backup</td><td>Data theft, unauthorized access</td></tr>
+                        <tr><td><strong>User</strong></td><td>Training, MFA, least privilege</td><td>Phishing, social engineering</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Least Privilege Principle</h2>
+                <p>Users should only have the minimum access required to do their job. Nothing more.</p>
+                <table>
+                    <thead><tr><th>Bad Practice</th><th>Good Practice</th><th>Why It Matters</th></tr></thead>
+                    <tbody>
+                        <tr><td>All users are local admins</td><td>Users have standard accounts; admins use separate admin accounts</td><td>Malware can't install without admin rights</td></tr>
+                        <tr><td>Shared admin passwords</td><td>Unique credentials per person, per system</td><td>Compromised password affects only one account</td></tr>
+                        <tr><td>Permanent access to everything</td><td>Just-in-time access, time-limited</td><td>Reduces window for abuse</td></tr>
+                        <tr><td>Service accounts with domain admin</td><td>Service accounts with minimal required permissions</td><td>Compromised service account can't take over domain</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Encryption Basics</h2>
+                <p>Encryption transforms readable data into unreadable data using a key.</p>
+                
+                <h3>Types of Encryption</h3>
+                <table>
+                    <thead><tr><th>Type</th><th>How It Works</th><th>Use Cases</th><th>Examples</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Symmetric</strong></td><td>Same key encrypts and decrypts</td><td>Bulk data encryption (fast)</td><td>AES, ChaCha20</td></tr>
+                        <tr><td><strong>Asymmetric</strong></td><td>Public key encrypts, private key decrypts (or vice versa)</td><td>Key exchange, digital signatures</td><td>RSA, ECC</td></tr>
+                        <tr><td><strong>Hashing</strong></td><td>One-way transformation (can't reverse)</td><td>Password storage, integrity verification</td><td>SHA-256, bcrypt</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Encryption in Practice</h3>
+                <ul>
+                    <li><strong>HTTPS:</strong> Uses TLS to encrypt web traffic (asymmetric for key exchange, symmetric for data)</li>
+                    <li><strong>Disk encryption:</strong> BitLocker, FileVault encrypt entire drives</li>
+                    <li><strong>Email encryption:</strong> S/MIME, PGP encrypt email content</li>
+                    <li><strong>VPN:</strong> Creates encrypted tunnel for all traffic</li>
+                </ul>
+
+                <h2>Logging and Monitoring</h2>
+                <p>If you don't have logs, you can't detect attacks. Period.</p>
+                <table>
+                    <thead><tr><th>Log Source</th><th>What It Records</th><th>Why SOC Needs It</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Authentication logs</strong></td><td>Who logged in, when, from where, success/failure</td><td>Detect brute force, impossible travel, account compromise</td></tr>
+                        <tr><td><strong>Firewall logs</strong></td><td>Allowed/blocked network connections</td><td>Detect C2 communication, port scanning</td></tr>
+                        <tr><td><strong>Endpoint logs</strong></td><td>Process execution, file changes, registry</td><td>Detect malware, persistence, lateral movement</td></tr>
+                        <tr><td><strong>Application logs</strong></td><td>Application-specific events</td><td>Detect application attacks, misuse</td></tr>
+                        <tr><td><strong>Cloud logs</strong></td><td>Cloud resource changes, access</td><td>Detect cloud misconfigurations, unauthorized access</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Vulnerability vs Threat vs Risk</h2>
+                <table>
+                    <thead><tr><th>Term</th><th>Definition</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Vulnerability</strong></td><td>A weakness that could be exploited</td><td>Unpatched server with known CVE</td></tr>
+                        <tr><td><strong>Threat</strong></td><td>Something that could exploit a vulnerability</td><td>Ransomware group scanning for that CVE</td></tr>
+                        <tr><td><strong>Risk</strong></td><td>Likelihood × Impact of threat exploiting vulnerability</td><td>High risk if server is internet-facing and has sensitive data</td></tr>
+                    </tbody>
+                </table>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); text-align: center; margin: 1rem 0;">
+                    <p style="font-size: 1.1rem; margin: 0;"><strong>Risk = Threat × Vulnerability × Impact</strong></p>
+                </div>
+
+                <h2>Common Attack Types</h2>
+                <table>
+                    <thead><tr><th>Attack Type</th><th>What It Is</th><th>How to Detect</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Phishing</strong></td><td>Tricking users into revealing credentials or running malware</td><td>Email gateway alerts, user reports, credential theft indicators</td></tr>
+                        <tr><td><strong>Malware</strong></td><td>Malicious software (ransomware, trojans, etc.)</td><td>EDR alerts, suspicious process behavior</td></tr>
+                        <tr><td><strong>Brute Force</strong></td><td>Trying many passwords until one works</td><td>Many failed logins from same source</td></tr>
+                        <tr><td><strong>DDoS</strong></td><td>Overwhelming systems with traffic</td><td>Traffic spike, service degradation</td></tr>
+                        <tr><td><strong>SQL Injection</strong></td><td>Inserting SQL commands into web inputs</td><td>WAF alerts, unusual database queries</td></tr>
+                        <tr><td><strong>Lateral Movement</strong></td><td>Moving from compromised system to others</td><td>Unusual authentication patterns, admin tool use</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <a href="what-is-soc.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> What is a SOC?</a>
+                    <a href="networking-basics.html" class="btn btn-primary">Next: Networking Basics <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

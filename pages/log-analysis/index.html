@@ -16,111 +16,134 @@
             <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Log Analysis</span></div>
             <div class="content">
                 <h1>Log Analysis</h1>
-                <p class="lead">Understanding security log sources is fundamental to detection and investigation. Learn to extract meaningful security insights from various log types.</p>
+                <p class="lead">Master the art of extracting security insights from log data. Logs are the foundation of detection and investigation.</p>
 
-                <h2>Log Analysis Topics</h2>
                 <div class="card-grid">
-                    <a href="windows-logs.html" class="card">
-                        <div class="card-icon"><i class="fab fa-windows"></i></div>
-                        <h3>Windows Event Logs</h3>
-                        <p>Security, System, and Application logs. Key Event IDs for detection.</p>
-                    </a>
-                    <a href="sysmon.html" class="card">
-                        <div class="card-icon"><i class="fas fa-microscope"></i></div>
-                        <h3>Sysmon</h3>
-                        <p>Advanced Windows monitoring for process, network, and file activity.</p>
-                    </a>
-                    <a href="linux-logs.html" class="card">
-                        <div class="card-icon"><i class="fab fa-linux"></i></div>
-                        <h3>Linux Logs</h3>
-                        <p>Auth.log, syslog, audit.log, and journal analysis.</p>
-                    </a>
-                    <a href="network-logs.html" class="card">
-                        <div class="card-icon"><i class="fas fa-network-wired"></i></div>
-                        <h3>Network Logs</h3>
-                        <p>Firewall, proxy, DNS, and NetFlow analysis.</p>
-                    </a>
+                    <a href="windows-events.html" class="card"><div class="card-icon"><i class="fab fa-windows"></i></div><h3>Windows Event Logs</h3><p>Security, System, Application event analysis.</p></a>
+                    <a href="sysmon.html" class="card"><div class="card-icon"><i class="fas fa-microscope"></i></div><h3>Sysmon Logs</h3><p>Advanced endpoint telemetry analysis.</p></a>
+                    <a href="linux-logs.html" class="card"><div class="card-icon"><i class="fab fa-linux"></i></div><h3>Linux Logs</h3><p>Auth, syslog, and application logs.</p></a>
+                    <a href="network-logs.html" class="card"><div class="card-icon"><i class="fas fa-network-wired"></i></div><h3>Network Logs</h3><p>Firewall, proxy, DNS, and flow analysis.</p></a>
                 </div>
 
-                <h2>Critical Windows Event IDs</h2>
+                <h2>Log Analysis Fundamentals</h2>
+                <h3>The 5 W's of Log Analysis</h3>
                 <table>
-                    <thead><tr><th>Event ID</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <thead><tr><th>Question</th><th>Log Fields</th><th>Security Context</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>4624</strong></td><td>Successful logon</td><td>Track user access, lateral movement</td></tr>
-                        <tr><td><strong>4625</strong></td><td>Failed logon</td><td>Brute force, password spray</td></tr>
-                        <tr><td><strong>4648</strong></td><td>Explicit credential logon</td><td>Credential use, lateral movement</td></tr>
-                        <tr><td><strong>4672</strong></td><td>Special privileges assigned</td><td>Admin logon detection</td></tr>
-                        <tr><td><strong>4688</strong></td><td>Process creation</td><td>Command execution (enable cmd line logging)</td></tr>
-                        <tr><td><strong>4698</strong></td><td>Scheduled task created</td><td>Persistence mechanism</td></tr>
-                        <tr><td><strong>4720</strong></td><td>User account created</td><td>Unauthorized account creation</td></tr>
-                        <tr><td><strong>4728/4732</strong></td><td>Member added to group</td><td>Privilege escalation</td></tr>
-                        <tr><td><strong>7045</strong></td><td>Service installed</td><td>Persistence, lateral movement</td></tr>
+                        <tr><td><strong>Who?</strong></td><td>Username, Account, SID, UPN</td><td>Identity attribution, privilege level</td></tr>
+                        <tr><td><strong>What?</strong></td><td>Event ID, Action, Command</td><td>Activity classification, severity</td></tr>
+                        <tr><td><strong>When?</strong></td><td>Timestamp, Duration</td><td>Timeline, correlation, patterns</td></tr>
+                        <tr><td><strong>Where?</strong></td><td>Source IP, Hostname, Path</td><td>Location context, lateral movement</td></tr>
+                        <tr><td><strong>Why?</strong></td><td>Process, Parent, Command line</td><td>Intent, attack chain, root cause</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Critical Sysmon Event IDs</h2>
+                <h2>Critical Log Sources by Attack Phase</h2>
                 <table>
-                    <thead><tr><th>Event ID</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <thead><tr><th>Attack Phase</th><th>Primary Logs</th><th>Key Events</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>1</strong></td><td>Process Create</td><td>Full command line, parent process</td></tr>
-                        <tr><td><strong>3</strong></td><td>Network Connection</td><td>Process network activity</td></tr>
-                        <tr><td><strong>7</strong></td><td>Image Loaded</td><td>DLL loading, injection detection</td></tr>
-                        <tr><td><strong>8</strong></td><td>CreateRemoteThread</td><td>Process injection</td></tr>
-                        <tr><td><strong>10</strong></td><td>Process Access</td><td>LSASS access, credential theft</td></tr>
-                        <tr><td><strong>11</strong></td><td>File Create</td><td>Malware drops, staging</td></tr>
-                        <tr><td><strong>13</strong></td><td>Registry Value Set</td><td>Persistence mechanisms</td></tr>
-                        <tr><td><strong>22</strong></td><td>DNS Query</td><td>C2 communication, DGA</td></tr>
+                        <tr><td><strong>Initial Access</strong></td><td>Email gateway, Proxy, VPN</td><td>Phishing delivery, web exploit, auth</td></tr>
+                        <tr><td><strong>Execution</strong></td><td>Sysmon, EDR, PowerShell</td><td>Process creation, script execution</td></tr>
+                        <tr><td><strong>Persistence</strong></td><td>Sysmon, Windows Security</td><td>Registry, scheduled tasks, services</td></tr>
+                        <tr><td><strong>Privilege Escalation</strong></td><td>Windows Security, AD logs</td><td>Token manipulation, group changes</td></tr>
+                        <tr><td><strong>Defense Evasion</strong></td><td>Sysmon, AV logs</td><td>Tamper attempts, log clearing</td></tr>
+                        <tr><td><strong>Credential Access</strong></td><td>Windows Security, Sysmon</td><td>LSASS access, Kerberos anomalies</td></tr>
+                        <tr><td><strong>Discovery</strong></td><td>Windows Security, DNS</td><td>Enumeration commands, AD queries</td></tr>
+                        <tr><td><strong>Lateral Movement</strong></td><td>Windows Security, Firewall</td><td>Remote logons, SMB connections</td></tr>
+                        <tr><td><strong>Collection</strong></td><td>File server, SharePoint</td><td>Mass file access, archive creation</td></tr>
+                        <tr><td><strong>Exfiltration</strong></td><td>Proxy, DLP, Firewall</td><td>Large transfers, unusual destinations</td></tr>
+                        <tr><td><strong>Impact</strong></td><td>EDR, Backup logs</td><td>Encryption, deletion, service disruption</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Log Analysis Workflow</h2>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Define Scope</div>
-                            <p>Determine time range, systems, and users of interest.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Gather Context</div>
-                            <p>Collect relevant logs from all applicable sources.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Filter & Normalize</div>
-                            <p>Remove noise, standardize fields for analysis.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Correlate Events</div>
-                            <p>Connect related events across sources to build timeline.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Identify Anomalies</div>
-                            <p>Spot unusual patterns, deviations from baseline.</p>
-                        </div>
-                    </div>
+                <h2>Log Retention Guidelines</h2>
+                <table>
+                    <thead><tr><th>Log Type</th><th>Minimum</th><th>Recommended</th><th>Compliance</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Authentication</strong></td><td>90 days</td><td>1 year</td><td>Often 1-7 years</td></tr>
+                        <tr><td><strong>Network/Firewall</strong></td><td>30 days</td><td>90 days</td><td>Varies</td></tr>
+                        <tr><td><strong>Endpoint (Sysmon/EDR)</strong></td><td>30 days</td><td>90-180 days</td><td>Varies</td></tr>
+                        <tr><td><strong>DNS</strong></td><td>30 days</td><td>90 days</td><td>Varies</td></tr>
+                        <tr><td><strong>Email</strong></td><td>90 days</td><td>1 year</td><td>Often 1-7 years</td></tr>
+                        <tr><td><strong>Cloud Audit</strong></td><td>90 days</td><td>1 year</td><td>Often 1-7 years</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Log Analysis Techniques</h2>
+                <h3>Statistical Analysis</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>Purpose</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Baseline comparison</strong></td><td>Identify anomalies</td><td>Compare today's failed logins to 30-day average</td></tr>
+                        <tr><td><strong>Frequency analysis</strong></td><td>Find unusual patterns</td><td>Count unique processes per host</td></tr>
+                        <tr><td><strong>Time series</strong></td><td>Detect trends/spikes</td><td>Graph authentication failures over time</td></tr>
+                        <tr><td><strong>Cardinality analysis</strong></td><td>Find outliers</td><td>Users accessing unusual number of systems</td></tr>
+                        <tr><td><strong>Clustering</strong></td><td>Group similar events</td><td>Group similar command lines</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Correlation Techniques</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>Purpose</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Temporal correlation</strong></td><td>Link events by time</td><td>Login → file access → exfil within 1 hour</td></tr>
+                        <tr><td><strong>Entity correlation</strong></td><td>Link events by identity</td><td>All events for user across systems</td></tr>
+                        <tr><td><strong>Kill chain correlation</strong></td><td>Map attack progression</td><td>Initial access → persistence → C2</td></tr>
+                        <tr><td><strong>Cross-log correlation</strong></td><td>Combine data sources</td><td>Email + endpoint + network for phishing</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Common Log Analysis Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Timeline for entity (KQL)</span>
+union SecurityEvent, SigninLogs, OfficeActivity, DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where Account contains "username" or UserPrincipalName contains "username"
+| project TimeGenerated, Type, Activity=coalesce(Activity, Operation, ActionType), 
+    Details=coalesce(ProcessCommandLine, TargetResources, "")
+| order by TimeGenerated asc
+
+<span style="color: #6aa3f7;">// Rare process detection</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| summarize Count=count(), Hosts=dcount(DeviceName) by FileName, SHA256
+| where Count < 5 and Hosts == 1
+| order by Count asc
+
+<span style="color: #6aa3f7;">// Beaconing detection (regular intervals)</span>
+CommonSecurityLog
+| where TimeGenerated > ago(24h)
+| summarize Times=make_list(TimeGenerated) by SourceIP, DestinationIP
+| mv-apply Times to typeof(datetime) on (
+    extend NextTime = next(Times)
+    | extend Interval = datetime_diff('second', NextTime, Times)
+    | summarize Avg=avg(Interval), Stdev=stdev(Interval), Count=count()
+)
+| where Stdev < 5 and Count > 50</pre>
                 </div>
 
-                <h2>Log Source Priority</h2>
+                <h2>Log Quality Indicators</h2>
                 <table>
-                    <thead><tr><th>Priority</th><th>Log Source</th><th>Why It Matters</th></tr></thead>
+                    <thead><tr><th>Indicator</th><th>Good</th><th>Bad</th><th>Impact</th></tr></thead>
                     <tbody>
-                        <tr><td>1</td><td>Authentication logs (AD, Azure AD)</td><td>Identity is the new perimeter</td></tr>
-                        <tr><td>2</td><td>Endpoint (EDR, Sysmon)</td><td>Where attacks execute</td></tr>
-                        <tr><td>3</td><td>Network (Firewall, DNS, Proxy)</td><td>C2, lateral movement, exfil</td></tr>
-                        <tr><td>4</td><td>Email gateway</td><td>Primary attack vector</td></tr>
-                        <tr><td>5</td><td>Cloud (Azure, AWS, M365)</td><td>Growing attack surface</td></tr>
+                        <tr><td><strong>Completeness</strong></td><td>All key fields populated</td><td>Missing timestamps, users</td><td>Can't investigate properly</td></tr>
+                        <tr><td><strong>Timeliness</strong></td><td>Near real-time ingestion</td><td>Hours/days delay</td><td>Delayed detection</td></tr>
+                        <tr><td><strong>Accuracy</strong></td><td>Correct parsing, normalization</td><td>Misparse, wrong field types</td><td>False positives/negatives</td></tr>
+                        <tr><td><strong>Coverage</strong></td><td>All systems logging</td><td>Gaps in critical systems</td><td>Blind spots</td></tr>
+                        <tr><td><strong>Retention</strong></td><td>Sufficient for investigation</td><td>Short retention</td><td>Can't investigate old incidents</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Log Analysis Tools</h2>
+                <table>
+                    <thead><tr><th>Tool</th><th>Use Case</th><th>Key Features</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>SIEM (Sentinel/Splunk)</strong></td><td>Centralized analysis</td><td>Correlation, alerting, dashboards</td></tr>
+                        <tr><td><strong>grep/awk/sed</strong></td><td>Quick text analysis</td><td>Fast, universal, scriptable</td></tr>
+                        <tr><td><strong>jq</strong></td><td>JSON log parsing</td><td>JSON query and transform</td></tr>
+                        <tr><td><strong>Chainsaw</strong></td><td>Windows event analysis</td><td>Sigma rules, EVTX parsing</td></tr>
+                        <tr><td><strong>Hayabusa</strong></td><td>Windows event analysis</td><td>Fast threat hunting</td></tr>
+                        <tr><td><strong>LogParser</strong></td><td>Windows log query</td><td>SQL-like queries on logs</td></tr>
                     </tbody>
                 </table>
 

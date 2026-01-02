@@ -6,11 +6,9 @@
     <title>Network Alert Triage | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
         <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
@@ -18,128 +16,187 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Network Triage</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-TRI-003</div>
+                    <div class="playbook-id">PB-TRIAGE-003</div>
                     <h1>Network Alert Triage</h1>
-                    <p class="lead">Triage network security alerts including IDS/IPS, firewall, proxy, and network anomaly detections.</p>
-                    <div class="playbook-meta">
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
-                    </div>
+                    <p class="lead">Rapid triage for IDS/IPS, firewall, and network anomaly alerts.</p>
                 </div>
 
-                <h2>Common Network Alert Types</h2>
+                <h2>Network Alert Categories</h2>
                 <table>
-                    <thead><tr><th>Alert Type</th><th>Source</th><th>Typical Severity</th></tr></thead>
+                    <thead><tr><th>Category</th><th>Examples</th><th>Priority</th><th>Initial Focus</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Known Malicious IP/Domain</strong></td><td>Firewall, Proxy, TI</td><td>High</td></tr>
-                        <tr><td><strong>IDS Signature Match</strong></td><td>IDS/IPS</td><td>Medium-High</td></tr>
-                        <tr><td><strong>Port Scan Detected</strong></td><td>Firewall, IDS</td><td>Low-Medium</td></tr>
-                        <tr><td><strong>Unusual Outbound Traffic</strong></td><td>NDR, Firewall</td><td>Medium</td></tr>
-                        <tr><td><strong>DNS Anomaly</strong></td><td>DNS security, NDR</td><td>Medium</td></tr>
-                        <tr><td><strong>Data Exfiltration</strong></td><td>DLP, NDR</td><td>High</td></tr>
-                        <tr><td><strong>Blocked Connection</strong></td><td>Firewall</td><td>Low (info)</td></tr>
+                        <tr><td><strong>C2 Communication</strong></td><td>Beaconing, known bad IP/domain</td><td>Critical</td><td>Source host, payload analysis</td></tr>
+                        <tr><td><strong>Exploitation</strong></td><td>CVE exploit attempts, buffer overflow</td><td>High</td><td>Target vulnerable? Attack succeeded?</td></tr>
+                        <tr><td><strong>Lateral Movement</strong></td><td>SMB attacks, pass-the-hash</td><td>High</td><td>Source/dest hosts, credentials used</td></tr>
+                        <tr><td><strong>Data Exfiltration</strong></td><td>Large transfers, DNS tunneling</td><td>High</td><td>Data volume, destination, content</td></tr>
+                        <tr><td><strong>Reconnaissance</strong></td><td>Port scans, service enumeration</td><td>Medium</td><td>Internal or external? Targeted?</td></tr>
+                        <tr><td><strong>Policy Violation</strong></td><td>Unauthorized protocols, ports</td><td>Low-Medium</td><td>Business context, user intent</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 1: Alert Context</h2>
-                <ul>
-                    <li><strong>Source IP:</strong> Internal or external? What asset?</li>
-                    <li><strong>Destination IP:</strong> Known bad? Cloud service? Unknown?</li>
-                    <li><strong>Port/Protocol:</strong> Standard (80/443) or unusual?</li>
-                    <li><strong>Direction:</strong> Inbound (attack) or outbound (C2/exfil)?</li>
-                    <li><strong>Action:</strong> Allowed or blocked?</li>
-                </ul>
-
-                <h2>Step 2: Quick Lookups</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Investigate destination IP</span>
-let TargetIP = "1.2.3.4";
-DeviceNetworkEvents
-| where TimeGenerated > ago(7d)
-| where RemoteIP == TargetIP
-| summarize 
-    Connections = count(),
-    UniqueHosts = dcount(DeviceName),
-    Hosts = make_set(DeviceName, 10),
-    Ports = make_set(RemotePort),
-    FirstSeen = min(TimeGenerated),
-    LastSeen = max(TimeGenerated)
-
-<span style="color: #a78bf6;">// KQL: What process is making the connection?</span>
-DeviceNetworkEvents
-| where RemoteIP == "1.2.3.4"
-| project TimeGenerated, DeviceName, InitiatingProcessFileName, 
-    InitiatingProcessCommandLine, LocalPort, RemotePort
+                <h2>C2 Communication Triage</h2>
+                <h3>Investigation Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Check connection patterns from source host</span>
+CommonSecurityLog
+| where TimeGenerated > ago(24h)
+| where SourceIP == "10.1.2.50"
+| where DestinationIP !startswith "10." and DestinationIP !startswith "192.168."
+| summarize ConnectionCount=count(), 
+    BytesSent=sum(SentBytes), 
+    BytesReceived=sum(ReceivedBytes),
+    Ports=make_set(DestinationPort) 
+    by DestinationIP, bin(TimeGenerated, 1h)
 | order by TimeGenerated desc
 
-<span style="color: #a78bf6;">Check IP reputation:</span>
-• VirusTotal: https://www.virustotal.com/gui/ip-address/{IP}
-• AbuseIPDB: https://www.abuseipdb.com/check/{IP}
-• Shodan: https://www.shodan.io/host/{IP}
-• GreyNoise: https://viz.greynoise.io/ip/{IP}</pre>
+<span style="color: #6aa3f7;">// Beaconing detection (regular intervals)</span>
+CommonSecurityLog
+| where TimeGenerated > ago(24h)
+| where SourceIP == "10.1.2.50"
+| summarize Times=make_list(TimeGenerated) by SourceIP, DestinationIP
+| mv-apply Times to typeof(datetime) on (
+    extend NextTime = next(Times)
+    | extend Interval = datetime_diff('second', NextTime, Times)
+    | summarize AvgInterval=avg(Interval), StdDev=stdev(Interval), Count=count()
+)
+| where StdDev < 10 and Count > 20
+
+<span style="color: #6aa3f7;">// DNS query analysis</span>
+DnsEvents
+| where TimeGenerated > ago(24h)
+| where ClientIP == "10.1.2.50"
+| summarize QueryCount=count(), 
+    UniqueQueries=dcount(Name),
+    Queries=make_set(Name, 100) 
+    by bin(TimeGenerated, 1h)
+| where QueryCount > 100</pre>
                 </div>
 
-                <h2>Step 3: Decision Tree</h2>
-                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                    <p><strong>Q1: Was the connection blocked?</strong></p>
-                    <ul>
-                        <li><strong>YES</strong> → Lower risk. Document, may close if isolated.</li>
-                        <li><strong>NO (Allowed)</strong> → Continue investigation.</li>
-                    </ul>
-                    <p><strong>Q2: Is the destination known malicious?</strong></p>
-                    <ul>
-                        <li><strong>YES (TI match, known C2)</strong> → <span style="color: var(--accent-danger);">HIGH PRIORITY</span>. Identify source host, isolate if needed.</li>
-                        <li><strong>NO/Unknown</strong> → Continue to Q3.</li>
-                    </ul>
-                    <p><strong>Q3: Is this expected traffic for the source?</strong></p>
-                    <ul>
-                        <li><strong>YES (Normal browsing, approved app)</strong> → Likely benign. Close.</li>
-                        <li><strong>NO (Unusual destination, weird port)</strong> → Investigate process on endpoint.</li>
-                    </ul>
-                    <p><strong>Q4: Is it a single connection or persistent?</strong></p>
-                    <ul>
-                        <li><strong>Single</strong> → Lower risk. May be incidental.</li>
-                        <li><strong>Persistent/Beaconing</strong> → Potential C2. Escalate.</li>
-                    </ul>
-                </div>
-
-                <h2>IDS Signature Triage</h2>
+                <h3>C2 Indicators</h3>
                 <table>
-                    <thead><tr><th>Signature Type</th><th>Investigation Focus</th></tr></thead>
+                    <thead><tr><th>Indicator</th><th>Description</th><th>Detection Method</th></tr></thead>
                     <tbody>
-                        <tr><td>Exploit attempt</td><td>Was target vulnerable? Check patch status.</td></tr>
-                        <tr><td>Malware callback</td><td>Identify source host. Check for infection.</td></tr>
-                        <tr><td>Policy violation</td><td>Is traffic authorized? May be FP.</td></tr>
-                        <tr><td>Reconnaissance</td><td>Internal or external? Check for follow-up activity.</td></tr>
-                        <tr><td>Shellcode detected</td><td>High priority. Correlate with endpoint.</td></tr>
+                        <tr><td><strong>Regular beaconing</strong></td><td>Connections at fixed intervals</td><td>Time series analysis, low jitter</td></tr>
+                        <tr><td><strong>Known bad IP/domain</strong></td><td>Threat intel match</td><td>IOC matching</td></tr>
+                        <tr><td><strong>High DNS query rate</strong></td><td>DNS tunneling</td><td>Query volume, subdomain length</td></tr>
+                        <tr><td><strong>Long connection duration</strong></td><td>Persistent C2 channel</td><td>Session duration analysis</td></tr>
+                        <tr><td><strong>Encoded traffic</strong></td><td>Base64, custom encoding</td><td>Payload inspection, entropy</td></tr>
+                        <tr><td><strong>Unusual ports</strong></td><td>C2 on non-standard ports</td><td>Port/protocol mismatch</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Exploitation Attempt Triage</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Check if target is vulnerable</span>
+// Cross-reference with vulnerability scanner data
+SecurityAlert
+| where TimeGenerated > ago(24h)
+| where AlertName contains "CVE"
+| extend CVE = extract("CVE-[0-9]+-[0-9]+", 0, AlertName)
+| join kind=leftouter (
+    // Vulnerability scan results
+    SecurityBaseline_CL
+    | where CVE_s != ""
+) on $left.CVE == $right.CVE_s
+
+<span style="color: #6aa3f7;">// Check for post-exploitation activity</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| where DeviceName == "TARGET-SERVER"
+| where InitiatingProcessFileName in~ ("w3wp.exe", "httpd.exe", "nginx.exe")
+| where FileName in~ ("cmd.exe", "powershell.exe", "whoami.exe", "net.exe")</pre>
+                </div>
+
+                <h3>Exploitation Assessment</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>If Yes</th><th>If No</th></tr></thead>
+                    <tbody>
+                        <tr><td>Is target running vulnerable version?</td><td>Higher risk, deeper investigation</td><td>Likely failed, still monitor</td></tr>
+                        <tr><td>Was traffic blocked by IPS?</td><td>Attack prevented</td><td>May have succeeded</td></tr>
+                        <tr><td>Any post-exploitation activity?</td><td>Compromise confirmed</td><td>Attack may have failed</td></tr>
+                        <tr><td>Is source IP known malicious?</td><td>Targeted attack likely</td><td>May be opportunistic scan</td></tr>
+                        <tr><td>Multiple targets hit?</td><td>Widespread campaign</td><td>Targeted or single probe</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Lateral Movement Detection</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// SMB connections from non-file-server</span>
+CommonSecurityLog
+| where TimeGenerated > ago(24h)
+| where DestinationPort == 445
+| where SourceIP !in ("10.1.1.10", "10.1.1.11") // Exclude file servers
+| summarize Targets=make_set(DestinationIP), Count=count() by SourceIP
+| where Count > 10
+
+<span style="color: #6aa3f7;">// RDP from workstation to workstation</span>
+CommonSecurityLog
+| where TimeGenerated > ago(24h)
+| where DestinationPort == 3389
+| where SourceIP startswith "10.2." // Workstation subnet
+| where DestinationIP startswith "10.2." // Also workstation subnet
+| project TimeGenerated, SourceIP, DestinationIP, Action
+
+<span style="color: #6aa3f7;">// WMI/WinRM lateral movement</span>
+CommonSecurityLog
+| where TimeGenerated > ago(24h)
+| where DestinationPort in (135, 5985, 5986)
+| where SourceIP !in ("10.1.1.5") // Exclude management server
+| summarize Targets=dcount(DestinationIP) by SourceIP
+| where Targets > 5</pre>
+                </div>
+
+                <h2>Data Exfiltration Triage</h2>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Threshold</th><th>Investigation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Large outbound transfer</strong></td><td>>100MB to single external IP</td><td>Check destination, data type</td></tr>
+                        <tr><td><strong>Unusual protocol for data</strong></td><td>DNS, ICMP with large payloads</td><td>Protocol analysis</td></tr>
+                        <tr><td><strong>After-hours transfers</strong></td><td>Large transfers outside business hours</td><td>User context, data sensitivity</td></tr>
+                        <tr><td><strong>Cloud storage uploads</strong></td><td>Unusual volume to personal cloud</td><td>User authorization, data type</td></tr>
+                        <tr><td><strong>Encrypted channel</strong></td><td>High volume to unknown HTTPS</td><td>Certificate inspection, destination</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>IP/Domain Reputation Check</h2>
+                <table>
+                    <thead><tr><th>Source</th><th>URL</th><th>Information Provided</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>VirusTotal</strong></td><td>virustotal.com</td><td>Detection ratio, passive DNS</td></tr>
+                        <tr><td><strong>AbuseIPDB</strong></td><td>abuseipdb.com</td><td>Abuse reports, confidence score</td></tr>
+                        <tr><td><strong>Shodan</strong></td><td>shodan.io</td><td>Open ports, services, banners</td></tr>
+                        <tr><td><strong>ThreatCrowd</strong></td><td>threatcrowd.org</td><td>Related domains, IPs, malware</td></tr>
+                        <tr><td><strong>IPInfo</strong></td><td>ipinfo.io</td><td>Geolocation, ASN, org</td></tr>
+                        <tr><td><strong>URLhaus</strong></td><td>urlhaus.abuse.ch</td><td>Malware distribution URLs</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Triage Decision Matrix</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Verdict</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Known bad IP + outbound connection</td><td>High risk</td><td>Isolate host, investigate</td></tr>
+                        <tr><td>Port scan from external</td><td>Low risk</td><td>Verify FW blocked, close</td></tr>
+                        <tr><td>IDS alert + blocked traffic</td><td>Contained</td><td>Verify block, monitor</td></tr>
+                        <tr><td>Large transfer + known cloud service</td><td>Needs context</td><td>Check if authorized, DLP</td></tr>
+                        <tr><td>Lateral movement + admin credentials</td><td>Critical</td><td>Contain all involved hosts</td></tr>
+                        <tr><td>DNS tunnel indicators</td><td>High risk</td><td>Block domain, investigate host</td></tr>
                     </tbody>
                 </table>
 
                 <h2>Common False Positives</h2>
-                <table>
-                    <thead><tr><th>Scenario</th><th>How to Identify</th><th>Action</th></tr></thead>
-                    <tbody>
-                        <tr><td>CDN/cloud services</td><td>IP belongs to Akamai, Cloudflare, AWS</td><td>Check hostname, likely benign</td></tr>
-                        <tr><td>Security tool traffic</td><td>Vuln scanner, EDR calling home</td><td>Verify tool, whitelist</td></tr>
-                        <tr><td>Software updates</td><td>Adobe, Microsoft, vendor updates</td><td>Normal, close</td></tr>
-                        <tr><td>SSL inspection artifacts</td><td>Proxy-related signatures</td><td>Known issue, tune</td></tr>
-                        <tr><td>Internal scanning</td><td>IT/security team activity</td><td>Verify with team</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Escalation Criteria</h2>
                 <ul>
-                    <li>Connection to known C2 infrastructure (allowed)</li>
-                    <li>Multiple hosts connecting to same suspicious destination</li>
-                    <li>Large outbound data transfer to unusual destination</li>
-                    <li>Beaconing pattern detected</li>
-                    <li>IDS signature for active exploit/shellcode</li>
-                    <li>Connection from server to unexpected external IP</li>
+                    <li><strong>CDN/Cloud IPs:</strong> Akamai, CloudFlare, AWS ranges flagged</li>
+                    <li><strong>Security scanners:</strong> Authorized vulnerability scans trigger IDS</li>
+                    <li><strong>Backup traffic:</strong> Large transfers to backup services</li>
+                    <li><strong>Software updates:</strong> Download traffic to legitimate sources</li>
+                    <li><strong>VPN/Proxy:</strong> Traffic to corporate VPN endpoints</li>
+                    <li><strong>Load balancer health checks:</strong> Regular connection patterns</li>
                 </ul>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../../js/main.js"></script>
 </body>

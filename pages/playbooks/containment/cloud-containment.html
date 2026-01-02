@@ -16,106 +16,218 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Cloud Containment</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-CON-005</div>
-                    <h1>Cloud Containment Procedures</h1>
-                    <p class="lead">Procedures for containing threats in Azure, AWS, GCP, and SaaS environments.</p>
+                    <div class="playbook-id">PB-CONTAIN-005</div>
+                    <h1>Cloud Containment Playbook</h1>
+                    <p class="lead">Containment procedures for Azure, AWS, GCP, and M365 security incidents.</p>
                 </div>
 
-                <h2>Azure Containment Actions</h2>
+                <h2>Cloud Containment Actions Overview</h2>
                 <table>
-                    <thead><tr><th>Threat</th><th>Containment Action</th><th>Command/Steps</th></tr></thead>
+                    <thead><tr><th>Action</th><th>When to Use</th><th>Impact</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Compromised VM</strong></td><td>Network isolation</td><td>Apply deny-all NSG rule or stop VM</td></tr>
-                        <tr><td><strong>Exposed storage</strong></td><td>Block public access</td><td>Disable anonymous access, regenerate keys</td></tr>
-                        <tr><td><strong>Malicious app</strong></td><td>Disable app registration</td><td>Remove app consent, delete if necessary</td></tr>
-                        <tr><td><strong>Compromised SP</strong></td><td>Rotate credentials</td><td>Generate new secret/certificate</td></tr>
-                        <tr><td><strong>Rogue resource</strong></td><td>Delete/terminate</td><td>Remove unauthorized resources</td></tr>
+                        <tr><td><strong>Disable user account</strong></td><td>Account compromise confirmed</td><td>User loses all access</td></tr>
+                        <tr><td><strong>Revoke sessions</strong></td><td>Active session hijacking</td><td>Forces re-authentication</td></tr>
+                        <tr><td><strong>Disable access keys</strong></td><td>AWS/Azure key compromise</td><td>Automated processes may fail</td></tr>
+                        <tr><td><strong>Remove IAM permissions</strong></td><td>Privilege escalation</td><td>User/role loses specific access</td></tr>
+                        <tr><td><strong>Revoke OAuth consent</strong></td><td>Malicious app consent</td><td>App loses access to data</td></tr>
+                        <tr><td><strong>Network isolation</strong></td><td>Compromised resource</td><td>Resource loses connectivity</td></tr>
+                        <tr><td><strong>Snapshot and terminate</strong></td><td>Compromised VM</td><td>Service disruption</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Azure CLI Commands</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Isolate VM with deny-all NSG</span>
-az network nsg rule create \
-  --resource-group MyRG \
-  --nsg-name MyNSG \
-  --name DenyAllInbound \
-  --priority 100 \
-  --direction Inbound \
-  --access Deny \
-  --source-address-prefixes '*'
+                <h2>Azure/Entra ID Containment</h2>
+                <h3>User Account Actions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Disable user account (blocks all sign-ins)</span>
+Update-MgUser -UserId "user@company.com" -AccountEnabled:$false
 
-<span style="color: #6aa3f7;"># Remove public access from storage account</span>
-az storage account update \
-  --name mystorageaccount \
-  --resource-group MyRG \
-  --allow-blob-public-access false
+<span style="color: #6aa3f7;">// Revoke all refresh tokens (forces re-auth)</span>
+Revoke-MgUserSignInSession -UserId "user@company.com"
 
-<span style="color: #6aa3f7;"># Regenerate storage account keys</span>
-az storage account keys renew \
-  --account-name mystorageaccount \
-  --resource-group MyRG \
-  --key primary
+<span style="color: #6aa3f7;">// Reset password</span>
+$NewPassword = @{
+    Password = "NewRandomP@ss123!"
+    ForceChangePasswordNextSignIn = $true
+}
+Update-MgUser -UserId "user@company.com" -PasswordProfile $NewPassword
 
-<span style="color: #6aa3f7;"># Stop a VM (preserves for forensics)</span>
-az vm stop --name MyVM --resource-group MyRG</pre>
+<span style="color: #6aa3f7;">// Remove from all groups</span>
+$groups = Get-MgUserMemberOf -UserId "user@company.com"
+foreach ($group in $groups) {
+    Remove-MgGroupMember -GroupId $group.Id -DirectoryObjectId "user-id"
+}
+
+<span style="color: #6aa3f7;">// Block sign-in via Conditional Access (recommended for investigation)</span>
+# Create CA policy targeting specific user with Block access</pre>
                 </div>
 
-                <h2>AWS Containment Actions</h2>
-                <table>
-                    <thead><tr><th>Threat</th><th>Containment Action</th><th>Command/Steps</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Compromised EC2</strong></td><td>Security Group isolation</td><td>Apply deny-all SG, snapshot for forensics</td></tr>
-                        <tr><td><strong>Exposed S3</strong></td><td>Block public access</td><td>Enable Block Public Access settings</td></tr>
-                        <tr><td><strong>Compromised IAM user</strong></td><td>Disable credentials</td><td>Deactivate access keys, delete user</td></tr>
-                        <tr><td><strong>Compromised role</strong></td><td>Revoke sessions</td><td>Update role trust policy, revoke sessions</td></tr>
-                    </tbody>
-                </table>
+                <h3>Remove Malicious OAuth Apps</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// List user's OAuth app consents</span>
+Get-MgUserOauth2PermissionGrant -UserId "user@company.com"
 
-                <h2>AWS CLI Commands</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Create isolation security group</span>
-aws ec2 create-security-group \
-  --group-name Quarantine \
-  --description "Isolation SG - no ingress/egress"
+<span style="color: #6aa3f7;">// Remove specific app consent</span>
+Remove-MgOauth2PermissionGrant -OAuth2PermissionGrantId "grant-id"
 
-<span style="color: #6aa3f7;"># Apply isolation SG to instance</span>
-aws ec2 modify-instance-attribute \
-  --instance-id i-1234567890abcdef0 \
-  --groups sg-quarantine
+<span style="color: #6aa3f7;">// Disable enterprise app tenant-wide</span>
+Update-MgServicePrincipal -ServicePrincipalId "app-id" -AccountEnabled:$false
 
-<span style="color: #6aa3f7;"># Block S3 bucket public access</span>
-aws s3api put-public-access-block \
-  --bucket my-bucket \
-  --public-access-block-configuration \
-    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-
-<span style="color: #6aa3f7;"># Deactivate IAM access key</span>
-aws iam update-access-key \
-  --user-name compromised-user \
-  --access-key-id AKIAXXXXXXXX \
-  --status Inactive</pre>
+<span style="color: #6aa3f7;">// Check for app credentials that may have been added</span>
+Get-MgServicePrincipal -ServicePrincipalId "app-id" | Select -Expand PasswordCredentials
+Get-MgServicePrincipal -ServicePrincipalId "app-id" | Select -Expand KeyCredentials</pre>
                 </div>
 
-                <h2>M365/SaaS Containment</h2>
+                <h3>Azure Resource Containment</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Isolate VM - remove from network (preserve for forensics)</span>
+$nic = Get-AzNetworkInterface -Name "vm-nic"
+$nic.NetworkSecurityGroup = $null  # Remove NSG
+$nic | Set-AzNetworkInterface
+
+<span style="color: #6aa3f7;">// Or apply deny-all NSG</span>
+$nsg = New-AzNetworkSecurityGroup -Name "Quarantine-NSG" -ResourceGroupName "RG" -Location "eastus"
+$nsg | Add-AzNetworkSecurityRuleConfig -Name "DenyAll" -Priority 100 `
+    -Access Deny -Direction Inbound -SourceAddressPrefix * `
+    -SourcePortRange * -DestinationAddressPrefix * -DestinationPortRange * -Protocol *
+$nic.NetworkSecurityGroup = $nsg
+$nic | Set-AzNetworkInterface
+
+<span style="color: #6aa3f7;">// Stop VM (if service disruption acceptable)</span>
+Stop-AzVM -ResourceGroupName "RG" -Name "VM-Name" -Force
+
+<span style="color: #6aa3f7;">// Take snapshot before any changes</span>
+$vm = Get-AzVM -ResourceGroupName "RG" -Name "VM-Name"
+$snapshot = New-AzSnapshotConfig -SourceUri $vm.StorageProfile.OsDisk.ManagedDisk.Id `
+    -Location "eastus" -CreateOption Copy
+New-AzSnapshot -ResourceGroupName "RG" -SnapshotName "Forensic-Snapshot" -Snapshot $snapshot
+
+<span style="color: #6aa3f7;">// Remove public IP</span>
+$pip = Get-AzPublicIpAddress -Name "public-ip-name"
+Remove-AzPublicIpAddress -Name $pip.Name -ResourceGroupName "RG" -Force</pre>
+                </div>
+
+                <h2>AWS Containment</h2>
+                <h3>IAM User/Role Actions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Deactivate access keys</span>
+aws iam update-access-key --user-name compromised-user --access-key-id AKIA... --status Inactive
+
+<span style="color: #6aa3f7;">// Delete access keys</span>
+aws iam delete-access-key --user-name compromised-user --access-key-id AKIA...
+
+<span style="color: #6aa3f7;">// Attach deny-all policy to user</span>
+aws iam put-user-policy --user-name compromised-user --policy-name DenyAll --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+        "Effect": "Deny",
+        "Action": "*",
+        "Resource": "*"
+    }]
+}'
+
+<span style="color: #6aa3f7;">// Detach all managed policies from user</span>
+aws iam list-attached-user-policies --user-name compromised-user
+aws iam detach-user-policy --user-name compromised-user --policy-arn arn:aws:iam::aws:policy/...
+
+<span style="color: #6aa3f7;">// Remove from all groups</span>
+aws iam list-groups-for-user --user-name compromised-user
+aws iam remove-user-from-group --user-name compromised-user --group-name ...
+
+<span style="color: #6aa3f7;">// Delete console password (prevents console login)</span>
+aws iam delete-login-profile --user-name compromised-user
+
+<span style="color: #6aa3f7;">// Revoke role session (for compromised role)</span>
+aws iam put-role-policy --role-name compromised-role --policy-name RevokeOldSessions --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+        "Effect": "Deny",
+        "Action": "*",
+        "Resource": "*",
+        "Condition": {"DateLessThan": {"aws:TokenIssueTime": "2025-01-01T00:00:00Z"}}
+    }]
+}'</pre>
+                </div>
+
+                <h3>EC2 Instance Containment</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Create forensic snapshot</span>
+aws ec2 create-snapshot --volume-id vol-xxx --description "Forensic-2025-001"
+
+<span style="color: #6aa3f7;">// Create quarantine security group (deny all)</span>
+aws ec2 create-security-group --group-name Quarantine --description "IR Quarantine" --vpc-id vpc-xxx
+# Default SG has no inbound rules, add explicit deny outbound
+aws ec2 revoke-security-group-egress --group-id sg-quarantine --protocol all --cidr 0.0.0.0/0
+
+<span style="color: #6aa3f7;">// Apply quarantine SG to instance</span>
+aws ec2 modify-instance-attribute --instance-id i-xxx --groups sg-quarantine
+
+<span style="color: #6aa3f7;">// Stop instance (if acceptable)</span>
+aws ec2 stop-instances --instance-ids i-xxx
+
+<span style="color: #6aa3f7;">// Remove from auto-scaling group (prevent replacement)</span>
+aws autoscaling detach-instances --instance-ids i-xxx --auto-scaling-group-name ASG --should-decrement-desired-capacity
+
+<span style="color: #6aa3f7;">// Disable termination protection (if needed for cleanup)</span>
+aws ec2 modify-instance-attribute --instance-id i-xxx --no-disable-api-termination</pre>
+                </div>
+
+                <h2>M365/Office 365 Containment</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Remove malicious inbox rules</span>
+Get-InboxRule -Mailbox user@company.com | Where-Object {
+    $_.ForwardTo -or $_.ForwardAsAttachmentTo -or $_.RedirectTo -or $_.DeleteMessage
+} | Remove-InboxRule -Confirm:$false
+
+<span style="color: #6aa3f7;">// Disable mailbox forwarding</span>
+Set-Mailbox -Identity user@company.com -ForwardingSMTPAddress $null -DeliverToMailboxAndForward $false
+
+<span style="color: #6aa3f7;">// Remove delegates</span>
+Remove-MailboxPermission -Identity user@company.com -User malicious@attacker.com -AccessRights FullAccess
+Remove-RecipientPermission -Identity user@company.com -Trustee malicious@attacker.com -AccessRights SendAs
+
+<span style="color: #6aa3f7;">// Revoke SharePoint/OneDrive sharing</span>
+# Via SharePoint Admin Center or:
+Remove-SPOExternalUser -UniqueIDs "external-user-id"
+
+<span style="color: #6aa3f7;">// Disable external sharing for site</span>
+Set-SPOSite -Identity "https://company.sharepoint.com/sites/sensitive" -SharingCapability Disabled</pre>
+                </div>
+
+                <h2>GCP Containment</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Disable service account</span>
+gcloud iam service-accounts disable SA@project.iam.gserviceaccount.com
+
+<span style="color: #6aa3f7;">// Delete service account keys</span>
+gcloud iam service-accounts keys list --iam-account=SA@project.iam.gserviceaccount.com
+gcloud iam service-accounts keys delete KEY_ID --iam-account=SA@project.iam.gserviceaccount.com
+
+<span style="color: #6aa3f7;">// Remove IAM bindings</span>
+gcloud projects remove-iam-policy-binding PROJECT_ID --member='user:compromised@company.com' --role='roles/editor'
+
+<span style="color: #6aa3f7;">// Isolate VM instance</span>
+gcloud compute instances remove-tags INSTANCE --tags=allow-external --zone=us-central1-a
+gcloud compute instances add-tags INSTANCE --tags=quarantine --zone=us-central1-a
+
+<span style="color: #6aa3f7;">// Create snapshot</span>
+gcloud compute disks snapshot DISK --snapshot-names=forensic-snapshot --zone=us-central1-a
+
+<span style="color: #6aa3f7;">// Stop instance</span>
+gcloud compute instances stop INSTANCE --zone=us-central1-a</pre>
+                </div>
+
+                <h2>Containment Verification</h2>
                 <table>
-                    <thead><tr><th>Threat</th><th>Containment Action</th></tr></thead>
+                    <thead><tr><th>Action</th><th>Verification Method</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>SharePoint oversharing</strong></td><td>Remove external sharing, review permissions</td></tr>
-                        <tr><td><strong>Malicious OAuth app</strong></td><td>Revoke consent, block app tenant-wide</td></tr>
-                        <tr><td><strong>Compromised mailbox</strong></td><td>Remove forwarding rules, block external access</td></tr>
-                        <tr><td><strong>Teams data leak</strong></td><td>Remove external members, restrict sharing</td></tr>
+                        <tr><td>User disabled</td><td>Attempt sign-in, check audit logs</td></tr>
+                        <tr><td>Sessions revoked</td><td>Check active sessions in portal</td></tr>
+                        <tr><td>Access keys disabled</td><td>Attempt API call with old key</td></tr>
+                        <tr><td>Network isolated</td><td>Ping test, connection attempt</td></tr>
+                        <tr><td>OAuth app revoked</td><td>Check app permissions list</td></tr>
+                        <tr><td>Forwarding removed</td><td>Check mailbox settings</td></tr>
                     </tbody>
                 </table>
-
-                <h2>Post-Containment Steps</h2>
-                <ul>
-                    <li>Document all containment actions taken</li>
-                    <li>Preserve evidence (snapshots, logs, configs)</li>
-                    <li>Notify stakeholders of affected resources</li>
-                    <li>Begin investigation to determine scope</li>
-                    <li>Plan remediation and recovery</li>
-                </ul>
 
             </div>
         </div>

@@ -16,91 +16,194 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Email Remediation</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-CON-004</div>
-                    <h1>Email Remediation Procedures</h1>
-                    <p class="lead">Procedures for remediating malicious emails from Microsoft 365 mailboxes.</p>
+                    <div class="playbook-id">PB-CONTAIN-004</div>
+                    <h1>Email Remediation Playbook</h1>
+                    <p class="lead">Procedures for removing malicious emails, blocking threats, and remediating email-based compromises.</p>
                 </div>
 
-                <h2>Remediation Options</h2>
+                <h2>Email Remediation Actions</h2>
                 <table>
-                    <thead><tr><th>Action</th><th>Effect</th><th>Use Case</th></tr></thead>
+                    <thead><tr><th>Action</th><th>Purpose</th><th>When to Use</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Soft Delete</strong></td><td>Move to Deleted Items (recoverable)</td><td>Standard remediation</td></tr>
-                        <tr><td><strong>Hard Delete</strong></td><td>Permanently remove (non-recoverable)</td><td>Severe threats, legal holds</td></tr>
-                        <tr><td><strong>Move to Junk</strong></td><td>Move to Junk folder</td><td>Less severe threats</td></tr>
+                        <tr><td><strong>Soft Delete</strong></td><td>Move to Deleted Items (recoverable)</td><td>Low confidence, reversible action needed</td></tr>
+                        <tr><td><strong>Hard Delete</strong></td><td>Permanently remove</td><td>Confirmed malicious, regulatory requirement</td></tr>
+                        <tr><td><strong>Move to Junk</strong></td><td>Move to spam folder</td><td>Spam, low-risk phishing</td></tr>
+                        <tr><td><strong>Block Sender</strong></td><td>Prevent future emails</td><td>Known malicious sender</td></tr>
+                        <tr><td><strong>Block Domain</strong></td><td>Prevent emails from entire domain</td><td>Malicious/spoofed domain</td></tr>
+                        <tr><td><strong>Block Attachment</strong></td><td>Prevent specific file hash</td><td>Malware identified by hash</td></tr>
+                        <tr><td><strong>Block URL</strong></td><td>Prevent access to malicious URL</td><td>Phishing/malware URL</td></tr>
                     </tbody>
                 </table>
 
-                <h2>M365 Compliance Search & Purge</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Connect to Security & Compliance PowerShell</span>
-Connect-IPPSSession
+                <h2>Microsoft 365 Remediation</h2>
+                <h3>Content Search and Purge (eDiscovery)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Connect to Security & Compliance Center</span>
+Connect-IPPSSession -UserPrincipalName admin@company.com
 
-<span style="color: #6aa3f7;"># Create search for specific phishing email</span>
-New-ComplianceSearch -Name "PhishPurge_$(Get-Date -Format 'yyyyMMdd_HHmm')" `
-    -ExchangeLocation All `
-    -ContentMatchQuery 'subject:"Urgent: Verify Your Account" AND from:attacker@evil.com'
+<span style="color: #6aa3f7;">// Create Content Search</span>
+New-ComplianceSearch -Name "Phishing-2025-001" -ExchangeLocation All -ContentMatchQuery '(From:phisher@malicious.com) AND (Subject:"Invoice Payment")'
 
-<span style="color: #6aa3f7;"># For subject with special characters, use quotes</span>
-New-ComplianceSearch -Name "PhishPurge2" `
-    -ExchangeLocation All `
-    -ContentMatchQuery 'subject:"RE: Invoice #12345" AND received:2025-01-02'
+<span style="color: #6aa3f7;">// Start the search</span>
+Start-ComplianceSearch -Identity "Phishing-2025-001"
 
-<span style="color: #6aa3f7;"># Start the search</span>
-Start-ComplianceSearch -Identity "PhishPurge_20250102_1430"
+<span style="color: #6aa3f7;">// Check search status</span>
+Get-ComplianceSearch -Identity "Phishing-2025-001" | FL Status, Items
 
-<span style="color: #6aa3f7;"># Check search status</span>
-Get-ComplianceSearch -Identity "PhishPurge_20250102_1430" | Select Name, Status, Items
+<span style="color: #6aa3f7;">// Preview results</span>
+New-ComplianceSearchAction -SearchName "Phishing-2025-001" -Preview
 
-<span style="color: #6aa3f7;"># Preview what will be deleted (ALWAYS DO THIS)</span>
-New-ComplianceSearchAction -SearchName "PhishPurge_20250102_1430" -Preview
+<span style="color: #6aa3f7;">// Soft delete (recoverable)</span>
+New-ComplianceSearchAction -SearchName "Phishing-2025-001" -Purge -PurgeType SoftDelete
 
-<span style="color: #6aa3f7;"># Execute soft delete (moves to Recoverable Items)</span>
-New-ComplianceSearchAction -SearchName "PhishPurge_20250102_1430" -Purge -PurgeType SoftDelete
+<span style="color: #6aa3f7;">// Hard delete (permanent - use with caution)</span>
+New-ComplianceSearchAction -SearchName "Phishing-2025-001" -Purge -PurgeType HardDelete
 
-<span style="color: #6aa3f7;"># Execute hard delete (permanent - use with caution)</span>
-New-ComplianceSearchAction -SearchName "PhishPurge_20250102_1430" -Purge -PurgeType HardDelete
-
-<span style="color: #6aa3f7;"># Check purge status</span>
-Get-ComplianceSearchAction -Identity "PhishPurge_20250102_1430_Purge" | Select Status, Results</pre>
+<span style="color: #6aa3f7;">// Check purge status</span>
+Get-ComplianceSearchAction -Identity "Phishing-2025-001_Purge" | FL Status, Results</pre>
                 </div>
 
-                <h2>Block Sender</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Block sender domain tenant-wide</span>
-New-TenantAllowBlockListItems -ListType Sender -Block -Entries "evil.com" -NoExpiration
+                <h3>Threat Explorer (Defender for Office 365)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Via Portal: security.microsoft.com</span>
+Email & collaboration > Explorer > All email
 
-<span style="color: #6aa3f7;"># Block specific sender</span>
-New-TenantAllowBlockListItems -ListType Sender -Block -Entries "attacker@evil.com" -NoExpiration
+1. Filter by sender, subject, or other criteria
+2. Select affected messages
+3. Actions > Move to Deleted Items / Hard Delete / Move to Junk
 
-<span style="color: #6aa3f7;"># Create transport rule to reject</span>
-New-TransportRule -Name "Block Evil Domain" `
-    -FromAddressMatchesPatterns "@evil\.com$" `
-    -RejectMessageReasonText "Blocked by security policy"</pre>
+<span style="color: #6aa3f7;">// Via API (Graph)</span>
+POST https://graph.microsoft.com/v1.0/security/threatSubmission/emailThreats
+{
+    "category": "phishing",
+    "recipientEmailAddress": "user@company.com",
+    "sender": "phisher@malicious.com",
+    "subject": "Invoice Payment",
+    "internetMessageId": "&lt;message-id&gt;"
+}</pre>
                 </div>
 
-                <h2>Block Malicious URL</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Add URL to tenant block list</span>
-New-TenantAllowBlockListItems -ListType Url -Block -Entries "http://evil.com/phish" -NoExpiration
+                <h3>Transport Rules (Block Sender/Domain)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Block specific sender</span>
+New-TransportRule -Name "Block-Phisher-2025-001" `
+    -From "phisher@malicious.com" `
+    -DeleteMessage $true `
+    -Comments "Blocked per incident SOC-2025-001"
 
-<span style="color: #6aa3f7;"># Block entire domain URLs</span>
-New-TenantAllowBlockListItems -ListType Url -Block -Entries "*.evil.com" -NoExpiration</pre>
+<span style="color: #6aa3f7;">// Block domain</span>
+New-TransportRule -Name "Block-Domain-Malicious" `
+    -SenderDomainIs "malicious-domain.com" `
+    -DeleteMessage $true
+
+<span style="color: #6aa3f7;">// Block emails with specific subject</span>
+New-TransportRule -Name "Block-Campaign-Subject" `
+    -SubjectContainsWords "Your Invoice #INV-2025" `
+    -DeleteMessage $true
+
+<span style="color: #6aa3f7;">// Add to Tenant Block List</span>
+New-TenantAllowBlockListItems -ListType Sender `
+    -Entries "phisher@malicious.com" `
+    -Block -NoExpiration</pre>
                 </div>
 
-                <h2>Documentation</h2>
+                <h2>Google Workspace Remediation</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Investigation Tool: admin.google.com > Security > Investigation tool</span>
+
+1. Select data source: Gmail messages
+2. Add conditions: From contains "phisher@malicious.com"
+3. Search
+4. Select all matching messages
+5. Actions > Delete messages
+
+<span style="color: #6aa3f7;">// Block sender via Admin Console</span>
+Admin console > Apps > Google Workspace > Gmail > Compliance > Blocked senders
+
+<span style="color: #6aa3f7;">// Content compliance rule to block</span>
+Admin console > Apps > Gmail > Compliance > Content compliance
+Add rule to reject messages matching criteria</pre>
+                </div>
+
+                <h2>Proofpoint Remediation</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// TRAP (Threat Response Auto-Pull)</span>
+1. Navigate to Incidents in Proofpoint TAP Dashboard
+2. Select incident
+3. Click "Pull Messages" to remove from mailboxes
+
+<span style="color: #6aa3f7;">// Manual message pull via API</span>
+POST /v2/threat/incidents/{incident_id}/messages/pull
+{
+    "messageIds": ["message-id-1", "message-id-2"]
+}</pre>
+                </div>
+
+                <h2>Account Compromise Remediation</h2>
+                <h3>Microsoft 365</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Reset password</span>
+Set-AzureADUserPassword -ObjectId "user-object-id" `
+    -Password (ConvertTo-SecureString "NewP@ssw0rd!" -AsPlainText -Force) `
+    -ForceChangePasswordNextLogin $true
+
+<span style="color: #6aa3f7;">// Revoke all sessions</span>
+Revoke-AzureADUserAllRefreshToken -ObjectId "user-object-id"
+
+<span style="color: #6aa3f7;">// Check and remove malicious inbox rules</span>
+Get-InboxRule -Mailbox user@company.com | Where-Object {
+    $_.ForwardTo -or $_.ForwardAsAttachmentTo -or $_.RedirectTo
+} | Remove-InboxRule -Confirm:$false
+
+<span style="color: #6aa3f7;">// Check for malicious OAuth apps</span>
+Get-AzureADUserOAuth2PermissionGrant -ObjectId "user-object-id"
+
+<span style="color: #6aa3f7;">// Remove suspicious app consent</span>
+Remove-AzureADOAuth2PermissionGrant -ObjectId "grant-object-id"
+
+<span style="color: #6aa3f7;">// Check mailbox forwarding</span>
+Get-Mailbox -Identity user@company.com | FL ForwardingSMTPAddress, DeliverToMailboxAndForward
+
+<span style="color: #6aa3f7;">// Remove mailbox forwarding</span>
+Set-Mailbox -Identity user@company.com -ForwardingSMTPAddress $null
+
+<span style="color: #6aa3f7;">// Enable MFA if not already</span>
+# Via Azure Portal or Conditional Access policy</pre>
+                </div>
+
+                <h2>Blocking Checklist</h2>
                 <table>
-                    <thead><tr><th>Field</th><th>Example</th></tr></thead>
+                    <thead><tr><th>IOC Type</th><th>Block Location</th><th>Command/Action</th></tr></thead>
                     <tbody>
-                        <tr><td>Search Name</td><td>PhishPurge_20250102_1430</td></tr>
-                        <tr><td>Search Query</td><td>subject:"Urgent" AND from:evil.com</td></tr>
-                        <tr><td>Items Found</td><td>47</td></tr>
-                        <tr><td>Items Purged</td><td>47</td></tr>
-                        <tr><td>Purge Type</td><td>SoftDelete</td></tr>
-                        <tr><td>Incident Reference</td><td>INC-2025-001</td></tr>
-                        <tr><td>Executed By</td><td>analyst@company.com</td></tr>
+                        <tr><td><strong>Sender email</strong></td><td>Tenant Block List</td><td><code>New-TenantAllowBlockListItems</code></td></tr>
+                        <tr><td><strong>Sender domain</strong></td><td>Transport Rule</td><td><code>New-TransportRule -SenderDomainIs</code></td></tr>
+                        <tr><td><strong>Attachment hash</strong></td><td>Tenant Block List</td><td><code>New-TenantAllowBlockListItems -ListType FileHash</code></td></tr>
+                        <tr><td><strong>URL</strong></td><td>Tenant Block List</td><td><code>New-TenantAllowBlockListItems -ListType Url</code></td></tr>
+                        <tr><td><strong>Subject pattern</strong></td><td>Transport Rule</td><td><code>New-TransportRule -SubjectContainsWords</code></td></tr>
                     </tbody>
                 </table>
+
+                <h2>Verification Steps</h2>
+                <ul>
+                    <li>☐ Confirm email removed from all mailboxes</li>
+                    <li>☐ Verify block rules are active</li>
+                    <li>☐ Check no new deliveries of campaign emails</li>
+                    <li>☐ Confirm compromised accounts are secured</li>
+                    <li>☐ Malicious inbox rules removed</li>
+                    <li>☐ OAuth app consents reviewed</li>
+                    <li>☐ User credentials reset if needed</li>
+                    <li>☐ Users notified of incident</li>
+                </ul>
+
+                <h2>Documentation Requirements</h2>
+                <ul>
+                    <li>☐ Number of messages deleted</li>
+                    <li>☐ Number of users affected</li>
+                    <li>☐ IOCs blocked (senders, domains, hashes, URLs)</li>
+                    <li>☐ Block rule names and expiration dates</li>
+                    <li>☐ Accounts remediated</li>
+                    <li>☐ Screenshot/export of search results before purge</li>
+                </ul>
 
             </div>
         </div>

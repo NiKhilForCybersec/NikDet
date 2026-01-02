@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troubleshooting & FAQ | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Troubleshooting & FAQ</span></div>
+            <div class="content">
+                <h1>Troubleshooting & Frequently Asked Questions</h1>
+                <p class="lead">Common problems, edge cases, and questions that arise during security operations - with answers.</p>
+
+                <h2>Alert Investigation FAQ</h2>
+
+                <h3>Q: The alert fired but I can't find any related logs. What do I do?</h3>
+                <p><strong>Possible causes and solutions:</strong></p>
+                <ul>
+                    <li><strong>Log retention:</strong> Logs may have aged out. Check your retention period.</li>
+                    <li><strong>Time zone mismatch:</strong> Alert time may be in different timezone than logs. Convert to UTC.</li>
+                    <li><strong>Ingestion delay:</strong> Logs may not be ingested yet. Wait 5-15 minutes and retry.</li>
+                    <li><strong>Log source not configured:</strong> The relevant log source may not be sending to SIEM.</li>
+                    <li><strong>Query error:</strong> Double-check your search syntax and field names.</li>
+                    <li><strong>Wrong index:</strong> You may be searching the wrong index/table.</li>
+                </ul>
+
+                <h3>Q: How do I know if an alert is a true positive or false positive?</h3>
+                <p><strong>Questions to ask yourself:</strong></p>
+                <ul>
+                    <li>Is the activity expected for this user/system role?</li>
+                    <li>Does the timing make sense (business hours, user's timezone)?</li>
+                    <li>Is there a change ticket or maintenance window?</li>
+                    <li>Have we seen this pattern before (check historical alerts)?</li>
+                    <li>Does the user/system have a legitimate reason?</li>
+                    <li>Are there corroborating indicators from other sources?</li>
+                </ul>
+
+                <h3>Q: The user says they didn't do it. How do I verify?</h3>
+                <p><strong>Verification steps:</strong></p>
+                <ul>
+                    <li>Check the source IP - is it the user's usual location/device?</li>
+                    <li>Check device name - is it their assigned device?</li>
+                    <li>Check timing - were they working at that time?</li>
+                    <li>Check for impossible travel - were they elsewhere at the time?</li>
+                    <li>Check for MFA completion - did they complete MFA?</li>
+                    <li>Check browser/user agent - does it match their usual?</li>
+                </ul>
+
+                <h3>Q: I found malware but it was blocked. Can I close the ticket?</h3>
+                <p><strong>Not so fast! Check for:</strong></p>
+                <ul>
+                    <li>Was this the only detection or are there more?</li>
+                    <li>How did the malware get there (email, download, USB)?</li>
+                    <li>Are other systems affected?</li>
+                    <li>Did anything execute before blocking?</li>
+                    <li>Is there any C2 communication in network logs?</li>
+                    <li>Should you search for IOCs across the environment?</li>
+                </ul>
+
+                <h2>Common Investigation Mistakes</h2>
+                <table>
+                    <thead><tr><th>Mistake</th><th>Why It's a Problem</th><th>Correct Approach</th></tr></thead>
+                    <tbody>
+                        <tr><td>Closing without root cause</td><td>Same thing will happen again</td><td>Always identify how the attack started</td></tr>
+                        <tr><td>Only looking at the alerted system</td><td>Missing lateral movement</td><td>Search for IOCs across all systems</td></tr>
+                        <tr><td>Trusting user claims blindly</td><td>User may be compromised or lying</td><td>Verify with technical evidence</td></tr>
+                        <tr><td>Not documenting findings</td><td>Loses knowledge, wastes future time</td><td>Document everything in the ticket</td></tr>
+                        <tr><td>Rushing through triage</td><td>Missing critical context</td><td>Follow the playbook completely</td></tr>
+                        <tr><td>Not escalating when unsure</td><td>May miss serious threat</td><td>When in doubt, escalate</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Query Troubleshooting</h2>
+
+                <h3>KQL Common Issues</h3>
+                <table>
+                    <thead><tr><th>Problem</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>Query returns no results</td><td>Wrong time range, wrong table, typo in field name</td><td>Start broad, then narrow down</td></tr>
+                        <tr><td>Query is very slow</td><td>Too much data, inefficient filters</td><td>Add time filter first, then where clauses</td></tr>
+                        <tr><td>"where" clause not working</td><td>Field type mismatch (string vs int)</td><td>Check field type with <code>getschema</code></td></tr>
+                        <tr><td>Join returns empty</td><td>Join keys don't match exactly</td><td>Check for case sensitivity, trailing spaces</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>SPL Common Issues</h3>
+                <table>
+                    <thead><tr><th>Problem</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>Search returns no results</td><td>Wrong index, time range, field extraction</td><td>Start with just index and time</td></tr>
+                        <tr><td>Field not extracting</td><td>Field extraction not defined</td><td>Use rex to extract at search time</td></tr>
+                        <tr><td>Stats not working</td><td>Field has spaces or special chars</td><td>Use quotes around field name</td></tr>
+                        <tr><td>Subsearch timeout</td><td>Subsearch returning too many results</td><td>Add <code>| head 10000</code> to subsearch</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Edge Cases</h2>
+
+                <h3>Authentication Edge Cases</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>What It Looks Like</th><th>How to Handle</th></tr></thead>
+                    <tbody>
+                        <tr><td>VPN exit node</td><td>Login from unexpected country</td><td>Check if user uses VPN; check VPN provider's exit locations</td></tr>
+                        <tr><td>Mobile carrier IP</td><td>Many users from same IP</td><td>Carrier NAT; focus on user behavior not IP</td></tr>
+                        <tr><td>Cloud proxy</td><td>Traffic appears from cloud provider</td><td>Check if company uses cloud proxy (Zscaler, etc.)</td></tr>
+                        <tr><td>Cached credentials</td><td>Login without network connectivity</td><td>Type 11 logon; credentials were cached locally</td></tr>
+                        <tr><td>Service account batch job</td><td>Many logins in short period</td><td>Check if scheduled task; verify with job owner</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Malware Edge Cases</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>What It Looks Like</th><th>How to Handle</th></tr></thead>
+                    <tbody>
+                        <tr><td>Security tool detected as malware</td><td>FP on legitimate tool</td><td>Verify tool, whitelist if legitimate</td></tr>
+                        <tr><td>Old detection on new system</td><td>Detection on reimaged system</td><td>May be old malware in restore; scan anyway</td></tr>
+                        <tr><td>Packed/encrypted legitimate software</td><td>High suspicion score</td><td>Check vendor signature, VirusTotal comments</td></tr>
+                        <tr><td>Test file (EICAR)</td><td>Malware detection on test file</td><td>Security testing; verify with security team</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>When to Escalate</h2>
+                <p><strong>Always escalate if:</strong></p>
+                <ul>
+                    <li>Ransomware indicators (even if blocked)</li>
+                    <li>Active C2 communication</li>
+                    <li>Credential theft confirmed (LSASS access, Mimikatz)</li>
+                    <li>Multiple systems affected</li>
+                    <li>VIP/executive account involved</li>
+                    <li>Critical infrastructure affected</li>
+                    <li>You're not sure and it could be bad</li>
+                    <li>Evidence of data exfiltration</li>
+                    <li>Attacker has achieved persistence</li>
+                    <li>You need permissions you don't have</li>
+                </ul>
+
+                <h2>Communication Templates</h2>
+
+                <h3>Escalation to L2</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md);">
+                    <p><strong>Subject:</strong> [ESCALATION] [Severity] - Brief description</p>
+                    <p><strong>Summary:</strong> One sentence describing the issue</p>
+                    <p><strong>Affected:</strong> Systems/users impacted</p>
+                    <p><strong>Evidence Found:</strong> Key findings from investigation</p>
+                    <p><strong>Actions Taken:</strong> What you've already done</p>
+                    <p><strong>Why Escalating:</strong> Why you need L2 help</p>
+                    <p><strong>Ticket:</strong> Link to ticket</p>
+                </div>
+
+                <h3>User Notification (Suspicious Activity)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md);">
+                    <p><strong>Subject:</strong> Security Question About Your Account</p>
+                    <p>Hi [Name],</p>
+                    <p>The Security team noticed some unusual activity on your account and wanted to verify it was you.</p>
+                    <p>On [Date/Time], we saw [brief, non-technical description of activity] from [location if relevant].</p>
+                    <p>Was this you? Please reply to confirm or call the Security team at [number] if you have concerns.</p>
+                    <p>Thanks,<br>Security Team</p>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

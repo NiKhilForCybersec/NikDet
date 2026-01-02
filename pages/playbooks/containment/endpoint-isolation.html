@@ -16,99 +16,205 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Endpoint Isolation</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-CON-001</div>
-                    <h1>Endpoint Isolation Procedures</h1>
-                    <p class="lead">Network isolation procedures for compromised or suspicious endpoints.</p>
-                </div>
-
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> DO NOT Power Off</div>
-                    <p style="margin: 0.5rem 0 0 0;">Unless specifically directed, do NOT power off the system. Memory contains valuable forensic evidence and possibly encryption keys.</p>
+                    <div class="playbook-id">PB-CONTAIN-001</div>
+                    <h1>Endpoint Isolation Playbook</h1>
+                    <p class="lead">Procedures for isolating compromised endpoints using EDR, network controls, and manual methods.</p>
                 </div>
 
                 <h2>When to Isolate</h2>
-                <ul>
-                    <li>Confirmed ransomware activity</li>
-                    <li>Active C2 communication</li>
-                    <li>Credential theft in progress (LSASS access)</li>
-                    <li>Lateral movement detected from the host</li>
-                    <li>Data exfiltration in progress</li>
-                    <li>Advanced persistent threat indicators</li>
-                </ul>
-
-                <h2>EDR Isolation by Platform</h2>
                 <table>
-                    <thead><tr><th>Platform</th><th>Navigation</th><th>What It Does</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Isolation Priority</th><th>Method</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>CrowdStrike</strong></td><td>Host → Actions → Network Containment → Contain</td><td>Blocks all network except Falcon cloud</td></tr>
-                        <tr><td><strong>Microsoft Defender</strong></td><td>Device page → Response Actions → Isolate Device</td><td>Blocks all network except MDE service</td></tr>
-                        <tr><td><strong>Cortex XDR</strong></td><td>Endpoint → Actions → Isolate Endpoint</td><td>Blocks all network except Cortex</td></tr>
-                        <tr><td><strong>SentinelOne</strong></td><td>Endpoint → Network → Disconnect from Network</td><td>Full isolation with agent control</td></tr>
-                        <tr><td><strong>Carbon Black</strong></td><td>Device → Quarantine Device</td><td>Blocks network, allows CB communication</td></tr>
+                        <tr><td><strong>Active ransomware</strong></td><td>Immediate</td><td>EDR isolation or network disconnect</td></tr>
+                        <tr><td><strong>Confirmed C2 communication</strong></td><td>Immediate</td><td>EDR isolation</td></tr>
+                        <tr><td><strong>Credential theft detected</strong></td><td>High (within minutes)</td><td>EDR isolation</td></tr>
+                        <tr><td><strong>Lateral movement source</strong></td><td>Immediate</td><td>EDR isolation + network block</td></tr>
+                        <tr><td><strong>Malware execution (contained)</strong></td><td>Medium (within 30 min)</td><td>EDR isolation for investigation</td></tr>
+                        <tr><td><strong>Suspicious but unconfirmed</strong></td><td>Low (after triage)</td><td>Consider impact before isolating</td></tr>
                     </tbody>
                 </table>
 
-                <h2>What EDR Isolation Provides</h2>
-                <ul>
-                    <li><strong>Network block:</strong> All traffic except EDR agent communication</li>
-                    <li><strong>Continued management:</strong> Can still run remote commands, queries</li>
-                    <li><strong>Evidence preservation:</strong> System stays running for forensics</li>
-                    <li><strong>Lateral movement prevention:</strong> Can't spread to other systems</li>
-                    <li><strong>C2 disruption:</strong> Attacker loses control of endpoint</li>
-                </ul>
+                <h2>Isolation Methods by EDR Platform</h2>
+                <h3>Microsoft Defender for Endpoint</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Isolate via Portal</span>
+Security Center > Devices > [Device] > Response Actions > Isolate device
 
-                <h2>Network-Level Isolation (If No EDR)</h2>
+<span style="color: #6aa3f7;">// Isolate via API (PowerShell)</span>
+$DeviceId = "device-id-here"
+$Body = @{
+    Comment = "SOC-2025-001: Ransomware investigation"
+    IsolationType = "Full"  # or "Selective" (allows Outlook/Teams)
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "https://api.security.microsoft.com/api/machines/$DeviceId/isolate" `
+    -Method Post -Headers $Headers -Body $Body
+
+<span style="color: #6aa3f7;">// Release isolation</span>
+Invoke-RestMethod -Uri "https://api.security.microsoft.com/api/machines/$DeviceId/unisolate" `
+    -Method Post -Headers $Headers -Body @{Comment="Cleared for release"} | ConvertTo-Json
+
+<span style="color: #6aa3f7;">// Check isolation status</span>
+DeviceInfo
+| where DeviceName == "WORKSTATION01"
+| project DeviceName, DeviceId, MachineGroup, HealthStatus, RiskScore, ExposureLevel</pre>
+                </div>
+
+                <h3>CrowdStrike Falcon</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Contain via Falcon Console</span>
+Host Management > Hosts > [Select Host] > Network Containment > Contain
+
+<span style="color: #6aa3f7;">// Contain via API</span>
+POST /devices/entities/devices-actions/v2?action_name=contain
+{
+    "ids": ["device-id-here"]
+}
+
+<span style="color: #6aa3f7;">// Lift containment via API</span>
+POST /devices/entities/devices-actions/v2?action_name=lift_containment
+{
+    "ids": ["device-id-here"]
+}
+
+<span style="color: #6aa3f7;">// Real-Time Response for investigation</span>
+Hosts > [Host] > Real Time Response
+Commands: ps, netstat, reg query, get [file], kill [pid]</pre>
+                </div>
+
+                <h3>Cortex XDR</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Isolate via Console</span>
+Endpoints > [Endpoint] > Actions > Isolate Endpoint
+
+<span style="color: #6aa3f7;">// Isolate via API</span>
+POST /public_api/v1/endpoints/isolate
+{
+    "request_data": {
+        "endpoint_id": "endpoint-id-here"
+    }
+}
+
+<span style="color: #6aa3f7;">// Live Terminal for investigation</span>
+Endpoints > [Endpoint] > Actions > Live Terminal</pre>
+                </div>
+
+                <h3>SentinelOne</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Network Quarantine via Console</span>
+Sentinels > [Agent] > Actions > Network Quarantine
+
+<span style="color: #6aa3f7;">// Disconnect from Network via API</span>
+POST /web/api/v2.1/agents/actions/disconnect
+{
+    "filter": {
+        "ids": ["agent-id-here"]
+    }
+}
+
+<span style="color: #6aa3f7;">// Remote Shell for investigation</span>
+Sentinels > [Agent] > Actions > Remote Shell</pre>
+                </div>
+
+                <h2>Network-Level Isolation</h2>
+                <p>When EDR isolation is unavailable or additional containment needed:</p>
                 <table>
-                    <thead><tr><th>Method</th><th>How</th><th>Pros</th><th>Cons</th></tr></thead>
+                    <thead><tr><th>Method</th><th>Implementation</th><th>Pros</th><th>Cons</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Switch port disable</strong></td><td>Disable port on network switch</td><td>Immediate, complete</td><td>Lose remote access</td></tr>
-                        <tr><td><strong>VLAN quarantine</strong></td><td>Move to isolated VLAN</td><td>Controlled access</td><td>Requires network config</td></tr>
-                        <tr><td><strong>Firewall block</strong></td><td>Block host IP at firewall</td><td>Quick</td><td>Intra-subnet traffic still works</td></tr>
-                        <tr><td><strong>Physical disconnect</strong></td><td>Unplug network cable</td><td>Absolute</td><td>Last resort, lose all access</td></tr>
+                        <tr><td><strong>Switch port disable</strong></td><td>Network team disables port</td><td>Immediate, complete</td><td>Manual, requires NOC</td></tr>
+                        <tr><td><strong>VLAN quarantine</strong></td><td>Move to isolated VLAN</td><td>Controlled access</td><td>Requires NAC/switch config</td></tr>
+                        <tr><td><strong>Firewall block</strong></td><td>Block IP at perimeter/internal FW</td><td>Flexible</td><td>May affect legitimate traffic</td></tr>
+                        <tr><td><strong>802.1X reauthentication</strong></td><td>Force re-auth to quarantine VLAN</td><td>Automated</td><td>Requires 802.1X deployment</td></tr>
+                        <tr><td><strong>Physical disconnect</strong></td><td>Unplug network cable</td><td>Guaranteed</td><td>Requires physical access</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Isolation Procedure</h2>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Document Current State</div>
-                            <p>Note hostname, IP, user, reason for isolation, time.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Initiate Isolation</div>
-                            <p>Use EDR console to isolate. Verify isolation status.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Notify User (If Appropriate)</div>
-                            <p>Coordinate with management. User may need to know.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Begin Investigation</div>
-                            <p>Use EDR to collect evidence, run queries, check persistence.</p>
-                        </div>
-                    </div>
+                <h3>Firewall Isolation Rules</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Palo Alto - Block all traffic from/to IP</span>
+set security-rule Quarantine-Host source any destination 10.1.2.50 action deny
+set security-rule Quarantine-Host source 10.1.2.50 destination any action deny
+commit
+
+<span style="color: #6aa3f7;">// Windows Firewall - Block all network (PowerShell on endpoint)</span>
+New-NetFirewallRule -DisplayName "Quarantine-Block-All" -Direction Outbound -Action Block
+New-NetFirewallRule -DisplayName "Quarantine-Block-All-In" -Direction Inbound -Action Block
+
+<span style="color: #6aa3f7;">// Allow only EDR communication</span>
+New-NetFirewallRule -DisplayName "Allow-EDR" -Direction Outbound `
+    -RemoteAddress "edr-cloud-ips" -Action Allow</pre>
+                </div>
+
+                <h2>Pre-Isolation Checklist</h2>
+                <ul>
+                    <li>☐ Document current device state (running processes, network connections)</li>
+                    <li>☐ Identify device owner and their role (VIP? Critical function?)</li>
+                    <li>☐ Check if device hosts critical services</li>
+                    <li>☐ Notify IR lead of isolation decision</li>
+                    <li>☐ Prepare user communication (if applicable)</li>
+                    <li>☐ Ensure EDR agent is responsive</li>
+                    <li>☐ Document ticket number for isolation comment</li>
+                </ul>
+
+                <h2>Post-Isolation Actions</h2>
+                <table>
+                    <thead><tr><th>Action</th><th>Purpose</th><th>How</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Verify isolation</strong></td><td>Confirm no network access</td><td>Check EDR status, attempt ping</td></tr>
+                        <tr><td><strong>Collect forensic data</strong></td><td>Preserve evidence</td><td>EDR live response, memory dump</td></tr>
+                        <tr><td><strong>Identify scope</strong></td><td>Find other affected systems</td><td>Search for IOCs across environment</td></tr>
+                        <tr><td><strong>Notify user</strong></td><td>Explain situation</td><td>Phone call, explain next steps</td></tr>
+                        <tr><td><strong>Update ticket</strong></td><td>Document actions</td><td>Record isolation time, method, reason</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Investigation While Isolated</h2>
+                <p>EDR live response commands for remote investigation:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Process listing</span>
+processes
+
+<span style="color: #6aa3f7;">// Network connections (if available)</span>
+netstat -an
+
+<span style="color: #6aa3f7;">// Scheduled tasks</span>
+schtasks /query /fo LIST /v
+
+<span style="color: #6aa3f7;">// Services</span>
+sc query state= all
+
+<span style="color: #6aa3f7;">// Autorun locations</span>
+reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+reg query "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
+
+<span style="color: #6aa3f7;">// Collect suspicious files</span>
+getfile "C:\Users\Public\malware.exe"
+
+<span style="color: #6aa3f7;">// Memory dump (if supported)</span>
+memdump</pre>
                 </div>
 
                 <h2>Release from Isolation</h2>
-                <p>Only release after:</p>
+                <h3>Release Criteria</h3>
                 <ul>
-                    <li>Threat is fully remediated</li>
-                    <li>No persistence mechanisms remain</li>
-                    <li>Full scan shows system clean</li>
-                    <li>IR lead approves release</li>
-                    <li>Enhanced monitoring in place</li>
+                    <li>✅ Malware removed and verified clean</li>
+                    <li>✅ No persistence mechanisms found (or all removed)</li>
+                    <li>✅ User credentials reset</li>
+                    <li>✅ System reimaged (if severe compromise)</li>
+                    <li>✅ IR lead approval for release</li>
+                    <li>✅ Enhanced monitoring configured</li>
                 </ul>
+
+                <h3>Post-Release Monitoring</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Monitor released device for 7 days</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where DeviceName == "RELEASED-DEVICE"
+| where FileName in~ ("powershell.exe", "cmd.exe", "wscript.exe")
+| where ProcessCommandLine has_any ("-enc", "downloadstring", "invoke-expression")
+| project TimeGenerated, FileName, ProcessCommandLine, AccountName</pre>
+                </div>
 
             </div>
         </div>

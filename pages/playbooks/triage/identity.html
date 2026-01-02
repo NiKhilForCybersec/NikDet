@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Identity Triage | SOC Compendium</title>
+    <title>Identity Alert Triage | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -16,95 +16,181 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Identity Triage</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-TRI-007</div>
+                    <div class="playbook-id">PB-TRIAGE-006</div>
                     <h1>Identity Alert Triage</h1>
-                    <p class="lead">Procedures for triaging identity-related alerts including risky users, privilege escalation, and account changes.</p>
+                    <p class="lead">Comprehensive triage for identity-based alerts including privilege escalation, account manipulation, and access policy changes.</p>
                 </div>
 
-                <h2>Common Identity Alert Types</h2>
+                <h2>Identity Alert Categories</h2>
                 <table>
-                    <thead><tr><th>Alert Type</th><th>Severity</th><th>Typical Cause</th></tr></thead>
+                    <thead><tr><th>Category</th><th>Alert Types</th><th>Risk Level</th><th>Key Questions</th></tr></thead>
                     <tbody>
-                        <tr><td>Risky User Detected</td><td><span style="color: #ffa502;">Medium-High</span></td><td>Azure AD Identity Protection risk signals</td></tr>
-                        <tr><td>Privilege Escalation</td><td><span style="color: #ff6b6b;">High</span></td><td>User added to privileged group</td></tr>
-                        <tr><td>Service Account Anomaly</td><td><span style="color: #ffa502;">Medium-High</span></td><td>Unusual service account behavior</td></tr>
-                        <tr><td>Account Created</td><td><span style="color: #f9ca24;">Medium</span></td><td>New user account creation</td></tr>
-                        <tr><td>Password Reset</td><td><span style="color: #f9ca24;">Medium</span></td><td>Admin or self-service reset</td></tr>
-                        <tr><td>MFA Method Changed</td><td><span style="color: #ff6b6b;">High</span></td><td>New authenticator registered</td></tr>
+                        <tr><td><strong>Privilege Changes</strong></td><td>Admin role assignment, group membership change</td><td>High</td><td>Who authorized? Business need? Self-elevation?</td></tr>
+                        <tr><td><strong>Account Lifecycle</strong></td><td>Account creation, deletion, modification</td><td>Medium</td><td>HR-approved? Follows naming convention?</td></tr>
+                        <tr><td><strong>Credential Events</strong></td><td>Password change, MFA modification, key rotation</td><td>Medium-High</td><td>User-initiated? After suspicious login?</td></tr>
+                        <tr><td><strong>Access Anomalies</strong></td><td>Unusual access patterns, dormant account activation</td><td>Medium</td><td>Expected behavior? Role change?</td></tr>
+                        <tr><td><strong>Policy Changes</strong></td><td>Conditional access, permission boundary changes</td><td>High</td><td>Authorized change? Reduces security?</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 1: Initial Assessment</h2>
-                <table>
-                    <thead><tr><th>Question</th><th>Where to Look</th></tr></thead>
-                    <tbody>
-                        <tr><td>What changed?</td><td>Account created, modified, or privileged</td></tr>
-                        <tr><td>Who made the change?</td><td>Admin user, service account, or unknown</td></tr>
-                        <tr><td>Was it authorized?</td><td>Change request, expected process</td></tr>
-                        <tr><td>What's the impact?</td><td>What access was granted?</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Step 2: Context Queries</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// Get user risk details (Azure AD)</span>
-AADRiskyUsers
-| where UserPrincipalName == "user@company.com"
-| project TimeGenerated, RiskLevel, RiskDetail, RiskState
-
-<span style="color: #a78bf6;">// Recent privilege changes</span>
+                <h2>Privilege Escalation Triage</h2>
+                <h3>Investigation Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Azure AD role assignments</span>
 AuditLogs
 | where TimeGenerated > ago(24h)
-| where OperationName has_any ("Add member", "role", "group")
-| project TimeGenerated, OperationName, InitiatedBy.user.userPrincipalName, TargetResources
+| where OperationName has_any ("Add member to role", "Add eligible member to role")
+| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+| extend RoleAssigned = tostring(TargetResources[0].modifiedProperties[1].newValue)
+| extend InitiatedBy = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, InitiatedBy, TargetUser, RoleAssigned, Result
 
-<span style="color: #a78bf6;">// MFA registration changes</span>
-AuditLogs
-| where TimeGenerated > ago(7d)
-| where OperationName has_any ("User registered", "authentication method")
-| project TimeGenerated, OperationName, InitiatedBy.user.userPrincipalName, TargetResources</pre>
+<span style="color: #6aa3f7;">// Windows domain admin additions</span>
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4728 or EventID == 4732 or EventID == 4756
+| where TargetUserName in ("Domain Admins", "Enterprise Admins", "Schema Admins", "Administrators")
+| project TimeGenerated, SubjectUserName, MemberName, TargetUserName, Computer
+
+<span style="color: #6aa3f7;">// AWS IAM privilege escalation</span>
+AWSCloudTrail
+| where TimeGenerated > ago(24h)
+| where EventName in ("AttachUserPolicy", "PutUserPolicy", "AttachGroupPolicy", 
+    "PutGroupPolicy", "AttachRolePolicy", "PutRolePolicy", "CreatePolicyVersion")
+| where RequestParameters has_any ("Admin", "*:*", "iam:*")
+| project TimeGenerated, UserIdentityArn, EventName, RequestParameters</pre>
                 </div>
 
-                <h2>Step 3: Decision Tree</h2>
+                <h3>High-Risk Role Assignments</h3>
                 <table>
-                    <thead><tr><th>Question</th><th>If YES</th><th>If NO</th></tr></thead>
+                    <thead><tr><th>Platform</th><th>High-Risk Roles</th><th>Why High Risk</th></tr></thead>
                     <tbody>
-                        <tr><td>Was this an authorized change?</td><td>Verify with ticket → Close</td><td>Continue investigation</td></tr>
-                        <tr><td>Does user/admin have authority?</td><td>May be policy violation if no ticket</td><td>Unauthorized → Escalate</td></tr>
-                        <tr><td>Does it grant sensitive access?</td><td>Admin/sensitive groups → Verify immediately</td><td>Lower priority</td></tr>
+                        <tr><td><strong>Azure AD</strong></td><td>Global Admin, Privileged Role Admin, Security Admin</td><td>Full tenant control</td></tr>
+                        <tr><td><strong>AWS</strong></td><td>AdministratorAccess, IAMFullAccess</td><td>Full account control</td></tr>
+                        <tr><td><strong>GCP</strong></td><td>Owner, Editor, Security Admin</td><td>Full project control</td></tr>
+                        <tr><td><strong>Active Directory</strong></td><td>Domain Admins, Enterprise Admins, Schema Admins</td><td>Full domain control</td></tr>
+                        <tr><td><strong>M365</strong></td><td>Exchange Admin, SharePoint Admin, Teams Admin</td><td>Service-wide access</td></tr>
                     </tbody>
                 </table>
 
-                <h2>High-Risk Identity Events</h2>
+                <h2>Account Creation/Modification Triage</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// New account creation</span>
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName == "Add user"
+| extend NewUser = tostring(TargetResources[0].userPrincipalName)
+| extend CreatedBy = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, CreatedBy, NewUser, CorrelationId
+
+<span style="color: #6aa3f7;">// Account modifications</span>
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName in ("Update user", "Reset password", "Update authentication method")
+| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+| extend ModifiedBy = tostring(InitiatedBy.user.userPrincipalName)
+| extend Changes = tostring(TargetResources[0].modifiedProperties)
+| project TimeGenerated, ModifiedBy, TargetUser, OperationName, Changes
+
+<span style="color: #6aa3f7;">// Windows local account creation</span>
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4720
+| project TimeGenerated, SubjectUserName, TargetUserName, Computer</pre>
+                </div>
+
+                <h3>Account Creation Red Flags</h3>
                 <table>
-                    <thead><tr><th>Event</th><th>Risk</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Red Flag</th><th>Why Suspicious</th><th>Investigation</th></tr></thead>
                     <tbody>
-                        <tr><td>User added to Domain Admins</td><td>Full domain control</td><td>Immediate verification</td></tr>
-                        <tr><td>MFA method added by unknown</td><td>Persistence mechanism</td><td>Verify with user</td></tr>
-                        <tr><td>Service account interactive login</td><td>Not normal behavior</td><td>Check if compromised</td></tr>
-                        <tr><td>Password reset + new MFA</td><td>Account takeover pattern</td><td>Verify with user</td></tr>
-                        <tr><td>Admin account from new location</td><td>Potential compromise</td><td>Verify legitimacy</td></tr>
+                        <tr><td>Non-standard naming</td><td>May be rogue account</td><td>Check against HR records</td></tr>
+                        <tr><td>Created by non-IT</td><td>Unauthorized</td><td>Verify creator authorization</td></tr>
+                        <tr><td>Immediate admin role</td><td>Pre-staged attack</td><td>Check business justification</td></tr>
+                        <tr><td>No manager assigned</td><td>Orphan account</td><td>Verify ownership</td></tr>
+                        <tr><td>Created during attack window</td><td>Attacker persistence</td><td>Correlate with other indicators</td></tr>
+                        <tr><td>Service account with interactive login</td><td>Potential abuse</td><td>Review account purpose</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Sensitive Groups to Monitor</h2>
-                <ul>
-                    <li>Domain Admins / Enterprise Admins</li>
-                    <li>Schema Admins / Account Operators</li>
-                    <li>Global Administrators (Azure AD)</li>
-                    <li>Exchange Admins / SharePoint Admins</li>
-                    <li>Security Administrators</li>
-                    <li>Any custom admin groups</li>
-                </ul>
+                <h2>Credential Change Triage</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Password resets (user-initiated vs admin)</span>
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName has "password"
+| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+| extend InitiatedBy = coalesce(
+    tostring(InitiatedBy.user.userPrincipalName),
+    tostring(InitiatedBy.app.displayName))
+| extend SelfService = TargetUser == InitiatedBy
+| project TimeGenerated, InitiatedBy, TargetUser, OperationName, SelfService
 
-                <h2>Escalation Criteria</h2>
+<span style="color: #6aa3f7;">// MFA method changes</span>
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName has_any ("authentication method", "StrongAuthentication")
+| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+| project TimeGenerated, TargetUser, OperationName, 
+    tostring(TargetResources[0].modifiedProperties)
+
+<span style="color: #6aa3f7;">// Password change after suspicious login</span>
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where RiskLevelDuringSignIn in ("high", "medium")
+| project SignInTime=TimeGenerated, UserPrincipalName, RiskLevelDuringSignIn
+| join kind=inner (
+    AuditLogs
+    | where OperationName has "password"
+    | extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+    | project PasswordChangeTime=TimeGenerated, TargetUser
+) on $left.UserPrincipalName == $right.TargetUser
+| where PasswordChangeTime between (SignInTime .. (SignInTime + 1h))</pre>
+                </div>
+
+                <h3>Credential Change Risk Assessment</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Risk</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Password reset by user after failed MFA</td><td>High</td><td>Verify user identity, check for compromise</td></tr>
+                        <tr><td>MFA method added from new device/location</td><td>High</td><td>Verify user, consider revoking method</td></tr>
+                        <tr><td>Admin reset of password without ticket</td><td>Medium</td><td>Verify business justification</td></tr>
+                        <tr><td>Service account password rotation</td><td>Low</td><td>Verify scheduled rotation</td></tr>
+                        <tr><td>Password reset immediately after risky login</td><td>Critical</td><td>Account likely compromised</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Service Account Monitoring</h2>
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Normal</th><th>Suspicious</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Authentication source</strong></td><td>Known servers</td><td>User workstations, unknown IPs</td></tr>
+                        <tr><td><strong>Authentication time</strong></td><td>Consistent with job schedule</td><td>Random times, off-hours</td></tr>
+                        <tr><td><strong>Activity pattern</strong></td><td>Predictable, automated</td><td>Interactive sessions, browsing</td></tr>
+                        <tr><td><strong>Resource access</strong></td><td>Specific scope</td><td>Accessing unusual resources</td></tr>
+                        <tr><td><strong>Failed authentications</strong></td><td>Rare, config issues</td><td>Multiple failures from new sources</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Triage Decision Flow</h2>
+                <table>
+                    <thead><tr><th>Question</th><th>If Yes</th><th>If No</th></tr></thead>
+                    <tbody>
+                        <tr><td>Is this a privileged role change?</td><td>High priority, verify authorization</td><td>Continue assessment</td></tr>
+                        <tr><td>Was change made by IT/Security?</td><td>Verify ticket/approval</td><td>Escalate - unauthorized</td></tr>
+                        <tr><td>Does change follow process?</td><td>Likely authorized</td><td>Investigate further</td></tr>
+                        <tr><td>Any correlated suspicious activity?</td><td>Escalate as potential compromise</td><td>Document and close</td></tr>
+                        <tr><td>Self-modification of security settings?</td><td>Verify with user directly</td><td>N/A</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Common False Positives</h2>
                 <ul>
-                    <li>Unauthorized addition to privileged groups</li>
-                    <li>MFA manipulation on high-value account</li>
-                    <li>Service account abuse or interactive login</li>
-                    <li>Account creation outside HR process</li>
-                    <li>Multiple identity events for same user in short time</li>
-                    <li>Admin activity from unexpected location</li>
+                    <li><strong>HR onboarding:</strong> Bulk account creation during hiring waves</li>
+                    <li><strong>Scheduled password rotation:</strong> Service accounts with automated rotation</li>
+                    <li><strong>PAM/PIM activation:</strong> Just-in-time privilege activation</li>
+                    <li><strong>Group policy updates:</strong> Planned security configuration changes</li>
+                    <li><strong>Directory sync:</strong> Azure AD Connect synchronization activities</li>
+                    <li><strong>Self-service password reset:</strong> Users resetting their own passwords</li>
                 </ul>
 
             </div>

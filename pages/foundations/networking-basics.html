@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Networking Basics | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Foundations</a><span class="separator">/</span><span>Networking Basics</span></div>
+            <div class="content">
+                <h1>Networking Basics for Security Analysts</h1>
+                <p class="lead">Understanding how networks work is essential for SOC work. You'll analyze network traffic daily, so these concepts must be second nature.</p>
+
+                <h2>The OSI Model (Simplified)</h2>
+                <p>Network communication happens in layers. Each layer has a specific job:</p>
+                <table>
+                    <thead><tr><th>Layer</th><th>Name</th><th>What It Does</th><th>Security Relevance</th><th>Examples</th></tr></thead>
+                    <tbody>
+                        <tr><td>7</td><td><strong>Application</strong></td><td>User-facing applications</td><td>Application attacks, malware C2</td><td>HTTP, HTTPS, DNS, SMTP, FTP</td></tr>
+                        <tr><td>6</td><td><strong>Presentation</strong></td><td>Data formatting, encryption</td><td>SSL/TLS attacks</td><td>SSL, TLS, JPEG, ASCII</td></tr>
+                        <tr><td>5</td><td><strong>Session</strong></td><td>Session management</td><td>Session hijacking</td><td>NetBIOS, RPC</td></tr>
+                        <tr><td>4</td><td><strong>Transport</strong></td><td>End-to-end communication</td><td>Port scanning, SYN floods</td><td>TCP, UDP</td></tr>
+                        <tr><td>3</td><td><strong>Network</strong></td><td>Routing between networks</td><td>IP spoofing, routing attacks</td><td>IP, ICMP, IPSec</td></tr>
+                        <tr><td>2</td><td><strong>Data Link</strong></td><td>Local network communication</td><td>ARP spoofing, MAC flooding</td><td>Ethernet, MAC addresses</td></tr>
+                        <tr><td>1</td><td><strong>Physical</strong></td><td>Physical transmission</td><td>Physical tampering</td><td>Cables, wireless signals</td></tr>
+                    </tbody>
+                </table>
+                <p><strong>Memory trick:</strong> "Please Do Not Throw Sausage Pizza Away" (Physical → Application)</p>
+
+                <h2>IP Addresses</h2>
+                <p>Every device on a network has an IP address - like a phone number for computers.</p>
+                
+                <h3>IPv4 Addresses</h3>
+                <p>Format: Four numbers (0-255) separated by dots. Example: <code>192.168.1.100</code></p>
+                
+                <h3>Private vs Public IP Ranges</h3>
+                <table>
+                    <thead><tr><th>Range</th><th>Type</th><th>Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>10.0.0.0 - 10.255.255.255</code></td><td>Private (Class A)</td><td>Large internal networks</td></tr>
+                        <tr><td><code>172.16.0.0 - 172.31.255.255</code></td><td>Private (Class B)</td><td>Medium internal networks</td></tr>
+                        <tr><td><code>192.168.0.0 - 192.168.255.255</code></td><td>Private (Class C)</td><td>Small internal networks, home</td></tr>
+                        <tr><td><code>127.0.0.0 - 127.255.255.255</code></td><td>Loopback</td><td>Local machine (localhost)</td></tr>
+                        <tr><td>Everything else</td><td>Public</td><td>Internet-routable addresses</td></tr>
+                    </tbody>
+                </table>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Why This Matters for SOC</div>
+                    <p style="margin: 0.5rem 0 0 0;">When analyzing traffic, you need to quickly identify: Is this internal-to-internal? Internal-to-external? External-to-internal? The answer changes your investigation approach.</p>
+                </div>
+
+                <h2>Ports and Protocols</h2>
+                <p>Ports are like apartment numbers - they tell traffic which application to go to on a server.</p>
+                
+                <h3>Must-Know Ports for SOC Analysts</h3>
+                <table>
+                    <thead><tr><th>Port</th><th>Protocol</th><th>Service</th><th>Security Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>20, 21</td><td>TCP</td><td>FTP</td><td>Unencrypted, avoid using</td></tr>
+                        <tr><td>22</td><td>TCP</td><td>SSH</td><td>Secure remote access; brute force target</td></tr>
+                        <tr><td>23</td><td>TCP</td><td>Telnet</td><td>Unencrypted, never use</td></tr>
+                        <tr><td>25</td><td>TCP</td><td>SMTP</td><td>Email sending; spam, phishing</td></tr>
+                        <tr><td>53</td><td>TCP/UDP</td><td>DNS</td><td>Name resolution; DNS tunneling, DGA</td></tr>
+                        <tr><td>80</td><td>TCP</td><td>HTTP</td><td>Unencrypted web; C2, malware download</td></tr>
+                        <tr><td>88</td><td>TCP/UDP</td><td>Kerberos</td><td>Windows auth; Kerberoasting, golden ticket</td></tr>
+                        <tr><td>110</td><td>TCP</td><td>POP3</td><td>Email retrieval</td></tr>
+                        <tr><td>135</td><td>TCP</td><td>RPC</td><td>Windows RPC; lateral movement</td></tr>
+                        <tr><td>137-139</td><td>TCP/UDP</td><td>NetBIOS</td><td>Windows networking; should be internal only</td></tr>
+                        <tr><td>143</td><td>TCP</td><td>IMAP</td><td>Email retrieval</td></tr>
+                        <tr><td>389</td><td>TCP/UDP</td><td>LDAP</td><td>Directory services; AD enumeration</td></tr>
+                        <tr><td>443</td><td>TCP</td><td>HTTPS</td><td>Encrypted web; encrypted C2</td></tr>
+                        <tr><td>445</td><td>TCP</td><td>SMB</td><td>File sharing; EternalBlue, lateral movement</td></tr>
+                        <tr><td>636</td><td>TCP</td><td>LDAPS</td><td>Encrypted LDAP</td></tr>
+                        <tr><td>1433</td><td>TCP</td><td>MSSQL</td><td>SQL Server; SQL injection target</td></tr>
+                        <tr><td>3306</td><td>TCP</td><td>MySQL</td><td>MySQL database</td></tr>
+                        <tr><td>3389</td><td>TCP</td><td>RDP</td><td>Remote desktop; brute force, lateral movement</td></tr>
+                        <tr><td>5432</td><td>TCP</td><td>PostgreSQL</td><td>PostgreSQL database</td></tr>
+                        <tr><td>5985, 5986</td><td>TCP</td><td>WinRM</td><td>Windows remote management; lateral movement</td></tr>
+                        <tr><td>8080</td><td>TCP</td><td>HTTP Alt</td><td>Alternative HTTP; proxies, web apps</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>TCP vs UDP</h3>
+                <table>
+                    <thead><tr><th>TCP</th><th>UDP</th></tr></thead>
+                    <tbody>
+                        <tr><td>Connection-oriented (handshake)</td><td>Connectionless (fire and forget)</td></tr>
+                        <tr><td>Reliable - guarantees delivery</td><td>Unreliable - no delivery guarantee</td></tr>
+                        <tr><td>Slower but accurate</td><td>Faster but may lose packets</td></tr>
+                        <tr><td>Web, email, file transfer</td><td>DNS, streaming, VoIP, gaming</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>DNS (Domain Name System)</h2>
+                <p>DNS translates human-readable names to IP addresses. When you visit google.com, DNS tells your browser the IP address.</p>
+                
+                <h3>How DNS Works</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">User types google.com</div>
+                            <p>Browser needs to find the IP address for google.com</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check local cache</div>
+                            <p>Computer checks if it already knows the answer</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Query DNS server</div>
+                            <p>Asks configured DNS server (ISP, corporate, or public like 8.8.8.8)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">DNS resolution</div>
+                            <p>DNS server finds answer (may query other DNS servers)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Response returned</div>
+                            <p>IP address (e.g., 142.250.80.46) sent back to user</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>DNS Security Concerns</h3>
+                <table>
+                    <thead><tr><th>Attack</th><th>Description</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>DNS Tunneling</strong></td><td>Hiding data/C2 in DNS queries</td><td>Long queries, high volume, unusual TXT records</td></tr>
+                        <tr><td><strong>DGA (Domain Generation Algorithm)</strong></td><td>Malware generates random domain names</td><td>Random-looking domains, high NXDomain responses</td></tr>
+                        <tr><td><strong>DNS Hijacking</strong></td><td>Redirecting DNS to malicious server</td><td>Unexpected DNS server responses</td></tr>
+                        <tr><td><strong>Typosquatting</strong></td><td>Domains similar to legitimate ones</td><td>Domains like g00gle.com, googel.com</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>HTTP/HTTPS</h2>
+                <p>HTTP is how browsers communicate with web servers. HTTPS is HTTP + encryption (TLS).</p>
+                
+                <h3>HTTP Methods</h3>
+                <table>
+                    <thead><tr><th>Method</th><th>Purpose</th><th>Security Note</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>GET</strong></td><td>Retrieve data</td><td>Parameters visible in URL</td></tr>
+                        <tr><td><strong>POST</strong></td><td>Submit data</td><td>Data in body, less visible</td></tr>
+                        <tr><td><strong>PUT</strong></td><td>Update/upload data</td><td>Can be used for webshell upload</td></tr>
+                        <tr><td><strong>DELETE</strong></td><td>Remove data</td><td>Dangerous if exposed</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>HTTP Response Codes</h3>
+                <table>
+                    <thead><tr><th>Code</th><th>Meaning</th><th>Security Relevance</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>200</strong></td><td>OK - Success</td><td>Normal response</td></tr>
+                        <tr><td><strong>301/302</strong></td><td>Redirect</td><td>May redirect to malicious site</td></tr>
+                        <tr><td><strong>401</strong></td><td>Unauthorized</td><td>Auth required</td></tr>
+                        <tr><td><strong>403</strong></td><td>Forbidden</td><td>Access denied</td></tr>
+                        <tr><td><strong>404</strong></td><td>Not Found</td><td>Scanning detection (many 404s)</td></tr>
+                        <tr><td><strong>500</strong></td><td>Server Error</td><td>May indicate attack or vulnerability</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network Devices</h2>
+                <table>
+                    <thead><tr><th>Device</th><th>Function</th><th>OSI Layer</th><th>Security Role</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Switch</strong></td><td>Connects devices on same network</td><td>Layer 2</td><td>VLAN segmentation, port security</td></tr>
+                        <tr><td><strong>Router</strong></td><td>Connects different networks</td><td>Layer 3</td><td>ACLs, routing security</td></tr>
+                        <tr><td><strong>Firewall</strong></td><td>Filters traffic based on rules</td><td>Layer 3-7</td><td>Block malicious traffic</td></tr>
+                        <tr><td><strong>IDS/IPS</strong></td><td>Detects (IDS) or blocks (IPS) attacks</td><td>Layer 3-7</td><td>Signature-based detection</td></tr>
+                        <tr><td><strong>Proxy</strong></td><td>Intermediary for web traffic</td><td>Layer 7</td><td>Content filtering, inspection</td></tr>
+                        <tr><td><strong>Load Balancer</strong></td><td>Distributes traffic across servers</td><td>Layer 4-7</td><td>DDoS mitigation</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network Analysis Commands</h2>
+                <p>Commands every SOC analyst should know:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Check your IP address</span>
+ipconfig (Windows) / ifconfig or ip a (Linux)
+
+<span style="color: #6aa3f7;"># Test connectivity</span>
+ping 8.8.8.8
+
+<span style="color: #6aa3f7;"># Trace route to destination</span>
+tracert 8.8.8.8 (Windows) / traceroute 8.8.8.8 (Linux)
+
+<span style="color: #6aa3f7;"># DNS lookup</span>
+nslookup google.com
+dig google.com (Linux)
+
+<span style="color: #6aa3f7;"># Show active connections</span>
+netstat -ano (Windows) / ss -tuln (Linux)
+
+<span style="color: #6aa3f7;"># Show listening ports</span>
+netstat -an | findstr LISTENING (Windows)
+
+<span style="color: #6aa3f7;"># ARP cache (IP to MAC mapping)</span>
+arp -a</pre>
+                </div>
+
+                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <a href="security-fundamentals.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Security Fundamentals</a>
+                    <a href="operating-systems.html" class="btn btn-primary">Next: Operating Systems <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

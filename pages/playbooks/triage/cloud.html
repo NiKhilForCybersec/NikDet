@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud Triage | SOC Compendium</title>
+    <title>Cloud Security Alert Triage | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -16,95 +16,176 @@
             <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Cloud Triage</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-TRI-005</div>
-                    <h1>Cloud Alert Triage</h1>
-                    <p class="lead">Procedures for triaging cloud security alerts from Azure, AWS, GCP, and M365 environments.</p>
+                    <div class="playbook-id">PB-TRIAGE-005</div>
+                    <h1>Cloud Security Alert Triage</h1>
+                    <p class="lead">Rapid triage procedures for Azure, AWS, and M365 security alerts. Cloud environments require different investigation approaches than on-premises.</p>
                 </div>
 
-                <h2>Common Cloud Alert Types</h2>
+                <h2>Cloud Alert Categories</h2>
                 <table>
-                    <thead><tr><th>Alert Type</th><th>Severity</th><th>Platforms</th></tr></thead>
+                    <thead><tr><th>Category</th><th>Examples</th><th>Typical Severity</th><th>Initial Focus</th></tr></thead>
                     <tbody>
-                        <tr><td>Unusual API Activity</td><td><span style="color: #ffa502;">Medium-High</span></td><td>All clouds</td></tr>
-                        <tr><td>Resource Exposure</td><td><span style="color: #ff6b6b;">High</span></td><td>Storage, databases public</td></tr>
-                        <tr><td>Privilege Escalation</td><td><span style="color: #ff6b6b;">High</span></td><td>IAM changes</td></tr>
-                        <tr><td>Suspicious Login</td><td><span style="color: #ffa502;">Medium</span></td><td>Console/CLI access</td></tr>
-                        <tr><td>Resource Creation</td><td><span style="color: #f9ca24;">Medium</span></td><td>New compute, storage</td></tr>
-                        <tr><td>Security Group Change</td><td><span style="color: #ffa502;">Medium-High</span></td><td>Network rules modified</td></tr>
-                        <tr><td>Cryptomining Detected</td><td><span style="color: #ff6b6b;">High</span></td><td>Compute abuse</td></tr>
+                        <tr><td><strong>Identity</strong></td><td>Risky sign-in, impossible travel, MFA bypass</td><td>High</td><td>User account, IP reputation, post-login activity</td></tr>
+                        <tr><td><strong>Data</strong></td><td>Mass download, external sharing, DLP violation</td><td>Medium-High</td><td>User role, data sensitivity, destination</td></tr>
+                        <tr><td><strong>Configuration</strong></td><td>Public exposure, policy change, resource creation</td><td>Medium</td><td>Who made change, what was exposed, business context</td></tr>
+                        <tr><td><strong>Compute</strong></td><td>Cryptomining, suspicious VM activity</td><td>High</td><td>Resource owner, network connections, process activity</td></tr>
+                        <tr><td><strong>Network</strong></td><td>Unusual egress, port scanning, C2 communication</td><td>High</td><td>Source resource, destination, data volume</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 1: Identify the Activity</h2>
-                <table>
-                    <thead><tr><th>Question</th><th>What It Tells You</th></tr></thead>
-                    <tbody>
-                        <tr><td>What resource was affected?</td><td>VM, storage, IAM, networking</td></tr>
-                        <tr><td>Who performed the action?</td><td>User, service principal, root</td></tr>
-                        <tr><td>What action was taken?</td><td>Create, modify, delete, access</td></tr>
-                        <tr><td>From where?</td><td>Console, CLI, API, unusual IP</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Step 2: Context Queries</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// Azure: Activity for specific user</span>
-AzureActivity
+                <h2>Azure/Entra ID Alert Triage</h2>
+                <h3>Risky Sign-In Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Get sign-in details with risk context</span>
+SigninLogs
 | where TimeGenerated > ago(24h)
-| where Caller == "user@company.com"
-| project TimeGenerated, OperationName, ResourceGroup, Resource, ActivityStatus, CallerIpAddress
+| where UserPrincipalName == "alerteduser@company.com"
+| project TimeGenerated, UserPrincipalName, IPAddress, Location, 
+    AppDisplayName, DeviceDetail, RiskLevelDuringSignIn,
+    RiskEventTypes_V2, ConditionalAccessStatus, MfaDetail
+| order by TimeGenerated desc
 
-<span style="color: #a78bf6;">// Azure: Role assignment changes</span>
-AzureActivity
-| where OperationName has "role"
-| project TimeGenerated, InitiatedBy=Caller, OperationName, TargetResources=Resource
+<span style="color: #6aa3f7;">// Check for post-login suspicious activity</span>
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where InitiatedBy.user.userPrincipalName == "alerteduser@company.com"
+| project TimeGenerated, OperationName, TargetResources, Result
+| order by TimeGenerated desc
 
-<span style="color: #a78bf6;">// Azure: Storage account exposure</span>
-AzureActivity
-| where ResourceProvider == "Microsoft.Storage"
-| where OperationName has_any ("networkRules", "publicAccess", "anonymousAccess")
-| project TimeGenerated, Caller, OperationName, Resource</pre>
+<span style="color: #6aa3f7;">// Check for mail rules created (common post-compromise)</span>
+OfficeActivity
+| where TimeGenerated > ago(24h)
+| where UserId == "alerteduser@company.com"
+| where Operation in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")
+| project TimeGenerated, Operation, Parameters</pre>
                 </div>
 
-                <h2>Step 3: Decision Tree</h2>
+                <h3>Risk Levels Interpretation</h3>
                 <table>
-                    <thead><tr><th>Question</th><th>If YES</th><th>If NO</th></tr></thead>
+                    <thead><tr><th>Risk Level</th><th>Meaning</th><th>Action</th></tr></thead>
                     <tbody>
-                        <tr><td>Is this known/expected change?</td><td>Verify with change ticket → Close</td><td>Continue</td></tr>
-                        <tr><td>Was it performed by expected identity?</td><td>May be legitimate → Verify with owner</td><td>Unexpected user → Escalate</td></tr>
-                        <tr><td>Does it expose data/resources?</td><td><strong>High priority</strong> → Revert immediately</td><td>Assess other impact</td></tr>
+                        <tr><td><strong>High</strong></td><td>High confidence of compromise</td><td>Immediate investigation, consider blocking</td></tr>
+                        <tr><td><strong>Medium</strong></td><td>Suspicious but not confirmed</td><td>Investigate within 4 hours</td></tr>
+                        <tr><td><strong>Low</strong></td><td>Minor anomaly</td><td>Review during normal triage</td></tr>
+                        <tr><td><strong>None</strong></td><td>No risk detected</td><td>Usually policy-triggered alert</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Platform-Specific Checks</h2>
+                <h3>Common Azure AD Risk Detections</h3>
                 <table>
-                    <thead><tr><th>Platform</th><th>Key Areas</th></tr></thead>
+                    <thead><tr><th>Detection</th><th>What It Means</th><th>Likely FP Scenario</th><th>TP Indicators</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Azure</strong></td><td>Role assignments, Storage public access, NSG rules, Key Vault access</td></tr>
-                        <tr><td><strong>AWS</strong></td><td>IAM policies, S3 bucket policies, Security Groups, CloudTrail</td></tr>
-                        <tr><td><strong>GCP</strong></td><td>IAM bindings, GCS permissions, Firewall rules, Audit logs</td></tr>
-                        <tr><td><strong>M365</strong></td><td>SharePoint sharing, Teams external access, App permissions</td></tr>
+                        <tr><td><strong>Unfamiliar sign-in properties</strong></td><td>New device/location/IP</td><td>User traveling, new device</td><td>Followed by suspicious activity</td></tr>
+                        <tr><td><strong>Atypical travel</strong></td><td>Impossible geography</td><td>VPN exit node, mobile carrier</td><td>Different browsers, no MFA on second</td></tr>
+                        <tr><td><strong>Anonymous IP</strong></td><td>TOR/VPN/Proxy detected</td><td>Privacy-focused user</td><td>No prior history of anonymous</td></tr>
+                        <tr><td><strong>Password spray</strong></td><td>Many accounts, same password</td><td>Rarely FP</td><td>Multiple accounts targeted</td></tr>
+                        <tr><td><strong>Leaked credentials</strong></td><td>Creds found in breach</td><td>Old breach, pwd changed</td><td>Password unchanged since breach</td></tr>
+                        <tr><td><strong>Malware linked IP</strong></td><td>Known bad IP</td><td>Shared IP, cloud provider</td><td>Other suspicious behavior</td></tr>
                     </tbody>
                 </table>
 
-                <h2>High-Risk Cloud Events</h2>
-                <ul>
-                    <li>Root/Owner account used unexpectedly</li>
-                    <li>Resource exposed to public internet (0.0.0.0/0)</li>
-                    <li>Privilege escalation to admin role</li>
-                    <li>Unusual resource creation (especially compute)</li>
-                    <li>Security group/firewall opened wide</li>
-                    <li>API keys or secrets accessed unusually</li>
-                    <li>Cross-account/tenant access changes</li>
-                </ul>
+                <h2>AWS Alert Triage</h2>
+                <h3>CloudTrail Investigation</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// User activity timeline</span>
+AWSCloudTrail
+| where TimeGenerated > ago(24h)
+| where UserIdentityArn contains "alerteduser"
+| project TimeGenerated, EventName, EventSource, SourceIpAddress,
+    UserAgent, RequestParameters, ResponseElements, ErrorCode
+| order by TimeGenerated desc
 
-                <h2>Escalation Criteria</h2>
+<span style="color: #6aa3f7;">// Credential-related events</span>
+AWSCloudTrail
+| where TimeGenerated > ago(24h)
+| where EventName in ("CreateAccessKey", "CreateLoginProfile", 
+    "UpdateLoginProfile", "AttachUserPolicy", "PutUserPolicy",
+    "CreateUser", "AddUserToGroup")
+| project TimeGenerated, UserIdentityArn, EventName, 
+    RequestParameters, SourceIpAddress
+
+<span style="color: #6aa3f7;">// Resource exposure events</span>
+AWSCloudTrail
+| where TimeGenerated > ago(24h)
+| where EventName in ("PutBucketPolicy", "PutBucketAcl",
+    "AuthorizeSecurityGroupIngress", "CreateSecurityGroup",
+    "ModifySnapshotAttribute", "ModifyImageAttribute")
+| project TimeGenerated, UserIdentityArn, EventName, RequestParameters</pre>
+                </div>
+
+                <h3>Critical AWS Events to Investigate</h3>
+                <table>
+                    <thead><tr><th>Event</th><th>Risk</th><th>Check For</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>ConsoleLogin</code></td><td>Unauthorized access</td><td>IP location, MFA used, user context</td></tr>
+                        <tr><td><code>CreateAccessKey</code></td><td>Persistence</td><td>Who created, for which user</td></tr>
+                        <tr><td><code>StopLogging</code></td><td>Defense evasion</td><td>Almost always malicious</td></tr>
+                        <tr><td><code>DeleteTrail</code></td><td>Defense evasion</td><td>Almost always malicious</td></tr>
+                        <tr><td><code>RunInstances</code></td><td>Resource abuse</td><td>Instance type, region, who launched</td></tr>
+                        <tr><td><code>PutBucketPolicy</code></td><td>Data exposure</td><td>Policy allows public access?</td></tr>
+                        <tr><td><code>AssumeRole</code></td><td>Privilege escalation</td><td>Cross-account, sensitive role</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>M365/Office 365 Alert Triage</h2>
+                <h3>Key Investigation Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// File access and sharing activity</span>
+OfficeActivity
+| where TimeGenerated > ago(24h)
+| where UserId == "alerteduser@company.com"
+| where Operation in ("FileDownloaded", "FileAccessed", 
+    "AnonymousLinkCreated", "SharingInvitationCreated", "FileSyncDownloadedFull")
+| summarize Count=count() by Operation, bin(TimeGenerated, 1h)
+
+<span style="color: #6aa3f7;">// Email forwarding rules</span>
+OfficeActivity
+| where TimeGenerated > ago(24h)
+| where Operation in ("New-InboxRule", "Set-InboxRule", "Set-Mailbox")
+| where Parameters has_any ("ForwardTo", "ForwardAsAttachmentTo", "RedirectTo")
+| project TimeGenerated, UserId, Operation, Parameters
+
+<span style="color: #6aa3f7;">// Admin activity</span>
+OfficeActivity
+| where TimeGenerated > ago(24h)
+| where RecordType in (1, 8, 14, 15) // Exchange Admin, Azure AD, SharePoint Admin, DLP
+| project TimeGenerated, UserId, Operation, OfficeObjectId, ClientIP</pre>
+                </div>
+
+                <h3>High-Risk M365 Operations</h3>
+                <table>
+                    <thead><tr><th>Operation</th><th>Risk</th><th>Triage Action</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>New-InboxRule</code> with forward</td><td>Data exfil, persistence</td><td>Check rule destination, delete if malicious</td></tr>
+                        <tr><td><code>Add-MailboxPermission</code></td><td>Unauthorized access</td><td>Verify business justification</td></tr>
+                        <tr><td><code>Set-MailboxJunkEmailConfiguration</code></td><td>Defense evasion</td><td>Check what's being allowed</td></tr>
+                        <tr><td><code>AnonymousLinkCreated</code></td><td>Data exposure</td><td>Check file sensitivity</td></tr>
+                        <tr><td><code>Add-UnifiedGroupLinks</code> (external)</td><td>Data exposure</td><td>Verify external user is authorized</td></tr>
+                        <tr><td><code>Consent to application</code></td><td>OAuth attack</td><td>Review app permissions</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Triage Decision Matrix</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Verdict</th><th>Next Step</th></tr></thead>
+                    <tbody>
+                        <tr><td>Risk detection + no suspicious post-login + user confirms</td><td>Likely FP</td><td>Document, close, monitor</td></tr>
+                        <tr><td>Risk detection + mail rules created</td><td>Likely TP</td><td>Escalate, contain account</td></tr>
+                        <tr><td>Risk detection + mass file access</td><td>Likely TP</td><td>Escalate, scope data access</td></tr>
+                        <tr><td>Risk detection + admin actions</td><td>Critical</td><td>Immediate escalation</td></tr>
+                        <tr><td>Public resource exposure + sensitive data</td><td>High</td><td>Remediate, assess exposure</td></tr>
+                        <tr><td>Resource creation + known owner + business context</td><td>Likely FP</td><td>Verify with owner, close</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Cloud-Specific False Positive Sources</h2>
                 <ul>
-                    <li>Data or resource exposed to public internet</li>
-                    <li>Unauthorized privilege escalation</li>
-                    <li>Root/global admin account compromise suspected</li>
-                    <li>Unusual resource creation (cryptomining)</li>
-                    <li>Large-scale changes across multiple resources</li>
+                    <li><strong>VPN/Proxy services:</strong> Corporate VPN exit nodes appear as impossible travel</li>
+                    <li><strong>Mobile carriers:</strong> IP geolocation is unreliable for mobile</li>
+                    <li><strong>Cloud shell/console:</strong> Azure/AWS console IPs may be flagged</li>
+                    <li><strong>Automation accounts:</strong> Service principals running on schedules</li>
+                    <li><strong>Third-party integrations:</strong> Approved apps may look suspicious</li>
+                    <li><strong>Migration activities:</strong> Large file operations during planned migrations</li>
                 </ul>
 
             </div>

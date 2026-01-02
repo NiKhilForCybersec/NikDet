@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Containment | SOC Compendium</title>
+    <title>Network Containment Actions | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -13,103 +13,220 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Network Actions</span></div>
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Network Containment</span></div>
             <div class="content">
                 <div class="playbook-header">
-                    <div class="playbook-id">PB-CON-003</div>
+                    <div class="playbook-id">PB-CONTAIN-003</div>
                     <h1>Network Containment Actions</h1>
-                    <p class="lead">Procedures for blocking malicious network traffic at various control points.</p>
+                    <p class="lead">Procedures for blocking malicious network traffic, C2 domains, and isolating network segments.</p>
                 </div>
 
-                <h2>Blocking Options by Control Point</h2>
+                <h2>Network Containment Types</h2>
                 <table>
-                    <thead><tr><th>Control Point</th><th>What to Block</th><th>Speed</th><th>Scope</th></tr></thead>
+                    <thead><tr><th>Action</th><th>Scope</th><th>Use Case</th><th>Platform</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Perimeter Firewall</strong></td><td>IPs, ports, protocols</td><td>Immediate</td><td>All traffic in/out</td></tr>
-                        <tr><td><strong>Internal Firewall</strong></td><td>IPs, segments</td><td>Immediate</td><td>East-west traffic</td></tr>
-                        <tr><td><strong>Web Proxy</strong></td><td>URLs, domains, categories</td><td>Minutes</td><td>HTTP/HTTPS only</td></tr>
-                        <tr><td><strong>DNS</strong></td><td>Domains (sinkhole)</td><td>Minutes</td><td>All DNS queries</td></tr>
-                        <tr><td><strong>Email Gateway</strong></td><td>Senders, attachments</td><td>Minutes</td><td>Email only</td></tr>
-                        <tr><td><strong>Switch/VLAN</strong></td><td>Ports, MAC addresses</td><td>Immediate</td><td>Physical network</td></tr>
+                        <tr><td><strong>IP Block</strong></td><td>Specific IP/CIDR</td><td>C2 server, attacker IP</td><td>Firewall, IPS</td></tr>
+                        <tr><td><strong>Domain Block</strong></td><td>DNS/URL</td><td>Malicious domain, phishing</td><td>DNS, Proxy, Firewall</td></tr>
+                        <tr><td><strong>Port Block</strong></td><td>Protocol/Port</td><td>Exploit mitigation, lateral movement</td><td>Firewall</td></tr>
+                        <tr><td><strong>Segment Isolation</strong></td><td>VLAN/Subnet</td><td>Contain outbreak</td><td>Switch, Router, Firewall</td></tr>
+                        <tr><td><strong>URL Block</strong></td><td>Specific URL</td><td>Malware download, phishing page</td><td>Proxy, Web Filter</td></tr>
+                        <tr><td><strong>Hash Block</strong></td><td>File hash</td><td>Known malware</td><td>Proxy, Email Gateway</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Firewall Block Procedures</h2>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Document IOC</div>
-                            <p>Record IP/domain, reason for block, incident reference, expiration (if any).</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Verify IOC</div>
-                            <p>Confirm IOC is not legitimate infrastructure (CDN, cloud services).</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Add to Block List</div>
-                            <p>Create firewall rule blocking inbound AND outbound to the IOC.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Verify Block</div>
-                            <p>Confirm rule is active and traffic is being dropped.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Monitor</div>
-                            <p>Watch for continued connection attempts to identify affected systems.</p>
-                        </div>
-                    </div>
+                <h2>C2 IP/Domain Blocking</h2>
+                <h3>Palo Alto Firewall</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Block IP via CLI</span>
+configure
+set address-group SOC-Blocked-IPs static 185.123.45.67
+set security rulebase security rules Block-C2 source any destination SOC-Blocked-IPs action deny log-end yes
+commit
+
+<span style="color: #6aa3f7;">// Block Domain (Anti-Spyware Profile)</span>
+set profiles spyware SOC-Block-Domains botnet-domains sinkhole ipv4-address 127.0.0.1
+set profiles spyware SOC-Block-Domains botnet-domains dns-security-categories enabled
+
+<span style="color: #6aa3f7;">// Add to External Dynamic List (EDL)</span>
+set external-list SOC-IOCs type ip
+set external-list SOC-IOCs source url https://yourserver.com/iocs.txt
+set external-list SOC-IOCs refresh-rate hour 1</pre>
                 </div>
 
-                <h2>DNS Sinkhole Procedure</h2>
-                <ul>
-                    <li>Add malicious domain to DNS block list</li>
-                    <li>Configure to return sinkhole IP (internal server that logs attempts)</li>
-                    <li>Monitor sinkhole logs for internal hosts still trying to resolve</li>
-                    <li>Investigate any hosts making resolution attempts</li>
-                </ul>
+                <h3>Cisco ASA/FTD</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Block IP via ACL</span>
+access-list SOC-BLOCK extended deny ip any host 185.123.45.67 log
+access-list SOC-BLOCK extended deny ip host 185.123.45.67 any log
+access-group SOC-BLOCK in interface outside
 
-                <h2>Proxy Block Procedure</h2>
-                <ul>
-                    <li>Add URL/domain to custom block category</li>
-                    <li>Optionally block by URL pattern for dynamic URLs</li>
-                    <li>Enable SSL inspection for HTTPS threats (if not already)</li>
-                    <li>Configure block page to inform users and log attempts</li>
-                </ul>
+<span style="color: #6aa3f7;">// Add to object group for easier management</span>
+object-group network SOC-Blocked-IPs
+ network-object host 185.123.45.67
+ network-object host 192.0.2.100
+
+access-list SOC-BLOCK extended deny ip any object-group SOC-Blocked-IPs</pre>
+                </div>
+
+                <h3>Fortinet FortiGate</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Block IP via address object</span>
+config firewall address
+    edit "SOC-Block-185.123.45.67"
+        set type ipmask
+        set subnet 185.123.45.67 255.255.255.255
+    next
+end
+
+config firewall policy
+    edit 1
+        set name "SOC-Block-C2"
+        set srcintf "any"
+        set dstintf "any"
+        set srcaddr "all"
+        set dstaddr "SOC-Block-185.123.45.67"
+        set action deny
+        set logtraffic all
+    next
+end</pre>
+                </div>
+
+                <h2>DNS Sinkholing</h2>
+                <h3>Microsoft DNS</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Create sinkhole zone (PowerShell)</span>
+Add-DnsServerPrimaryZone -Name "malicious-domain.com" -ZoneFile "malicious-domain.com.dns"
+Add-DnsServerResourceRecordA -Name "@" -ZoneName "malicious-domain.com" -IPv4Address "127.0.0.1"
+Add-DnsServerResourceRecordA -Name "*" -ZoneName "malicious-domain.com" -IPv4Address "127.0.0.1"
+
+<span style="color: #6aa3f7;">// Using Response Policy Zone (RPZ) if supported</span>
+Add-DnsServerResponseRateLimitingExceptionlist -Name "SOC-Sinkhole" -Fqdn "malicious-domain.com"</pre>
+                </div>
+
+                <h3>Infoblox</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Add to RPZ via API</span>
+POST /wapi/v2.10/record:rpz:cname
+{
+    "name": "malicious-domain.com.rpz.local",
+    "canonical": "sinkhole.company.com",
+    "rp_zone": "rpz.local"
+}
+
+<span style="color: #6aa3f7;">// Block via Threat Intelligence Feed</span>
+Grid > DNS > Response Policy Zones > Add Custom Feed</pre>
+                </div>
+
+                <h2>Web Proxy Blocking</h2>
+                <h3>Zscaler</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Block URL via Admin Portal</span>
+Administration > URL Categories > Add URL > Custom Category: SOC-Blocked
+
+<span style="color: #6aa3f7;">// Block via API</span>
+POST /api/v1/webApplicationRules
+{
+    "name": "SOC-Block-Malicious",
+    "state": "ENABLED",
+    "rank": 1,
+    "urlCategories": ["SOC-Blocked"],
+    "action": "BLOCK"
+}</pre>
+                </div>
+
+                <h3>Cisco Umbrella</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Block domain via Dashboard</span>
+Policies > Destination Lists > Add > Block List
+
+<span style="color: #6aa3f7;">// Block via API</span>
+POST /1.0/destinationlists/{destinationListId}/destinations
+{
+    "destination": "malicious-domain.com",
+    "comment": "SOC-2025-001 C2 domain"
+}</pre>
+                </div>
+
+                <h2>Lateral Movement Prevention</h2>
+                <table>
+                    <thead><tr><th>Protocol</th><th>Ports</th><th>Attack Use</th><th>Block Strategy</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>SMB</strong></td><td>445, 139</td><td>Ransomware spread, PsExec</td><td>Block between workstation segments</td></tr>
+                        <tr><td><strong>RDP</strong></td><td>3389</td><td>Lateral movement</td><td>Allow only from jump servers</td></tr>
+                        <tr><td><strong>WinRM</strong></td><td>5985, 5986</td><td>Remote execution</td><td>Restrict to admin systems</td></tr>
+                        <tr><td><strong>WMI</strong></td><td>135 + dynamic</td><td>Remote execution</td><td>Block between workstations</td></tr>
+                        <tr><td><strong>SSH</strong></td><td>22</td><td>Linux lateral movement</td><td>Allow only from bastion hosts</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Emergency Lateral Movement Block</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Block SMB between workstation VLANs (Palo Alto example)</span>
+set rulebase security rules Emergency-Block-SMB source Workstation-Zone destination Workstation-Zone 
+    application ms-ds-smb action deny log-end yes
+
+<span style="color: #6aa3f7;">// Windows Firewall GPO - Block inbound SMB</span>
+New-NetFirewallRule -DisplayName "Emergency-Block-SMB" -Direction Inbound -Protocol TCP -LocalPort 445 -Action Block
+
+<span style="color: #6aa3f7;">// Block RDP except from jump server</span>
+set rulebase security rules Allow-RDP-Jump source Jump-Server-Zone destination any application ms-rdp action allow
+set rulebase security rules Block-RDP-Other source any destination any application ms-rdp action deny</pre>
+                </div>
+
+                <h2>Segment Isolation</h2>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Isolation Method</th><th>Steps</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Single infected host</strong></td><td>VLAN quarantine</td><td>Move to isolated VLAN via switch or NAC</td></tr>
+                        <tr><td><strong>Multiple hosts in subnet</strong></td><td>Inter-VLAN block</td><td>Block routing between affected VLAN and others</td></tr>
+                        <tr><td><strong>Entire department</strong></td><td>Firewall segment block</td><td>Deny all traffic at firewall except critical</td></tr>
+                        <tr><td><strong>Critical server</strong></td><td>Micro-segmentation</td><td>Apply zero-trust policy, allow only specific flows</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Verification Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Verify IP block is working (Sentinel)</span>
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| where DestinationIP == "185.123.45.67" or SourceIP == "185.123.45.67"
+| summarize Count=count() by DeviceAction, DeviceVendor
+| where DeviceAction !in ("Deny", "Block", "Drop")
+
+<span style="color: #6aa3f7;">// Check for DNS queries to blocked domain</span>
+DnsEvents
+| where TimeGenerated > ago(1h)
+| where Name contains "malicious-domain.com"
+| summarize Count=count() by ClientIP, Name
+
+<span style="color: #6aa3f7;">// Verify traffic stopped from isolated host</span>
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| where SourceIP == "10.1.2.50"
+| where DeviceAction in ("Allow", "Permit")
+| summarize Count=count() by DestinationIP, DestinationPort</pre>
+                </div>
+
+                <h2>Rollback Procedures</h2>
+                <table>
+                    <thead><tr><th>Block Type</th><th>Rollback Command</th><th>Verification</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Firewall IP block</strong></td><td>Remove from address group, commit</td><td>Test connectivity, check logs</td></tr>
+                        <tr><td><strong>DNS sinkhole</strong></td><td>Delete zone or RPZ entry</td><td>nslookup shows real IP</td></tr>
+                        <tr><td><strong>Proxy block</strong></td><td>Remove from block list</td><td>Test URL access</td></tr>
+                        <tr><td><strong>Segment isolation</strong></td><td>Restore routing/ACLs</td><td>Ping test, traffic flow</td></tr>
+                    </tbody>
+                </table>
 
                 <h2>Documentation Requirements</h2>
-                <table>
-                    <thead><tr><th>Field</th><th>Example</th></tr></thead>
-                    <tbody>
-                        <tr><td>IOC Type</td><td>IP Address / Domain / URL / Hash</td></tr>
-                        <tr><td>IOC Value</td><td>192.168.1.100 / evil.com</td></tr>
-                        <tr><td>Block Location</td><td>Perimeter FW / DNS / Proxy</td></tr>
-                        <tr><td>Incident Reference</td><td>INC-2025-001</td></tr>
-                        <tr><td>Date/Time Added</td><td>2025-01-02 14:30 UTC</td></tr>
-                        <tr><td>Added By</td><td>analyst@company.com</td></tr>
-                        <tr><td>Expiration</td><td>Permanent / 30 days / Review date</td></tr>
-                        <tr><td>Reason</td><td>C2 server for Cobalt Strike</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Block List Hygiene</h2>
                 <ul>
-                    <li>Review and expire old blocks quarterly</li>
-                    <li>Remove blocks for incidents that are fully remediated</li>
-                    <li>Document reason for permanent blocks</li>
-                    <li>Monitor for legitimate traffic hitting blocks (false positives)</li>
+                    <li>☐ IOC blocked (IP, domain, URL, hash)</li>
+                    <li>☐ Platform where block was applied</li>
+                    <li>☐ Time of block implementation</li>
+                    <li>☐ Related incident ticket</li>
+                    <li>☐ Expiration/review date for block</li>
+                    <li>☐ Verification that block is effective</li>
+                    <li>☐ Business systems potentially affected</li>
                 </ul>
 
             </div>

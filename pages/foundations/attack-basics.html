@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Attacks Work | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Foundations</a><span class="separator">/</span><span>How Attacks Work</span></div>
+            <div class="content">
+                <h1>How Cyberattacks Work</h1>
+                <p class="lead">Understanding how attackers operate is essential for detecting and stopping them. This guide covers the attack lifecycle, common attack types, and attacker motivations.</p>
+
+                <h2>The Cyber Kill Chain</h2>
+                <p>Attacks don't happen instantly. They follow a sequence of steps. Understanding this helps you detect attacks early and disrupt them.</p>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Reconnaissance</div>
+                            <p>Attacker gathers information about the target. Researches employees on LinkedIn, scans for open ports, discovers technologies used.</p>
+                            <p><strong>Detection:</strong> Port scans, web scraping, unusual DNS queries</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Weaponization</div>
+                            <p>Attacker creates the attack payload. Builds malware, crafts phishing email, develops exploit.</p>
+                            <p><strong>Detection:</strong> Mostly happens outside your visibility</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Delivery</div>
+                            <p>Attacker sends the payload to the victim. Email attachment, malicious link, USB drive, compromised website.</p>
+                            <p><strong>Detection:</strong> Email gateway alerts, web proxy blocks, suspicious file downloads</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Exploitation</div>
+                            <p>Payload executes and exploits a vulnerability. User opens malicious document, exploit triggers, code runs.</p>
+                            <p><strong>Detection:</strong> EDR alerts, process creation, suspicious parent-child relationships</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Installation</div>
+                            <p>Attacker establishes persistence. Creates scheduled task, adds registry key, installs service.</p>
+                            <p><strong>Detection:</strong> Registry changes, new services, scheduled tasks, startup items</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Command & Control (C2)</div>
+                            <p>Malware phones home to attacker for instructions. HTTP/HTTPS beaconing, DNS tunneling, encrypted channels.</p>
+                            <p><strong>Detection:</strong> Unusual outbound connections, beaconing patterns, DNS anomalies</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">7</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Actions on Objectives</div>
+                            <p>Attacker achieves their goal. Steals data, deploys ransomware, moves laterally, maintains access.</p>
+                            <p><strong>Detection:</strong> Data exfiltration, encryption activity, lateral movement, privilege escalation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>Common Attack Types</h2>
+
+                <h3>Phishing</h3>
+                <p>Tricking users into revealing credentials or executing malware via deceptive emails or messages.</p>
+                <table>
+                    <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Mass Phishing</strong></td><td>Generic emails to many targets</td><td>"Your bank account has been locked" sent to millions</td></tr>
+                        <tr><td><strong>Spear Phishing</strong></td><td>Targeted at specific individuals</td><td>Email to CFO mentioning real colleagues by name</td></tr>
+                        <tr><td><strong>Whaling</strong></td><td>Targeting executives</td><td>Fake board meeting invite to CEO</td></tr>
+                        <tr><td><strong>BEC (Business Email Compromise)</strong></td><td>Impersonating executives for fraud</td><td>"CEO" asking finance to wire money</td></tr>
+                        <tr><td><strong>Vishing</strong></td><td>Voice phishing via phone</td><td>Fake IT support call asking for password</td></tr>
+                        <tr><td><strong>Smishing</strong></td><td>SMS phishing</td><td>Fake delivery notification text with malicious link</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Malware Types</h3>
+                <table>
+                    <thead><tr><th>Type</th><th>What It Does</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Ransomware</strong></td><td>Encrypts files, demands payment</td><td>LockBit, BlackCat, REvil</td></tr>
+                        <tr><td><strong>Trojan</strong></td><td>Disguised as legitimate software</td><td>Fake software update containing malware</td></tr>
+                        <tr><td><strong>RAT (Remote Access Trojan)</strong></td><td>Gives attacker remote control</td><td>Cobalt Strike, njRAT</td></tr>
+                        <tr><td><strong>Worm</strong></td><td>Self-propagating malware</td><td>WannaCry spreading via SMB</td></tr>
+                        <tr><td><strong>Rootkit</strong></td><td>Hides itself deep in the OS</td><td>Kernel-level rootkits</td></tr>
+                        <tr><td><strong>Keylogger</strong></td><td>Records keystrokes</td><td>Captures passwords as typed</td></tr>
+                        <tr><td><strong>Cryptominer</strong></td><td>Uses your resources to mine crypto</td><td>Hidden mining consuming CPU</td></tr>
+                        <tr><td><strong>Infostealer</strong></td><td>Steals credentials, cookies, data</td><td>RedLine, Raccoon, Vidar</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Network Attacks</h3>
+                <table>
+                    <thead><tr><th>Attack</th><th>What It Does</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Port Scanning</strong></td><td>Discovers open ports/services</td><td>Many connection attempts from single source</td></tr>
+                        <tr><td><strong>DDoS</strong></td><td>Overwhelms with traffic</td><td>Massive traffic spike, service unavailability</td></tr>
+                        <tr><td><strong>Man-in-the-Middle</strong></td><td>Intercepts communication</td><td>Certificate warnings, ARP anomalies</td></tr>
+                        <tr><td><strong>DNS Poisoning</strong></td><td>Redirects DNS queries</td><td>Unexpected DNS responses</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Web Application Attacks</h3>
+                <table>
+                    <thead><tr><th>Attack</th><th>What It Does</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>SQL Injection</strong></td><td>Injects SQL commands via input</td><td>Entering <code>' OR 1=1 --</code> in login form</td></tr>
+                        <tr><td><strong>XSS (Cross-Site Scripting)</strong></td><td>Injects JavaScript into pages</td><td>Script stealing cookies from other users</td></tr>
+                        <tr><td><strong>CSRF</strong></td><td>Tricks user into unwanted actions</td><td>Clicking link that transfers money</td></tr>
+                        <tr><td><strong>Directory Traversal</strong></td><td>Accesses files outside web root</td><td>Using <code>../../</code> to read /etc/passwd</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Identity Attacks</h3>
+                <table>
+                    <thead><tr><th>Attack</th><th>What It Does</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Brute Force</strong></td><td>Tries many passwords</td><td>Many failed logins, then success</td></tr>
+                        <tr><td><strong>Password Spray</strong></td><td>Tries common passwords across many accounts</td><td>Same password tried against many users</td></tr>
+                        <tr><td><strong>Credential Stuffing</strong></td><td>Uses stolen credentials from breaches</td><td>Login attempts with known breach credentials</td></tr>
+                        <tr><td><strong>Pass-the-Hash</strong></td><td>Uses password hash without knowing password</td><td>Type 3 logons, unusual auth patterns</td></tr>
+                        <tr><td><strong>Kerberoasting</strong></td><td>Extracts service account hashes</td><td>Unusual TGS requests for SPNs</td></tr>
+                        <tr><td><strong>Golden Ticket</strong></td><td>Forges Kerberos tickets with KRBTGT hash</td><td>Tickets with abnormal lifetimes, domain admin access</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Attacker Motivations</h2>
+                <table>
+                    <thead><tr><th>Attacker Type</th><th>Motivation</th><th>Tactics</th><th>Typical Targets</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Cybercriminals</strong></td><td>Money</td><td>Ransomware, BEC, card fraud</td><td>Anyone with money or data</td></tr>
+                        <tr><td><strong>Nation-States</strong></td><td>Espionage, disruption</td><td>Long-term persistent access, zero-days</td><td>Government, defense, critical infrastructure</td></tr>
+                        <tr><td><strong>Hacktivists</strong></td><td>Political/social causes</td><td>Website defacement, DDoS, data leaks</td><td>Organizations opposing their cause</td></tr>
+                        <tr><td><strong>Insiders</strong></td><td>Revenge, money, ideology</td><td>Data theft, sabotage</td><td>Their own organization</td></tr>
+                        <tr><td><strong>Script Kiddies</strong></td><td>Notoriety, fun</td><td>Pre-made tools, simple attacks</td><td>Easy targets</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>MITRE ATT&CK Framework</h2>
+                <p>The industry-standard knowledge base of adversary tactics and techniques. Every SOC analyst should understand it.</p>
+                <table>
+                    <thead><tr><th>Tactic</th><th>Goal</th><th>Example Techniques</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Reconnaissance</strong></td><td>Gather information</td><td>Active scanning, search open databases</td></tr>
+                        <tr><td><strong>Resource Development</strong></td><td>Prepare attack infrastructure</td><td>Acquire domains, develop malware</td></tr>
+                        <tr><td><strong>Initial Access</strong></td><td>Get into the network</td><td>Phishing, exploit public app, valid accounts</td></tr>
+                        <tr><td><strong>Execution</strong></td><td>Run malicious code</td><td>PowerShell, command line, scripting</td></tr>
+                        <tr><td><strong>Persistence</strong></td><td>Maintain access</td><td>Scheduled tasks, registry keys, accounts</td></tr>
+                        <tr><td><strong>Privilege Escalation</strong></td><td>Get higher permissions</td><td>Exploit vulnerability, token manipulation</td></tr>
+                        <tr><td><strong>Defense Evasion</strong></td><td>Avoid detection</td><td>Disable AV, obfuscation, masquerading</td></tr>
+                        <tr><td><strong>Credential Access</strong></td><td>Steal credentials</td><td>Mimikatz, keylogging, brute force</td></tr>
+                        <tr><td><strong>Discovery</strong></td><td>Learn about environment</td><td>Network scanning, account discovery</td></tr>
+                        <tr><td><strong>Lateral Movement</strong></td><td>Move to other systems</td><td>RDP, SMB, WMI, PsExec</td></tr>
+                        <tr><td><strong>Collection</strong></td><td>Gather data to steal</td><td>Archive data, screen capture, keylogging</td></tr>
+                        <tr><td><strong>Command & Control</strong></td><td>Communicate with malware</td><td>HTTP/S, DNS, encrypted channels</td></tr>
+                        <tr><td><strong>Exfiltration</strong></td><td>Steal data out</td><td>Cloud storage, web services, USB</td></tr>
+                        <tr><td><strong>Impact</strong></td><td>Disrupt, destroy, ransom</td><td>Ransomware, wiper, defacement</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <a href="operating-systems.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Operating Systems</a>
+                    <a href="tools-overview.html" class="btn btn-primary">Next: SOC Tools <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

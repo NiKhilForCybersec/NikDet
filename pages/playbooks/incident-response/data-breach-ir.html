@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Breach IR | SOC Compendium</title>
+    <title>Data Breach Incident Response | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -18,79 +18,234 @@
                 <div class="playbook-header">
                     <div class="playbook-id">PB-IR-006</div>
                     <h1>Data Breach Incident Response</h1>
-                    <p class="lead">Response procedures for confirmed or suspected data breaches involving regulated or sensitive data.</p>
-                    <div class="playbook-meta">
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">CRITICAL</span></div>
-                    </div>
+                    <p class="lead">Advanced response procedures for confirmed or suspected data exfiltration incidents requiring regulatory notification assessment.</p>
                 </div>
 
-                <h2>Immediate Actions</h2>
+                <h2>Breach Classification Matrix</h2>
                 <table>
-                    <thead><tr><th>Priority</th><th>Action</th><th>Who</th></tr></thead>
+                    <thead><tr><th>Data Type</th><th>Regulatory Framework</th><th>Notification Timeline</th><th>Severity</th></tr></thead>
                     <tbody>
-                        <tr><td>1</td><td><strong>Stop the breach</strong> - Contain ongoing data loss</td><td>IR Team</td></tr>
-                        <tr><td>2</td><td><strong>Preserve evidence</strong> - Logs, forensic images</td><td>IR Team</td></tr>
-                        <tr><td>3</td><td><strong>Notify Legal</strong> - Regulatory obligations</td><td>IR Lead</td></tr>
-                        <tr><td>4</td><td><strong>Notify executives</strong> - CISO, CEO, General Counsel</td><td>IR Lead</td></tr>
-                        <tr><td>5</td><td><strong>Engage external counsel</strong> - Attorney-client privilege</td><td>Legal</td></tr>
-                        <tr><td>6</td><td><strong>Contact cyber insurance</strong> - Early notification required</td><td>Legal/Finance</td></tr>
+                        <tr><td>PII (SSN, DOB, Address)</td><td>State breach laws, CCPA</td><td>30-90 days (varies by state)</td><td>Critical</td></tr>
+                        <tr><td>PHI (Health Information)</td><td>HIPAA</td><td>60 days to HHS, individuals</td><td>Critical</td></tr>
+                        <tr><td>Payment Card Data</td><td>PCI-DSS</td><td>Immediate to acquirer/brands</td><td>Critical</td></tr>
+                        <tr><td>Financial Records</td><td>GLBA, SOX</td><td>As soon as possible</td><td>High</td></tr>
+                        <tr><td>EU Resident Data</td><td>GDPR</td><td>72 hours to DPA</td><td>Critical</td></tr>
+                        <tr><td>Children's Data</td><td>COPPA</td><td>Varies</td><td>Critical</td></tr>
+                        <tr><td>Biometric Data</td><td>BIPA, state laws</td><td>Varies by state</td><td>High</td></tr>
+                        <tr><td>Employee Records</td><td>Various labor laws</td><td>Varies</td><td>Medium-High</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Scope Assessment Questions</h2>
+                <h2>Phase 1: Initial Assessment (0-4 Hours)</h2>
+                <h3>Immediate Containment Decisions</h3>
                 <table>
-                    <thead><tr><th>Question</th><th>Why It Matters</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>Authorization Required</th></tr></thead>
                     <tbody>
-                        <tr><td>What data was exposed?</td><td>Determines notification requirements and severity</td></tr>
-                        <tr><td>How many records/individuals?</td><td>Affects regulatory thresholds and response scale</td></tr>
-                        <tr><td>Who is affected?</td><td>Customers, employees, partners have different implications</td></tr>
-                        <tr><td>What jurisdictions?</td><td>Different laws apply (GDPR, CCPA, state laws)</td></tr>
-                        <tr><td>How long was access?</td><td>Affects scope and impact assessment</td></tr>
-                        <tr><td>Was data encrypted?</td><td>May affect notification requirements</td></tr>
+                        <tr><td>Active exfiltration in progress</td><td>Immediate network isolation, block destination IPs/domains</td><td>SOC authority</td></tr>
+                        <tr><td>Compromised account with data access</td><td>Disable account, revoke all sessions, reset credentials</td><td>SOC authority</td></tr>
+                        <tr><td>Compromised system with sensitive data</td><td>Network isolation via EDR, preserve for forensics</td><td>SOC authority</td></tr>
+                        <tr><td>Third-party/vendor compromise</td><td>Revoke API keys, disable integrations, contact vendor</td><td>Management approval</td></tr>
+                        <tr><td>Cloud storage exposure</td><td>Revoke public access, rotate keys, audit access logs</td><td>SOC authority</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Notification Requirements</h2>
+                <h3>Data Impact Assessment Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.65rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL: Identify all files accessed by compromised account</span>
+let compromised_user = "user@company.com";
+let incident_start = datetime(2025-01-01);
+OfficeActivity
+| where TimeGenerated > incident_start
+| where UserId =~ compromised_user
+| where Operation in ("FileAccessed", "FileDownloaded", "FileSyncDownloadedFull", "FileModified")
+| extend FileName = tostring(parse_json(tostring(SourceFileExtension)))
+| project TimeGenerated, Operation, SourceFileName, SourceRelativeUrl, ClientIP, UserAgent
+| summarize AccessCount=count(), Operations=make_set(Operation), FirstAccess=min(TimeGenerated), LastAccess=max(TimeGenerated) by SourceFileName, SourceRelativeUrl
+| order by AccessCount desc
+
+<span style="color: #6aa3f7;">// KQL: Quantify data volume exfiltrated</span>
+let compromised_user = "user@company.com";
+let compromised_ip = "1.2.3.4";
+let incident_start = datetime(2025-01-01);
+union 
+(OfficeActivity | where UserId =~ compromised_user | where TimeGenerated > incident_start | where Operation == "FileDownloaded" | extend bytes = toint(SourceFileSize)),
+(DeviceFileEvents | where InitiatingProcessAccountName =~ compromised_user | where TimeGenerated > incident_start | where ActionType == "FileCreated" | extend bytes = FileSize)
+| summarize TotalBytes=sum(bytes), FileCount=count() by bin(TimeGenerated, 1h)
+| extend TotalMB = TotalBytes / 1048576
+| order by TimeGenerated asc
+
+<span style="color: #6aa3f7;">// KQL: Identify sensitive file access patterns</span>
+let sensitive_paths = dynamic(["HR", "Finance", "Legal", "Confidential", "PII", "PHI", "Secret"]);
+OfficeActivity
+| where TimeGenerated > ago(30d)
+| where Operation in ("FileAccessed", "FileDownloaded")
+| where SourceRelativeUrl has_any (sensitive_paths) or SourceFileName has_any (sensitive_paths)
+| summarize AccessCount=count(), UniqueFiles=dcount(SourceFileName) by UserId, bin(TimeGenerated, 1d)
+| where AccessCount > 100 or UniqueFiles > 50
+
+<span style="color: #6aa3f7;">// SPL: Track all data movement from compromised system</span>
+index=proxy OR index=firewall src_ip="10.1.2.3" earliest=-7d
+| stats sum(bytes_out) as total_bytes dc(dest_ip) as unique_destinations values(dest_ip) as destinations by src_ip, user
+| eval total_GB = round(total_bytes/1024/1024/1024, 2)
+| where total_GB > 1
+| sort -total_GB</pre>
+                </div>
+
+                <h2>Phase 2: Scope Determination (4-24 Hours)</h2>
+                <h3>Data Classification Inventory</h3>
                 <table>
-                    <thead><tr><th>Regulation</th><th>Timeframe</th><th>Who to Notify</th></tr></thead>
+                    <thead><tr><th>Question</th><th>How to Determine</th><th>Impact on Response</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>GDPR</strong></td><td>72 hours</td><td>Supervisory authority, individuals (high risk)</td></tr>
-                        <tr><td><strong>CCPA</strong></td><td>"Expedient" ~45 days</td><td>Affected California residents</td></tr>
-                        <tr><td><strong>HIPAA</strong></td><td>60 days (individuals)</td><td>HHS, individuals, media (>500 in state)</td></tr>
-                        <tr><td><strong>State laws</strong></td><td>Varies (30-90 days)</td><td>State AG, affected residents</td></tr>
-                        <tr><td><strong>SEC</strong></td><td>4 business days</td><td>8-K filing for material incidents</td></tr>
+                        <tr><td>What data types were accessed?</td><td>File metadata, DLP classifications, folder locations</td><td>Determines regulatory requirements</td></tr>
+                        <tr><td>How many records affected?</td><td>Database logs, file row counts, deduplication</td><td>Notification scope, regulatory thresholds</td></tr>
+                        <tr><td>Whose data was affected?</td><td>Data owner identification, customer vs employee</td><td>Notification audience</td></tr>
+                        <tr><td>Was data actually exfiltrated?</td><td>Network logs, endpoint telemetry, cloud audit</td><td>Distinguishes access vs breach</td></tr>
+                        <tr><td>Was data encrypted in transit/rest?</td><td>Encryption status, TLS logs</td><td>May reduce notification requirements</td></tr>
+                        <tr><td>Geographic scope of affected individuals?</td><td>Data residency, customer locations</td><td>Determines applicable laws</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Data Classification Impact</h2>
+                <h3>Evidence Collection Checklist</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                    <p><strong>Network Evidence:</strong></p>
+                    <ul style="margin: 0.5rem 0;">
+                        <li>☐ Firewall logs showing outbound data transfers</li>
+                        <li>☐ Proxy logs with full URLs and response sizes</li>
+                        <li>☐ DNS query logs for exfiltration domains</li>
+                        <li>☐ NetFlow/packet captures if available</li>
+                        <li>☐ VPN connection logs</li>
+                    </ul>
+                    <p><strong>Endpoint Evidence:</strong></p>
+                    <ul style="margin: 0.5rem 0;">
+                        <li>☐ File access/modification timestamps (MACB)</li>
+                        <li>☐ USB device connection history</li>
+                        <li>☐ Browser download history</li>
+                        <li>☐ Email client sent items and attachments</li>
+                        <li>☐ Cloud sync client logs (OneDrive, Dropbox)</li>
+                        <li>☐ Print spooler logs</li>
+                        <li>☐ Clipboard history (if captured)</li>
+                    </ul>
+                    <p><strong>Cloud Evidence:</strong></p>
+                    <ul style="margin: 0.5rem 0;">
+                        <li>☐ Cloud storage access logs</li>
+                        <li>☐ Sharing permission changes</li>
+                        <li>☐ External sharing links created</li>
+                        <li>☐ API access logs</li>
+                        <li>☐ OAuth application consents</li>
+                    </ul>
+                </div>
+
+                <h2>Phase 3: Notification Assessment (24-72 Hours)</h2>
+                <h3>Notification Decision Framework</h3>
                 <table>
-                    <thead><tr><th>Data Type</th><th>Regulatory Impact</th></tr></thead>
+                    <thead><tr><th>Factor</th><th>Notification More Likely</th><th>Notification Less Likely</th></tr></thead>
                     <tbody>
-                        <tr><td>SSN, Financial data</td><td>Most state breach notification laws triggered</td></tr>
-                        <tr><td>Healthcare (PHI)</td><td>HIPAA notification required</td></tr>
-                        <tr><td>EU resident data</td><td>GDPR applies regardless of company location</td></tr>
-                        <tr><td>Payment cards</td><td>PCI-DSS, card brand notification</td></tr>
-                        <tr><td>Children's data</td><td>COPPA applies, higher scrutiny</td></tr>
+                        <tr><td><strong>Data sensitivity</strong></td><td>SSN, financial, health data</td><td>Business contact info only</td></tr>
+                        <tr><td><strong>Exfiltration confirmed</strong></td><td>Evidence of data leaving network</td><td>Access only, no transfer evidence</td></tr>
+                        <tr><td><strong>Encryption status</strong></td><td>Data unencrypted</td><td>Data encrypted with strong key</td></tr>
+                        <tr><td><strong>Attacker sophistication</strong></td><td>Targeted attack, data staged</td><td>Opportunistic, no data access</td></tr>
+                        <tr><td><strong>Number of records</strong></td><td>Above state thresholds (often 500+)</td><td>Below thresholds</td></tr>
+                        <tr><td><strong>Risk of harm</strong></td><td>Identity theft, financial fraud likely</td><td>Low risk of misuse</td></tr>
                     </tbody>
                 </table>
 
-                <h2>External Communications</h2>
+                <h3>Regulatory Notification Requirements</h3>
+                <table>
+                    <thead><tr><th>Regulation</th><th>Trigger</th><th>Timeline</th><th>Recipients</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>GDPR (EU)</strong></td><td>Personal data of EU residents</td><td>72 hours</td><td>Supervisory authority, affected individuals if high risk</td></tr>
+                        <tr><td><strong>CCPA (California)</strong></td><td>CA resident personal info</td><td>"Most expedient time possible"</td><td>Affected individuals, AG if 500+ CA residents</td></tr>
+                        <tr><td><strong>HIPAA</strong></td><td>Unsecured PHI</td><td>60 days (individuals), annual (HHS if <500)</td><td>HHS, individuals, media if 500+ in state</td></tr>
+                        <tr><td><strong>NY SHIELD Act</strong></td><td>NY resident private info</td><td>"Most expedient time"</td><td>Affected individuals, AG, Consumer Protection</td></tr>
+                        <tr><td><strong>PCI-DSS</strong></td><td>Payment card data</td><td>Immediate</td><td>Acquirer, card brands, forensic investigator</td></tr>
+                        <tr><td><strong>SEC (Public Co)</strong></td><td>Material cybersecurity incident</td><td>4 business days (8-K)</td><td>SEC, investors</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Phase 4: Forensic Analysis</h2>
+                <h3>Timeline Reconstruction</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.65rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL: Build comprehensive breach timeline</span>
+let compromised_accounts = dynamic(["user1@company.com", "user2@company.com"]);
+let compromised_ips = dynamic(["1.2.3.4", "5.6.7.8"]);
+let incident_start = datetime(2025-01-01);
+union
+(SigninLogs | where UserPrincipalName in~ (compromised_accounts) | project TimeGenerated, EventType="Authentication", Details=strcat("Sign-in from ", IPAddress, " - ", ResultDescription), Source="AzureAD"),
+(AuditLogs | where InitiatedBy.user.userPrincipalName in~ (compromised_accounts) | project TimeGenerated, EventType="AuditEvent", Details=OperationName, Source="AzureAD"),
+(OfficeActivity | where UserId in~ (compromised_accounts) | project TimeGenerated, EventType="FileActivity", Details=strcat(Operation, ": ", SourceFileName), Source="M365"),
+(DeviceProcessEvents | where InitiatingProcessAccountUpn in~ (compromised_accounts) | project TimeGenerated, EventType="ProcessExec", Details=strcat(FileName, " ", ProcessCommandLine), Source="MDE"),
+(DeviceNetworkEvents | where InitiatingProcessAccountUpn in~ (compromised_accounts) | project TimeGenerated, EventType="NetworkConn", Details=strcat(RemoteIP, ":", RemotePort), Source="MDE"),
+(DeviceFileEvents | where InitiatingProcessAccountUpn in~ (compromised_accounts) | project TimeGenerated, EventType="FileEvent", Details=strcat(ActionType, ": ", FileName), Source="MDE"),
+(EmailEvents | where SenderFromAddress in~ (compromised_accounts) | project TimeGenerated, EventType="EmailSent", Details=strcat("To: ", RecipientEmailAddress, " Subj: ", Subject), Source="MDO")
+| where TimeGenerated > incident_start
+| sort by TimeGenerated asc
+| project TimeGenerated, EventType, Details, Source
+
+<span style="color: #6aa3f7;">// KQL: Identify all data repositories accessed</span>
+let compromised_user = "user@company.com";
+union
+(OfficeActivity | where UserId =~ compromised_user | where Operation has_any ("File", "Folder", "List", "Site") | summarize Count=count() by Site=SourceRelativeUrl),
+(AzureActivity | where Caller =~ compromised_user | summarize Count=count() by Resource=ResourceGroup),
+(AuditLogs | where InitiatedBy.user.userPrincipalName =~ compromised_user | where TargetResources has "application" | summarize Count=count() by App=tostring(TargetResources[0].displayName))
+| order by Count desc</pre>
+                </div>
+
+                <h3>Exfiltration Vector Analysis</h3>
+                <table>
+                    <thead><tr><th>Vector</th><th>Detection Method</th><th>Evidence Sources</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Email (attachments)</strong></td><td>Large attachments, external recipients</td><td>Email gateway, M365 audit logs</td></tr>
+                        <tr><td><strong>Cloud storage sync</strong></td><td>Personal cloud app usage</td><td>CASB, proxy logs, endpoint telemetry</td></tr>
+                        <tr><td><strong>USB/Removable media</strong></td><td>Device connection events</td><td>Windows event logs, EDR</td></tr>
+                        <tr><td><strong>Web upload</strong></td><td>POST requests, file sharing sites</td><td>Proxy logs, browser history</td></tr>
+                        <tr><td><strong>FTP/SFTP</strong></td><td>Protocol usage, external servers</td><td>Firewall, proxy, endpoint</td></tr>
+                        <tr><td><strong>DNS tunneling</strong></td><td>High-entropy subdomains</td><td>DNS logs, packet capture</td></tr>
+                        <tr><td><strong>Encrypted channels</strong></td><td>TLS to unusual destinations</td><td>Firewall, SSL inspection</td></tr>
+                        <tr><td><strong>Physical (print/photo)</strong></td><td>Print jobs, physical access</td><td>Print server logs, badge access</td></tr>
+                        <tr><td><strong>API exfiltration</strong></td><td>Bulk API calls, data export</td><td>API gateway logs, application logs</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Phase 5: Stakeholder Communication</h2>
+                <h3>Communication Matrix</h3>
+                <table>
+                    <thead><tr><th>Stakeholder</th><th>When to Notify</th><th>Information to Provide</th><th>Owner</th></tr></thead>
+                    <tbody>
+                        <tr><td>Executive Leadership</td><td>Within 4 hours of confirmation</td><td>Scope, business impact, regulatory exposure</td><td>CISO</td></tr>
+                        <tr><td>Legal Counsel</td><td>Immediately upon suspicion</td><td>All details, preserve privilege</td><td>CISO</td></tr>
+                        <tr><td>Privacy Officer</td><td>Within 24 hours</td><td>Data types, record counts, jurisdictions</td><td>IR Lead</td></tr>
+                        <tr><td>PR/Communications</td><td>Before any external notification</td><td>Draft statements, Q&A preparation</td><td>Legal</td></tr>
+                        <tr><td>Cyber Insurance</td><td>Within 24-48 hours</td><td>Claim initiation, coverage review</td><td>Legal/Finance</td></tr>
+                        <tr><td>External Forensics</td><td>If required by insurance/complexity</td><td>Scope of engagement, evidence access</td><td>IR Lead</td></tr>
+                        <tr><td>Law Enforcement</td><td>Per legal guidance</td><td>Coordinated through legal</td><td>Legal</td></tr>
+                        <tr><td>Regulators</td><td>Per notification requirements</td><td>Formal notification per regulation</td><td>Legal/Privacy</td></tr>
+                        <tr><td>Affected Individuals</td><td>Per legal/regulatory requirements</td><td>What happened, what we're doing, what they should do</td><td>PR with Legal</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Phase 6: Remediation & Hardening</h2>
+                <table>
+                    <thead><tr><th>Action</th><th>Timeline</th><th>Verification</th></tr></thead>
+                    <tbody>
+                        <tr><td>Credential reset for all affected accounts</td><td>Immediate</td><td>Confirm no lingering sessions</td></tr>
+                        <tr><td>Revoke OAuth tokens and API keys</td><td>Immediate</td><td>Audit all authorized applications</td></tr>
+                        <tr><td>Patch exploited vulnerabilities</td><td>Within 24 hours</td><td>Vulnerability scan verification</td></tr>
+                        <tr><td>Implement additional access controls</td><td>Within 72 hours</td><td>Access review, least privilege</td></tr>
+                        <tr><td>Enhanced monitoring for affected data</td><td>Ongoing</td><td>DLP rules, access alerts</td></tr>
+                        <tr><td>Third-party access review</td><td>Within 1 week</td><td>Vendor security assessment</td></tr>
+                        <tr><td>Employee awareness (if applicable)</td><td>Post-incident</td><td>Training completion tracking</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Post-Incident Documentation</h2>
                 <ul>
-                    <li><strong>Affected individuals:</strong> Clear, helpful notification with next steps</li>
-                    <li><strong>Regulators:</strong> Timely, complete notification per requirements</li>
-                    <li><strong>Media:</strong> Prepared statement through PR/communications</li>
-                    <li><strong>Partners/vendors:</strong> As contractually required</li>
-                    <li><strong>Law enforcement:</strong> Per policy and legal guidance</li>
-                </ul>
-
-                <h2>Documentation Requirements</h2>
-                <ul>
-                    <li>Breach discovery timeline</li>
-                    <li>Scope of affected data and individuals</li>
-                    <li>Containment and remediation actions</li>
-                    <li>Root cause analysis</li>
-                    <li>All notification records and responses</li>
-                    <li>Lessons learned and improvements</li>
+                    <li><strong>Incident timeline:</strong> Complete chronology from initial access to containment</li>
+                    <li><strong>Data impact assessment:</strong> Final determination of data types and volumes</li>
+                    <li><strong>Root cause analysis:</strong> How initial access was gained</li>
+                    <li><strong>Notification log:</strong> All notifications made, to whom, when, content</li>
+                    <li><strong>Evidence inventory:</strong> All preserved evidence with chain of custody</li>
+                    <li><strong>Lessons learned:</strong> What worked, what didn't, improvements needed</li>
+                    <li><strong>Cost accounting:</strong> Response costs, notification costs, remediation costs</li>
                 </ul>
 
             </div>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-World Investigation Scenarios | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Troubleshooting</a><span class="separator">/</span><span>Real-World Scenarios</span></div>
+            <div class="content">
+                <h1>Real-World Investigation Scenarios</h1>
+                <p class="lead">Learn from detailed walkthroughs of actual security investigations. Each scenario shows the full investigation process from alert to resolution.</p>
+
+                <h2>Scenario 1: The Impossible Travel That Wasn't</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                    <p><strong>Alert:</strong> Impossible Travel - User logged in from US and Germany within 30 minutes</p>
+                    <p><strong>Severity:</strong> High</p>
+                    <p><strong>User:</strong> john.smith@company.com (Finance department)</p>
+                </div>
+
+                <h3>Investigation Steps</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Initial Triage</div>
+                            <p>Alert shows login from New York (10:15 AM EST) and Frankfurt (10:42 AM EST). User is based in New York office.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Login Details</div>
+                            <p>New York login: IP 203.45.67.89, Browser: Chrome, MFA: Completed via authenticator app</p>
+                            <p>Germany login: IP 185.23.45.67, Browser: Edge, MFA: Completed via SMS</p>
+                            <p><strong>Red flag:</strong> Different browsers and MFA methods</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check IP Reputation</div>
+                            <p>New York IP: Registered to Verizon (ISP), matches user's previous logins</p>
+                            <p>Germany IP: Registered to hosting provider. <strong>Red flag:</strong> VPS/hosting provider IP</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Post-Login Activity</div>
+                            <p>Germany session: Created inbox rule forwarding emails to external address. Accessed finance reports. <strong>Major red flag!</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Contact User</div>
+                            <p>Called user directly. User confirms only the New York login was them. Received SMS code but didn't request it.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Verdict: TRUE POSITIVE - Account Compromise</h3>
+                <p><strong>What happened:</strong> Attacker phished user's credentials. Used SIM swapping or SS7 attack to intercept SMS MFA code. Logged in from Germany VPS.</p>
+                <p><strong>Response taken:</strong></p>
+                <ul>
+                    <li>Reset user's password immediately</li>
+                    <li>Revoked all active sessions</li>
+                    <li>Removed malicious inbox rule</li>
+                    <li>Blocked the Germany IP</li>
+                    <li>Changed user's MFA to authenticator app only (no SMS)</li>
+                    <li>Reviewed what data was accessed</li>
+                </ul>
+
+                <hr style="margin: 2rem 0; border-color: var(--border-color);">
+
+                <h2>Scenario 2: The PowerShell That Was OK</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                    <p><strong>Alert:</strong> Suspicious PowerShell - Encoded command execution</p>
+                    <p><strong>Severity:</strong> High</p>
+                    <p><strong>Host:</strong> WKS-FINANCE-042</p>
+                    <p><strong>Command:</strong> <code>powershell.exe -EncodedCommand UwB0AGEAcgB0AC0AUwBsAGUAZQBwACAALQBTAGUAYwBvAG4AZABzACAANQA=</code></p>
+                </div>
+
+                <h3>Investigation Steps</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Decode the Command</div>
+                            <p>Base64 decoded: <code>Start-Sleep -Seconds 5</code></p>
+                            <p>Just a sleep command - not immediately malicious, but need context.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Parent Process</div>
+                            <p>Parent: SCCM Agent (ccmexec.exe)</p>
+                            <p>Grandparent: services.exe</p>
+                            <p>This is the legitimate SCCM/MECM software deployment chain.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Timing</div>
+                            <p>Executed at 2:00 AM on Tuesday - matches IT's software deployment window.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Verify with IT</div>
+                            <p>IT confirms they deployed a software package that night. Sleep command is part of installation script.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Verdict: FALSE POSITIVE - Legitimate IT Activity</h3>
+                <p><strong>What happened:</strong> IT software deployment uses encoded PowerShell for compatibility. Detection rule needs tuning.</p>
+                <p><strong>Action taken:</strong></p>
+                <ul>
+                    <li>Documented as false positive</li>
+                    <li>Created exception for SCCM-initiated encoded commands</li>
+                    <li>Kept rule active for non-SCCM encoded commands</li>
+                </ul>
+
+                <hr style="margin: 2rem 0; border-color: var(--border-color);">
+
+                <h2>Scenario 3: The Phishing That Spread</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                    <p><strong>Alert:</strong> User reported suspicious email</p>
+                    <p><strong>Reporter:</strong> sarah.jones@company.com</p>
+                    <p><strong>Subject:</strong> "Urgent: Your password expires today - Action Required"</p>
+                </div>
+
+                <h3>Investigation Steps</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Analyze the Email</div>
+                            <p>From: IT-Support@c0mpany.com (note: zero instead of 'o' - typosquatting)</p>
+                            <p>Link: hxxps://company-password[.]com/reset (lookalike domain)</p>
+                            <p>Reply-To: Different from sender. <strong>Confirmed phishing.</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Who Else Received It</div>
+                            <p>Searched email logs: 47 users received the same email!</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Who Clicked</div>
+                            <p>Web proxy logs show 8 users visited the phishing URL.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Identify Credential Submission</div>
+                            <p>3 users have POST requests to the phishing site - likely submitted credentials!</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Compromise</div>
+                            <p>1 of the 3 users has new login from unusual IP after credential submission. <strong>Confirmed compromise.</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Verdict: TRUE POSITIVE - Phishing Campaign with 1 Compromise</h3>
+                <p><strong>Response taken:</strong></p>
+                <ul>
+                    <li>Blocked sender domain and phishing URL at email gateway and proxy</li>
+                    <li>Deleted phishing email from all 47 mailboxes</li>
+                    <li>Reset passwords for all 3 users who submitted credentials</li>
+                    <li>Revoked sessions and investigated compromised account</li>
+                    <li>Sent awareness notice to all recipients</li>
+                    <li>Reported phishing domain for takedown</li>
+                </ul>
+
+                <hr style="margin: 2rem 0; border-color: var(--border-color);">
+
+                <h2>Scenario 4: The Ransomware Near-Miss</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                    <p><strong>Alert:</strong> Multiple file encryption detected</p>
+                    <p><strong>Severity:</strong> Critical</p>
+                    <p><strong>Host:</strong> SRV-FILE-01 (File server)</p>
+                </div>
+
+                <h3>Investigation Steps</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Immediate Isolation</div>
+                            <p>Given the criticality, isolated server via EDR immediately while investigating.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check What's Happening</div>
+                            <p>EDR shows: cmd.exe → powershell.exe → encrypting files with .locked extension</p>
+                            <p>Ransom note being dropped in each folder.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Identify Source</div>
+                            <p>Process started from user's mapped drive connection from WKS-ACCT-015.</p>
+                            <p>User: mike.wilson@company.com</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Origin Workstation</div>
+                            <p>WKS-ACCT-015: User opened malicious Excel attachment 30 minutes ago. Macro executed Cobalt Strike beacon. Ransomware deployed.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Scope the Impact</div>
+                            <p>Only one folder (500 files) encrypted before isolation. Backups from 1 hour ago available.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Verdict: TRUE POSITIVE - Ransomware Stopped Early</h3>
+                <p><strong>Response taken:</strong></p>
+                <ul>
+                    <li>Kept both systems isolated</li>
+                    <li>Blocked all identified C2 IPs and domains</li>
+                    <li>Reset Mike's credentials</li>
+                    <li>Reimaged Mike's workstation</li>
+                    <li>Restored encrypted files from backup</li>
+                    <li>Scanned all systems for Cobalt Strike beacon IOCs</li>
+                    <li>Enhanced email filtering for Excel macros</li>
+                </ul>
+
+                <h2>Key Takeaways</h2>
+                <ul>
+                    <li><strong>Context is everything:</strong> Same alert can be malicious or benign depending on context</li>
+                    <li><strong>Don't trust single indicators:</strong> Build the full picture before deciding</li>
+                    <li><strong>Check for spread:</strong> One compromised account/system often means more</li>
+                    <li><strong>Speed matters:</strong> For ransomware, isolate first, investigate second</li>
+                    <li><strong>Document everything:</strong> Future analysts will thank you</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

@@ -13,102 +13,179 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Sentinel</span></div>
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Microsoft Sentinel</span></div>
             <div class="content">
                 <h1>Microsoft Sentinel</h1>
-                <p class="lead">Cloud-native SIEM and SOAR platform built on Azure. Master KQL and Sentinel capabilities for effective security operations.</p>
+                <p class="lead">Advanced KQL techniques, analytics rules, automation playbooks, and enterprise-scale Sentinel operations.</p>
 
-                <h2>Sentinel Topics</h2>
                 <div class="card-grid">
-                    <a href="kql-basics.html" class="card">
-                        <div class="card-icon"><i class="fas fa-code"></i></div>
-                        <h3>KQL Basics</h3>
-                        <p>Kusto Query Language fundamentals for security analysis.</p>
-                    </a>
-                    <a href="kql-intermediate.html" class="card">
-                        <div class="card-icon"><i class="fas fa-layer-group"></i></div>
-                        <h3>KQL Intermediate</h3>
-                        <p>Joins, aggregations, time series, and complex queries.</p>
-                    </a>
-                    <a href="kql-advanced.html" class="card">
-                        <div class="card-icon"><i class="fas fa-brain"></i></div>
-                        <h3>KQL Advanced</h3>
-                        <p>Machine learning functions, custom functions, optimization.</p>
-                    </a>
-                    <a href="analytics-rules.html" class="card">
-                        <div class="card-icon"><i class="fas fa-bell"></i></div>
-                        <h3>Analytics Rules</h3>
-                        <p>Creating and managing detection rules in Sentinel.</p>
-                    </a>
-                    <a href="data-connectors.html" class="card">
-                        <div class="card-icon"><i class="fas fa-plug"></i></div>
-                        <h3>Data Connectors</h3>
-                        <p>Ingesting data from Microsoft and third-party sources.</p>
-                    </a>
-                    <a href="automation.html" class="card">
-                        <div class="card-icon"><i class="fas fa-robot"></i></div>
-                        <h3>Automation</h3>
-                        <p>Playbooks, automation rules, and SOAR capabilities.</p>
-                    </a>
+                    <a href="kql-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Fundamentals</h3><p>Core query syntax, operators, time ranges.</p></a>
+                    <a href="kql-intermediate.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>KQL Intermediate</h3><p>Joins, aggregations, parsing, functions.</p></a>
+                    <a href="kql-advanced.html" class="card"><div class="card-icon"><i class="fas fa-rocket"></i></div><h3>KQL Advanced</h3><p>Machine learning, time series, optimization.</p></a>
+                    <a href="analytics-rules.html" class="card"><div class="card-icon"><i class="fas fa-bell"></i></div><h3>Analytics Rules</h3><p>Detection rules, scheduling, entity mapping.</p></a>
+                    <a href="data-connectors.html" class="card"><div class="card-icon"><i class="fas fa-plug"></i></div><h3>Data Connectors</h3><p>Log sources, ingestion, normalization.</p></a>
+                    <a href="automation.html" class="card"><div class="card-icon"><i class="fas fa-robot"></i></div><h3>Automation</h3><p>Playbooks, Logic Apps, SOAR capabilities.</p></a>
                 </div>
 
-                <h2>KQL Quick Reference</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// Basic search</span>
-SecurityEvent
-| where TimeGenerated > ago(24h)
-| where EventID == 4625
-| project TimeGenerated, Account, Computer, IpAddress
-
-<span style="color: #a78bf6;">// Aggregation</span>
-SigninLogs
-| summarize count() by UserPrincipalName, ResultType
-| sort by count_ desc
-
-<span style="color: #a78bf6;">// Join tables</span>
-SecurityEvent
-| where EventID == 4624
-| join kind=inner (
-    IdentityInfo | project AccountUPN, Department
-) on $left.Account == $right.AccountUPN
-
-<span style="color: #a78bf6;">// Time series</span>
-SecurityAlert
-| summarize AlertCount = count() by bin(TimeGenerated, 1h)
-| render timechart</pre>
-                </div>
-
-                <h2>Key Sentinel Tables</h2>
+                <h2>Sentinel Architecture</h2>
                 <table>
-                    <thead><tr><th>Table</th><th>Description</th><th>Common Use</th></tr></thead>
+                    <thead><tr><th>Component</th><th>Purpose</th><th>Key Configuration</th></tr></thead>
                     <tbody>
-                        <tr><td><code>SecurityEvent</code></td><td>Windows Security logs</td><td>Authentication, process creation</td></tr>
-                        <tr><td><code>SigninLogs</code></td><td>Azure AD sign-ins</td><td>Cloud authentication analysis</td></tr>
-                        <tr><td><code>AuditLogs</code></td><td>Azure AD audit</td><td>Configuration changes</td></tr>
-                        <tr><td><code>DeviceProcessEvents</code></td><td>MDE process telemetry</td><td>Endpoint behavior</td></tr>
-                        <tr><td><code>EmailEvents</code></td><td>M365 email metadata</td><td>Phishing investigation</td></tr>
-                        <tr><td><code>CommonSecurityLog</code></td><td>CEF/Syslog data</td><td>Firewall, network devices</td></tr>
+                        <tr><td><strong>Log Analytics Workspace</strong></td><td>Data storage and query engine</td><td>Retention, access control, pricing tier</td></tr>
+                        <tr><td><strong>Data Connectors</strong></td><td>Ingest data from sources</td><td>Azure, M365, third-party, CEF/Syslog</td></tr>
+                        <tr><td><strong>Analytics Rules</strong></td><td>Detection and alerting</td><td>Scheduled, NRT, Fusion, ML</td></tr>
+                        <tr><td><strong>Incidents</strong></td><td>Case management</td><td>Assignment, status, tasks, comments</td></tr>
+                        <tr><td><strong>Workbooks</strong></td><td>Visualization and reporting</td><td>Templates, custom dashboards</td></tr>
+                        <tr><td><strong>Playbooks</strong></td><td>Automated response</td><td>Logic Apps, triggers, actions</td></tr>
+                        <tr><td><strong>Hunting</strong></td><td>Proactive threat discovery</td><td>Queries, bookmarks, livestream</td></tr>
+                        <tr><td><strong>Watchlists</strong></td><td>Reference data</td><td>IOCs, VIPs, assets, allow/block lists</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Sentinel Architecture</h2>
-                <ul>
-                    <li><strong>Log Analytics Workspace:</strong> Data storage and query engine</li>
-                    <li><strong>Data Connectors:</strong> Ingest from 100+ sources</li>
-                    <li><strong>Analytics Rules:</strong> Detection logic that creates incidents</li>
-                    <li><strong>Incidents:</strong> Correlated alerts for investigation</li>
-                    <li><strong>Playbooks:</strong> Logic Apps for automated response</li>
-                    <li><strong>Workbooks:</strong> Interactive dashboards and reports</li>
-                </ul>
+                <h2>Critical Sentinel Tables</h2>
+                <table>
+                    <thead><tr><th>Table</th><th>Data Source</th><th>Key Fields</th><th>Common Uses</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>SecurityEvent</code></td><td>Windows Security logs</td><td>EventID, Account, Computer, Activity</td><td>Authentication, process, privilege use</td></tr>
+                        <tr><td><code>SigninLogs</code></td><td>Azure AD sign-ins</td><td>UserPrincipalName, IPAddress, ResultType</td><td>Cloud auth, risky sign-ins</td></tr>
+                        <tr><td><code>AuditLogs</code></td><td>Azure AD changes</td><td>OperationName, InitiatedBy, TargetResources</td><td>Identity changes, app consent</td></tr>
+                        <tr><td><code>DeviceProcessEvents</code></td><td>MDE process execution</td><td>FileName, ProcessCommandLine, InitiatingProcessFileName</td><td>Endpoint detection</td></tr>
+                        <tr><td><code>DeviceNetworkEvents</code></td><td>MDE network connections</td><td>RemoteIP, RemotePort, InitiatingProcessFileName</td><td>C2, lateral movement</td></tr>
+                        <tr><td><code>DeviceFileEvents</code></td><td>MDE file activity</td><td>FileName, FolderPath, SHA256</td><td>Malware, ransomware</td></tr>
+                        <tr><td><code>EmailEvents</code></td><td>MDO email</td><td>SenderFromAddress, Subject, DeliveryAction</td><td>Phishing, BEC</td></tr>
+                        <tr><td><code>OfficeActivity</code></td><td>M365 audit</td><td>Operation, UserId, ClientIP</td><td>Data access, sharing</td></tr>
+                        <tr><td><code>AzureActivity</code></td><td>Azure management</td><td>OperationName, Caller, ResourceGroup</td><td>Cloud security</td></tr>
+                        <tr><td><code>CommonSecurityLog</code></td><td>CEF/Syslog sources</td><td>DeviceVendor, Activity, SourceIP</td><td>Firewall, IDS, third-party</td></tr>
+                        <tr><td><code>Syslog</code></td><td>Linux systems</td><td>Facility, SeverityLevel, SyslogMessage</td><td>Linux security</td></tr>
+                    </tbody>
+                </table>
 
-                <h2>Cost Optimization Tips</h2>
-                <ul>
-                    <li>Use commitment tiers for predictable workloads</li>
-                    <li>Filter noisy logs at ingestion with transformations</li>
-                    <li>Archive cold data to Basic logs tier</li>
-                    <li>Monitor ingestion with Usage tables</li>
-                    <li>Consider Auxiliary logs for high-volume, low-value data</li>
-                </ul>
+                <h2>Advanced Detection Patterns</h2>
+                <h3>Authentication Attacks</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Password spray with successful login</span>
+let threshold = 10;
+let timeframe = 5m;
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType == "50126" // Invalid username or password
+| summarize FailedAttempts = count(), TargetAccounts = make_set(UserPrincipalName) by IPAddress, bin(TimeGenerated, timeframe)
+| where FailedAttempts > threshold
+| join kind=inner (
+    SigninLogs
+    | where ResultType == 0
+    | project SuccessTime = TimeGenerated, UserPrincipalName, IPAddress
+) on IPAddress
+| where SuccessTime between (TimeGenerated .. (TimeGenerated + timeframe))
+| project TimeGenerated, IPAddress, FailedAttempts, TargetAccounts, CompromisedAccount = UserPrincipalName
+
+<span style="color: #6aa3f7;">// Impossible travel with risk context</span>
+let threshold_km = 500;
+let threshold_minutes = 60;
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0
+| project TimeGenerated, UserPrincipalName, IPAddress, Location, Latitude = todouble(LocationDetails.geoCoordinates.latitude), Longitude = todouble(LocationDetails.geoCoordinates.longitude)
+| sort by UserPrincipalName, TimeGenerated
+| extend PrevLat = prev(Latitude), PrevLon = prev(Longitude), PrevTime = prev(TimeGenerated), PrevUser = prev(UserPrincipalName)
+| where UserPrincipalName == PrevUser
+| extend Distance_km = geo_distance_2points(Longitude, Latitude, PrevLon, PrevLat) / 1000
+| extend TimeDiff_min = datetime_diff('minute', TimeGenerated, PrevTime)
+| where Distance_km > threshold_km and TimeDiff_min < threshold_minutes
+| project TimeGenerated, UserPrincipalName, FromLocation = strcat(PrevLat, ",", PrevLon), ToLocation = strcat(Latitude, ",", Longitude), Distance_km, TimeDiff_min</pre>
+                </div>
+
+                <h3>Endpoint Threats</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Living off the land - suspicious process chains</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where InitiatingProcessFileName in~ ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe")
+| where FileName in~ ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe", "mshta.exe", "regsvr32.exe", "rundll32.exe", "certutil.exe")
+| project TimeGenerated, DeviceName, AccountName, InitiatingProcessFileName, FileName, ProcessCommandLine
+| extend DecodedCommand = base64_decode_tostring(extract(@"-[Ee](?:nc|ncodedcommand)?\s+([A-Za-z0-9+/=]+)", 1, ProcessCommandLine))
+
+<span style="color: #6aa3f7;">// Credential dumping via LSASS</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where FileName =~ "lsass.exe" or ProcessCommandLine has_any ("lsass", "mimikatz", "sekurlsa", "procdump", "comsvcs.dll")
+| where InitiatingProcessFileName !in~ ("csrss.exe", "services.exe", "svchost.exe", "wininit.exe")
+| project TimeGenerated, DeviceName, AccountName, InitiatingProcessFileName, FileName, ProcessCommandLine
+
+<span style="color: #6aa3f7;">// Ransomware indicators</span>
+DeviceFileEvents
+| where TimeGenerated > ago(1h)
+| where ActionType == "FileCreated"
+| where FileName matches regex @"\.(encrypted|locked|crypted|enc|cry|[a-z]{5,8})$"
+| summarize EncryptedFiles = count(), Folders = dcount(FolderPath) by DeviceName, bin(TimeGenerated, 5m)
+| where EncryptedFiles > 100 or Folders > 10
+| project TimeGenerated, DeviceName, EncryptedFiles, Folders</pre>
+                </div>
+
+                <h3>Network & C2 Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Beaconing pattern detection</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteIPType == "Public"
+| summarize ConnectionCount = count(), Times = make_list(TimeGenerated) by DeviceName, RemoteIP, RemotePort
+| where ConnectionCount > 50
+| extend Intervals = array_sort_asc(Times)
+| mv-apply Intervals to typeof(datetime) on (
+    extend NextTime = next(Intervals)
+    | extend Interval = datetime_diff('second', NextTime, Intervals)
+    | summarize AvgInterval = avg(Interval), StdevInterval = stdev(Interval)
+)
+| where StdevInterval < 5 and AvgInterval between (30 .. 3600)
+| project DeviceName, RemoteIP, RemotePort, ConnectionCount, AvgInterval, StdevInterval
+
+<span style="color: #6aa3f7;">// DNS tunneling detection</span>
+DnsEvents
+| where TimeGenerated > ago(24h)
+| extend SubdomainLength = strlen(tostring(split(Name, ".")[0]))
+| extend DomainParts = array_length(split(Name, "."))
+| where SubdomainLength > 30 or DomainParts > 6
+| summarize QueryCount = count(), AvgSubdomainLen = avg(SubdomainLength) by ClientIP, tostring(split(Name, ".")[-2])
+| where QueryCount > 100</pre>
+                </div>
+
+                <h2>Entity Mapping Best Practices</h2>
+                <table>
+                    <thead><tr><th>Entity Type</th><th>Common Fields</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Account</strong></td><td>UserPrincipalName, AccountName, AadUserId</td><td>Identity correlation</td></tr>
+                        <tr><td><strong>Host</strong></td><td>DeviceName, Computer, HostName</td><td>Endpoint grouping</td></tr>
+                        <tr><td><strong>IP</strong></td><td>IPAddress, SourceIP, DestinationIP</td><td>Network analysis</td></tr>
+                        <tr><td><strong>URL</strong></td><td>Url, RequestUrl</td><td>Web threat analysis</td></tr>
+                        <tr><td><strong>File</strong></td><td>FileName, SHA256, FilePath</td><td>Malware correlation</td></tr>
+                        <tr><td><strong>Process</strong></td><td>ProcessId, ProcessCommandLine</td><td>Endpoint investigation</td></tr>
+                        <tr><td><strong>Mailbox</strong></td><td>MailboxPrimaryAddress, RecipientEmailAddress</td><td>Email investigation</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Cost Optimization</h2>
+                <table>
+                    <thead><tr><th>Strategy</th><th>Implementation</th><th>Savings</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Basic Logs tier</strong></td><td>Use for high-volume, low-query data</td><td>Up to 80%</td></tr>
+                        <tr><td><strong>Ingestion-time transformation</strong></td><td>Filter/transform before storage</td><td>30-70%</td></tr>
+                        <tr><td><strong>Commitment tiers</strong></td><td>Pre-purchase capacity</td><td>Up to 50%</td></tr>
+                        <tr><td><strong>Archive tier</strong></td><td>Long-term retention at lower cost</td><td>Up to 90%</td></tr>
+                        <tr><td><strong>Data collection rules</strong></td><td>Filter at collection time</td><td>Variable</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Analytics Rule Types</h2>
+                <table>
+                    <thead><tr><th>Type</th><th>Latency</th><th>Use Case</th><th>Limitations</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Scheduled</strong></td><td>5 min - 14 days</td><td>Most detections</td><td>Query timeout 10 min</td></tr>
+                        <tr><td><strong>NRT (Near Real-Time)</strong></td><td>~1 minute</td><td>Critical threats</td><td>Limited tables, simpler queries</td></tr>
+                        <tr><td><strong>Fusion</strong></td><td>Varies</td><td>Multi-stage attack correlation</td><td>Microsoft-managed</td></tr>
+                        <tr><td><strong>ML Behavior Analytics</strong></td><td>Daily</td><td>Anomaly detection</td><td>Requires sufficient data</td></tr>
+                        <tr><td><strong>Threat Intelligence</strong></td><td>Periodic</td><td>IOC matching</td><td>Requires TI feed</td></tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>

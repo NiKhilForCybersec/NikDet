@@ -16,128 +16,178 @@
             <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Splunk</a><span class="separator">/</span><span>SPL Fundamentals</span></div>
             <div class="content">
                 <h1>SPL Fundamentals</h1>
-                <p class="lead">Search Processing Language (SPL) basics for security analysts. Master the essential commands to investigate security events.</p>
+                <p class="lead">Master the Search Processing Language for effective security investigations and threat detection.</p>
 
-                <h2>Basic Search Structure</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Basic structure</span>
-index=<index_name> sourcetype=<sourcetype> <search_terms>
-| <command1>
-| <command2>
+                <h2>Search Pipeline Architecture</h2>
+                <p>SPL uses a pipe-based architecture where each command transforms data and passes it to the next:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin-bottom: 1rem;">
+<pre style="margin: 0;">index=security sourcetype=WinEventLog:Security EventCode=4625
+| stats count by Account_Name, Source_Network_Address
+| where count > 10
+| sort -count
+| head 20
 
-<span style="color: #6aa3f7;">// Example: Find failed Windows logins</span>
-index=wineventlog sourcetype=WinEventLog:Security EventCode=4625
-| table _time, Account_Name, Workstation_Name, Source_Network_Address</pre>
+<span style="color: #6aa3f7;">Pipeline Flow:</span>
+[Raw Events] → [Filter] → [Aggregate] → [Filter Results] → [Sort] → [Limit]</pre>
                 </div>
 
-                <h2>Essential Commands</h2>
+                <h2>Essential Search Commands</h2>
                 <table>
-                    <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
+                    <thead><tr><th>Command</th><th>Type</th><th>Purpose</th><th>Example</th></tr></thead>
                     <tbody>
-                        <tr><td><code>search</code></td><td>Filter events</td><td><code>search EventCode=4625</code></td></tr>
-                        <tr><td><code>where</code></td><td>Filter with expressions</td><td><code>where count > 10</code></td></tr>
-                        <tr><td><code>table</code></td><td>Display specific fields</td><td><code>table _time, user, src_ip</code></td></tr>
-                        <tr><td><code>fields</code></td><td>Include/exclude fields</td><td><code>fields + user, - _raw</code></td></tr>
-                        <tr><td><code>rename</code></td><td>Rename fields</td><td><code>rename src_ip as SourceIP</code></td></tr>
-                        <tr><td><code>sort</code></td><td>Order results</td><td><code>sort -count</code> (descending)</td></tr>
-                        <tr><td><code>head</code></td><td>First N results</td><td><code>head 10</code></td></tr>
-                        <tr><td><code>tail</code></td><td>Last N results</td><td><code>tail 10</code></td></tr>
-                        <tr><td><code>dedup</code></td><td>Remove duplicates</td><td><code>dedup user, src_ip</code></td></tr>
+                        <tr><td><code>search</code></td><td>Filtering</td><td>Filter events (implicit at start)</td><td><code>search error OR failed</code></td></tr>
+                        <tr><td><code>where</code></td><td>Filtering</td><td>Filter with expressions</td><td><code>where count > 100</code></td></tr>
+                        <tr><td><code>stats</code></td><td>Aggregating</td><td>Calculate statistics</td><td><code>stats count by src_ip</code></td></tr>
+                        <tr><td><code>eval</code></td><td>Transforming</td><td>Create/modify fields</td><td><code>eval MB=bytes/1024/1024</code></td></tr>
+                        <tr><td><code>table</code></td><td>Formatting</td><td>Select and order fields</td><td><code>table _time, user, action</code></td></tr>
+                        <tr><td><code>rename</code></td><td>Formatting</td><td>Rename fields</td><td><code>rename src_ip as SourceIP</code></td></tr>
+                        <tr><td><code>sort</code></td><td>Ordering</td><td>Sort results</td><td><code>sort -count</code></td></tr>
+                        <tr><td><code>dedup</code></td><td>Filtering</td><td>Remove duplicates</td><td><code>dedup user, src_ip</code></td></tr>
+                        <tr><td><code>rex</code></td><td>Extracting</td><td>Regex field extraction</td><td><code>rex field=_raw "user=(?&lt;user&gt;\w+)"</code></td></tr>
+                        <tr><td><code>lookup</code></td><td>Enriching</td><td>Add data from lookups</td><td><code>lookup users.csv user OUTPUT department</code></td></tr>
+                        <tr><td><code>join</code></td><td>Combining</td><td>Join with subsearch</td><td><code>join src_ip [search index=threats]</code></td></tr>
+                        <tr><td><code>append</code></td><td>Combining</td><td>Append subsearch results</td><td><code>append [search index=firewall]</code></td></tr>
+                        <tr><td><code>transaction</code></td><td>Grouping</td><td>Group related events</td><td><code>transaction user maxspan=10m</code></td></tr>
+                        <tr><td><code>timechart</code></td><td>Visualizing</td><td>Time-based statistics</td><td><code>timechart span=1h count by action</code></td></tr>
                     </tbody>
                 </table>
 
-                <h2>Time Range Modifiers</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Relative time</span>
-earliest=-24h latest=now       <span style="color: #6aa3f7;">// Last 24 hours</span>
-earliest=-7d@d latest=@d       <span style="color: #6aa3f7;">// Last 7 days, rounded to day</span>
-earliest=-1h                    <span style="color: #6aa3f7;">// Last hour</span>
+                <h2>Time Range Specifications</h2>
+                <table>
+                    <thead><tr><th>Syntax</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>earliest=-1h</code></td><td>Relative time (ago)</td><td>Last 1 hour</td></tr>
+                        <tr><td><code>earliest=-7d@d</code></td><td>Snap to day boundary</td><td>Last 7 days, starting at midnight</td></tr>
+                        <tr><td><code>earliest=@d</code></td><td>Start of today</td><td>Today from midnight</td></tr>
+                        <tr><td><code>earliest=-1mon@mon</code></td><td>Start of last month</td><td>Last month from 1st</td></tr>
+                        <tr><td><code>earliest="01/15/2025:00:00:00"</code></td><td>Absolute time</td><td>Specific date/time</td></tr>
+                        <tr><td><code>latest=now</code></td><td>Current time</td><td>Up to now</td></tr>
+                    </tbody>
+                </table>
 
-<span style="color: #6aa3f7;">// Absolute time</span>
-earliest="01/01/2025:00:00:00" latest="01/02/2025:00:00:00"
+                <h2>Comparison Operators</h2>
+                <table>
+                    <thead><tr><th>Operator</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>=</code></td><td>Equals (field exists)</td><td><code>user=admin</code></td></tr>
+                        <tr><td><code>!=</code></td><td>Not equals</td><td><code>action!=allowed</code></td></tr>
+                        <tr><td><code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code></td><td>Numeric comparison</td><td><code>bytes > 1000000</code></td></tr>
+                        <tr><td><code>IN</code></td><td>Match any in list</td><td><code>action IN ("login", "logout")</code></td></tr>
+                        <tr><td><code>LIKE</code></td><td>Wildcard match</td><td><code>user LIKE "admin%"</code></td></tr>
+                    </tbody>
+                </table>
 
-<span style="color: #6aa3f7;">// Snap to time</span>
-earliest=-1d@d latest=@d       <span style="color: #6aa3f7;">// Yesterday</span>
-earliest=@w0 latest=now        <span style="color: #6aa3f7;">// This week (Sunday start)</span></pre>
+                <h2>Search Operators</h2>
+                <table>
+                    <thead><tr><th>Operator</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>AND</code></td><td>Both conditions (implicit)</td><td><code>error AND critical</code></td></tr>
+                        <tr><td><code>OR</code></td><td>Either condition</td><td><code>error OR warning</code></td></tr>
+                        <tr><td><code>NOT</code></td><td>Exclude</td><td><code>NOT debug</code></td></tr>
+                        <tr><td><code>*</code></td><td>Wildcard (any characters)</td><td><code>user=admin*</code></td></tr>
+                        <tr><td><code>""</code></td><td>Exact phrase</td><td><code>"failed login"</code></td></tr>
+                        <tr><td><code>()</code></td><td>Grouping</td><td><code>(error OR warning) AND critical</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Stats Functions</h2>
+                <table>
+                    <thead><tr><th>Function</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>count</code></td><td>Count events</td><td><code>stats count by user</code></td></tr>
+                        <tr><td><code>dc(field)</code></td><td>Distinct count</td><td><code>stats dc(src_ip) as unique_ips</code></td></tr>
+                        <tr><td><code>sum(field)</code></td><td>Sum values</td><td><code>stats sum(bytes) as total_bytes</code></td></tr>
+                        <tr><td><code>avg(field)</code></td><td>Average</td><td><code>stats avg(response_time)</code></td></tr>
+                        <tr><td><code>min(field)</code>, <code>max(field)</code></td><td>Min/max values</td><td><code>stats min(_time) as first_seen</code></td></tr>
+                        <tr><td><code>values(field)</code></td><td>List unique values</td><td><code>stats values(action) by user</code></td></tr>
+                        <tr><td><code>list(field)</code></td><td>List all values</td><td><code>stats list(dest_ip) by src_ip</code></td></tr>
+                        <tr><td><code>earliest(field)</code></td><td>First value by time</td><td><code>stats earliest(_time) as first</code></td></tr>
+                        <tr><td><code>latest(field)</code></td><td>Last value by time</td><td><code>stats latest(_time) as last</code></td></tr>
+                        <tr><td><code>stdev(field)</code></td><td>Standard deviation</td><td><code>stats stdev(bytes) by host</code></td></tr>
+                        <tr><td><code>perc95(field)</code></td><td>95th percentile</td><td><code>stats perc95(response_time)</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Eval Functions</h2>
+                <table>
+                    <thead><tr><th>Function</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>if(condition, true, false)</code></td><td>Conditional</td><td><code>eval status=if(code=200, "OK", "Error")</code></td></tr>
+                        <tr><td><code>case(cond1, val1, ...)</code></td><td>Multiple conditions</td><td><code>eval severity=case(level>7,"High",level>4,"Med",true(),"Low")</code></td></tr>
+                        <tr><td><code>coalesce(field1, field2)</code></td><td>First non-null</td><td><code>eval user=coalesce(username, account)</code></td></tr>
+                        <tr><td><code>isnull(field)</code></td><td>Check if null</td><td><code>where isnull(user)</code></td></tr>
+                        <tr><td><code>isnotnull(field)</code></td><td>Check if not null</td><td><code>where isnotnull(src_ip)</code></td></tr>
+                        <tr><td><code>lower(field)</code>, <code>upper(field)</code></td><td>Case conversion</td><td><code>eval user=lower(user)</code></td></tr>
+                        <tr><td><code>len(field)</code></td><td>String length</td><td><code>eval cmdlen=len(CommandLine)</code></td></tr>
+                        <tr><td><code>substr(field, start, len)</code></td><td>Substring</td><td><code>eval domain=substr(email, 5, 10)</code></td></tr>
+                        <tr><td><code>split(field, delim)</code></td><td>Split to multivalue</td><td><code>eval parts=split(path, "/")</code></td></tr>
+                        <tr><td><code>mvindex(field, index)</code></td><td>Get multivalue item</td><td><code>eval first=mvindex(parts, 0)</code></td></tr>
+                        <tr><td><code>mvcount(field)</code></td><td>Count multivalue items</td><td><code>eval count=mvcount(ips)</code></td></tr>
+                        <tr><td><code>strftime(_time, format)</code></td><td>Format time</td><td><code>eval hour=strftime(_time, "%H")</code></td></tr>
+                        <tr><td><code>strptime(field, format)</code></td><td>Parse time string</td><td><code>eval epoch=strptime(date, "%Y-%m-%d")</code></td></tr>
+                        <tr><td><code>now()</code></td><td>Current epoch time</td><td><code>eval age=now()-_time</code></td></tr>
+                        <tr><td><code>relative_time(time, spec)</code></td><td>Relative time calc</td><td><code>eval yesterday=relative_time(now(), "-1d@d")</code></td></tr>
+                        <tr><td><code>cidrmatch(cidr, ip)</code></td><td>CIDR matching</td><td><code>where cidrmatch("10.0.0.0/8", src_ip)</code></td></tr>
+                        <tr><td><code>match(field, regex)</code></td><td>Regex match</td><td><code>where match(user, "^admin")</code></td></tr>
+                        <tr><td><code>replace(field, regex, new)</code></td><td>Regex replace</td><td><code>eval clean=replace(data, "\s+", " ")</code></td></tr>
+                        <tr><td><code>tonumber(field)</code></td><td>Convert to number</td><td><code>eval port=tonumber(dest_port)</code></td></tr>
+                        <tr><td><code>tostring(field)</code></td><td>Convert to string</td><td><code>eval port_str=tostring(port)</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Security Investigation Patterns</h2>
+                <h3>Pattern 1: Find and Count</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find failed logins and count by user</span>
+index=wineventlog EventCode=4625 earliest=-24h
+| stats count as FailedAttempts, 
+        dc(Source_Network_Address) as UniqueIPs,
+        values(Source_Network_Address) as SourceIPs
+        by Account_Name
+| where FailedAttempts > 5
+| sort -FailedAttempts</pre>
                 </div>
 
-                <h2>Wildcards and Boolean Operators</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Wildcards</span>
-index=security user=admin*     <span style="color: #6aa3f7;">// Starts with admin</span>
-index=security user=*smith     <span style="color: #6aa3f7;">// Ends with smith</span>
-index=security user=*admin*    <span style="color: #6aa3f7;">// Contains admin</span>
-
-<span style="color: #6aa3f7;">// Boolean operators</span>
-index=security (EventCode=4624 OR EventCode=4625)
-index=security EventCode=4625 AND src_ip=10.0.0.*
-index=security NOT EventCode=4634
-
-<span style="color: #6aa3f7;">// Field comparisons</span>
-index=security EventCode!=4634
-index=security count>=100</pre>
+                <h3>Pattern 2: Timeline Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Track user activity over time</span>
+index=proxy user="suspicious_user" earliest=-7d
+| timechart span=1h count by action
+| addtotals</pre>
                 </div>
 
-                <h2>Basic Statistics</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Count events by field</span>
-index=security EventCode=4625
-| stats count by Account_Name
-| sort -count
-
-<span style="color: #6aa3f7;">// Multiple statistics</span>
-index=security EventCode=4625
-| stats count, dc(Source_Network_Address) as UniqueIPs by Account_Name
-
-<span style="color: #6aa3f7;">// Common stat functions</span>
-count           <span style="color: #6aa3f7;">// Number of events</span>
-dc(field)       <span style="color: #6aa3f7;">// Distinct count</span>
-sum(field)      <span style="color: #6aa3f7;">// Sum values</span>
-avg(field)      <span style="color: #6aa3f7;">// Average</span>
-min(field)      <span style="color: #6aa3f7;">// Minimum</span>
-max(field)      <span style="color: #6aa3f7;">// Maximum</span>
-values(field)   <span style="color: #6aa3f7;">// List all values</span>
-first(field)    <span style="color: #6aa3f7;">// First value</span>
-last(field)     <span style="color: #6aa3f7;">// Last value</span></pre>
+                <h3>Pattern 3: Baseline Comparison</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Compare today vs baseline</span>
+index=firewall action=blocked earliest=-1d
+| stats count as today_count by dest_port
+| join dest_port 
+    [search index=firewall action=blocked earliest=-8d latest=-1d
+    | stats avg(count) as baseline by dest_port]
+| eval deviation = (today_count - baseline) / baseline * 100
+| where deviation > 200
+| sort -deviation</pre>
                 </div>
 
-                <h2>Security-Focused Examples</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Failed logins by user (potential brute force)</span>
-index=wineventlog EventCode=4625
-| stats count by Account_Name
-| where count > 10
-| sort -count
-
-<span style="color: #6aa3f7;">// Successful logins from unusual hours</span>
-index=wineventlog EventCode=4624
-| eval hour=strftime(_time, "%H")
-| where hour < 6 OR hour > 22
-| table _time, Account_Name, Workstation_Name
-
-<span style="color: #6aa3f7;">// Process creation (requires cmd line logging)</span>
-index=wineventlog EventCode=4688
-| table _time, Account_Name, New_Process_Name, Process_Command_Line
-
-<span style="color: #6aa3f7;">// Network connections by process (Sysmon)</span>
-index=sysmon EventCode=3
-| stats count by Image, DestinationIp, DestinationPort
-| sort -count</pre>
+                <h3>Pattern 4: Session Reconstruction</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Reconstruct user session</span>
+index=wineventlog (EventCode=4624 OR EventCode=4634 OR EventCode=4625)
+    Account_Name="target_user" earliest=-24h
+| transaction Account_Name, Logon_ID maxspan=12h
+| table _time, Account_Name, eventcount, duration, 
+        values(EventCode), values(Workstation_Name)</pre>
                 </div>
 
-                <h2>Best Practices</h2>
+                <h2>Performance Best Practices</h2>
                 <ul>
-                    <li><strong>Always specify index and time range</strong> for performance</li>
-                    <li><strong>Filter early</strong> - put restrictive terms first</li>
-                    <li><strong>Use fields command</strong> to reduce data before stats</li>
-                    <li><strong>Test searches</strong> in a small time window first</li>
-                    <li><strong>Use Job Inspector</strong> to understand search performance</li>
+                    <li><strong>Always specify index and time range</strong> - Never search all data</li>
+                    <li><strong>Filter early</strong> - Put most restrictive filters first</li>
+                    <li><strong>Avoid wildcards at start</strong> - <code>*admin</code> is slow, <code>admin*</code> is fast</li>
+                    <li><strong>Use fields command</strong> - Limit fields early: <code>| fields user, src_ip, action</code></li>
+                    <li><strong>Use tstats for data models</strong> - 10-100x faster than raw search</li>
+                    <li><strong>Avoid real-time if possible</strong> - Use scheduled searches instead</li>
                 </ul>
-
-                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
-                    <a href="index.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Splunk</a>
-                    <a href="spl-intermediate.html" class="btn btn-primary">Next: Intermediate SPL <i class="fas fa-arrow-right"></i></a>
-                </div>
 
             </div>
         </div>

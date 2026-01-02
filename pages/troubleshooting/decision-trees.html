@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investigation Decision Trees | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Troubleshooting</a><span class="separator">/</span><span>Decision Trees</span></div>
+            <div class="content">
+                <h1>Investigation Decision Trees</h1>
+                <p class="lead">Step-by-step decision guides for common alert types. Follow the questions to reach the right conclusion.</p>
+
+                <h2>Authentication Alert Decision Tree</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <p><strong>Start:</strong> You received an authentication alert (failed logins, unusual location, etc.)</p>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q1: Is the user account a service account or automated process?</strong></p>
+                    <ul>
+                        <li><strong>YES →</strong> Check if there's a known issue with the service. Check with service owner. If expected, tune the alert. If unexpected, investigate as potential credential compromise.</li>
+                        <li><strong>NO →</strong> Continue to Q2</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q2: Did the authentication succeed?</strong></p>
+                    <ul>
+                        <li><strong>NO (Failed) →</strong> Go to Failed Auth Tree (below)</li>
+                        <li><strong>YES (Succeeded) →</strong> Continue to Q3</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q3: Is the source IP/location normal for this user?</strong></p>
+                    <ul>
+                        <li><strong>YES →</strong> Check if behavior after login is normal. If yes, likely false positive. Document and close.</li>
+                        <li><strong>NO →</strong> Continue to Q4</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q4: Could the unusual location be explained by VPN, travel, or mobile carrier?</strong></p>
+                    <ul>
+                        <li><strong>YES →</strong> Verify with user if possible. If confirmed legitimate, document and close.</li>
+                        <li><strong>NO →</strong> Continue to Q5</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q5: Was MFA completed successfully?</strong></p>
+                    <ul>
+                        <li><strong>NO (MFA failed or bypassed) →</strong> <span style="color: #ff6b6b;"><strong>HIGH RISK</strong></span> - Likely compromise. Reset password, revoke sessions, investigate.</li>
+                        <li><strong>YES →</strong> Continue to Q6</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q6: Is there suspicious post-login activity?</strong></p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">(Inbox rules, mass file access, privilege changes, unusual applications)</p>
+                    <ul>
+                        <li><strong>YES →</strong> <span style="color: #ff6b6b;"><strong>CONFIRMED COMPROMISE</strong></span> - Escalate immediately. Contain and investigate.</li>
+                        <li><strong>NO →</strong> Contact user to verify. If user confirms it was them, document and close. If user denies, treat as compromise.</li>
+                    </ul>
+                </div>
+
+                <h2>Failed Authentication Tree</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <p><strong>Start:</strong> Multiple failed authentication attempts detected</p>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q1: How many failed attempts?</strong></p>
+                    <ul>
+                        <li><strong>1-5 attempts →</strong> Likely user typo or forgot password. Low priority unless pattern continues.</li>
+                        <li><strong>6-20 attempts →</strong> Suspicious. Continue to Q2.</li>
+                        <li><strong>20+ attempts →</strong> Likely automated attack. Continue to Q2 with high priority.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q2: Is it one account from one source, one account from many sources, or many accounts from one source?</strong></p>
+                    <ul>
+                        <li><strong>One account, one source →</strong> Targeted brute force. Check if source is internal or external. Block source if external.</li>
+                        <li><strong>One account, many sources →</strong> Distributed brute force or credential stuffing. High priority. Consider disabling account temporarily.</li>
+                        <li><strong>Many accounts, one source →</strong> Password spray attack. <span style="color: #ff6b6b;"><strong>HIGH PRIORITY</strong></span> - Check if any succeeded. Block source.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q3: Did any attempt eventually succeed?</strong></p>
+                    <ul>
+                        <li><strong>YES →</strong> <span style="color: #ff6b6b;"><strong>POTENTIAL COMPROMISE</strong></span> - Go back to Authentication Alert Tree Q3</li>
+                        <li><strong>NO →</strong> Attack was unsuccessful. Block source, document, and monitor for retry.</li>
+                    </ul>
+                </div>
+
+                <h2>Malware Detection Decision Tree</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <p><strong>Start:</strong> AV/EDR detected malware on endpoint</p>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q1: What type of malware was detected?</strong></p>
+                    <ul>
+                        <li><strong>Ransomware →</strong> <span style="color: #ff6b6b;"><strong>CRITICAL</strong></span> - Isolate immediately. Do not wait. Then continue investigation.</li>
+                        <li><strong>RAT/Backdoor →</strong> <span style="color: #ff6b6b;"><strong>HIGH</strong></span> - Isolate. Check for C2 communication. Continue investigation.</li>
+                        <li><strong>Trojan/Infostealer →</strong> <span style="color: #ffa502;"><strong>HIGH</strong></span> - May need credential reset. Continue to Q2.</li>
+                        <li><strong>Worm →</strong> <span style="color: #ffa502;"><strong>HIGH</strong></span> - Check for spread to other systems. Continue to Q2.</li>
+                        <li><strong>PUA/Adware →</strong> <span style="color: #f9ca24;"><strong>LOW</strong></span> - Usually low risk. Verify cleaned. Document and close.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q2: Was the malware blocked/quarantined or did it execute?</strong></p>
+                    <ul>
+                        <li><strong>Blocked before execution →</strong> Lower risk. Continue to Q3 to check for other indicators.</li>
+                        <li><strong>Executed before detection →</strong> Higher risk. Assume compromise. Continue to Q4.</li>
+                        <li><strong>Unknown →</strong> Check process creation logs. Assume executed if uncertain.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q3: How did the malware arrive?</strong></p>
+                    <ul>
+                        <li><strong>Email attachment →</strong> Check who else received. Search for same attachment hash across mailboxes.</li>
+                        <li><strong>Web download →</strong> Check what site. Was it categorized? Should it be blocked?</li>
+                        <li><strong>USB/Removable media →</strong> Check USB policy. Who plugged in the device?</li>
+                        <li><strong>Network share/Lateral movement →</strong> <span style="color: #ff6b6b;"><strong>HIGH</strong></span> - There's already a compromised system. Find it.</li>
+                        <li><strong>Unknown →</strong> Need more investigation. Check parent process, file creation time.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q4: Is there evidence of C2 communication?</strong></p>
+                    <ul>
+                        <li><strong>YES →</strong> <span style="color: #ff6b6b;"><strong>CONFIRMED COMPROMISE</strong></span> - Full IR response. Block C2 IOCs. Check all systems.</li>
+                        <li><strong>NO →</strong> Check for persistence mechanisms. If none found, may have been caught early. Still verify cleaned.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q5: Are other systems affected?</strong></p>
+                    <ul>
+                        <li><strong>YES →</strong> Scope is larger. Escalate. Need coordinated response.</li>
+                        <li><strong>NO →</strong> Contained to single system. Clean, verify, document.</li>
+                    </ul>
+                </div>
+
+                <h2>Phishing Email Decision Tree</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <p><strong>Start:</strong> User reported suspicious email or email gateway flagged potential phishing</p>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q1: Is the email actually phishing?</strong></p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Check: Sender domain (typosquatting?), Reply-to mismatch, Urgent language, Suspicious links, Attachment type</p>
+                    <ul>
+                        <li><strong>Not phishing →</strong> Thank user for reporting. Explain why it's legitimate. Close.</li>
+                        <li><strong>Confirmed phishing →</strong> Continue to Q2</li>
+                        <li><strong>Uncertain →</strong> Check URL in sandbox. Check attachment in sandbox. Then decide.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q2: What type of phishing is it?</strong></p>
+                    <ul>
+                        <li><strong>Credential harvesting (fake login page) →</strong> Focus on who clicked and who submitted credentials</li>
+                        <li><strong>Malware delivery (attachment or link to download) →</strong> Focus on who opened attachment or downloaded file</li>
+                        <li><strong>BEC (no link/attachment, just asking for action) →</strong> Focus on whether anyone took the requested action</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q3: How many people received this email?</strong></p>
+                    <ul>
+                        <li><strong>Just the reporter →</strong> Targeted spear phishing. Higher sophistication. Continue to Q4.</li>
+                        <li><strong>Multiple users →</strong> Campaign. Need to check all recipients. Continue to Q4.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q4: Did anyone click the link or open the attachment?</strong></p>
+                    <ul>
+                        <li><strong>NO →</strong> Good! Block IOCs. Delete from mailboxes. Notify recipients. Close.</li>
+                        <li><strong>YES →</strong> Continue to Q5</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q5: Did anyone submit credentials or execute malware?</strong></p>
+                    <ul>
+                        <li><strong>NO (clicked but didn't submit/execute) →</strong> Users who clicked need awareness reminder. Block IOCs. Close.</li>
+                        <li><strong>YES, credentials submitted →</strong> <span style="color: #ff6b6b;"><strong>COMPROMISE</strong></span> - Reset passwords. Revoke sessions. Check for abuse.</li>
+                        <li><strong>YES, malware executed →</strong> <span style="color: #ff6b6b;"><strong>COMPROMISE</strong></span> - Go to Malware Detection Tree.</li>
+                    </ul>
+                </div>
+
+                <h2>Suspicious Process Decision Tree</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <p><strong>Start:</strong> Alert on suspicious process execution (unusual parent-child, suspicious command line, etc.)</p>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q1: Is the process a known legitimate tool?</strong></p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">(PowerShell, cmd, certutil, mshta, regsvr32, etc.)</p>
+                    <ul>
+                        <li><strong>YES, known tool →</strong> These are dual-use (legitimate and attack tool). Continue to Q2.</li>
+                        <li><strong>NO, unknown executable →</strong> Check hash reputation. If malicious, go to Malware Tree. If unknown, continue to Q2.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q2: What is the parent process?</strong></p>
+                    <ul>
+                        <li><strong>explorer.exe →</strong> User initiated. Check if user action makes sense.</li>
+                        <li><strong>Office application (WINWORD, EXCEL, OUTLOOK) →</strong> <span style="color: #ffa502;"><strong>SUSPICIOUS</strong></span> - May be macro malware. Check for document.</li>
+                        <li><strong>Browser (chrome, firefox, edge) →</strong> May be download and execute. Check what was downloaded.</li>
+                        <li><strong>IT management tool (SCCM, Intune, etc.) →</strong> Likely IT activity. Verify with IT.</li>
+                        <li><strong>Script host (wscript, cscript) →</strong> Check what script ran. Often malicious.</li>
+                        <li><strong>Unusual parent →</strong> <span style="color: #ff6b6b;"><strong>SUSPICIOUS</strong></span> - May indicate injection or unusual execution chain.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q3: What does the command line contain?</strong></p>
+                    <ul>
+                        <li><strong>Encoded/obfuscated content →</strong> <span style="color: #ff6b6b;"><strong>SUSPICIOUS</strong></span> - Decode and analyze. Often malicious.</li>
+                        <li><strong>Downloads from internet →</strong> <span style="color: #ffa502;"><strong>SUSPICIOUS</strong></span> - Check what's being downloaded.</li>
+                        <li><strong>Accesses sensitive paths →</strong> Check if accessing LSASS, SAM, or other sensitive files.</li>
+                        <li><strong>Normal-looking commands →</strong> May still be suspicious based on context. Continue to Q4.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q4: What happened after this process ran?</strong></p>
+                    <ul>
+                        <li><strong>Nothing notable →</strong> May have been blocked or benign. Document and monitor.</li>
+                        <li><strong>Network connections to unusual IPs →</strong> Check for C2. May be compromise.</li>
+                        <li><strong>File creation in unusual locations →</strong> Check files. May be malware dropping payload.</li>
+                        <li><strong>Child processes spawned →</strong> Follow the process tree. Attack chains have multiple steps.</li>
+                    </ul>
+                </div>
+
+                <h2>Data Exfiltration Decision Tree</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <p><strong>Start:</strong> Alert on potential data exfiltration (DLP, large transfer, unusual destination)</p>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q1: What type of data is involved?</strong></p>
+                    <ul>
+                        <li><strong>PII (SSN, personal info) →</strong> Regulatory implications. Higher priority.</li>
+                        <li><strong>Financial data →</strong> High business impact. Higher priority.</li>
+                        <li><strong>Source code/IP →</strong> Competitive impact. Higher priority.</li>
+                        <li><strong>General business data →</strong> Assess sensitivity. May be lower priority.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q2: Where is the data going?</strong></p>
+                    <ul>
+                        <li><strong>Personal email (Gmail, Yahoo) →</strong> <span style="color: #ffa502;"><strong>SUSPICIOUS</strong></span> - Why not use corporate email?</li>
+                        <li><strong>Personal cloud storage (Dropbox, GDrive personal) →</strong> <span style="color: #ffa502;"><strong>SUSPICIOUS</strong></span> - Policy violation at minimum.</li>
+                        <li><strong>Known partner/vendor →</strong> May be legitimate. Verify with data owner.</li>
+                        <li><strong>Unknown external destination →</strong> <span style="color: #ff6b6b;"><strong>HIGH RISK</strong></span> - Investigate immediately.</li>
+                        <li><strong>USB/Removable media →</strong> Check if user has business need. Often policy violation.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q3: Who is the user and what is their role?</strong></p>
+                    <ul>
+                        <li><strong>Role requires data access →</strong> May be legitimate but improper method. Verify with manager.</li>
+                        <li><strong>Role doesn't require this data →</strong> <span style="color: #ff6b6b;"><strong>SUSPICIOUS</strong></span> - Why do they have it?</li>
+                        <li><strong>Departing employee →</strong> <span style="color: #ff6b6b;"><strong>HIGH RISK</strong></span> - Possible data theft. Escalate to HR/Legal.</li>
+                        <li><strong>New employee →</strong> <span style="color: #ffa502;"><strong>SUSPICIOUS</strong></span> - May not understand policies, or may be malicious.</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1rem;"><strong>Q4: Was the transfer blocked or allowed?</strong></p>
+                    <ul>
+                        <li><strong>Blocked →</strong> Data protected. Still investigate intent. May need user education or HR involvement.</li>
+                        <li><strong>Allowed →</strong> Assess impact. May need to notify data owners, legal, or regulators depending on data type.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

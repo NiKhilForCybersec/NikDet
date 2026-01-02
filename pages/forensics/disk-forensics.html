@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disk Forensics | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Digital Forensics</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="df-nav"><i class="fas fa-search"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="df-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="evidence-collection.html">Evidence Collection</a></li>
+                    <li><a href="memory-forensics.html">Memory Forensics</a></li>
+                    <li><a href="disk-forensics.html" class="active">Disk Forensics</a></li>
+                    <li><a href="timeline-analysis.html">Timeline Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Forensics</a><span class="separator">/</span><span>Disk Forensics</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-hdd" style="color: var(--accent-warning);"></i> Disk Forensics</h1>
+                <p class="lead">Analyze disk images and file systems to uncover evidence of attacker activity.</p>
+            </div>
+            <div class="content">
+                <h2>Key Windows Artifacts</h2>
+                <p>Windows systems contain rich forensic artifacts that reveal program execution, file access, and user activity.</p>
+
+                <h3>Program Execution Artifacts</h3>
+                <table>
+                    <thead><tr><th>Artifact</th><th>Location</th><th>Information</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Prefetch</strong></td>
+                            <td>C:\Windows\Prefetch\</td>
+                            <td>Program name, run count, last 8 run times, files/directories accessed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Amcache</strong></td>
+                            <td>C:\Windows\AppCompat\Programs\Amcache.hve</td>
+                            <td>Program path, size, hash, first execution time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Shimcache</strong></td>
+                            <td>SYSTEM hive</td>
+                            <td>Program path, last modified time, execution flag</td>
+                        </tr>
+                        <tr>
+                            <td><strong>BAM/DAM</strong></td>
+                            <td>SYSTEM hive</td>
+                            <td>Background Activity Moderator - execution times</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UserAssist</strong></td>
+                            <td>NTUSER.DAT</td>
+                            <td>Programs executed via Explorer, run count, focus time</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>File System Artifacts</h3>
+                <table>
+                    <thead><tr><th>Artifact</th><th>Location</th><th>Information</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>$MFT</strong></td>
+                            <td>Root of NTFS volume</td>
+                            <td>All file metadata, timestamps, file paths</td>
+                        </tr>
+                        <tr>
+                            <td><strong>$UsnJrnl</strong></td>
+                            <td>$Extend\$UsnJrnl:$J</td>
+                            <td>File system changes journal</td>
+                        </tr>
+                        <tr>
+                            <td><strong>$I30 (Index)</strong></td>
+                            <td>Directory entries</td>
+                            <td>Directory indexes, can reveal deleted files</td>
+                        </tr>
+                        <tr>
+                            <td><strong>$LogFile</strong></td>
+                            <td>Root of NTFS volume</td>
+                            <td>Transaction log for file system operations</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Registry Artifacts</h3>
+                <table>
+                    <thead><tr><th>Hive</th><th>Location</th><th>Key Artifacts</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SAM</strong></td>
+                            <td>C:\Windows\System32\config\SAM</td>
+                            <td>Local user accounts, password hashes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SYSTEM</strong></td>
+                            <td>C:\Windows\System32\config\SYSTEM</td>
+                            <td>Services, drivers, Shimcache, USB history</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SOFTWARE</strong></td>
+                            <td>C:\Windows\System32\config\SOFTWARE</td>
+                            <td>Installed software, Run keys</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NTUSER.DAT</strong></td>
+                            <td>C:\Users\{user}\NTUSER.DAT</td>
+                            <td>UserAssist, recent docs, typed paths</td>
+                        </tr>
+                        <tr>
+                            <td><strong>USRCLASS.DAT</strong></td>
+                            <td>C:\Users\{user}\AppData\Local\Microsoft\Windows\UsrClass.dat</td>
+                            <td>Shellbags - folder access history</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Autopsy Analysis</h2>
+                <p>Autopsy is a free, open-source digital forensics platform.</p>
+
+                <h3>Getting Started</h3>
+                <ol>
+                    <li>Create new case</li>
+                    <li>Add data source (disk image)</li>
+                    <li>Select ingest modules (keyword search, hash lookup, etc.)</li>
+                    <li>Wait for ingest to complete</li>
+                    <li>Analyze results in views</li>
+                </ol>
+
+                <h3>Key Autopsy Views</h3>
+                <table>
+                    <thead><tr><th>View</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Data Artifacts</strong></td><td>Parsed artifacts like web history, recent docs</td></tr>
+                        <tr><td><strong>OS Accounts</strong></td><td>User accounts found on the system</td></tr>
+                        <tr><td><strong>Web Artifacts</strong></td><td>Browser history, downloads, bookmarks</td></tr>
+                        <tr><td><strong>Timeline</strong></td><td>Events sorted chronologically</td></tr>
+                        <tr><td><strong>Deleted Files</strong></td><td>Recovered deleted files</td></tr>
+                        <tr><td><strong>Keyword Hits</strong></td><td>Search results from keyword lists</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Registry Analysis</h2>
+                <h3>RegRipper</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Run all plugins for a hive</span>
+rip.exe -r SYSTEM -f system > system_report.txt
+rip.exe -r SOFTWARE -f software > software_report.txt
+rip.exe -r NTUSER.DAT -f ntuser > ntuser_report.txt
+
+<span style="color: #6aa3f7;"># Run specific plugin</span>
+rip.exe -r SYSTEM -p services
+rip.exe -r SOFTWARE -p run
+rip.exe -r NTUSER.DAT -p userassist</pre>
+                </div>
+
+                <h3>Key Registry Locations</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Persistence - Run Keys</span>
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+
+<span style="color: #6aa3f7;"># Services</span>
+HKLM\SYSTEM\CurrentControlSet\Services
+
+<span style="color: #6aa3f7;"># USB History</span>
+HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR
+HKLM\SYSTEM\MountedDevices
+
+<span style="color: #6aa3f7;"># Recent Files</span>
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs
+
+<span style="color: #6aa3f7;"># Typed URLs</span>
+HKCU\SOFTWARE\Microsoft\Internet Explorer\TypedURLs
+HKCU\SOFTWARE\Microsoft\Edge\TypedURLs
+
+<span style="color: #6aa3f7;"># Last Shutdown</span>
+HKLM\SYSTEM\CurrentControlSet\Control\Windows\ShutdownTime</pre>
+                </div>
+
+                <h2>MFT Analysis</h2>
+                <p>The Master File Table contains metadata for every file on an NTFS volume.</p>
+
+                <h3>MFT Timestamps</h3>
+                <table>
+                    <thead><tr><th>Timestamp</th><th>What It Records</th><th>Updated By</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Created (B)</strong></td><td>When file was created</td><td>File creation</td></tr>
+                        <tr><td><strong>Modified (M)</strong></td><td>When content changed</td><td>Write operations</td></tr>
+                        <tr><td><strong>Accessed (A)</strong></td><td>When file was read</td><td>Read operations (often disabled)</td></tr>
+                        <tr><td><strong>Entry Modified (E)</strong></td><td>When MFT record changed</td><td>Any metadata change</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>MFTECmd Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Parse $MFT to CSV</span>
+MFTECmd.exe -f $MFT --csv output_folder --csvf mft_output.csv
+
+<span style="color: #6aa3f7;"># Parse $J (USN Journal)</span>
+MFTECmd.exe -f $J --csv output_folder --csvf usn_output.csv</pre>
+                </div>
+
+                <h2>Prefetch Analysis</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># PECmd - Parse Prefetch</span>
+PECmd.exe -d C:\Windows\Prefetch --csv output_folder
+
+<span style="color: #6aa3f7;"># Output includes:</span>
+# - Executable name
+# - Run count
+# - Last 8 run times
+# - Files and directories accessed</pre>
+                </div>
+
+                <h3>What Prefetch Reveals</h3>
+                <ul>
+                    <li><strong>Execution proof:</strong> Prefetch file exists = program ran</li>
+                    <li><strong>Run count:</strong> How many times it executed</li>
+                    <li><strong>Last run time:</strong> When it last executed</li>
+                    <li><strong>Files accessed:</strong> What files/DLLs the program used</li>
+                </ul>
+
+                <h2>Browser Forensics</h2>
+                <h3>Browser History Locations</h3>
+                <table>
+                    <thead><tr><th>Browser</th><th>History Location</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Chrome</strong></td><td>%USERPROFILE%\AppData\Local\Google\Chrome\User Data\Default\History</td></tr>
+                        <tr><td><strong>Edge</strong></td><td>%USERPROFILE%\AppData\Local\Microsoft\Edge\User Data\Default\History</td></tr>
+                        <tr><td><strong>Firefox</strong></td><td>%USERPROFILE%\AppData\Roaming\Mozilla\Firefox\Profiles\*.default\places.sqlite</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Browser Data to Examine</h3>
+                <ul>
+                    <li><strong>History:</strong> Sites visited, timestamps</li>
+                    <li><strong>Downloads:</strong> Files downloaded, source URLs</li>
+                    <li><strong>Cache:</strong> Cached web content</li>
+                    <li><strong>Cookies:</strong> Session tokens, authentication</li>
+                    <li><strong>Form data:</strong> Submitted form values</li>
+                </ul>
+
+                <h2>Eric Zimmerman Tools</h2>
+                <p>Essential free tools for Windows forensics:</p>
+                <table>
+                    <thead><tr><th>Tool</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>MFTECmd</strong></td><td>Parse $MFT, $J, $Boot</td></tr>
+                        <tr><td><strong>PECmd</strong></td><td>Parse Prefetch files</td></tr>
+                        <tr><td><strong>RECmd</strong></td><td>Parse Registry hives</td></tr>
+                        <tr><td><strong>ShellBags Explorer</strong></td><td>Parse shellbags</td></tr>
+                        <tr><td><strong>JLECmd</strong></td><td>Parse Jump Lists</td></tr>
+                        <tr><td><strong>LECmd</strong></td><td>Parse LNK files</td></tr>
+                        <tr><td><strong>Timeline Explorer</strong></td><td>View CSV timelines</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Security | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Cloud Security</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="cs-nav"><i class="fas fa-cloud"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="cs-nav">
+                    <li><a href="index.html" class="active">Overview</a></li>
+                    <li><a href="azure-security.html">Azure Security</a></li>
+                    <li><a href="aws-security.html">AWS Security</a></li>
+                    <li><a href="m365-security.html">Microsoft 365</a></li>
+                    <li><a href="cloud-detection.html">Cloud Detection</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Cloud Security</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-cloud" style="color: var(--accent-secondary);"></i> Cloud Security Monitoring</h1>
+                <p class="lead">Detect and respond to threats across cloud infrastructure and SaaS applications.</p>
+            </div>
+            <div class="content">
+                <h2>Cloud Security Challenges</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: linear-gradient(135deg, rgba(240,112,112,0.15), transparent); border: 1px solid rgba(240,112,112,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #f07070; margin-top: 0;"><i class="fas fa-eye-slash"></i> Reduced Visibility</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">No network tap, different log formats, shared responsibility</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(240,183,86,0.15), transparent); border: 1px solid rgba(240,183,86,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #f0b756; margin-top: 0;"><i class="fas fa-key"></i> Identity-Centric</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Identity is the new perimeter; credential attacks dominate</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(106,163,247,0.15), transparent); border: 1px solid rgba(106,163,247,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #6aa3f7; margin-top: 0;"><i class="fas fa-cogs"></i> API-First</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Everything is an API; monitor API activity for abuse</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(92,224,196,0.15), transparent); border: 1px solid rgba(92,224,196,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #5ce0c4; margin-top: 0;"><i class="fas fa-tachometer-alt"></i> Scale & Speed</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Resources spin up/down rapidly; attackers move fast</p>
+                    </div>
+                </div>
+
+                <h2>Shared Responsibility Model</h2>
+                <table>
+                    <thead><tr><th>Model</th><th>Customer Responsibility</th><th>Provider Responsibility</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>IaaS</strong> (VMs)</td>
+                            <td>OS, apps, data, identity, network config</td>
+                            <td>Physical, hypervisor, network fabric</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PaaS</strong> (App Services)</td>
+                            <td>Apps, data, identity</td>
+                            <td>Physical, OS, runtime, network</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SaaS</strong> (M365, Salesforce)</td>
+                            <td>Data, identity, client devices</td>
+                            <td>Everything else</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Cloud Log Sources</h2>
+                <h3>Azure</h3>
+                <table>
+                    <thead><tr><th>Log Source</th><th>Contents</th><th>Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Azure AD Sign-in Logs</strong></td><td>Authentication events</td><td>Credential attacks, MFA bypass</td></tr>
+                        <tr><td><strong>Azure AD Audit Logs</strong></td><td>Directory changes</td><td>Persistence, privilege escalation</td></tr>
+                        <tr><td><strong>Azure Activity Log</strong></td><td>Control plane operations</td><td>Resource tampering, config changes</td></tr>
+                        <tr><td><strong>Azure Resource Logs</strong></td><td>Data plane operations</td><td>Data access, exfiltration</td></tr>
+                        <tr><td><strong>NSG Flow Logs</strong></td><td>Network flows</td><td>Lateral movement, data exfil</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>AWS</h3>
+                <table>
+                    <thead><tr><th>Log Source</th><th>Contents</th><th>Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>CloudTrail</strong></td><td>API calls</td><td>All management activity</td></tr>
+                        <tr><td><strong>GuardDuty</strong></td><td>Threat detection</td><td>Built-in threat detection</td></tr>
+                        <tr><td><strong>VPC Flow Logs</strong></td><td>Network flows</td><td>Network anomalies</td></tr>
+                        <tr><td><strong>S3 Access Logs</strong></td><td>Bucket access</td><td>Data access, exfiltration</td></tr>
+                        <tr><td><strong>IAM Access Analyzer</strong></td><td>Permission analysis</td><td>Excessive permissions</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Microsoft 365</h3>
+                <table>
+                    <thead><tr><th>Log Source</th><th>Contents</th><th>Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Unified Audit Log</strong></td><td>All M365 activity</td><td>Comprehensive visibility</td></tr>
+                        <tr><td><strong>Exchange Message Trace</strong></td><td>Email flow</td><td>Phishing, BEC</td></tr>
+                        <tr><td><strong>SharePoint/OneDrive</strong></td><td>File activity</td><td>Data exfiltration</td></tr>
+                        <tr><td><strong>Teams</strong></td><td>Collaboration activity</td><td>Data sharing</td></tr>
+                        <tr><td><strong>Defender for Cloud Apps</strong></td><td>SaaS activity</td><td>Shadow IT, anomalies</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Common Cloud Attack Patterns</h2>
+                <table>
+                    <thead><tr><th>Attack</th><th>Description</th><th>Detection Approach</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Credential Stuffing</strong></td>
+                            <td>Automated login attempts with stolen creds</td>
+                            <td>Failed logins from multiple IPs, unusual locations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Password Spray</strong></td>
+                            <td>Few attempts per account, many accounts</td>
+                            <td>Distributed failures across accounts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MFA Fatigue</strong></td>
+                            <td>Spam MFA prompts until user accepts</td>
+                            <td>Multiple MFA prompts in short time</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Token Theft</strong></td>
+                            <td>Steal session tokens to bypass MFA</td>
+                            <td>Impossible travel, device anomalies</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Privilege Escalation</strong></td>
+                            <td>Gain higher privileges via role assignment</td>
+                            <td>Role assignments to unexpected users</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Exfiltration</strong></td>
+                            <td>Download or share sensitive data</td>
+                            <td>Large downloads, external sharing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Resource Hijacking</strong></td>
+                            <td>Create resources for cryptomining</td>
+                            <td>Unexpected resource creation</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Cloud MITRE ATT&CK</h2>
+                <p>Key ATT&CK techniques for cloud environments:</p>
+                <table>
+                    <thead><tr><th>Tactic</th><th>Technique</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Initial Access</strong></td><td>T1078 - Valid Accounts</td><td>Compromised credentials</td></tr>
+                        <tr><td><strong>Persistence</strong></td><td>T1098 - Account Manipulation</td><td>Add credentials to service principal</td></tr>
+                        <tr><td><strong>Privilege Escalation</strong></td><td>T1098.001 - Additional Cloud Credentials</td><td>Add keys to compromised account</td></tr>
+                        <tr><td><strong>Defense Evasion</strong></td><td>T1562.008 - Disable Cloud Logs</td><td>Turn off CloudTrail</td></tr>
+                        <tr><td><strong>Credential Access</strong></td><td>T1528 - Steal Application Access Token</td><td>OAuth token theft</td></tr>
+                        <tr><td><strong>Discovery</strong></td><td>T1580 - Cloud Infrastructure Discovery</td><td>Enumerate cloud resources</td></tr>
+                        <tr><td><strong>Collection</strong></td><td>T1530 - Data from Cloud Storage</td><td>Access S3 buckets</td></tr>
+                        <tr><td><strong>Exfiltration</strong></td><td>T1537 - Transfer Data to Cloud Account</td><td>Copy to attacker's account</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Detection Priorities</h2>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-bullseye"></i> Focus Areas</div>
+                    <ol style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Identity:</strong> Anomalous logins, MFA bypass, impossible travel</li>
+                        <li><strong>Privilege:</strong> Role changes, permission grants, admin actions</li>
+                        <li><strong>Configuration:</strong> Security settings changes, policy modifications</li>
+                        <li><strong>Data:</strong> Large downloads, external sharing, unusual access</li>
+                        <li><strong>Resources:</strong> Unexpected creation, modification, deletion</li>
+                    </ol>
+                </div>
+
+                <h2>Quick Detection Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Azure AD: Risky Sign-ins</span>
+SigninLogs
+| where RiskLevelDuringSignIn in ("high", "medium")
+| project TimeGenerated, UserPrincipalName, Location, 
+    RiskLevelDuringSignIn, ResultType, AppDisplayName
+
+<span style="color: #6aa3f7;">// Azure AD: New Global Admin</span>
+AuditLogs
+| where OperationName == "Add member to role"
+| where TargetResources[0].modifiedProperties[0].newValue contains "Global Administrator"
+
+<span style="color: #6aa3f7;">// AWS: Root Account Usage (CloudTrail)</span>
+CloudTrail
+| where UserIdentityType == "Root"
+| project EventTime, EventName, SourceIPAddress, UserAgent
+
+<span style="color: #6aa3f7;">// M365: Mass File Download</span>
+OfficeActivity
+| where Operation in ("FileDownloaded", "FileSyncDownloadedFull")
+| summarize DownloadCount = count() by UserId, bin(TimeGenerated, 1h)
+| where DownloadCount > 100</pre>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

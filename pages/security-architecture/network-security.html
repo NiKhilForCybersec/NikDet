@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Security | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Security Architecture</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="sa-nav"><i class="fas fa-sitemap"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="sa-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="defense-in-depth.html">Defense in Depth</a></li>
+                    <li><a href="zero-trust.html">Zero Trust</a></li>
+                    <li><a href="network-security.html" class="active">Network Security</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Security Architecture</a><span class="separator">/</span><span>Network Security</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-network-wired" style="color: var(--accent-secondary);"></i> Network Security</h1>
+                <p class="lead">Design and monitor network infrastructure to detect and prevent threats.</p>
+            </div>
+            <div class="content">
+                <h2>Network Zones</h2>
+                <table>
+                    <thead><tr><th>Zone</th><th>Description</th><th>Security Level</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Internet</strong></td><td>Public, untrusted network</td><td style="color: #f07070;">Untrusted</td></tr>
+                        <tr><td><strong>DMZ</strong></td><td>Public-facing servers</td><td style="color: #f0b756;">Semi-trusted</td></tr>
+                        <tr><td><strong>Internal/Corporate</strong></td><td>General user network</td><td style="color: #5ce0c4;">Trusted</td></tr>
+                        <tr><td><strong>Restricted</strong></td><td>Sensitive systems (DC, finance)</td><td style="color: #6aa3f7;">Highly trusted</td></tr>
+                        <tr><td><strong>Management</strong></td><td>Admin access, OOB management</td><td style="color: #a78bf6;">Most trusted</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network Security Controls</h2>
+                <table>
+                    <thead><tr><th>Control</th><th>Function</th><th>Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Firewall</strong></td>
+                            <td>Filter traffic by rules</td>
+                            <td>Denied connections, policy violations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IDS/IPS</strong></td>
+                            <td>Detect/block known attacks</td>
+                            <td>Signature-based threat detection</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NDR</strong></td>
+                            <td>Behavioral network analysis</td>
+                            <td>Anomalies, C2, lateral movement</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Web Proxy</strong></td>
+                            <td>Filter web traffic</td>
+                            <td>Malicious URLs, data exfiltration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DNS Security</strong></td>
+                            <td>Filter DNS queries</td>
+                            <td>DGA, DNS tunneling, malicious domains</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NAC</strong></td>
+                            <td>Control network access</td>
+                            <td>Unauthorized devices</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Segmentation Strategies</h2>
+
+                <h3>VLAN Segmentation</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Common VLAN Structure:</span>
+VLAN 10  - Management (switches, routers, firewalls)
+VLAN 20  - Servers (production)
+VLAN 30  - User Workstations
+VLAN 40  - VoIP
+VLAN 50  - Guest WiFi
+VLAN 100 - DMZ
+VLAN 200 - Restricted (PCI, HIPAA data)</pre>
+                </div>
+
+                <h3>Microsegmentation</h3>
+                <p>Fine-grained segmentation at the workload level:</p>
+                <ul>
+                    <li>Each application/workload in its own segment</li>
+                    <li>Policy based on identity, not IP</li>
+                    <li>East-west traffic visibility</li>
+                    <li>Software-defined (VMware NSX, Illumio, etc.)</li>
+                </ul>
+
+                <h2>Common Ports to Monitor</h2>
+                <table>
+                    <thead><tr><th>Port</th><th>Service</th><th>Why Monitor</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>22</strong></td><td>SSH</td><td>Remote access, lateral movement</td></tr>
+                        <tr><td><strong>23</strong></td><td>Telnet</td><td>Legacy, unencrypted - should be blocked</td></tr>
+                        <tr><td><strong>25</strong></td><td>SMTP</td><td>Email, potential relay abuse</td></tr>
+                        <tr><td><strong>53</strong></td><td>DNS</td><td>DNS tunneling, C2</td></tr>
+                        <tr><td><strong>80/443</strong></td><td>HTTP/HTTPS</td><td>Web traffic, C2</td></tr>
+                        <tr><td><strong>135</strong></td><td>RPC</td><td>Windows exploitation</td></tr>
+                        <tr><td><strong>139/445</strong></td><td>SMB</td><td>Lateral movement, ransomware</td></tr>
+                        <tr><td><strong>3389</strong></td><td>RDP</td><td>Remote access, lateral movement</td></tr>
+                        <tr><td><strong>5985/5986</strong></td><td>WinRM</td><td>Remote management, lateral movement</td></tr>
+                        <tr><td><strong>4444</strong></td><td>Metasploit default</td><td>Common malware port</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network Detection Opportunities</h2>
+                <table>
+                    <thead><tr><th>Indicator</th><th>What It Suggests</th><th>Detection Method</th></tr></thead>
+                    <tbody>
+                        <tr><td>Port scan activity</td><td>Reconnaissance</td><td>Firewall logs, IDS</td></tr>
+                        <tr><td>Beaconing traffic</td><td>C2 communication</td><td>NDR, flow analysis</td></tr>
+                        <tr><td>DNS to rare TLDs</td><td>Potential C2 or malware</td><td>DNS logs, DNS security</td></tr>
+                        <tr><td>Large outbound transfers</td><td>Data exfiltration</td><td>NetFlow, proxy logs</td></tr>
+                        <tr><td>SMB to unusual hosts</td><td>Lateral movement</td><td>Firewall, NDR</td></tr>
+                        <tr><td>RDP from unexpected sources</td><td>Lateral movement</td><td>Firewall, event logs</td></tr>
+                        <tr><td>Traffic to known bad IPs</td><td>Active compromise</td><td>Threat intel feeds</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network Log Sources for SIEM</h2>
+                <ul>
+                    <li><strong>Firewall logs:</strong> Allowed/denied connections, NAT translations</li>
+                    <li><strong>Proxy logs:</strong> Web requests, URLs, user-agents</li>
+                    <li><strong>DNS logs:</strong> Queries and responses</li>
+                    <li><strong>NetFlow/IPFIX:</strong> Connection metadata</li>
+                    <li><strong>IDS/IPS alerts:</strong> Signature matches</li>
+                    <li><strong>VPN logs:</strong> Remote access</li>
+                    <li><strong>DHCP logs:</strong> IP assignments</li>
+                </ul>
+
+                <h2>Example Firewall Rules</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Block all by default</span>
+deny ip any any log
+
+<span style="color: #6aa3f7;"># Allow DNS to internal DNS servers only</span>
+permit udp internal-users internal-dns eq 53
+
+<span style="color: #6aa3f7;"># Allow HTTP/HTTPS through proxy</span>
+permit tcp internal-users proxy-server eq 3128
+
+<span style="color: #6aa3f7;"># Block direct internet access</span>
+deny tcp internal-users any eq 80 log
+deny tcp internal-users any eq 443 log
+
+<span style="color: #6aa3f7;"># Block SMB to internet (ransomware prevention)</span>
+deny tcp any external eq 445 log
+deny tcp external any eq 445 log
+
+<span style="color: #6aa3f7;"># Allow RDP only to jump servers</span>
+permit tcp admins jump-servers eq 3389
+deny tcp any any eq 3389 log</pre>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

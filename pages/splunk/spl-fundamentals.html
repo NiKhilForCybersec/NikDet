@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL Fundamentals | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="home-nav"><i class="fas fa-home"></i><span>Home</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="home-nav"><li><a href="../../index.html">Introduction</a></li></ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href='index.html'>Splunk</a><span class='separator'>/</span><span>SPL Fundamentals</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-search-dollar" style="color: var(--color-splunk);"></i> SPL Fundamentals</h1>
+            </div>
+            <div class="content">
+<p class="lead">Learn Search Processing Language (SPL) fundamentals for security analysis in Splunk.</p>
+
+<h2>Basic Search Structure</h2>
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> SPL</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">| Basic structure</span>
+<span class="keyword">index</span>=<span class="string">security</span> <span class="keyword">sourcetype</span>=<span class="string">WinEventLog:Security</span> earliest=-24h
+| <span class="keyword">search</span> EventCode=4625
+| <span class="function">stats</span> <span class="function">count</span> <span class="keyword">by</span> Account_Name
+| <span class="function">sort</span> - count</code></pre>
+    </div>
+</div>
+
+<h2>Searching Events</h2>
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Search Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">| Search by index and sourcetype</span>
+<span class="keyword">index</span>=<span class="string">security</span> <span class="keyword">sourcetype</span>=<span class="string">WinEventLog:Security</span>
+
+<span class="comment">| Search with field values</span>
+<span class="keyword">index</span>=<span class="string">security</span> EventCode=4624 Logon_Type=10
+
+<span class="comment">| Search with wildcards</span>
+<span class="keyword">index</span>=<span class="string">security</span> src_ip=192.168.1.*
+
+<span class="comment">| Search with boolean operators</span>
+<span class="keyword">index</span>=<span class="string">security</span> (EventCode=4624 OR EventCode=4625) NOT Account_Name="SYSTEM"
+
+<span class="comment">| Time ranges</span>
+<span class="keyword">index</span>=<span class="string">security</span> earliest=-7d latest=-1d
+<span class="keyword">index</span>=<span class="string">security</span> earliest="01/01/2025:00:00:00"</code></pre>
+    </div>
+</div>
+
+<h2>Essential Commands</h2>
+<table>
+    <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr><td><code>stats</code></td><td>Aggregate data</td><td><code>stats count by src_ip</code></td></tr>
+        <tr><td><code>table</code></td><td>Select fields</td><td><code>table _time, src_ip, dest_ip</code></td></tr>
+        <tr><td><code>sort</code></td><td>Order results</td><td><code>sort - count</code></td></tr>
+        <tr><td><code>head/tail</code></td><td>Limit results</td><td><code>head 100</code></td></tr>
+        <tr><td><code>dedup</code></td><td>Remove duplicates</td><td><code>dedup src_ip</code></td></tr>
+        <tr><td><code>eval</code></td><td>Calculate fields</td><td><code>eval MB=bytes/1024/1024</code></td></tr>
+        <tr><td><code>rex</code></td><td>Extract with regex</td><td><code>rex field=_raw "IP=(?<ip>\d+\.\d+)"</code></td></tr>
+        <tr><td><code>rename</code></td><td>Rename fields</td><td><code>rename src_ip as SourceIP</code></td></tr>
+    </tbody>
+</table>
+
+<h2>Stats Functions</h2>
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Stats Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">| Count events</span>
+| <span class="function">stats</span> <span class="function">count</span>
+
+<span class="comment">| Count by field</span>
+| <span class="function">stats</span> <span class="function">count</span> <span class="keyword">by</span> src_ip
+
+<span class="comment">| Multiple aggregations</span>
+| <span class="function">stats</span> <span class="function">count</span> <span class="keyword">as</span> TotalEvents
+    <span class="function">dc</span>(src_ip) <span class="keyword">as</span> UniqueIPs
+    <span class="function">values</span>(dest_port) <span class="keyword">as</span> Ports
+    <span class="keyword">by</span> dest_ip
+
+<span class="comment">| Time-based stats</span>
+| <span class="function">timechart</span> span=1h <span class="function">count</span> <span class="keyword">by</span> EventCode</code></pre>
+    </div>
+</div>
+</div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

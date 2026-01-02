@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Investigation Playbook | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../../index.html" class="nav-brand">
+            <div class="brand-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div>
+        </a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Investigation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="nav-home"><i class="fas fa-home"></i><span>Navigation</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="nav-home">
+                    <li><a href="../../../index.html">Home</a></li>
+                    <li><a href="../index.html">All Playbooks</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="inv-nav"><i class="fas fa-search"></i><span>Investigation</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="inv-nav">
+                    <li><a href="phishing.html" class="active">Phishing</a></li>
+                    <li><a href="malware.html">Malware</a></li>
+                    <li><a href="account-compromise.html">Account Compromise</a></li>
+                    <li><a href="ransomware.html">Ransomware</a></li>
+                    <li><a href="bec.html">Business Email Compromise</a></li>
+                    <li><a href="data-exfiltration.html">Data Exfiltration</a></li>
+                    <li><a href="insider-threat.html">Insider Threat</a></li>
+                    <li><a href="lateral-movement.html">Lateral Movement</a></li>
+                    <li><a href="c2-detection.html">C2 Detection</a></li>
+                    <li><a href="privilege-escalation.html">Privilege Escalation</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header collapsed" data-toggle="toc-nav"><i class="fas fa-list"></i><span>On This Page</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links" id="toc-nav">
+                    <li><a href="#overview">Overview</a></li>
+                    <li><a href="#when-to-use">When to Use</a></li>
+                    <li><a href="#prerequisites">Prerequisites</a></li>
+                    <li><a href="#initial-triage">Initial Triage</a></li>
+                    <li><a href="#email-analysis">Email Analysis</a></li>
+                    <li><a href="#ioc-extraction">IOC Extraction</a></li>
+                    <li><a href="#scope-determination">Scope Determination</a></li>
+                    <li><a href="#user-interaction">User Interaction Analysis</a></li>
+                    <li><a href="#credential-check">Credential Compromise Check</a></li>
+                    <li><a href="#malware-check">Malware Delivery Check</a></li>
+                    <li><a href="#decision-tree">Decision Tree</a></li>
+                    <li><a href="#containment">Containment Actions</a></li>
+                    <li><a href="#queries">Investigation Queries</a></li>
+                    <li><a href="#documentation">Documentation</a></li>
+                    <li><a href="#common-mistakes">Common Mistakes</a></li>
+                    <li><a href="#faqs">FAQs</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <a href="../index.html#investigation">Investigation</a><span class="separator">/</span>
+                <span>Phishing</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">PB-INV-001</div>
+                <h1>Phishing Investigation Playbook</h1>
+                <p class="lead">Complete, step-by-step investigation procedure for reported or detected phishing emails. Covers email header analysis, IOC extraction, scope determination, user impact assessment, and escalation criteria.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2 / L3</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">30-90 min</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Last Updated</span><span class="playbook-meta-value">2025-01-02</span></div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                    <span class="mitre-tag">T1566.001</span>
+                    <span class="mitre-tag">T1566.002</span>
+                    <span class="mitre-tag">T1566.003</span>
+                    <span class="mitre-tag">T1598</span>
+                    <span class="mitre-tag">T1078</span>
+                    <span class="mitre-tag">T1114</span>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- OVERVIEW -->
+                <h2 id="overview">Overview</h2>
+                <p>Phishing is the most common initial access vector, responsible for over 90% of successful breaches. This playbook provides a systematic, thorough approach to investigating phishing incidents to determine the full scope of impact and prevent further compromise.</p>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> What This Playbook Covers</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>User-reported suspicious emails</li>
+                        <li>Email gateway detected phishing</li>
+                        <li>Credential harvesting attempts</li>
+                        <li>Malware delivery via email</li>
+                        <li>Spearphishing campaigns</li>
+                        <li>Internal phishing (compromised account sending)</li>
+                    </ul>
+                </div>
+
+                <h3>Objectives</h3>
+                <p>By the end of this investigation, you will have determined:</p>
+                <ol>
+                    <li><strong>Validity</strong> - Is this actually a phishing email or false positive?</li>
+                    <li><strong>Type</strong> - Credential harvesting, malware delivery, or reconnaissance?</li>
+                    <li><strong>Scope</strong> - How many users received this email?</li>
+                    <li><strong>Impact</strong> - Did anyone interact with it? Were credentials stolen?</li>
+                    <li><strong>IOCs</strong> - What indicators can be blocked organization-wide?</li>
+                    <li><strong>Attribution</strong> - Is this a targeted attack or spray campaign?</li>
+                </ol>
+
+                <!-- WHEN TO USE -->
+                <h2 id="when-to-use">When to Use This Playbook</h2>
+                <table>
+                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th></tr></thead>
+                    <tbody>
+                        <tr><td>User reports suspicious email via phishing button</td><td>User Report</td><td>Medium</td></tr>
+                        <tr><td>User reports suspicious email to helpdesk</td><td>User Report</td><td>Medium</td></tr>
+                        <tr><td>Email gateway blocks suspicious email</td><td>Email Security</td><td>Low-Medium</td></tr>
+                        <tr><td>User clicked link flagged by SafeLinks/URL protection</td><td>Email Security</td><td>High</td></tr>
+                        <tr><td>User reports entering credentials on suspicious site</td><td>User Report</td><td>Critical</td></tr>
+                        <tr><td>Multiple users report same suspicious email</td><td>User Report</td><td>High</td></tr>
+                        <tr><td>SIEM alert for phishing indicators</td><td>SIEM</td><td>Medium-High</td></tr>
+                        <tr><td>Threat intel indicates active phishing campaign</td><td>Threat Intel</td><td>High</td></tr>
+                        <tr><td>Executive/VIP receives targeted email</td><td>Any</td><td>High</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Do NOT Use This Playbook For</div>
+                    <ul style="margin: 0.3rem 0 0 1rem;">
+                        <li><strong>Spam</strong> - Unwanted marketing, use spam filters</li>
+                        <li><strong>Scam calls/texts</strong> - Use separate vishing/smishing playbooks</li>
+                        <li><strong>Known good emails</strong> - Legitimate vendor communications</li>
+                    </ul>
+                </div>
+
+                <!-- PREREQUISITES -->
+                <h2 id="prerequisites">Prerequisites</h2>
+                
+                <h3>Required Access</h3>
+                <table>
+                    <thead><tr><th>System</th><th>Access Level</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>Microsoft 365 Security Center</td><td>Security Reader+</td><td>Email trace, threat explorer</td></tr>
+                        <tr><td>Exchange Admin Center</td><td>Compliance Management</td><td>Message trace, content search</td></tr>
+                        <tr><td>Microsoft Sentinel / Splunk</td><td>Analyst</td><td>Query logs, correlate events</td></tr>
+                        <tr><td>Azure AD / Entra ID</td><td>Security Reader</td><td>Sign-in logs, risky users</td></tr>
+                        <tr><td>EDR (Defender/CrowdStrike/etc)</td><td>Analyst</td><td>Endpoint activity</td></tr>
+                        <tr><td>Threat Intelligence Platform</td><td>Analyst</td><td>IOC reputation checks</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Required Log Sources</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-database"></i> Microsoft 365 / Sentinel Tables</div>
+                    <ul style="margin: 0.3rem 0 0 1rem; font-family: var(--font-mono); font-size: 0.85rem;">
+                        <li><code>EmailEvents</code> - Email metadata (sender, recipient, subject)</li>
+                        <li><code>EmailUrlInfo</code> - URLs contained in emails</li>
+                        <li><code>EmailAttachmentInfo</code> - Attachment details and hashes</li>
+                        <li><code>UrlClickEvents</code> - SafeLinks click tracking</li>
+                        <li><code>EmailPostDeliveryEvents</code> - Post-delivery actions (ZAP)</li>
+                        <li><code>SigninLogs</code> - Authentication events</li>
+                        <li><code>AADNonInteractiveUserSignInLogs</code> - Non-interactive auth</li>
+                        <li><code>OfficeActivity</code> - O365 activity including inbox rules</li>
+                        <li><code>CloudAppEvents</code> - Cloud app activity</li>
+                        <li><code>DeviceProcessEvents</code> - Process execution on endpoints</li>
+                        <li><code>DeviceNetworkEvents</code> - Network connections from endpoints</li>
+                        <li><code>DeviceFileEvents</code> - File creation/modification</li>
+                    </ul>
+                </div>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-database"></i> Splunk Sourcetypes</div>
+                    <ul style="margin: 0.3rem 0 0 1rem; font-family: var(--font-mono); font-size: 0.85rem;">
+                        <li><code>ms:o365:message</code> - Email events</li>
+                        <li><code>ms:aad:signin</code> - Azure AD sign-ins</li>
+                        <li><code>ms:aad:audit</code> - Azure AD audit logs</li>
+                        <li><code>ms:defender:advanced</code> - Defender for Endpoint</li>
+                        <li><code>stream:http</code> - Web proxy/HTTP traffic</li>
+                        <li><code>pan:traffic</code> - Palo Alto firewall</li>
+                    </ul>
+                </div>
+
+                <h3>Tools You'll Need</h3>
+                <table>
+                    <thead><tr><th>Tool</th><th>Purpose</th><th>Free Alternative</th></tr></thead>
+                    <tbody>
+                        <tr><td>VirusTotal</td><td>Multi-engine scan of URLs, domains, files</td><td>VirusTotal (free tier)</td></tr>
+                        <tr><td>URLScan.io</td><td>Safe URL rendering and analysis</td><td>Free</td></tr>
+                        <tr><td>AbuseIPDB</td><td>IP reputation lookup</td><td>Free tier available</td></tr>
+                        <tr><td>MXToolbox</td><td>Email header analysis</td><td>Free</td></tr>
+                        <tr><td>Hybrid Analysis</td><td>Malware sandbox</td><td>Free</td></tr>
+                        <tr><td>ANY.RUN</td><td>Interactive malware sandbox</td><td>Free tier</td></tr>
+                        <tr><td>PhishTank</td><td>Phishing URL database</td><td>Free</td></tr>
+                        <tr><td>Browserling</td><td>Safe browser to visit suspicious URLs</td><td>Free</td></tr>
+                        <tr><td>CyberChef</td><td>Decode obfuscated content</td><td>Free</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- INITIAL TRIAGE -->
+                <h2 id="initial-triage">Step 1: Initial Triage (5 Minutes)</h2>
+                <p>Before deep investigation, quickly assess whether this needs immediate escalation or standard processing.</p>
+
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1.1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Gather Basic Information</div>
+                            <div class="step-description">Collect the essentials from the report:</div>
+                            <table>
+                                <thead><tr><th>Field</th><th>Where to Find It</th><th>Why It Matters</th></tr></thead>
+                                <tbody>
+                                    <tr><td><strong>Reporter Name</strong></td><td>Ticket/Report</td><td>Contact for follow-up questions</td></tr>
+                                    <tr><td><strong>Reporter Email</strong></td><td>Ticket/Report</td><td>May need to examine their mailbox</td></tr>
+                                    <tr><td><strong>Report Time</strong></td><td>Ticket timestamp</td><td>Calculate response time SLA</td></tr>
+                                    <tr><td><strong>Email Received Time</strong></td><td>Email headers</td><td>Scope search timeframe</td></tr>
+                                    <tr><td><strong>Sender Address</strong></td><td>Email headers (From:)</td><td>Primary search pivot</td></tr>
+                                    <tr><td><strong>Reply-To Address</strong></td><td>Email headers</td><td>Often different in phishing</td></tr>
+                                    <tr><td><strong>Subject Line</strong></td><td>Email</td><td>Secondary search pivot</td></tr>
+                                    <tr><td><strong>User Action Taken</strong></td><td>Ask reporter</td><td>Determines urgency</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1.2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Quick Malicious Indicators Check</div>
+                            <div class="step-description">Look for obvious red flags that confirm malicious intent:</div>
+                            <table>
+                                <thead><tr><th>Indicator</th><th>Highly Suspicious</th><th>Likely Legitimate</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Sender Domain</strong></td>
+                                        <td>Lookalike (micros0ft.com), free email (gmail for "bank"), newly registered</td>
+                                        <td>Known vendor domain, internal domain</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Display Name vs Email</strong></td>
+                                        <td>"IT Support" &lt;random@gmail.com&gt;</td>
+                                        <td>Display name matches email domain</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Reply-To</strong></td>
+                                        <td>Different domain than sender</td>
+                                        <td>Same as sender or expected</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Links</strong></td>
+                                        <td>Shortened URLs, suspicious TLDs (.xyz, .top), IP addresses</td>
+                                        <td>Direct links to known vendor sites</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Urgency Language</strong></td>
+                                        <td>"Act immediately", "Account suspended", "Verify now"</td>
+                                        <td>Normal business tone</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Attachments</strong></td>
+                                        <td>.exe, .js, .vbs, .iso, password-protected .zip</td>
+                                        <td>.pdf, .docx from known sender</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Grammar/Spelling</strong></td>
+                                        <td>Multiple errors, awkward phrasing</td>
+                                        <td>Professional writing</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Personalization</strong></td>
+                                        <td>"Dear Customer", generic greeting</td>
+                                        <td>Uses recipient's actual name</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1.3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Immediate Escalation Check</div>
+                            <div class="info-box danger">
+                                <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> STOP - Escalate Immediately If Any Are True</div>
+                                <ul style="margin: 0.5rem 0 0 1rem;">
+                                    <li>✅ User confirms they entered credentials on a suspicious site</li>
+                                    <li>✅ User opened attachment and system is behaving abnormally</li>
+                                    <li>✅ Multiple users (5+) reporting the same email = active campaign</li>
+                                    <li>✅ Executive, finance, or IT admin is the target</li>
+                                    <li>✅ Email requests wire transfer, gift cards, or sensitive data</li>
+                                    <li>✅ Sender appears to be internal compromised account</li>
+                                    <li>✅ Known active threat campaign (matching threat intel)</li>
+                                </ul>
+                                <p style="margin-top: 0.75rem;"><strong>Escalation Path:</strong> Notify SOC Lead → Engage L3/IR team → Consider containment before full investigation</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1.4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Classify Phishing Type</div>
+                            <div class="step-description">Determine the attack objective to guide investigation focus:</div>
+                            <table>
+                                <thead><tr><th>Type</th><th>Indicators</th><th>Investigation Focus</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Credential Harvesting</strong></td>
+                                        <td>Login page link, "verify account", "password expiring"</td>
+                                        <td>Check for credential entry, suspicious sign-ins</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Malware Delivery</strong></td>
+                                        <td>Attachment, "invoice", "document", macro-enabled files</td>
+                                        <td>Check for file execution, process creation, persistence</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>BEC/Impersonation</strong></td>
+                                        <td>Executive name, requests action, no links/attachments</td>
+                                        <td>Check for financial fraud, data theft</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Reconnaissance</strong></td>
+                                        <td>Tracking pixel, read receipt request, no payload</td>
+                                        <td>Check what info was leaked, future targeting</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Callback Phishing</strong></td>
+                                        <td>Phone number to call, fake invoice/subscription</td>
+                                        <td>Check if user called, what info was shared</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EMAIL ANALYSIS -->
+                <h2 id="email-analysis">Step 2: Email Header Analysis (10 Minutes)</h2>
+                <p>Email headers contain critical forensic evidence. Analyze them to understand the email's true origin and authentication status.</p>
+
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2.1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Extract Full Email Headers</div>
+                            <div class="step-description">How to get headers from different clients:</div>
+                            <table>
+                                <thead><tr><th>Client</th><th>Steps</th></tr></thead>
+                                <tbody>
+                                    <tr><td><strong>Outlook Desktop</strong></td><td>Open email → File → Properties → Internet Headers</td></tr>
+                                    <tr><td><strong>Outlook Web</strong></td><td>Open email → ⋯ menu → View → View message details</td></tr>
+                                    <tr><td><strong>Gmail</strong></td><td>Open email → ⋮ menu → Show original</td></tr>
+                                    <tr><td><strong>M365 Admin</strong></td><td>Message Trace → View message details → Headers</td></tr>
+                                    <tr><td><strong>Exchange PowerShell</strong></td><td><code>Get-MessageTrackingLog | Get-MessageHeader</code></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2.2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Analyze Key Headers</div>
+                            <div class="step-description">Critical headers to examine:</div>
+                            <table>
+                                <thead><tr><th>Header</th><th>What to Look For</th><th>Red Flags</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><code>From:</code></td>
+                                        <td>Display name and email address</td>
+                                        <td>Display name impersonating known entity, mismatch between name and domain</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Reply-To:</code></td>
+                                        <td>Where replies are sent</td>
+                                        <td>Different domain than From address (BEC indicator)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Return-Path:</code></td>
+                                        <td>Bounce address, envelope sender</td>
+                                        <td>Different from From address (spoofing indicator)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Received:</code></td>
+                                        <td>Path email took (read bottom to top)</td>
+                                        <td>Unexpected mail servers, mismatched geography</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>X-Originating-IP:</code></td>
+                                        <td>Source IP of sender</td>
+                                        <td>VPS, Tor exit node, unexpected country</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Message-ID:</code></td>
+                                        <td>Unique message identifier</td>
+                                        <td>Search pivot for finding all recipients</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>X-Mailer:</code></td>
+                                        <td>Email client used</td>
+                                        <td>Bulk mailer, Python script, unfamiliar tools</td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>Date:</code></td>
+                                        <td>When email was sent</td>
+                                        <td>Timezone mismatch with claimed sender location</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2.3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Email Authentication Results</div>
+                            <div class="step-description">Look for the <code>Authentication-Results</code> header:</div>
+                            <table>
+                                <thead><tr><th>Check</th><th>Pass Means</th><th>Fail Means</th><th>Investigation Action</th></tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>SPF</strong></td>
+                                        <td>Email came from authorized IP for domain</td>
+                                        <td>Sender IP not authorized (possible spoofing)</td>
+                                        <td>If fail: likely spoofed domain</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DKIM</strong></td>
+                                        <td>Email content was not modified in transit</td>
+                                        <td>Content was altered or no DKIM signature</td>
+                                        <td>If fail: may be forwarded or tampered</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>DMARC</strong></td>
+                                        <td>Email passes domain's authentication policy</td>
+                                        <td>Email failed domain owner's requirements</td>
+                                        <td>If fail: high confidence spoofing</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="info-box warning">
+                                <div class="info-box-title"><i class="fas fa-lightbulb"></i> Important Nuance</div>
+                                <p style="margin: 0.2rem 0 0 0;"><strong>All Pass ≠ Legitimate:</strong> Attackers can set up their own domains with valid SPF/DKIM/DMARC. A "pass" from <code>micros0ft-support.com</code> doesn't make it legitimate—it just means the attacker configured their malicious domain properly.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2.4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Investigate Sender Domain</div>
+                            <div class="step-description">Research the sender's domain:</div>
+                            <ul>
+                                <li><strong>WHOIS Lookup</strong> - When was domain registered? (Recent = suspicious)</li>
+                                <li><strong>Domain Age</strong> - Less than 30 days is high risk</li>
+                                <li><strong>Registrar</strong> - Some registrars are abuse-friendly</li>
+                                <li><strong>MX Records</strong> - Where does the domain receive email?</li>
+                                <li><strong>Website</strong> - Does the domain have a legitimate website?</li>
+                                <li><strong>Lookalike Check</strong> - Is it impersonating a known brand?</li>
+                            </ul>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform">🔧 WHOIS Commands</span></div>
+                                <div class="query-body">
+<pre class="code-block"><code># Command line WHOIS
+whois suspicious-domain.com
+
+# Check domain age and registration
+whois suspicious-domain.com | grep -i "creation\|registered"
+
+# DNS records
+dig suspicious-domain.com MX
+dig suspicious-domain.com A
+dig suspicious-domain.com TXT</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IOC EXTRACTION -->
+                <h2 id="ioc-extraction">Step 3: IOC Extraction (10 Minutes)</h2>
+                <p>Extract all indicators of compromise for blocking, searching, and threat intelligence sharing.</p>
+
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3.1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Extract All URLs</div>
+                            <div class="step-description">Find all links in the email body and headers:</div>
+                            <ul>
+                                <li>Visible hyperlinks in email body</li>
+                                <li>Hidden links (hover to reveal actual URL)</li>
+                                <li>Links in attachments (if safe to open in sandbox)</li>
+                                <li>Shortened URLs (unshorten before analysis)</li>
+                                <li>QR codes (scan in sandbox environment)</li>
+                            </ul>
+                            <div class="info-box tip">
+                                <div class="info-box-title"><i class="fas fa-lightbulb"></i> URL Defanging</div>
+                                <p style="margin: 0.2rem 0 0 0;">Always defang URLs before sharing in tickets or chat: <code>hxxps://malicious[.]com/path</code>. This prevents accidental clicks.</p>
+                            </div>
+                            <h4>URL Analysis Checklist</h4>
+                            <table>
+                                <thead><tr><th>Check</th><th>Tool</th><th>Red Flags</th></tr></thead>
+                                <tbody>
+                                    <tr><td>VirusTotal scan</td><td>virustotal.com</td><td>Any detections</td></tr>
+                                    <tr><td>URLScan render</td><td>urlscan.io</td><td>Login form, redirect chain</td></tr>
+                                    <tr><td>Domain age</td><td>whois</td><td>&lt;30 days old</td></tr>
+                                    <tr><td>SSL certificate</td><td>Browser/SSLLabs</td><td>Free cert, mismatched domain</td></tr>
+                                    <tr><td>Redirect chain</td><td>wheregoes.com</td><td>Multiple redirects</td></tr>
+                                    <tr><td>Known phishing</td><td>PhishTank</td><td>Listed as phishing</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3.2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Extract Domains and IPs</div>
+                            <div class="step-description">Identify all domains and IP addresses:</div>
+                            <ul>
+                                <li><strong>Sender domain</strong> - From the email address</li>
+                                <li><strong>Reply-to domain</strong> - If different from sender</li>
+                                <li><strong>Link domains</strong> - All unique domains in URLs</li>
+                                <li><strong>Originating IP</strong> - From email headers</li>
+                                <li><strong>Link target IPs</strong> - Resolve domains to IPs</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3.3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Extract File Hashes (If Attachments)</div>
+                            <div class="step-description">For any attachments, calculate hashes:</div>
+                            <table>
+                                <thead><tr><th>Hash Type</th><th>Command (Linux)</th><th>Command (PowerShell)</th></tr></thead>
+                                <tbody>
+                                    <tr><td>MD5</td><td><code>md5sum file.ext</code></td><td><code>Get-FileHash file.ext -Algorithm MD5</code></td></tr>
+                                    <tr><td>SHA1</td><td><code>sha1sum file.ext</code></td><td><code>Get-FileHash file.ext -Algorithm SHA1</code></td></tr>
+                                    <tr><td>SHA256</td><td><code>sha256sum file.ext</code></td><td><code>Get-FileHash file.ext -Algorithm SHA256</code></td></tr>
+                                </tbody>
+                            </table>
+                            <div class="info-box danger">
+                                <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Safety Warning</div>
+                                <p style="margin: 0.2rem 0 0 0;">NEVER open suspicious attachments on your workstation! Use a sandbox (Hybrid Analysis, ANY.RUN) or isolated VM.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3.4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Document All IOCs</div>
+                            <div class="step-description">Create a complete IOC list:</div>
+                            <table>
+                                <thead><tr><th>IOC Type</th><th>Value</th><th>Confidence</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Email Address</td><td>attacker@malicious.com</td><td>High</td><td>Block sender</td></tr>
+                                    <tr><td>Domain</td><td>malicious.com</td><td>High</td><td>Block in proxy/firewall</td></tr>
+                                    <tr><td>URL</td><td>hxxps://malicious.com/login</td><td>High</td><td>Block in proxy</td></tr>
+                                    <tr><td>IP Address</td><td>192.0.2.1</td><td>Medium</td><td>Block if dedicated</td></tr>
+                                    <tr><td>SHA256</td><td>abc123...</td><td>High</td><td>Block in EDR</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCOPE DETERMINATION -->
+                <h2 id="scope-determination">Step 4: Scope Determination (10 Minutes)</h2>
+                <p>Identify all users who received this email to understand the full scope of the attack.</p>
+
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4.1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Search for All Recipients</div>
+                            <div class="step-description">Use multiple search criteria to find all affected users:</div>
+                            
+                            <h4>Search by Sender (KQL - Microsoft Sentinel)</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Find all recipients of email from specific sender</span>
+<span class="table">EmailEvents</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> SenderFromAddress =~ <span class="string">"attacker@suspicious-domain.com"</span>
+| <span class="keyword">project</span> 
+    TimeGenerated,
+    NetworkMessageId,
+    SenderFromAddress,
+    SenderDisplayName,
+    RecipientEmailAddress,
+    Subject,
+    DeliveryAction,
+    DeliveryLocation,
+    ThreatTypes,
+    ThreatNames
+| <span class="keyword">summarize</span> 
+    Recipients = <span class="function">make_set</span>(RecipientEmailAddress),
+    TotalCount = <span class="function">count</span>(),
+    FirstSeen = <span class="function">min</span>(TimeGenerated),
+    LastSeen = <span class="function">max</span>(TimeGenerated)
+    <span class="keyword">by</span> Subject, SenderFromAddress</code></pre>
+                                </div>
+                            </div>
+
+                            <h4>Search by Subject Line (KQL)</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Find all emails with matching subject</span>
+<span class="table">EmailEvents</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> Subject contains <span class="string">"Urgent: Verify Your Account"</span>
+| <span class="keyword">summarize</span> 
+    Recipients = <span class="function">make_set</span>(RecipientEmailAddress),
+    Senders = <span class="function">make_set</span>(SenderFromAddress),
+    Count = <span class="function">count</span>()
+| <span class="keyword">extend</span> RecipientCount = <span class="function">array_length</span>(Recipients)</code></pre>
+                                </div>
+                            </div>
+
+                            <h4>Search by URL in Email (KQL)</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Find all emails containing specific URL</span>
+<span class="table">EmailUrlInfo</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> Url contains <span class="string">"suspicious-domain.com"</span>
+| <span class="keyword">join</span> <span class="keyword">kind</span>=inner (
+    <span class="table">EmailEvents</span>
+    | <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+) <span class="keyword">on</span> NetworkMessageId
+| <span class="keyword">project</span> TimeGenerated, RecipientEmailAddress, SenderFromAddress, Subject, Url
+| <span class="keyword">summarize</span> Recipients = <span class="function">make_set</span>(RecipientEmailAddress) <span class="keyword">by</span> Url</code></pre>
+                                </div>
+                            </div>
+
+                            <h4>Search by Sender (SPL - Splunk)</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="keyword">index</span>=<span class="string">email</span> <span class="keyword">sourcetype</span>=<span class="string">"ms:o365:message"</span> earliest=-7d
+    SenderFromAddress="attacker@suspicious-domain.com"
+| <span class="function">stats</span> 
+    <span class="function">values</span>(RecipientEmailAddress) <span class="keyword">as</span> Recipients
+    <span class="function">count</span> <span class="keyword">as</span> TotalEmails
+    <span class="function">earliest</span>(_time) <span class="keyword">as</span> FirstSeen
+    <span class="function">latest</span>(_time) <span class="keyword">as</span> LastSeen
+    <span class="keyword">by</span> Subject SenderFromAddress
+| <span class="function">eval</span> RecipientCount=<span class="function">mvcount</span>(Recipients)
+| <span class="function">convert</span> ctime(FirstSeen) ctime(LastSeen)</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4.2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Delivery Status</div>
+                            <div class="step-description">Determine where emails were delivered:</div>
+                            <table>
+                                <thead><tr><th>Delivery Status</th><th>Meaning</th><th>Action Needed</th></tr></thead>
+                                <tbody>
+                                    <tr><td><strong>Delivered to Inbox</strong></td><td>Email reached user's inbox</td><td>Check for user interaction, consider removal</td></tr>
+                                    <tr><td><strong>Delivered to Junk</strong></td><td>Email went to spam folder</td><td>Lower risk, but user may still access</td></tr>
+                                    <tr><td><strong>Quarantined</strong></td><td>Email held by security</td><td>No user access, review and delete</td></tr>
+                                    <tr><td><strong>Blocked</strong></td><td>Email rejected at gateway</td><td>No action needed, email never delivered</td></tr>
+                                    <tr><td><strong>ZAP'd</strong></td><td>Removed after delivery by Zero-hour Auto Purge</td><td>Verify removal, check if accessed before ZAP</td></tr>
+                                </tbody>
+                            </table>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Check Delivery Locations (KQL)</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Check delivery status for all recipients</span>
+<span class="table">EmailEvents</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> SenderFromAddress =~ <span class="string">"attacker@suspicious.com"</span>
+| <span class="keyword">summarize</span> 
+    Count = <span class="function">count</span>() 
+    <span class="keyword">by</span> DeliveryAction, DeliveryLocation
+| <span class="keyword">order by</span> Count <span class="keyword">desc</span></code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4.3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Assess Campaign Scope</div>
+                            <div class="step-description">Document the full scope:</div>
+                            <table>
+                                <thead><tr><th>Metric</th><th>Value</th><th>Risk Level</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Total recipients</td><td>Count all unique recipients</td><td>1-5: Targeted, 50+: Campaign</td></tr>
+                                    <tr><td>Delivered to inbox</td><td>Count delivered emails</td><td>Higher = more risk</td></tr>
+                                    <tr><td>Departments affected</td><td>List departments</td><td>Finance/IT = higher risk</td></tr>
+                                    <tr><td>VIPs targeted</td><td>Any executives?</td><td>Yes = escalate</td></tr>
+                                    <tr><td>Time span</td><td>First to last email</td><td>Ongoing = active campaign</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USER INTERACTION -->
+                <h2 id="user-interaction">Step 5: User Interaction Analysis (15 Minutes)</h2>
+                <p>This is the critical step - determine if any users actually interacted with the phishing email.</p>
+
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5.1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for URL Clicks</div>
+                            <div class="step-description">Determine if anyone clicked links in the email:</div>
+                            
+                            <h4>SafeLinks Click Events (KQL)</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Find all clicks on phishing URL</span>
+<span class="table">UrlClickEvents</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> Url contains <span class="string">"suspicious-domain.com"</span>
+| <span class="keyword">project</span> 
+    TimeGenerated,
+    AccountUpn,
+    Url,
+    ActionType,
+    IsClickedThrough,  <span class="comment">// TRUE = user proceeded despite warning</span>
+    UrlChain,
+    IPAddress,
+    NetworkMessageId
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">desc</span></code></pre>
+                                </div>
+                            </div>
+
+                            <h4>Understanding Click Results</h4>
+                            <table>
+                                <thead><tr><th>ActionType</th><th>IsClickedThrough</th><th>Meaning</th><th>Risk</th></tr></thead>
+                                <tbody>
+                                    <tr><td>ClickBlocked</td><td>False</td><td>User clicked, SafeLinks blocked</td><td>Low</td></tr>
+                                    <tr><td>ClickBlocked</td><td>True</td><td>User clicked through warning</td><td>High - investigate further</td></tr>
+                                    <tr><td>ClickAllowed</td><td>True</td><td>Click allowed (URL not blocked)</td><td>Medium - check if credential page</td></tr>
+                                    <tr><td>None</td><td>N/A</td><td>No SafeLinks protection</td><td>Unknown - check proxy logs</td></tr>
+                                </tbody>
+                            </table>
+
+                            <h4>Web Proxy Logs (If SafeLinks Not Available)</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk - Proxy Logs</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="keyword">index</span>=<span class="string">proxy</span> <span class="keyword">sourcetype</span>=<span class="string">"bluecoat:proxysg:access:syslog"</span>
+    earliest=-7d
+    (url="*suspicious-domain.com*" OR dest_host="suspicious-domain.com")
+| <span class="function">stats</span> 
+    <span class="function">count</span> <span class="keyword">as</span> Visits
+    <span class="function">values</span>(url) <span class="keyword">as</span> URLs
+    <span class="function">earliest</span>(_time) <span class="keyword">as</span> FirstVisit
+    <span class="function">latest</span>(_time) <span class="keyword">as</span> LastVisit
+    <span class="keyword">by</span> src_user src_ip
+| <span class="function">convert</span> ctime(FirstVisit) ctime(LastVisit)</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5.2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Attachment Opens</div>
+                            <div class="step-description">If the email had attachments, check for execution:</div>
+                            
+                            <h4>File Download/Open Events (KQL)</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Check for attachment file activity</span>
+<span class="keyword">let</span> AttachmentName = <span class="string">"Invoice_12345.xlsx"</span>;
+<span class="keyword">let</span> AttachmentHash = <span class="string">"abc123def456..."</span>;  <span class="comment">// SHA256 if known</span>
+<span class="table">DeviceFileEvents</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> FileName contains AttachmentName
+    <span class="keyword">or</span> SHA256 == AttachmentHash
+| <span class="keyword">project</span> 
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    ActionType,  <span class="comment">// FileCreated, FileModified, FileRenamed</span>
+    FileName,
+    FolderPath,
+    SHA256,
+    InitiatingProcessFileName</code></pre>
+                                </div>
+                            </div>
+
+                            <h4>Process Execution from Email Attachment</h4>
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Check for processes spawned from Office applications</span>
+<span class="table">DeviceProcessEvents</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> InitiatingProcessFileName in~ (<span class="string">"outlook.exe"</span>, <span class="string">"winword.exe"</span>, <span class="string">"excel.exe"</span>, <span class="string">"powerpnt.exe"</span>)
+| <span class="keyword">where</span> FileName in~ (<span class="string">"powershell.exe"</span>, <span class="string">"cmd.exe"</span>, <span class="string">"wscript.exe"</span>, <span class="string">"cscript.exe"</span>, <span class="string">"mshta.exe"</span>, <span class="string">"rundll32.exe"</span>)
+| <span class="keyword">project</span> 
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    InitiatingProcessFileName,
+    FileName,
+    ProcessCommandLine
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">desc</span></code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5.3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Contact Users Who Interacted</div>
+                            <div class="step-description">For users who clicked or opened attachments:</div>
+                            <div class="info-box info">
+                                <div class="info-box-title"><i class="fas fa-phone"></i> User Interview Questions</div>
+                                <ol style="margin: 0.5rem 0 0 1rem;">
+                                    <li>Did you click any links in the email?</li>
+                                    <li>Did a webpage load? What did it look like?</li>
+                                    <li>Did you enter any information (username, password, etc.)?</li>
+                                    <li>Did you open any attachments?</li>
+                                    <li>Did anything unusual happen after (slow computer, pop-ups, errors)?</li>
+                                    <li>Did you download any files?</li>
+                                    <li>Did you forward the email to anyone else?</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CREDENTIAL CHECK -->
+                <h2 id="credential-check">Step 6: Credential Compromise Check (15 Minutes)</h2>
+                <p>If this was a credential harvesting phish and users clicked, check for signs of credential theft and use.</p>
+
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6.1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Suspicious Sign-ins After Click</div>
+                            <div class="step-description">Look for authentication from unexpected sources after the click time:</div>
+                            
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Sign-ins for user after potential credential theft</span>
+<span class="keyword">let</span> ClickTime = datetime(<span class="string">2025-01-02T10:30:00Z</span>);
+<span class="keyword">let</span> AffectedUser = <span class="string">"user@company.com"</span>;
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated between (ClickTime .. (ClickTime + <span class="number">72h</span>))
+| <span class="keyword">where</span> UserPrincipalName =~ AffectedUser
+| <span class="keyword">project</span> 
+    TimeGenerated,
+    UserPrincipalName,
+    AppDisplayName,
+    IPAddress,
+    Location,
+    DeviceDetail,
+    ResultType,
+    ResultDescription,
+    RiskState,
+    RiskLevelDuringSignIn,
+    MfaDetail
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">asc</span></code></pre>
+                                </div>
+                            </div>
+
+                            <h4>Red Flags in Sign-in Logs</h4>
+                            <table>
+                                <thead><tr><th>Indicator</th><th>What It Means</th><th>Severity</th></tr></thead>
+                                <tbody>
+                                    <tr><td>New IP address after click</td><td>Attacker may be using stolen creds</td><td>High</td></tr>
+                                    <tr><td>Impossible travel</td><td>Login from distant location too quickly</td><td>Critical</td></tr>
+                                    <tr><td>Anonymous IP / Tor / VPN</td><td>Attacker hiding location</td><td>High</td></tr>
+                                    <tr><td>New device</td><td>Attacker's device</td><td>Medium</td></tr>
+                                    <tr><td>MFA not required</td><td>Legacy auth or bypass</td><td>High</td></tr>
+                                    <tr><td>Failed then success</td><td>Password guessing then correct</td><td>High</td></tr>
+                                    <tr><td>RiskState = atRisk</td><td>Azure AD detected risk</td><td>High</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6.2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Inbox Rules (Persistence)</div>
+                            <div class="step-description">Attackers often create rules to hide their activity:</div>
+                            
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Check for new inbox rules created</span>
+<span class="table">OfficeActivity</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> Operation in (<span class="string">"New-InboxRule"</span>, <span class="string">"Set-InboxRule"</span>, <span class="string">"Enable-InboxRule"</span>)
+| <span class="keyword">where</span> UserId =~ <span class="string">"user@company.com"</span>
+| <span class="keyword">extend</span> RuleDetails = tostring(Parameters)
+| <span class="keyword">project</span> 
+    TimeGenerated,
+    UserId,
+    Operation,
+    RuleDetails,
+    ClientIP
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">desc</span></code></pre>
+                                </div>
+                            </div>
+
+                            <h4>Suspicious Inbox Rule Patterns</h4>
+                            <table>
+                                <thead><tr><th>Rule Action</th><th>Why It's Suspicious</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Delete emails with "security" or "password"</td><td>Hide security notifications</td></tr>
+                                    <tr><td>Forward all email to external address</td><td>Data exfiltration</td></tr>
+                                    <tr><td>Move emails to RSS Feeds or hidden folder</td><td>Hide attacker communications</td></tr>
+                                    <tr><td>Mark as read and delete</td><td>User won't notice suspicious emails</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6.3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for OAuth App Consent</div>
+                            <div class="step-description">Attackers may trick users into granting app permissions:</div>
+                            
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Check for OAuth app consent grants</span>
+<span class="table">AuditLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> OperationName == <span class="string">"Consent to application"</span>
+| <span class="keyword">where</span> InitiatedBy.user.userPrincipalName =~ <span class="string">"user@company.com"</span>
+| <span class="keyword">extend</span> 
+    AppName = tostring(TargetResources[<span class="number">0</span>].displayName),
+    Permissions = tostring(TargetResources[<span class="number">0</span>].modifiedProperties)
+| <span class="keyword">project</span> TimeGenerated, AppName, Permissions</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6.4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Email Forwarding</div>
+                            <div class="step-description">External forwarding is a major data exfiltration risk:</div>
+                            
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Check for mailbox forwarding configuration</span>
+<span class="table">OfficeActivity</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> Operation in (<span class="string">"Set-Mailbox"</span>, <span class="string">"New-TransportRule"</span>)
+| <span class="keyword">where</span> Parameters contains <span class="string">"ForwardingSmtpAddress"</span> 
+    <span class="keyword">or</span> Parameters contains <span class="string">"ForwardTo"</span>
+    <span class="keyword">or</span> Parameters contains <span class="string">"RedirectTo"</span>
+| <span class="keyword">project</span> TimeGenerated, UserId, Operation, Parameters</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MALWARE CHECK -->
+                <h2 id="malware-check">Step 7: Malware Delivery Check (15 Minutes)</h2>
+                <p>If the phishing email contained attachments, check for malware execution.</p>
+
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">7.1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Malicious Process Execution</div>
+                            <div class="step-description">Look for suspicious processes on endpoints that opened attachments:</div>
+                            
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Suspicious child processes from Office apps</span>
+<span class="keyword">let</span> Device = <span class="string">"WORKSTATION01"</span>;
+<span class="keyword">let</span> StartTime = datetime(<span class="string">2025-01-02T10:30:00Z</span>);
+<span class="table">DeviceProcessEvents</span>
+| <span class="keyword">where</span> TimeGenerated between (StartTime .. (StartTime + <span class="number">24h</span>))
+| <span class="keyword">where</span> DeviceName =~ Device
+| <span class="keyword">where</span> InitiatingProcessFileName in~ (
+    <span class="string">"winword.exe"</span>, <span class="string">"excel.exe"</span>, <span class="string">"powerpnt.exe"</span>, <span class="string">"outlook.exe"</span>,
+    <span class="string">"msedge.exe"</span>, <span class="string">"chrome.exe"</span>, <span class="string">"firefox.exe"</span>
+)
+| <span class="keyword">where</span> FileName in~ (
+    <span class="string">"powershell.exe"</span>, <span class="string">"cmd.exe"</span>, <span class="string">"wscript.exe"</span>, <span class="string">"cscript.exe"</span>,
+    <span class="string">"mshta.exe"</span>, <span class="string">"rundll32.exe"</span>, <span class="string">"regsvr32.exe"</span>, <span class="string">"certutil.exe"</span>,
+    <span class="string">"bitsadmin.exe"</span>, <span class="string">"msiexec.exe"</span>
+)
+| <span class="keyword">project</span> 
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    InitiatingProcessFileName,
+    FileName,
+    ProcessCommandLine,
+    FolderPath</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">7.2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Persistence Mechanisms</div>
+                            <div class="step-description">Malware often establishes persistence:</div>
+                            
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Check for persistence mechanisms</span>
+<span class="keyword">let</span> Device = <span class="string">"WORKSTATION01"</span>;
+<span class="keyword">let</span> StartTime = datetime(<span class="string">2025-01-02T10:30:00Z</span>);
+<span class="table">DeviceRegistryEvents</span>
+| <span class="keyword">where</span> TimeGenerated between (StartTime .. (StartTime + <span class="number">24h</span>))
+| <span class="keyword">where</span> DeviceName =~ Device
+| <span class="keyword">where</span> RegistryKey has_any (
+    <span class="string">"Run"</span>, <span class="string">"RunOnce"</span>, <span class="string">"Winlogon"</span>, <span class="string">"Userinit"</span>,
+    <span class="string">"Shell"</span>, <span class="string">"AppInit"</span>, <span class="string">"Image File Execution"</span>
+)
+| <span class="keyword">project</span> TimeGenerated, RegistryKey, RegistryValueName, RegistryValueData, ActionType</code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">7.3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Network Connections</div>
+                            <div class="step-description">Look for C2 communications or data exfiltration:</div>
+                            
+                            <div class="query-example">
+                                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
+                                <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Suspicious outbound connections</span>
+<span class="keyword">let</span> Device = <span class="string">"WORKSTATION01"</span>;
+<span class="keyword">let</span> StartTime = datetime(<span class="string">2025-01-02T10:30:00Z</span>);
+<span class="table">DeviceNetworkEvents</span>
+| <span class="keyword">where</span> TimeGenerated between (StartTime .. (StartTime + <span class="number">24h</span>))
+| <span class="keyword">where</span> DeviceName =~ Device
+| <span class="keyword">where</span> ActionType == <span class="string">"ConnectionSuccess"</span>
+| <span class="keyword">where</span> RemoteIPType == <span class="string">"Public"</span>
+| <span class="keyword">summarize</span> 
+    Connections = <span class="function">count</span>(),
+    DataSent = <span class="function">sum</span>(SentBytes),
+    DataReceived = <span class="function">sum</span>(ReceivedBytes),
+    Processes = <span class="function">make_set</span>(InitiatingProcessFileName)
+    <span class="keyword">by</span> RemoteIP, RemoteUrl
+| <span class="keyword">order by</span> Connections <span class="keyword">desc</span></code></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DECISION TREE -->
+                <h2 id="decision-tree">Decision Tree</h2>
+                <p>Use this flowchart to determine appropriate actions based on your findings:</p>
+                
+                <div class="decision-tree">
+                    <div class="decision-node question">
+                        <strong>Q1: Is the email confirmed malicious?</strong>
+                        <p style="margin: 0.3rem 0 0 0; font-size: 0.8rem; color: var(--text-secondary);">Based on sender analysis, URL/attachment reputation, content analysis</p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
+                        <div class="decision-node close"><strong>NO →</strong> Close as False Positive. Document why it appeared suspicious but was legitimate.</div>
+                        <div class="decision-node action"><strong>YES →</strong> Continue to Q2</div>
+                    </div>
+
+                    <div class="decision-node question">
+                        <strong>Q2: Did any user click links or open attachments?</strong>
+                        <p style="margin: 0.3rem 0 0 0; font-size: 0.8rem; color: var(--text-secondary);">Check SafeLinks, proxy logs, EDR file events</p>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
+                        <div class="decision-node close"><strong>NO →</strong> Remove emails from mailboxes, block IOCs, close as TP-Remediated</div>
+                        <div class="decision-node action"><strong>YES →</strong> Continue to Q3</div>
+                    </div>
+
+                    <div class="decision-node question">
+                        <strong>Q3: Was this credential harvesting or malware delivery?</strong>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
+                        <div class="decision-node action"><strong>CREDENTIALS →</strong> Go to Q4</div>
+                        <div class="decision-node action"><strong>MALWARE →</strong> Go to Q5</div>
+                    </div>
+
+                    <div class="decision-node question">
+                        <strong>Q4: Did user enter credentials?</strong>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
+                        <div class="decision-node close"><strong>NO/UNKNOWN →</strong> Reset password as precaution, monitor for 72h, close</div>
+                        <div class="decision-node escalate"><strong>YES →</strong> Immediately: Reset password, revoke sessions, check for compromise signs. If compromise confirmed → Escalate to IR</div>
+                    </div>
+
+                    <div class="decision-node question">
+                        <strong>Q5: Did malware execute?</strong>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
+                        <div class="decision-node close"><strong>NO →</strong> EDR blocked execution. Quarantine file, close as TP-Blocked</div>
+                        <div class="decision-node escalate"><strong>YES →</strong> Immediately: Isolate endpoint, preserve evidence. Escalate to IR for full malware investigation</div>
+                    </div>
+                </div>
+
+                <!-- CONTAINMENT -->
+                <h2 id="containment">Containment Actions</h2>
+                <p>Based on findings, execute appropriate containment measures:</p>
+
+                <h3>Email Remediation</h3>
+                <table>
+                    <thead><tr><th>Action</th><th>When to Use</th><th>How to Execute</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Soft Delete</strong></td>
+                            <td>Email in inbox, no confirmed interaction</td>
+                            <td>M365 Security Center → Threat Explorer → Soft Delete</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hard Delete</strong></td>
+                            <td>Confirmed malicious, need permanent removal</td>
+                            <td>M365 Security Center → Threat Explorer → Hard Delete</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Block Sender</strong></td>
+                            <td>Ongoing campaign from specific address</td>
+                            <td>Exchange Admin → Mail Flow Rules or Block List</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Block Domain</strong></td>
+                            <td>Clearly malicious domain</td>
+                            <td>Email Gateway Block List</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Account Remediation (If Compromised)</h3>
+                <table>
+                    <thead><tr><th>Action</th><th>Command / Location</th></tr></thead>
+                    <tbody>
+                        <tr><td>Reset Password</td><td>Azure AD → Users → Reset Password (require change at next login)</td></tr>
+                        <tr><td>Revoke Sessions</td><td>Azure AD → Users → Revoke Sessions</td></tr>
+                        <tr><td>Revoke Refresh Tokens</td><td><code>Revoke-AzureADUserAllRefreshToken -ObjectId &lt;userid&gt;</code></td></tr>
+                        <tr><td>Review MFA Methods</td><td>Azure AD → Users → Authentication Methods</td></tr>
+                        <tr><td>Remove Inbox Rules</td><td>Exchange Admin → Mailbox → Inbox Rules</td></tr>
+                        <tr><td>Check Forwarding</td><td>Exchange Admin → Mailbox → Mail Flow Settings</td></tr>
+                        <tr><td>Review OAuth Apps</td><td>Azure AD → Enterprise Apps → User Consent</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Network/Infrastructure Blocking</h3>
+                <table>
+                    <thead><tr><th>IOC Type</th><th>Block Location</th></tr></thead>
+                    <tbody>
+                        <tr><td>URLs</td><td>Web Proxy, SafeLinks Block List</td></tr>
+                        <tr><td>Domains</td><td>DNS Sinkhole, Firewall, Proxy</td></tr>
+                        <tr><td>IP Addresses</td><td>Firewall (if dedicated malicious IP)</td></tr>
+                        <tr><td>File Hashes</td><td>EDR Custom Indicator, AV Signatures</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- QUERIES SECTION -->
+                <h2 id="queries">Complete Query Reference</h2>
+                <p>All investigation queries in one place, organized by investigation phase.</p>
+
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Query Customization</div>
+                    <p style="margin: 0.2rem 0 0 0;">Replace placeholder values (marked in <span style="color: var(--accent-warning);">yellow</span>) with your specific investigation details.</p>
+                </div>
+
+                <p>Refer to queries embedded throughout the steps above. For a complete query library, see:</p>
+                <ul>
+                    <li><a href="../../sentinel/kql-library.html">KQL Query Library</a></li>
+                    <li><a href="../../splunk/spl-library.html">SPL Query Library</a></li>
+                </ul>
+
+                <!-- DOCUMENTATION -->
+                <h2 id="documentation">Documentation Requirements</h2>
+                <p>Document the following in your ticket/case management system:</p>
+
+                <table>
+                    <thead><tr><th>Section</th><th>Required Information</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Alert Details</strong></td><td>Alert ID, time received, source system, initial severity</td></tr>
+                        <tr><td><strong>Email Details</strong></td><td>Sender, subject, message ID, received time, attachment names</td></tr>
+                        <tr><td><strong>IOCs</strong></td><td>All extracted IOCs with type, value, and reputation result</td></tr>
+                        <tr><td><strong>Scope</strong></td><td>Total recipients, delivered count, clicked count, compromised count</td></tr>
+                        <tr><td><strong>Timeline</strong></td><td>Key events in chronological order with timestamps</td></tr>
+                        <tr><td><strong>Analysis</strong></td><td>Your findings and reasoning</td></tr>
+                        <tr><td><strong>Actions Taken</strong></td><td>All containment and remediation actions with timestamps</td></tr>
+                        <tr><td><strong>Verdict</strong></td><td>TP/FP, classification, MITRE mapping</td></tr>
+                        <tr><td><strong>Recommendations</strong></td><td>Any suggested improvements or follow-up actions</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>MITRE ATT&CK Mapping</h3>
+                <table>
+                    <thead><tr><th>Technique ID</th><th>Name</th><th>Applies When</th></tr></thead>
+                    <tbody>
+                        <tr><td><span class="mitre-tag">T1566.001</span></td><td>Spearphishing Attachment</td><td>Email contained malicious attachment</td></tr>
+                        <tr><td><span class="mitre-tag">T1566.002</span></td><td>Spearphishing Link</td><td>Email contained malicious link</td></tr>
+                        <tr><td><span class="mitre-tag">T1566.003</span></td><td>Spearphishing via Service</td><td>Phishing via Teams, Slack, etc.</td></tr>
+                        <tr><td><span class="mitre-tag">T1598.002</span></td><td>Phishing for Information: Spearphishing Attachment</td><td>Attachment used to collect info</td></tr>
+                        <tr><td><span class="mitre-tag">T1598.003</span></td><td>Phishing for Information: Spearphishing Link</td><td>Link used for credential harvesting</td></tr>
+                        <tr><td><span class="mitre-tag">T1078</span></td><td>Valid Accounts</td><td>Stolen credentials used</td></tr>
+                        <tr><td><span class="mitre-tag">T1114.003</span></td><td>Email Forwarding Rule</td><td>Attacker set up forwarding</td></tr>
+                        <tr><td><span class="mitre-tag">T1534</span></td><td>Internal Spearphishing</td><td>Compromised account sent phishing</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- COMMON MISTAKES -->
+                <h2 id="common-mistakes">Common Mistakes to Avoid</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-times-circle"></i> Don't Make These Mistakes</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Opening attachments on your workstation</strong> - Always use sandbox</li>
+                        <li><strong>Clicking links to "test" them</strong> - Use URLScan.io or sandbox browser</li>
+                        <li><strong>Only searching by sender</strong> - Attackers use multiple addresses; search by subject, URL, hash too</li>
+                        <li><strong>Trusting SPF/DKIM/DMARC pass</strong> - Attackers can configure these on their own domains</li>
+                        <li><strong>Closing after email removal</strong> - Always check for user interaction first</li>
+                        <li><strong>Not resetting passwords after credential phishing click</strong> - Even if unsure creds were entered</li>
+                        <li><strong>Forgetting to check inbox rules</strong> - Attacker persistence mechanism</li>
+                        <li><strong>Not documenting IOCs</strong> - Other analysts need these for future reference</li>
+                        <li><strong>Waiting to escalate</strong> - When in doubt, escalate early</li>
+                    </ul>
+                </div>
+
+                <!-- FAQs -->
+                <h2 id="faqs">Frequently Asked Questions</h2>
+                
+                <details style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <summary style="cursor: pointer; font-weight: 600;">Q: The email passed SPF/DKIM/DMARC. Does that mean it's legitimate?</summary>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">No. Attackers can register their own domains and properly configure email authentication. A "pass" only means the email came from where it claims—it doesn't mean that source is trustworthy. A pass from "micros0ft-support.com" is still malicious.</p>
+                </details>
+
+                <details style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <summary style="cursor: pointer; font-weight: 600;">Q: User says they clicked but didn't enter credentials. Should I still reset their password?</summary>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Yes, as a precaution. Users may not realize or remember entering credentials. The credential page may have used browser autofill. Reset the password, revoke sessions, and monitor for 72 hours.</p>
+                </details>
+
+                <details style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <summary style="cursor: pointer; font-weight: 600;">Q: How do I know if MFA would have protected the user?</summary>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Modern phishing kits (like EvilGinx) can steal session tokens and bypass MFA. Check if: (1) The phishing page was a real-time proxy, (2) Sign-in logs show MFA was completed on a session you don't recognize, (3) Session tokens were issued to unexpected IPs. MFA helps but isn't a guarantee against sophisticated phishing.</p>
+                </details>
+
+                <details style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <summary style="cursor: pointer; font-weight: 600;">Q: The URL is behind a shortener. How do I analyze it safely?</summary>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Use URL unshortening services like CheckShortURL.com, GetLinkInfo.com, or urlscan.io which can follow redirects without exposing you. Never paste shortened URLs directly into your browser.</p>
+                </details>
+
+                <details style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <summary style="cursor: pointer; font-weight: 600;">Q: How long should I monitor after a suspected credential compromise?</summary>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Minimum 72 hours of active monitoring. Set up alerts for the affected user's account for: new sign-ins, inbox rule changes, mail forwarding, and OAuth consent. Consider extended monitoring (30 days) for high-value accounts.</p>
+                </details>
+
+                <details style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <summary style="cursor: pointer; font-weight: 600;">Q: Should I block the sender's IP address?</summary>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Generally no for email IPs. Attackers use shared infrastructure (cloud providers, email services) and IPs are often short-lived. Block the sender domain instead. Only block IPs if they're clearly dedicated malicious infrastructure and you're blocking at the network level (not email).</p>
+                </details>
+
+                <details style="margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                    <summary style="cursor: pointer; font-weight: 600;">Q: What if the phishing email came from an internal compromised account?</summary>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">This is called "internal spearphishing" (T1534) and is high severity. Immediately: (1) Disable the sending account, (2) Identify all recipients, (3) Trace back how that account was compromised, (4) Escalate to IR as this indicates active attacker presence.</p>
+                </details>
+
+                <!-- RELATED PLAYBOOKS -->
+                <h2>Related Playbooks</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.6rem;">
+                    <a href="account-compromise.html" class="pb-card">
+                        <i class="fas fa-user-lock" style="color: var(--accent-secondary);"></i>
+                        <div><strong>Account Compromise</strong><p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">If credentials were stolen</p></div>
+                    </a>
+                    <a href="malware.html" class="pb-card">
+                        <i class="fas fa-bug" style="color: var(--accent-danger);"></i>
+                        <div><strong>Malware Investigation</strong><p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">If attachment was malware</p></div>
+                    </a>
+                    <a href="bec.html" class="pb-card">
+                        <i class="fas fa-user-secret" style="color: var(--accent-warning);"></i>
+                        <div><strong>BEC Investigation</strong><p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">If impersonation/fraud attempt</p></div>
+                    </a>
+                    <a href="../incident-response/phishing-ir.html" class="pb-card">
+                        <i class="fas fa-fire-extinguisher" style="color: var(--accent-primary);"></i>
+                        <div><strong>Phishing IR</strong><p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">For large-scale campaigns</p></div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../../js/main.js"></script>
+</body>
+</html>

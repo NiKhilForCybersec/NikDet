@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L1 SOC Operations | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>SOC Operations</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="soc-nav"><i class="fas fa-users-cog"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="soc-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="l1-operations.html" class="active">L1 Operations</a></li>
+                    <li><a href="l2-operations.html">L2 Operations</a></li>
+                    <li><a href="l3-operations.html">L3 Operations</a></li>
+                    <li><a href="metrics.html">SOC Metrics</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">SOC Operations</a><span class="separator">/</span><span>L1 Operations</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-user-gear" style="color: var(--accent-secondary);"></i> L1 SOC Analyst - Complete Guide</h1>
+                <p class="lead">Everything a Tier 1 analyst needs to know: alert triage, investigation basics, escalation criteria, and documentation standards.</p>
+            </div>
+            <div class="content">
+
+                <!-- TABLE OF CONTENTS -->
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <h3 style="margin-top: 0; color: var(--accent-primary);"><i class="fas fa-list"></i> What You'll Learn</h3>
+                    <ol style="margin: 0; column-count: 2; column-gap: 2rem;">
+                        <li>L1 analyst role and responsibilities</li>
+                        <li>Alert queue management</li>
+                        <li>Step-by-step triage process</li>
+                        <li>Investigation fundamentals</li>
+                        <li>When and how to escalate</li>
+                        <li>Documentation standards</li>
+                        <li>Common alert types explained</li>
+                        <li>Tools and queries for L1</li>
+                        <li>Communication skills</li>
+                        <li>Career growth path</li>
+                    </ol>
+                </div>
+
+                <!-- PART 1: ROLE OVERVIEW -->
+                <h2>Part 1: Understanding the L1 Role</h2>
+
+                <h3>What Does an L1 Analyst Do?</h3>
+                <p>L1 analysts are the <strong>first line of defense</strong> in the SOC. You're the gatekeeper who determines whether security alerts are real threats that need action or false alarms that can be closed.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: linear-gradient(135deg, rgba(92,224,196,0.15), transparent); border: 1px solid rgba(92,224,196,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h4 style="color: #5ce0c4; margin-top: 0;"><i class="fas fa-check-circle"></i> Primary Goal</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Quickly and accurately classify alerts as True Positive (real threat), False Positive (not a threat), or escalate to L2 for deeper investigation.</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(106,163,247,0.15), transparent); border: 1px solid rgba(106,163,247,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h4 style="color: #6aa3f7; margin-top: 0;"><i class="fas fa-clock"></i> Time Expectation</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Initial triage should take 5-15 minutes per alert. If you can't determine TP/FP in 15 minutes, escalate.</p>
+                    </div>
+                </div>
+
+                <h3>L1 Responsibilities</h3>
+                <table>
+                    <thead><tr><th>Responsibility</th><th>What This Means</th><th>Time Allocation</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Alert Monitoring</strong></td>
+                            <td>Watch alert queues, acknowledge new alerts promptly</td>
+                            <td>Continuous</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Initial Triage</strong></td>
+                            <td>Quickly assess each alert's validity and severity</td>
+                            <td>5-10 min/alert</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Basic Investigation</strong></td>
+                            <td>Gather context: who, what, when, where</td>
+                            <td>5-15 min/alert</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Documentation</strong></td>
+                            <td>Record all findings in ticketing system</td>
+                            <td>5 min/alert</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Escalation</strong></td>
+                            <td>Pass complex/confirmed incidents to L2</td>
+                            <td>As needed</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Basic Containment</strong></td>
+                            <td>Execute pre-approved actions (block IP, isolate host)</td>
+                            <td>As authorized</td>
+                        </tr>
+                        <tr>
+                            <td><strong>User Support</strong></td>
+                            <td>Handle security questions, phishing reports</td>
+                            <td>As received</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>What L1 Does NOT Do</h3>
+                <ul>
+                    <li>Deep forensic investigation (that's L2/L3)</li>
+                    <li>Malware reverse engineering</li>
+                    <li>Create new detection rules</li>
+                    <li>Make major containment decisions without approval</li>
+                    <li>Communicate directly with executives during incidents</li>
+                </ul>
+
+                <!-- PART 2: ALERT QUEUE MANAGEMENT -->
+                <h2>Part 2: Managing the Alert Queue</h2>
+
+                <h3>Priority Order</h3>
+                <p>Work alerts in this order (not first-in-first-out):</p>
+
+                <table>
+                    <thead><tr><th>Priority</th><th>Alert Type</th><th>Response Time</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #f07070;"><strong>1. Critical</strong></td>
+                            <td>Ransomware, active breach, executive systems</td>
+                            <td>&lt; 15 minutes</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0b756;"><strong>2. High</strong></td>
+                            <td>Malware execution, credential theft, C2 traffic</td>
+                            <td>&lt; 30 minutes</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #5ce0c4;"><strong>3. Medium</strong></td>
+                            <td>Suspicious behavior, policy violations</td>
+                            <td>&lt; 2 hours</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #6aa3f7;"><strong>4. Low</strong></td>
+                            <td>Informational alerts, routine scans</td>
+                            <td>&lt; 8 hours</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Queue Management Tips</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Best Practices</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Don't cherry-pick easy alerts.</strong> Work high priority first, even if they're harder.</li>
+                        <li><strong>Acknowledge alerts immediately.</strong> This shows others it's being worked.</li>
+                        <li><strong>Set realistic SLAs.</strong> Don't let alerts age in queue.</li>
+                        <li><strong>Communicate during shift changes.</strong> Hand off in-progress work.</li>
+                        <li><strong>Track your average handle time.</strong> Know your pace.</li>
+                    </ul>
+                </div>
+
+                <!-- PART 3: TRIAGE PROCESS -->
+                <h2>Part 3: Step-by-Step Alert Triage</h2>
+
+                <h3>The Triage Workflow</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Receive & Acknowledge</div>
+                            <p>Alert appears in queue. Acknowledge it to show you're working on it.</p>
+                            <p><strong>Time: 30 seconds</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Read the Alert</div>
+                            <p>Understand what the alert is telling you:</p>
+                            <ul>
+                                <li>What triggered the alert? (rule name, description)</li>
+                                <li>What system/user is involved?</li>
+                                <li>When did it happen?</li>
+                                <li>What's the severity?</li>
+                            </ul>
+                            <p><strong>Time: 1-2 minutes</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Known FP</div>
+                            <p>Before investigating, check if this is a known false positive:</p>
+                            <ul>
+                                <li>Is there a documented FP pattern for this alert?</li>
+                                <li>Has this same alert fired on this user/system before?</li>
+                                <li>Is there an active change window that explains this?</li>
+                            </ul>
+                            <p><strong>Time: 1-2 minutes</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Gather Context</div>
+                            <p>Collect information to understand if this is malicious:</p>
+                            <ul>
+                                <li>Who is the user? What's their role?</li>
+                                <li>What system is affected? Is it critical?</li>
+                                <li>What happened before and after the alert?</li>
+                                <li>Are there related alerts?</li>
+                            </ul>
+                            <p><strong>Time: 5-10 minutes</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Make a Decision</div>
+                            <p>Based on your investigation:</p>
+                            <ul>
+                                <li><strong>False Positive:</strong> Document reason, close alert</li>
+                                <li><strong>True Positive:</strong> Escalate to L2 or take authorized action</li>
+                                <li><strong>Needs More Investigation:</strong> If >15 min, escalate to L2</li>
+                            </ul>
+                            <p><strong>Time: 1-2 minutes</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Document Everything</div>
+                            <p>Record your findings regardless of outcome:</p>
+                            <ul>
+                                <li>What you investigated</li>
+                                <li>What you found</li>
+                                <li>Why you made your decision</li>
+                                <li>Any actions taken</li>
+                            </ul>
+                            <p><strong>Time: 3-5 minutes</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Triage Decision Framework</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; overflow-x: auto;">
+<pre style="margin: 0;">
+<span style="color: #a78bf6;">TRIAGE DECISION TREE</span>
+━━━━━━━━━━━━━━━━━━━━━
+
+                    ┌─────────────────┐
+                    │  New Alert      │
+                    └────────┬────────┘
+                             │
+                             ▼
+              ┌──────────────────────────┐
+              │ Is this a known FP?      │
+              └──────────────┬───────────┘
+                    YES │         │ NO
+                        ▼         ▼
+              ┌─────────────┐ ┌──────────────────────────┐
+              │ Document &  │ │ Is the user/system real? │
+              │ Close as FP │ └──────────────┬───────────┘
+              └─────────────┘       YES │         │ NO
+                                       ▼         ▼
+                        ┌─────────────────┐ ┌─────────────────┐
+                        │ Does behavior   │ │ Verify in AD/   │
+                        │ match job role? │ │ asset inventory │
+                        └────────┬────────┘ └─────────────────┘
+                      YES │            │ NO
+                          ▼            ▼
+              ┌─────────────────┐ ┌─────────────────────────┐
+              │ Likely FP -     │ │ Is this high severity/  │
+              │ verify & close  │ │ critical system?        │
+              └─────────────────┘ └────────────┬────────────┘
+                                      YES │         │ NO
+                                          ▼         ▼
+                            ┌───────────────┐ ┌─────────────────┐
+                            │ ESCALATE to   │ │ Can I resolve   │
+                            │ L2 immediately│ │ in 15 minutes?  │
+                            └───────────────┘ └────────┬────────┘
+                                                YES │      │ NO
+                                                    ▼      ▼
+                                        ┌──────────────┐ ┌─────────────┐
+                                        │ Complete L1  │ │ Escalate to │
+                                        │ investigation│ │ L2          │
+                                        └──────────────┘ └─────────────┘
+</pre>
+                </div>
+
+                <!-- PART 4: INVESTIGATION BASICS -->
+                <h2>Part 4: Investigation Fundamentals</h2>
+
+                <h3>The Five W's</h3>
+                <p>Every investigation answers these questions:</p>
+
+                <table>
+                    <thead><tr><th>Question</th><th>What to Find</th><th>Where to Look</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>WHO</strong></td>
+                            <td>User account, their role, department, manager</td>
+                            <td>Active Directory, HR system, asset inventory</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WHAT</strong></td>
+                            <td>Exact action that triggered alert</td>
+                            <td>Alert details, raw logs, process info</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WHEN</strong></td>
+                            <td>Timestamp, during/outside business hours</td>
+                            <td>Alert timestamp, log timeline</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WHERE</strong></td>
+                            <td>System name, IP, location, network zone</td>
+                            <td>Alert details, asset inventory, CMDB</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WHY</strong></td>
+                            <td>Is there a legitimate reason for this activity?</td>
+                            <td>User context, change tickets, business justification</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Investigation Queries (KQL Examples)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// 1. Get user's recent activity (last 24 hours)</span>
+union DeviceProcessEvents, DeviceNetworkEvents, DeviceFileEvents
+| where Timestamp > ago(24h)
+| where AccountName == "suspicious.user"
+| project Timestamp, ActionType, FileName, ProcessCommandLine, RemoteIP
+| sort by Timestamp desc
+| take 100
+
+<span style="color: #a78bf6;">// 2. Get all activity on a specific machine</span>
+union Device*
+| where Timestamp > ago(24h)
+| where DeviceName == "WORKSTATION01"
+| summarize EventCount = count() by ActionType
+| sort by EventCount desc
+
+<span style="color: #a78bf6;">// 3. Check if IP is known malicious</span>
+ThreatIntelligenceIndicator
+| where NetworkIP == "203.0.113.50"
+| project Description, ThreatType, ConfidenceScore, Source
+
+<span style="color: #a78bf6;">// 4. Find related alerts for same user/system</span>
+SecurityAlert
+| where TimeGenerated > ago(7d)
+| where CompromisedEntity contains "suspicious.user"
+   or CompromisedEntity contains "WORKSTATION01"
+| project TimeGenerated, AlertName, Severity, Status
+
+<span style="color: #a78bf6;">// 5. Check user's login history</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where UserPrincipalName == "suspicious.user@company.com"
+| project TimeGenerated, ResultType, Location, IPAddress, AppDisplayName
+| sort by TimeGenerated desc</pre>
+                </div>
+
+                <h3>Red Flags During Investigation</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-circle"></i> Escalate Immediately If You See:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Known malware names (Mimikatz, Cobalt Strike, etc.)</li>
+                        <li>Commands attempting to disable security tools</li>
+                        <li>Large data transfers to external IPs</li>
+                        <li>Multiple systems showing same suspicious activity</li>
+                        <li>Executive or privileged accounts compromised</li>
+                        <li>Activity outside user's normal working hours from unusual location</li>
+                        <li>Registry modifications for persistence</li>
+                        <li>Encoded PowerShell commands</li>
+                    </ul>
+                </div>
+
+                <!-- PART 5: ESCALATION -->
+                <h2>Part 5: When and How to Escalate</h2>
+
+                <h3>Escalation Triggers</h3>
+                <table>
+                    <thead><tr><th>Trigger</th><th>Why Escalate</th><th>Urgency</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Confirmed malware execution</strong></td>
+                            <td>Needs containment, forensics, remediation</td>
+                            <td style="color: #f07070;">Immediate</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Credential theft indicators</strong></td>
+                            <td>Attacker may have access to other systems</td>
+                            <td style="color: #f07070;">Immediate</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Multiple systems affected</strong></td>
+                            <td>May indicate lateral movement/larger compromise</td>
+                            <td style="color: #f07070;">Immediate</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Executive/VIP involved</strong></td>
+                            <td>High-value target, needs senior attention</td>
+                            <td style="color: #f0b756;">High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Critical system affected</strong></td>
+                            <td>Business impact concerns</td>
+                            <td style="color: #f0b756;">High</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Can't determine TP/FP in 15 min</strong></td>
+                            <td>Needs deeper investigation skills</td>
+                            <td style="color: #5ce0c4;">Normal</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Outside your authorization</strong></td>
+                            <td>Action needed that you can't perform</td>
+                            <td style="color: #5ce0c4;">Normal</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>How to Escalate Properly</h3>
+                <p>A good escalation includes:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">ESCALATION TEMPLATE</span>
+━━━━━━━━━━━━━━━━━━━━━
+
+<span style="color: #f0b756;">Alert:</span> [Alert Name] - [Alert ID]
+<span style="color: #f0b756;">Severity:</span> [Critical/High/Medium]
+<span style="color: #f0b756;">Time:</span> [When alert fired]
+
+<span style="color: #f0b756;">Affected:</span>
+- User: john.doe@company.com (Sales Manager)
+- System: WORKSTATION-JD01 (10.10.5.42)
+- Location: New York Office
+
+<span style="color: #f0b756;">Summary:</span>
+Observed encoded PowerShell execution on user's workstation.
+Process tree shows Word -> cmd -> PowerShell -enc [base64].
+
+<span style="color: #f0b756;">What I Investigated:</span>
+1. Verified user exists in AD - confirmed
+2. Checked for change tickets - none found
+3. Reviewed process tree - suspicious parent/child
+4. Checked for related alerts - found 2 more on same system
+
+<span style="color: #f0b756;">Why I'm Escalating:</span>
+Behavior matches known malware delivery technique.
+Cannot determine legitimate business reason.
+Multiple indicators suggest potential compromise.
+
+<span style="color: #f0b756;">Recommended Action:</span>
+Consider isolating workstation pending investigation.
+
+<span style="color: #f0b756;">Evidence Attached:</span>
+- Screenshot of process tree
+- Raw log events
+- Timeline of activity</pre>
+                </div>
+
+                <!-- PART 6: DOCUMENTATION -->
+                <h2>Part 6: Documentation Standards</h2>
+
+                <h3>Why Documentation Matters</h3>
+                <ul>
+                    <li><strong>Continuity:</strong> Others can pick up where you left off</li>
+                    <li><strong>Metrics:</strong> Track FP rates, response times</li>
+                    <li><strong>Legal:</strong> May be needed for legal proceedings</li>
+                    <li><strong>Learning:</strong> Build knowledge base for future alerts</li>
+                </ul>
+
+                <h3>Required Fields for Every Alert</h3>
+                <table>
+                    <thead><tr><th>Field</th><th>Content</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Alert ID</strong></td><td>Unique identifier</td><td>INC-2025-00142</td></tr>
+                        <tr><td><strong>Timestamp</strong></td><td>When investigated</td><td>2025-01-15 14:32 UTC</td></tr>
+                        <tr><td><strong>Analyst</strong></td><td>Who worked it</td><td>John Smith</td></tr>
+                        <tr><td><strong>Classification</strong></td><td>TP, FP, or Escalated</td><td>False Positive</td></tr>
+                        <tr><td><strong>Summary</strong></td><td>Brief description</td><td>"Encoded PowerShell from SCCM deployment"</td></tr>
+                        <tr><td><strong>Investigation Steps</strong></td><td>What you checked</td><td>"Verified parent process, checked change tickets"</td></tr>
+                        <tr><td><strong>Findings</strong></td><td>What you found</td><td>"Activity from authorized ConfigMgr deployment"</td></tr>
+                        <tr><td><strong>Decision Rationale</strong></td><td>Why you classified it this way</td><td>"Parent process is legitimate SCCM agent"</td></tr>
+                        <tr><td><strong>Actions Taken</strong></td><td>What you did</td><td>"None - closed as FP"</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Good vs. Bad Documentation</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                    <div style="background: rgba(240,112,112,0.1); border: 1px solid rgba(240,112,112,0.3); border-radius: var(--radius-md); padding: 1rem;">
+                        <h4 style="color: #f07070; margin-top: 0;"><i class="fas fa-times"></i> Bad Example</h4>
+                        <p style="font-family: var(--font-mono); font-size: 0.8rem;">"Checked it, looks fine. FP."</p>
+                        <p style="margin-bottom: 0; font-size: 0.85rem;"><strong>Problems:</strong> No details, can't learn from it, no audit trail</p>
+                    </div>
+                    <div style="background: rgba(92,224,196,0.1); border: 1px solid rgba(92,224,196,0.3); border-radius: var(--radius-md); padding: 1rem;">
+                        <h4 style="color: #5ce0c4; margin-top: 0;"><i class="fas fa-check"></i> Good Example</h4>
+                        <p style="font-family: var(--font-mono); font-size: 0.75rem;">"Encoded PowerShell alert on WKSTN-042. Verified user jsmith is IT admin. Parent process is CcmExec.exe (SCCM). Correlated with CHG-4521 - scheduled software deployment. Closing as FP - legitimate SCCM activity."</p>
+                        <p style="margin-bottom: 0; font-size: 0.85rem;"><strong>Why good:</strong> Complete context, reproducible, builds knowledge</p>
+                    </div>
+                </div>
+
+                <!-- PART 7: COMMON ALERT TYPES -->
+                <h2>Part 7: Common Alert Types Explained</h2>
+
+                <h3>Alert Type 1: Encoded PowerShell</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <h4 style="margin-top: 0;">What It Means</h4>
+                    <p>PowerShell command using -enc/-encodedcommand to hide what it's doing.</p>
+                    
+                    <h4>Why It's Suspicious</h4>
+                    <p>Attackers use encoding to evade detection. Legitimate tools rarely need encoding.</p>
+                    
+                    <h4>How to Investigate</h4>
+                    <ol>
+                        <li>Look at the parent process (what launched PowerShell)</li>
+                        <li>Decode the base64 to see actual command</li>
+                        <li>Check if there's a change ticket or deployment</li>
+                    </ol>
+                    
+                    <h4>Common FPs</h4>
+                    <ul style="margin-bottom: 0;">
+                        <li>SCCM/ConfigMgr deployments</li>
+                        <li>Intune management</li>
+                        <li>Legitimate IT automation scripts</li>
+                    </ul>
+                </div>
+
+                <h3>Alert Type 2: Suspicious Login</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <h4 style="margin-top: 0;">What It Means</h4>
+                    <p>Login from unusual location, impossible travel, or after hours.</p>
+                    
+                    <h4>Why It's Suspicious</h4>
+                    <p>Could indicate stolen credentials being used by attacker.</p>
+                    
+                    <h4>How to Investigate</h4>
+                    <ol>
+                        <li>Check if user is traveling (out of office, travel booking)</li>
+                        <li>Verify the IP/location makes sense</li>
+                        <li>Look at what actions were taken after login</li>
+                        <li>Check for VPN usage (VPN exit nodes can appear as different locations)</li>
+                    </ol>
+                    
+                    <h4>Common FPs</h4>
+                    <ul style="margin-bottom: 0;">
+                        <li>VPN connections showing exit node location</li>
+                        <li>Mobile device on cellular network</li>
+                        <li>User actually traveling</li>
+                    </ul>
+                </div>
+
+                <h3>Alert Type 3: Malware Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <h4 style="margin-top: 0;">What It Means</h4>
+                    <p>AV/EDR detected known malware signature or behavior.</p>
+                    
+                    <h4>Why It's Important</h4>
+                    <p>Even if blocked, indicates attack attempt. May have related activity.</p>
+                    
+                    <h4>How to Investigate</h4>
+                    <ol>
+                        <li>Confirm AV/EDR blocked/quarantined the file</li>
+                        <li>Check how it got there (email, download, USB)</li>
+                        <li>Look for execution attempts</li>
+                        <li>Check for related network activity (C2)</li>
+                    </ol>
+                    
+                    <h4>When to Escalate</h4>
+                    <ul style="margin-bottom: 0;">
+                        <li>If malware executed before being caught</li>
+                        <li>If user clicked something in phishing email</li>
+                        <li>If multiple systems have same malware</li>
+                    </ul>
+                </div>
+
+                <!-- PART 8: CAREER GROWTH -->
+                <h2>Part 8: Growing from L1 to L2</h2>
+
+                <h3>Skills to Develop</h3>
+                <table>
+                    <thead><tr><th>Skill</th><th>How to Develop</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Deeper log analysis</strong></td><td>Practice complex queries, study raw logs</td></tr>
+                        <tr><td><strong>Threat intelligence</strong></td><td>Read threat reports, follow security researchers</td></tr>
+                        <tr><td><strong>Malware basics</strong></td><td>Learn common malware behaviors, take courses</td></tr>
+                        <tr><td><strong>Networking</strong></td><td>Understand protocols, packet analysis basics</td></tr>
+                        <tr><td><strong>Scripting</strong></td><td>Learn Python/PowerShell for automation</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Certifications Path</h3>
+                <ul>
+                    <li><strong>Entry:</strong> CompTIA Security+, CySA+</li>
+                    <li><strong>Intermediate:</strong> GCIH, GCFA, GCIA</li>
+                    <li><strong>Advanced:</strong> GCFE, GNFA, OSCP</li>
+                </ul>
+
+                <h2>Quick Reference Card</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h4 style="margin-top: 0;">L1 Analyst Checklist</h4>
+                    <table>
+                        <tbody>
+                            <tr><td>☐</td><td>Acknowledge alert immediately</td></tr>
+                            <tr><td>☐</td><td>Check for known FP patterns</td></tr>
+                            <tr><td>☐</td><td>Gather the 5 W's (Who, What, When, Where, Why)</td></tr>
+                            <tr><td>☐</td><td>Check for related alerts</td></tr>
+                            <tr><td>☐</td><td>Make classification decision</td></tr>
+                            <tr><td>☐</td><td>Document everything</td></tr>
+                            <tr><td>☐</td><td>Escalate if: confirmed TP, can't resolve in 15 min, critical system</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

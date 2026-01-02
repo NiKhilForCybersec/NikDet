@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL Advanced | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Splunk</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="spl-nav"><i class="fas fa-search"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="spl-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="spl-basics.html">SPL Basics</a></li>
+                    <li><a href="spl-intermediate.html">SPL Intermediate</a></li>
+                    <li><a href="spl-advanced.html" class="active">SPL Advanced</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Splunk</a><span class="separator">/</span><span>SPL Advanced</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-brain" style="color: var(--accent-tertiary);"></i> SPL Advanced</h1>
+                <p class="lead">Master advanced SPL techniques for complex detections and analysis.</p>
+            </div>
+            <div class="content">
+
+                <h2>Statistical Analysis Commands</h2>
+
+                <h3>eventstats - Add Statistics Without Grouping</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Unlike stats, eventstats keeps all events and adds calculated fields</span>
+
+<span style="color: #6aa3f7;">// Add total to each event for percentage calculation</span>
+index=firewall
+| eventstats count as total_events
+| stats count as action_count by action
+| eval percentage = round((action_count/total_events)*100, 2)
+
+<span style="color: #6aa3f7;">// Add user's typical login count per event</span>
+index=windows EventCode=4624
+| eventstats avg(eval(1)) as avg_logins by TargetUserName
+| eventstats count as user_logins by TargetUserName
+| where user_logins > (avg_logins * 3)  <span style="color: #6aa3f7;">// 3x above average</span>
+
+<span style="color: #6aa3f7;">// Security: Find outliers from normal behavior</span>
+index=proxy
+| stats sum(bytes) as user_bytes by user
+| eventstats avg(user_bytes) as avg_bytes, stdev(user_bytes) as stdev_bytes
+| eval zscore = (user_bytes - avg_bytes) / stdev_bytes
+| where zscore > 3  <span style="color: #6aa3f7;">// More than 3 standard deviations</span></pre>
+                </div>
+
+                <h3>streamstats - Running Statistics</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Running count (accumulating)</span>
+index=firewall
+| sort _time
+| streamstats count as running_count
+
+<span style="color: #6aa3f7;">// Window-based stats (last N events)</span>
+index=firewall action=blocked
+| sort _time
+| streamstats count as last_5min_blocks window=300 time_window=5m
+
+<span style="color: #6aa3f7;">// Security: Detect rapid succession of events</span>
+index=windows EventCode=4625
+| sort _time
+| streamstats count as attempts window=5 by TargetUserName
+| where attempts >= 5  <span style="color: #6aa3f7;">// 5 failures in quick succession</span>
+
+<span style="color: #6aa3f7;">// Running average for anomaly detection</span>
+index=firewall
+| timechart span=5m count as events
+| streamstats avg(events) as running_avg window=12  <span style="color: #6aa3f7;">// Last hour</span>
+| eval deviation = events / running_avg
+| where deviation > 3</pre>
+                </div>
+
+                <h3>anomalydetection - Built-in ML</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Detect anomalies using machine learning</span>
+index=firewall
+| timechart span=1h count as events
+| anomalydetection events
+
+<span style="color: #6aa3f7;">// Returns: isAnomaly (0/1), anomalyScore, expectedValue, etc.</span>
+
+<span style="color: #6aa3f7;">// Filter to only anomalies</span>
+| where isAnomaly=1
+
+<span style="color: #6aa3f7;">// Multivariate anomaly detection</span>
+index=firewall
+| timechart span=1h count as connections, sum(bytes) as total_bytes
+| anomalydetection connections total_bytes</pre>
+                </div>
+
+                <h2>Multi-Value Field Operations</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Create multi-value field</span>
+| makemv delim="," src_ips
+
+<span style="color: #6aa3f7;">// Expand multi-value to separate events</span>
+| mvexpand src_ips
+
+<span style="color: #6aa3f7;">// Combine values into multi-value</span>
+| stats values(src_ip) as all_sources by user
+
+<span style="color: #6aa3f7;">// Count multi-value items</span>
+| eval ip_count = mvcount(all_sources)
+
+<span style="color: #6aa3f7;">// Get specific index</span>
+| eval first_ip = mvindex(all_sources, 0)
+| eval last_ip = mvindex(all_sources, -1)
+
+<span style="color: #6aa3f7;">// Filter multi-value</span>
+| eval internal_ips = mvfilter(cidrmatch("10.0.0.0/8", all_sources))
+
+<span style="color: #6aa3f7;">// Sort multi-value</span>
+| eval sorted_ips = mvsort(all_sources)
+
+<span style="color: #6aa3f7;">// Security: Find users with multiple source IPs</span>
+index=windows EventCode=4624
+| stats values(IpAddress) as source_ips, dc(IpAddress) as unique_ips by TargetUserName
+| where unique_ips > 5</pre>
+                </div>
+
+                <h2>Advanced Correlation Techniques</h2>
+
+                <h3>Chained Searches with append/appendcols</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// append - Add rows from another search</span>
+index=windows EventCode=4625
+| stats count as failed by src_ip
+| append [
+    search index=windows EventCode=4624
+    | stats count as success by src_ip
+]
+| stats sum(failed) as failed, sum(success) as success by src_ip
+
+<span style="color: #6aa3f7;">// appendcols - Add columns from another search</span>
+index=firewall earliest=-1h
+| stats count as current_hour
+| appendcols [
+    search index=firewall earliest=-25h latest=-24h
+    | stats count as same_hour_yesterday
+]
+| eval change_pct = round(((current_hour - same_hour_yesterday) / same_hour_yesterday) * 100, 2)</pre>
+                </div>
+
+                <h3>map - Iterate Over Results</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// For each suspicious IP, get all related activity</span>
+index=firewall action=blocked
+| stats count by src_ip
+| where count > 100
+| head 10
+| map search="search index=* src_ip=$src_ip$ | stats count by index, sourcetype"
+
+<span style="color: #6aa3f7;">// Careful: map has performance implications for large result sets</span></pre>
+                </div>
+
+                <h2>Datamodel Acceleration</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Use accelerated datamodels for faster searches</span>
+
+<span style="color: #6aa3f7;">// Network Traffic datamodel</span>
+| from datamodel:"Network_Traffic"."All_Traffic"
+| stats sum(bytes) as total_bytes by src_ip
+
+<span style="color: #6aa3f7;">// Authentication datamodel</span>
+| from datamodel:"Authentication"."Authentication"
+| where action="failure"
+| stats count by user, src
+
+<span style="color: #6aa3f7;">// tstats - Much faster than regular search on datamodels</span>
+| tstats count from datamodel=Authentication where Authentication.action=failure by Authentication.user
+
+<span style="color: #6aa3f7;">// tstats with summariesonly (only accelerated data, fastest)</span>
+| tstats summariesonly=true count from datamodel=Network_Traffic by All_Traffic.src_ip</pre>
+                </div>
+
+                <h2>Security Detection Examples</h2>
+
+                <h3>Lateral Movement Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Detect user accessing many hosts rapidly</span>
+index=windows EventCode=4624 LogonType IN (3, 10)  <span style="color: #6aa3f7;">// Network & RemoteInteractive</span>
+| bin _time span=1h
+| stats dc(ComputerName) as unique_hosts, values(ComputerName) as hosts by TargetUserName, _time
+| where unique_hosts > 10
+| sort -unique_hosts
+
+<span style="color: #6aa3f7;">// RDP lateral movement</span>
+index=windows EventCode=4624 LogonType=10
+| transaction TargetUserName maxspan=1h
+| where eventcount > 5
+| table _time, TargetUserName, eventcount, duration</pre>
+                </div>
+
+                <h3>Data Exfiltration Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Large outbound transfers</span>
+index=firewall direction=outbound
+| stats sum(bytes) as total_bytes by src_ip, dest_ip
+| where total_bytes > 1073741824  <span style="color: #6aa3f7;">// > 1GB</span>
+| eval total_gb = round(total_bytes/1024/1024/1024, 2)
+| sort -total_gb
+
+<span style="color: #6aa3f7;">// Unusual upload destinations</span>
+index=proxy http_method=POST
+| stats sum(bytes_out) as uploaded by dest, user
+| eventstats avg(uploaded) as avg_upload, stdev(uploaded) as stdev_upload
+| eval zscore = (uploaded - avg_upload) / stdev_upload
+| where zscore > 2
+| sort -zscore</pre>
+                </div>
+
+                <h3>Beaconing Detection (C2)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find regular interval connections (potential C2 beaconing)</span>
+index=firewall
+| sort _time
+| streamstats current=f last(_time) as prev_time by src_ip, dest_ip
+| eval interval = _time - prev_time
+| stats count, avg(interval) as avg_interval, stdev(interval) as stdev_interval by src_ip, dest_ip
+| where count > 20 AND stdev_interval < 10  <span style="color: #6aa3f7;">// Low variance = regular interval</span>
+| sort stdev_interval
+
+<span style="color: #6aa3f7;">// Alternative: Use coefficient of variation</span>
+| eval cv = stdev_interval / avg_interval
+| where cv < 0.1  <span style="color: #6aa3f7;">// Less than 10% variation = very regular</span></pre>
+                </div>
+
+                <h3>Account Compromise Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Impossible travel detection</span>
+index=azure_ad SigninLogs
+| sort _time
+| streamstats current=f last(Location) as prev_location, last(_time) as prev_time by UserPrincipalName
+| iplocation IpAddress
+| eval time_diff_hours = (_time - prev_time) / 3600
+| eval locations_different = if(Location != prev_location AND isnotnull(prev_location), 1, 0)
+| where locations_different=1 AND time_diff_hours < 2  <span style="color: #6aa3f7;">// Different location within 2 hours</span>
+| table _time, UserPrincipalName, Location, prev_location, time_diff_hours
+
+<span style="color: #6aa3f7;">// First-time login from new location</span>
+index=azure_ad SigninLogs ResultType=0  <span style="color: #6aa3f7;">// Successful</span>
+| iplocation IpAddress
+| stats earliest(_time) as first_login, count by UserPrincipalName, Country
+| where first_login > relative_time(now(), "-24h")  <span style="color: #6aa3f7;">// New in last 24h</span></pre>
+                </div>
+
+                <h2>Performance Optimization</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>Impact</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Filter early</strong></td>
+                            <td>Major</td>
+                            <td>Put restrictive filters before expensive commands</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use indexed fields</strong></td>
+                            <td>Major</td>
+                            <td><code>index=X source=Y</code> before <code>| search field=value</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Limit time range</strong></td>
+                            <td>Major</td>
+                            <td>Use <code>earliest</code> and <code>latest</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use tstats</strong></td>
+                            <td>Major</td>
+                            <td>Query accelerated datamodels</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Avoid wildcards in middle</strong></td>
+                            <td>Moderate</td>
+                            <td><code>user=admin*</code> better than <code>user=*admin*</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Use fields command</strong></td>
+                            <td>Moderate</td>
+                            <td>Drop unnecessary fields early: <code>| fields src_ip, user</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #f07070;">// BAD: Expensive search</span>
+| search *password*
+| stats count by user
+
+<span style="color: #5ce0c4;">// GOOD: Optimized search</span>
+index=windows EventCode=4625 earliest=-1h
+| fields TargetUserName, IpAddress
+| stats count by TargetUserName
+
+<span style="color: #6aa3f7;">// Use Job Inspector to analyze performance</span>
+<span style="color: #6aa3f7;">// Look for: scanCount, eventCount, execution time</span></pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

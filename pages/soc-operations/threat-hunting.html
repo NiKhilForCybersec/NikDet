@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Hunting | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>SOC Operations</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="soc-nav"><i class="fas fa-users-gear"></i><span>Operations</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="soc-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="l1-operations.html">L1 Operations</a></li>
+                    <li><a href="l2-operations.html">L2 Operations</a></li>
+                    <li><a href="l3-operations.html">L3 Operations</a></li>
+                    <li><a href="threat-hunting.html" class="active">Threat Hunting</a></li>
+                    <li><a href="incident-response.html">Incident Response</a></li>
+                    <li><a href="metrics.html">Metrics</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">SOC Operations</a><span class="separator">/</span><span>Threat Hunting</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-crosshairs" style="color: var(--accent-tertiary);"></i> Threat Hunting</h1>
+                <p class="lead">Proactively search for threats that evade automated detection systems.</p>
+            </div>
+            <div class="content">
+                <h2>What is Threat Hunting?</h2>
+                <p>Threat hunting is the <strong>proactive, human-driven</strong> search for threats that have bypassed your automated security controls. Unlike alert-driven SOC work, hunting assumes adversaries are already in your environment and actively searches for evidence of their presence.</p>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Hunting vs. Alert Investigation</div>
+                    <table style="margin: 0.5rem 0 0 0;">
+                        <thead><tr><th>Alert Investigation</th><th>Threat Hunting</th></tr></thead>
+                        <tbody>
+                            <tr><td>Reactive - triggered by alerts</td><td>Proactive - initiated by hunter</td></tr>
+                            <tr><td>Known bad indicators</td><td>Unknown or emerging threats</td></tr>
+                            <tr><td>Follows playbooks</td><td>Creative hypothesis testing</td></tr>
+                            <tr><td>High volume, quick triage</td><td>Deep dive, thorough analysis</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2>The Hunting Loop</h2>
+                <p>Effective hunting follows an iterative cycle:</p>
+
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin: 2rem 0; padding: 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                    <div style="flex: 1; min-width: 140px; max-width: 180px; padding: 1rem; text-align: center; background: linear-gradient(135deg, rgba(167,139,246,0.2), transparent); border-radius: var(--radius-md); border: 1px solid rgba(167,139,246,0.3);">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">1️⃣</div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #a78bf6;">Hypothesis</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">Form a theory about potential threats</p>
+                    </div>
+                    <div style="display: flex; align-items: center;"><i class="fas fa-arrow-right" style="color: var(--text-muted);"></i></div>
+                    <div style="flex: 1; min-width: 140px; max-width: 180px; padding: 1rem; text-align: center; background: linear-gradient(135deg, rgba(106,163,247,0.2), transparent); border-radius: var(--radius-md); border: 1px solid rgba(106,163,247,0.3);">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">2️⃣</div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #6aa3f7;">Investigate</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">Query data, analyze patterns</p>
+                    </div>
+                    <div style="display: flex; align-items: center;"><i class="fas fa-arrow-right" style="color: var(--text-muted);"></i></div>
+                    <div style="flex: 1; min-width: 140px; max-width: 180px; padding: 1rem; text-align: center; background: linear-gradient(135deg, rgba(92,224,196,0.2), transparent); border-radius: var(--radius-md); border: 1px solid rgba(92,224,196,0.3);">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">3️⃣</div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #5ce0c4;">Discover</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">Find evidence or rule out threat</p>
+                    </div>
+                    <div style="display: flex; align-items: center;"><i class="fas fa-arrow-right" style="color: var(--text-muted);"></i></div>
+                    <div style="flex: 1; min-width: 140px; max-width: 180px; padding: 1rem; text-align: center; background: linear-gradient(135deg, rgba(240,183,86,0.2), transparent); border-radius: var(--radius-md); border: 1px solid rgba(240,183,86,0.3);">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">4️⃣</div>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #f0b756;">Enrich</h4>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">Create detections, document findings</p>
+                    </div>
+                </div>
+
+                <h2>Hypothesis Development</h2>
+                <p>Every hunt starts with a hypothesis - an educated guess about what threat activity might look like.</p>
+
+                <h3>Hypothesis Sources</h3>
+                <table>
+                    <thead><tr><th>Source</th><th>Description</th><th>Example Hypothesis</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Threat Intelligence</strong></td>
+                            <td>Reports about active threats, APT campaigns</td>
+                            <td>"APT29 is targeting our sector with spearphishing - look for their known TTPs"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ATT&CK Framework</strong></td>
+                            <td>Techniques we haven't validated detection for</td>
+                            <td>"We have no detection for T1055 Process Injection - hunt for it manually"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security News</strong></td>
+                            <td>New vulnerabilities, emerging attack techniques</td>
+                            <td>"Log4Shell is being exploited - search for JNDI lookup patterns"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Internal Events</strong></td>
+                            <td>Suspicious alerts, user reports, audit findings</td>
+                            <td>"Finance reported unusual emails - hunt for BEC indicators"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Anomalies</strong></td>
+                            <td>Unusual patterns in baseline data</td>
+                            <td>"DNS queries spiked 300% - investigate the cause"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Good Hypothesis Format</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
+                    <strong>Template:</strong><br>
+                    "Adversaries may be using [TECHNIQUE] to [GOAL] in our environment.<br>
+                    Evidence would include [OBSERVABLE INDICATORS].<br>
+                    I will search [DATA SOURCES] for [SPECIFIC PATTERNS]."<br><br>
+                    <strong>Example:</strong><br>
+                    "Adversaries may be using scheduled tasks for persistence in our environment.<br>
+                    Evidence would include tasks created by non-standard accounts or running unusual binaries.<br>
+                    I will search Windows Security logs for Event 4698 and filter for suspicious attributes."
+                </div>
+
+                <h2>Hunting Methodologies</h2>
+
+                <h3>1. Intelligence-Driven Hunting</h3>
+                <p>Start with known threat intelligence and search for specific indicators or TTPs.</p>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Collect Intelligence</div>
+                            <p>Gather IOCs, TTPs from threat reports (APT reports, ISACs, vendor intel)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Translate to Queries</div>
+                            <p>Convert IOCs to SIEM queries (hash, IP, domain searches)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Execute Search</div>
+                            <p>Run queries against historical data (30-90 days typically)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Analyze Results</div>
+                            <p>Review matches, eliminate false positives, investigate true hits</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>2. Hypothesis-Driven Hunting</h3>
+                <p>Start with a theory about attacker behavior and test it against your data.</p>
+                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                    <strong>Example Hunt: Credential Dumping</strong><br><br>
+                    <strong>Hypothesis:</strong> Attackers may be dumping credentials from LSASS<br>
+                    <strong>ATT&CK:</strong> T1003.001 - OS Credential Dumping: LSASS Memory<br>
+                    <strong>Data Source:</strong> Sysmon Event 10 (Process Access)<br>
+                    <strong>Search:</strong> Processes accessing lsass.exe with suspicious access masks<br>
+                    <strong>Expected Results:</strong> Mimikatz, procdump, or unknown tools accessing LSASS
+                </div>
+
+                <h3>3. Baseline/Anomaly Hunting</h3>
+                <p>Establish what's normal, then search for deviations.</p>
+                <ul>
+                    <li><strong>First:</strong> Establish baseline of normal activity</li>
+                    <li><strong>Then:</strong> Search for statistical outliers</li>
+                    <li><strong>Focus:</strong> Rare processes, unusual connections, abnormal volumes</li>
+                </ul>
+
+                <h2>Hunting Queries by Technique</h2>
+
+                <h3>Hunt: Rare Process Execution</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Find processes seen on &lt;3 machines in 7 days</span>
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| summarize 
+    MachineCount = dcount(DeviceName),
+    Machines = make_set(DeviceName, 5),
+    Users = make_set(AccountName, 5),
+    SampleCommandLine = any(ProcessCommandLine)
+    by FileName
+| where MachineCount <= 3
+| sort by MachineCount asc</pre>
+                </div>
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Why This Works</div>
+                    <p style="margin: 0.5rem 0 0 0;">Malware and attacker tools are often unique to compromised systems. A legitimate enterprise application appears on many machines; a backdoor appears on one or two.</p>
+                </div>
+
+                <h3>Hunt: Suspicious PowerShell</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - PowerShell with suspicious patterns</span>
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any (
+    "-enc", "-encoded", "-e ",           <span style="color: #6aa3f7;">// Encoded commands</span>
+    "downloadstring", "downloadfile",     <span style="color: #6aa3f7;">// Downloads</span>
+    "invoke-expression", "iex",           <span style="color: #6aa3f7;">// Execution</span>
+    "bypass", "-nop", "-w hidden",        <span style="color: #6aa3f7;">// Evasion</span>
+    "frombase64", "decompress",           <span style="color: #6aa3f7;">// Obfuscation</span>
+    "webclient", "net.webclient",         <span style="color: #6aa3f7;">// Web access</span>
+    "reflection.assembly"                 <span style="color: #6aa3f7;">// In-memory loading</span>
+)
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine, InitiatingProcessFileName</pre>
+                </div>
+
+                <h3>Hunt: Beaconing Activity</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Find regular interval connections (potential C2)</span>
+DeviceNetworkEvents
+| where Timestamp > ago(24h)
+| where RemoteIPType == "Public"
+| summarize 
+    ConnectionCount = count(),
+    TimeStamps = make_list(Timestamp)
+    by DeviceName, RemoteIP, RemotePort
+| where ConnectionCount > 50
+| extend TimeDiffs = array_sort_asc(TimeStamps)
+| mv-expand TimeDiff = TimeDiffs
+| extend PrevTime = prev(todatetime(TimeDiff))
+| where isnotnull(PrevTime)
+| extend Interval = datetime_diff('second', todatetime(TimeDiff), PrevTime)
+| summarize 
+    AvgInterval = avg(Interval),
+    StdDev = stdev(Interval),
+    Count = count()
+    by DeviceName, RemoteIP
+| where StdDev < 10 and AvgInterval between (30 .. 900)  <span style="color: #6aa3f7;">// Low variance, 30s-15min interval</span>
+| extend CoeffOfVariation = StdDev / AvgInterval * 100
+| where CoeffOfVariation < 15  <span style="color: #6aa3f7;">// Very regular timing</span></pre>
+                </div>
+
+                <h3>Hunt: Lateral Movement via RDP</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - RDP from unusual sources</span>
+DeviceLogonEvents
+| where Timestamp > ago(7d)
+| where LogonType == "RemoteInteractive"  <span style="color: #6aa3f7;">// RDP</span>
+| where isnotempty(RemoteIP)
+| summarize 
+    FirstSeen = min(Timestamp),
+    LastSeen = max(Timestamp),
+    LogonCount = count(),
+    TargetMachines = make_set(DeviceName)
+    by RemoteIP, AccountName
+| join kind=leftouter (
+    <span style="color: #6aa3f7;">// Historical baseline - who normally RDPs from where</span>
+    DeviceLogonEvents
+    | where Timestamp between (ago(90d) .. ago(7d))
+    | where LogonType == "RemoteInteractive"
+    | summarize HistoricalLogons = count() by RemoteIP, AccountName
+) on RemoteIP, AccountName
+| where isnull(HistoricalLogons) or HistoricalLogons < 5  <span style="color: #6aa3f7;">// New or rare</span></pre>
+                </div>
+
+                <h3>Hunt: Persistence via Scheduled Tasks</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Suspicious scheduled task creation</span>
+DeviceEvents
+| where Timestamp > ago(7d)
+| where ActionType == "ScheduledTaskCreated"
+| extend TaskContent = parse_json(AdditionalFields)
+| extend TaskCommand = tostring(TaskContent.TaskCommand)
+| where TaskCommand has_any (
+    "powershell", "cmd.exe", "wscript", "cscript",
+    "mshta", "rundll32", "regsvr32", "certutil",
+    "\\temp\\", "\\appdata\\", "\\public\\"
+)
+| project Timestamp, DeviceName, AccountName, TaskContent, TaskCommand</pre>
+                </div>
+
+                <h2>Hunt Documentation Template</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">hunt_id:</span> HUNT-2025-001
+<span style="color: #a78bf6;">title:</span> Credential Dumping via LSASS Access
+<span style="color: #a78bf6;">date:</span> 2025-01-15
+<span style="color: #a78bf6;">hunter:</span> Security Analyst
+<span style="color: #a78bf6;">time_spent:</span> 4 hours
+
+<span style="color: #a78bf6;">hypothesis:</span> |
+  Attackers may be using credential dumping tools to access LSASS 
+  memory and extract credentials for lateral movement.
+
+<span style="color: #a78bf6;">mitre_attack:</span>
+  - T1003.001 - OS Credential Dumping: LSASS Memory
+
+<span style="color: #a78bf6;">data_sources:</span>
+  - Sysmon Event 10 (Process Access)
+  - Windows Security Event 4663
+
+<span style="color: #a78bf6;">queries_used:</span>
+  - <span style="color: #a78bf6;">name:</span> LSASS Access Detection
+    <span style="color: #a78bf6;">query:</span> |
+      DeviceEvents | where ActionType == "ProcessAccess" 
+      | where TargetFileName =~ "lsass.exe"
+
+<span style="color: #a78bf6;">findings:</span>
+  - <span style="color: #a78bf6;">finding_id:</span> F001
+    <span style="color: #a78bf6;">description:</span> Procdump.exe accessed LSASS on WORKSTATION-15
+    <span style="color: #a78bf6;">severity:</span> High
+    <span style="color: #a78bf6;">action_taken:</span> Escalated to IR team
+    
+<span style="color: #a78bf6;">outcome:</span> |
+  Found one true positive (procdump used by IT admin for legitimate 
+  troubleshooting - verified). Created detection rule for future.
+
+<span style="color: #a78bf6;">detections_created:</span>
+  - DET-087: LSASS Access by Suspicious Process
+
+<span style="color: #a78bf6;">recommendations:</span>
+  - Implement Credential Guard on sensitive systems
+  - Add LSASS protection via Windows Defender</pre>
+                </div>
+
+                <h2>Weekly Hunt Ideas</h2>
+                <table>
+                    <thead><tr><th>Week</th><th>Hunt Focus</th><th>Technique</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>Encoded PowerShell execution</td><td>T1059.001</td></tr>
+                        <tr><td>2</td><td>Suspicious parent-child processes</td><td>T1059</td></tr>
+                        <tr><td>3</td><td>LSASS access patterns</td><td>T1003.001</td></tr>
+                        <tr><td>4</td><td>New scheduled tasks</td><td>T1053.005</td></tr>
+                        <tr><td>5</td><td>Registry Run key modifications</td><td>T1547.001</td></tr>
+                        <tr><td>6</td><td>Rare process execution</td><td>Various</td></tr>
+                        <tr><td>7</td><td>Unusual outbound connections</td><td>T1071</td></tr>
+                        <tr><td>8</td><td>Service account logons</td><td>T1078</td></tr>
+                        <tr><td>9</td><td>WMI-based persistence</td><td>T1546.003</td></tr>
+                        <tr><td>10</td><td>DNS tunneling indicators</td><td>T1071.004</td></tr>
+                        <tr><td>11</td><td>Lateral movement via SMB</td><td>T1021.002</td></tr>
+                        <tr><td>12</td><td>Data staging for exfiltration</td><td>T1074</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Resources</h2>
+                <ul>
+                    <li><a href="https://github.com/ThreatHuntingProject/ThreatHunting" target="_blank">Threat Hunting Project</a></li>
+                    <li><a href="https://attack.mitre.org/" target="_blank">MITRE ATT&CK</a></li>
+                    <li><a href="https://car.mitre.org/" target="_blank">MITRE Cyber Analytics Repository</a></li>
+                </ul>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Parsing | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Infrastructure</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="infra-nav"><i class="fas fa-server"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="infra-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="log-sources.html">Log Sources</a></li>
+                    <li><a href="collection.html">Collection</a></li>
+                    <li><a href="parsing.html" class="active">Parsing</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Infrastructure</a><span class="separator">/</span><span>Parsing</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-code" style="color: var(--accent-warning);"></i> Log Parsing & Normalization</h1>
+                <p class="lead">Transform raw logs into structured, searchable data for effective detection and analysis.</p>
+            </div>
+            <div class="content">
+
+                <h2>What is Log Parsing?</h2>
+                <p>Log parsing is the process of extracting structured fields from raw log data. Without parsing, logs are just text strings that are difficult to search and analyze.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">BEFORE PARSING (Raw Log)</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Jan 15 10:23:45 webserver01 sshd[12345]: Failed password for invalid user admin from 192.168.1.100 port 52413 ssh2
+
+<span style="color: #5ce0c4;">AFTER PARSING (Structured Fields)</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{
+  "timestamp": "2025-01-15T10:23:45",
+  "host": "webserver01",
+  "process": "sshd",
+  "pid": 12345,
+  "action": "Failed password",
+  "user": "admin",
+  "user_type": "invalid",
+  "src_ip": "192.168.1.100",
+  "src_port": 52413,
+  "protocol": "ssh2"
+}</pre>
+                </div>
+
+                <h2>Why Parsing Matters</h2>
+                <table>
+                    <thead><tr><th>Without Parsing</th><th>With Parsing</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Search entire log text with wildcards</td>
+                            <td>Query specific fields: <code>src_ip = "192.168.1.100"</code></td>
+                        </tr>
+                        <tr>
+                            <td>Slow, inefficient searches</td>
+                            <td>Fast, indexed field lookups</td>
+                        </tr>
+                        <tr>
+                            <td>Can't aggregate or group data</td>
+                            <td>Easy aggregation: <code>stats count by src_ip</code></td>
+                        </tr>
+                        <tr>
+                            <td>Difficult to correlate across sources</td>
+                            <td>Normalized fields enable correlation</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Parsing Methods</h2>
+
+                <h3>1. Regular Expressions (Regex)</h3>
+                <p>Most flexible but complex. Extract fields by matching patterns.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># SSH Failed Login Regex</span>
+<span style="color: #a78bf6;">Pattern:</span> Failed password for (?:invalid user )?(?P&lt;user&gt;\S+) from (?P&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+) port (?P&lt;src_port&gt;\d+)
+
+<span style="color: #6aa3f7;"># Splunk rex command</span>
+| rex field=_raw "Failed password for (?:invalid user )?(?P&lt;user&gt;\S+) from (?P&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)"
+
+<span style="color: #6aa3f7;"># Sentinel KQL parse</span>
+| parse RawData with * "Failed password for " UserType:string " " User:string " from " SrcIP:string " port " *</pre>
+                </div>
+
+                <h3>2. Key-Value Extraction</h3>
+                <p>For logs with key=value pairs.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Sample log with key-value pairs</span>
+action=login user=admin src=192.168.1.100 result=failure reason="invalid password"
+
+<span style="color: #6aa3f7;"># Splunk automatic extraction</span>
+| extract auto=true
+
+<span style="color: #6aa3f7;"># Splunk spath for JSON</span>
+| spath input=_raw
+
+<span style="color: #6aa3f7;"># KQL parse_json</span>
+| extend parsed = parse_json(RawData)</pre>
+                </div>
+
+                <h3>3. Delimited Parsing</h3>
+                <p>For CSV, TSV, or other delimited formats.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># CSV log</span>
+2025-01-15,10:23:45,webserver01,login,admin,192.168.1.100,failure
+
+<span style="color: #6aa3f7;"># Splunk - specify fields</span>
+| makemv delim="," _raw
+| eval date=mvindex(_raw,0), time=mvindex(_raw,1), host=mvindex(_raw,2)
+
+<span style="color: #6aa3f7;"># KQL - split</span>
+| extend fields = split(RawData, ",")
+| extend date = fields[0], time = fields[1], host = fields[2]</pre>
+                </div>
+
+                <h3>4. Grok Patterns (Logstash/Elastic)</h3>
+                <p>Pre-built regex patterns for common log formats.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Logstash grok filter</span>
+filter {
+  grok {
+    match => { "message" => "%{SYSLOGTIMESTAMP:timestamp} %{HOSTNAME:host} %{PROG:program}\[%{POSINT:pid}\]: %{GREEDYDATA:message}" }
+  }
+}
+
+<span style="color: #6aa3f7;"># Common grok patterns</span>
+%{IP:src_ip}              <span style="color: #6aa3f7;"># IP address</span>
+%{HOSTNAME:hostname}      <span style="color: #6aa3f7;"># Hostname</span>
+%{EMAILADDRESS:email}     <span style="color: #6aa3f7;"># Email</span>
+%{URIPATH:path}           <span style="color: #6aa3f7;"># URL path</span>
+%{NUMBER:bytes}           <span style="color: #6aa3f7;"># Numeric value</span></pre>
+                </div>
+
+                <h2>Common Log Formats</h2>
+
+                <h3>Syslog (RFC 5424)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Format:</span>
+&lt;priority&gt;version timestamp hostname app-name procid msgid structured-data msg
+
+<span style="color: #6aa3f7;"># Example:</span>
+&lt;34&gt;1 2025-01-15T10:23:45.123Z webserver01 nginx 12345 - - GET /index.html 200
+
+<span style="color: #6aa3f7;"># Fields:</span>
+priority = 34 (facility=4/auth, severity=2/critical)
+version = 1
+timestamp = 2025-01-15T10:23:45.123Z
+hostname = webserver01
+app-name = nginx
+procid = 12345</pre>
+                </div>
+
+                <h3>CEF (Common Event Format)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Format:</span>
+CEF:Version|Device Vendor|Device Product|Device Version|Signature ID|Name|Severity|Extension
+
+<span style="color: #6aa3f7;"># Example:</span>
+CEF:0|Palo Alto|NGFW|10.0|threat|Malware Detected|9|src=192.168.1.100 dst=10.0.0.5 act=blocked
+
+<span style="color: #6aa3f7;"># Common CEF extensions:</span>
+src = source IP
+dst = destination IP
+spt = source port
+dpt = destination port
+act = action taken
+msg = message
+cs1-cs6 = custom strings
+cn1-cn3 = custom numbers</pre>
+                </div>
+
+                <h3>JSON Logs</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Native JSON is easiest to parse</span>
+{
+  "timestamp": "2025-01-15T10:23:45Z",
+  "level": "error",
+  "service": "auth-service",
+  "message": "Authentication failed",
+  "user": "admin",
+  "source_ip": "192.168.1.100",
+  "error_code": "AUTH_001"
+}
+
+<span style="color: #6aa3f7;"># Splunk - automatic JSON extraction</span>
+| spath
+
+<span style="color: #6aa3f7;"># KQL - parse_json</span>
+| extend data = parse_json(RawData)
+| extend user = data.user, source_ip = data.source_ip</pre>
+                </div>
+
+                <h2>Field Normalization</h2>
+                <p>Different sources use different field names for the same concept. Normalization maps them to common names.</p>
+
+                <table>
+                    <thead><tr><th>Concept</th><th>Source A</th><th>Source B</th><th>Normalized Name</th></tr></thead>
+                    <tbody>
+                        <tr><td>Source IP</td><td>src_ip</td><td>SourceAddress</td><td><strong>src_ip</strong></td></tr>
+                        <tr><td>Destination IP</td><td>dst</td><td>DestinationIP</td><td><strong>dst_ip</strong></td></tr>
+                        <tr><td>Username</td><td>user</td><td>AccountName</td><td><strong>user</strong></td></tr>
+                        <tr><td>Action</td><td>action</td><td>EventType</td><td><strong>action</strong></td></tr>
+                        <tr><td>Hostname</td><td>host</td><td>ComputerName</td><td><strong>host</strong></td></tr>
+                    </tbody>
+                </table>
+
+                <h3>ASIM (Advanced Security Information Model) - Sentinel</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Use ASIM parsers for normalized queries across sources</span>
+
+<span style="color: #6aa3f7;">// Instead of querying specific tables:</span>
+SigninLogs | where ResultType != 0
+SecurityEvent | where EventID == 4625
+
+<span style="color: #6aa3f7;">// Use normalized ASIM parser:</span>
+imAuthentication
+| where EventResult == "Failure"
+| summarize FailedAttempts = count() by TargetUsername, SrcIpAddr
+
+<span style="color: #6aa3f7;">// ASIM schemas: Authentication, NetworkSession, ProcessEvent, FileEvent, etc.</span></pre>
+                </div>
+
+                <h2>Splunk Parsing Configuration</h2>
+
+                <h3>props.conf - Field Extractions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># $SPLUNK_HOME/etc/apps/myapp/local/props.conf</span>
+
+[my_custom_sourcetype]
+TIME_FORMAT = %Y-%m-%d %H:%M:%S
+TIME_PREFIX = timestamp=
+MAX_TIMESTAMP_LOOKAHEAD = 30
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)
+
+<span style="color: #6aa3f7;"># Field extractions using regex</span>
+EXTRACT-user = user=(?P&lt;user&gt;[^\s]+)
+EXTRACT-src_ip = src=(?P&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)
+EXTRACT-action = action=(?P&lt;action&gt;[^\s]+)
+
+<span style="color: #6aa3f7;"># Field aliases (normalization)</span>
+FIELDALIAS-source = SourceIP AS src_ip
+FIELDALIAS-dest = DestinationIP AS dst_ip
+
+<span style="color: #6aa3f7;"># Calculated fields</span>
+EVAL-bytes_kb = bytes / 1024</pre>
+                </div>
+
+                <h2>Troubleshooting Parsing Issues</h2>
+                <table>
+                    <thead><tr><th>Problem</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Fields not extracted</td>
+                            <td>Regex doesn't match log format</td>
+                            <td>Test regex against sample logs, check for variations</td>
+                        </tr>
+                        <tr>
+                            <td>Wrong timestamp</td>
+                            <td>TIME_FORMAT doesn't match</td>
+                            <td>Verify timestamp format, use strptime format codes</td>
+                        </tr>
+                        <tr>
+                            <td>Multi-line logs broken</td>
+                            <td>LINE_BREAKER incorrect</td>
+                            <td>Adjust line breaking, use SHOULD_LINEMERGE</td>
+                        </tr>
+                        <tr>
+                            <td>Truncated fields</td>
+                            <td>Field length limits</td>
+                            <td>Increase TRUNCATE setting, check field limits</td>
+                        </tr>
+                        <tr>
+                            <td>Special characters</td>
+                            <td>Encoding issues</td>
+                            <td>Verify UTF-8, escape special chars in regex</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Best Practices</h2>
+                <ul>
+                    <li><strong>Parse at ingest time:</strong> Extract fields during indexing, not search time</li>
+                    <li><strong>Use standard formats:</strong> Prefer JSON or CEF over custom formats</li>
+                    <li><strong>Normalize field names:</strong> Use consistent names across all sources</li>
+                    <li><strong>Document your parsers:</strong> Explain what each extraction does</li>
+                    <li><strong>Test with variations:</strong> Logs change over time, test edge cases</li>
+                    <li><strong>Monitor parsing errors:</strong> Alert on logs that fail to parse</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

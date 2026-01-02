@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coverage Analysis | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Detection Engineering</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="de-nav"><i class="fas fa-crosshairs"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="de-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="lifecycle.html">Detection Lifecycle</a></li>
+                    <li><a href="detection-as-code.html">Detection-as-Code</a></li>
+                    <li><a href="sigma-rules.html">Sigma Rules</a></li>
+                    <li><a href="testing.html">Testing</a></li>
+                    <li><a href="coverage-analysis.html" class="active">Coverage Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Detection Engineering</a><span class="separator">/</span><span>Coverage Analysis</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-chart-pie" style="color: var(--accent-warning);"></i> Detection Coverage Analysis</h1>
+                <p class="lead">Map your detections to MITRE ATT&CK to identify gaps and prioritize improvements.</p>
+            </div>
+            <div class="content">
+                <h2>What is Coverage Analysis?</h2>
+                <p>Coverage analysis answers the critical question: <strong>"What attacks can we actually detect?"</strong> By mapping your detection rules to the MITRE ATT&CK framework, you can visualize gaps, prioritize development, and communicate security posture to stakeholders.</p>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Why Coverage Analysis Matters</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Identify blind spots:</strong> Know which techniques you cannot detect</li>
+                        <li><strong>Prioritize development:</strong> Focus on high-risk gaps first</li>
+                        <li><strong>Measure progress:</strong> Track improvement over time</li>
+                        <li><strong>Communicate to leadership:</strong> Visual representation of security posture</li>
+                        <li><strong>Validate investments:</strong> Justify security tool purchases</li>
+                    </ul>
+                </div>
+
+                <h2>MITRE ATT&CK Framework Overview</h2>
+                <p>ATT&CK (Adversarial Tactics, Techniques, and Common Knowledge) is the industry standard for categorizing attacker behaviors:</p>
+
+                <table>
+                    <thead><tr><th>Level</th><th>Description</th><th>Example</th><th>Count (Enterprise)</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Tactics</strong></td><td>The "why" - attacker's goal</td><td>Credential Access</td><td>14 tactics</td></tr>
+                        <tr><td><strong>Techniques</strong></td><td>The "how" - method to achieve goal</td><td>OS Credential Dumping</td><td>~200 techniques</td></tr>
+                        <tr><td><strong>Sub-techniques</strong></td><td>Specific variation of technique</td><td>LSASS Memory</td><td>~400 sub-techniques</td></tr>
+                        <tr><td><strong>Procedures</strong></td><td>Specific implementation by threat actor</td><td>Mimikatz sekurlsa::logonpasswords</td><td>Thousands</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>The 14 ATT&CK Tactics</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; margin: 1rem 0;">
+                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Reconnaissance</strong><br>TA0043</div>
+                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Resource Dev</strong><br>TA0042</div>
+                    <div style="padding: 0.5rem; background: rgba(240,183,86,0.1); border-left: 3px solid #f0b756; font-size: 0.8rem;"><strong>Initial Access</strong><br>TA0001</div>
+                    <div style="padding: 0.5rem; background: rgba(240,183,86,0.1); border-left: 3px solid #f0b756; font-size: 0.8rem;"><strong>Execution</strong><br>TA0002</div>
+                    <div style="padding: 0.5rem; background: rgba(106,163,247,0.1); border-left: 3px solid #6aa3f7; font-size: 0.8rem;"><strong>Persistence</strong><br>TA0003</div>
+                    <div style="padding: 0.5rem; background: rgba(106,163,247,0.1); border-left: 3px solid #6aa3f7; font-size: 0.8rem;"><strong>Priv Escalation</strong><br>TA0004</div>
+                    <div style="padding: 0.5rem; background: rgba(92,224,196,0.1); border-left: 3px solid #5ce0c4; font-size: 0.8rem;"><strong>Defense Evasion</strong><br>TA0005</div>
+                    <div style="padding: 0.5rem; background: rgba(92,224,196,0.1); border-left: 3px solid #5ce0c4; font-size: 0.8rem;"><strong>Cred Access</strong><br>TA0006</div>
+                    <div style="padding: 0.5rem; background: rgba(167,139,246,0.1); border-left: 3px solid #a78bf6; font-size: 0.8rem;"><strong>Discovery</strong><br>TA0007</div>
+                    <div style="padding: 0.5rem; background: rgba(167,139,246,0.1); border-left: 3px solid #a78bf6; font-size: 0.8rem;"><strong>Lateral Move</strong><br>TA0008</div>
+                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Collection</strong><br>TA0009</div>
+                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>C2</strong><br>TA0011</div>
+                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Exfiltration</strong><br>TA0010</div>
+                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Impact</strong><br>TA0040</div>
+                </div>
+
+                <h2>Building Your Coverage Map</h2>
+
+                <h3>Step 1: Inventory Your Detections</h3>
+                <p>Create a comprehensive list of all detection rules with their ATT&CK mappings:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># detection_inventory.csv</span>
+detection_id,name,technique_id,sub_technique_id,data_source,siem,status
+DET-001,Encoded PowerShell,T1059,T1059.001,Sysmon,Splunk,Active
+DET-002,LSASS Access,T1003,T1003.001,Sysmon,Splunk,Active
+DET-003,Registry Run Keys,T1547,T1547.001,Sysmon,Splunk,Active
+DET-004,Scheduled Task Creation,T1053,T1053.005,Windows Security,Splunk,Active
+DET-005,PsExec Execution,T1021,T1021.002,Sysmon,Splunk,Testing</pre>
+                </div>
+
+                <h3>Step 2: Map to ATT&CK Navigator</h3>
+                <p>Use the ATT&CK Navigator to visualize coverage:</p>
+                <ol>
+                    <li>Go to <a href="https://mitre-attack.github.io/attack-navigator/" target="_blank">ATT&CK Navigator</a></li>
+                    <li>Create new layer</li>
+                    <li>Color techniques based on coverage level</li>
+                    <li>Export as JSON for version control</li>
+                </ol>
+
+                <h3>Navigator Layer JSON Format</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;">{
+  "name": "SOC Detection Coverage",
+  "versions": {
+    "attack": "14",
+    "navigator": "4.9.1"
+  },
+  "domain": "enterprise-attack",
+  "description": "Current detection coverage as of 2025-01",
+  "techniques": [
+    {
+      "techniqueID": "T1059.001",
+      "tactic": "execution",
+      "color": "#5ce0c4",        <span style="color: #6aa3f7;">// Green = Good coverage</span>
+      "comment": "3 detections: encoded PS, download cradle, suspicious args",
+      "score": 3
+    },
+    {
+      "techniqueID": "T1003.001",
+      "tactic": "credential-access",
+      "color": "#5ce0c4",
+      "comment": "2 detections: LSASS access, procdump",
+      "score": 2
+    },
+    {
+      "techniqueID": "T1055",
+      "tactic": "defense-evasion",
+      "color": "#f0b756",        <span style="color: #6aa3f7;">// Yellow = Partial coverage</span>
+      "comment": "1 detection, needs improvement",
+      "score": 1
+    },
+    {
+      "techniqueID": "T1134",
+      "tactic": "privilege-escalation",
+      "color": "#f07070",        <span style="color: #6aa3f7;">// Red = No coverage</span>
+      "comment": "Gap - no detection for token manipulation",
+      "score": 0
+    }
+  ],
+  "gradient": {
+    "colors": ["#f07070", "#f0b756", "#5ce0c4"],
+    "minValue": 0,
+    "maxValue": 3
+  }
+}</pre>
+                </div>
+
+                <h3>Coverage Scoring System</h3>
+                <table>
+                    <thead><tr><th>Score</th><th>Color</th><th>Meaning</th><th>Criteria</th></tr></thead>
+                    <tbody>
+                        <tr><td>0</td><td style="background: rgba(240,112,112,0.3);">Red</td><td>No Coverage</td><td>No detection rules exist</td></tr>
+                        <tr><td>1</td><td style="background: rgba(240,183,86,0.3);">Yellow</td><td>Partial Coverage</td><td>1 detection, basic coverage</td></tr>
+                        <tr><td>2</td><td style="background: rgba(106,163,247,0.3);">Blue</td><td>Good Coverage</td><td>2+ detections, multiple variations</td></tr>
+                        <tr><td>3</td><td style="background: rgba(92,224,196,0.3);">Green</td><td>Strong Coverage</td><td>3+ detections, tested, low FP rate</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Identifying Gaps</h2>
+
+                <h3>Gap Analysis Process</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Export Current Coverage</div>
+                            <p>Generate list of all techniques with detections from your SIEM and detection inventory.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Compare Against Threat Profile</div>
+                            <p>Identify which techniques are used by threat actors targeting your industry.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Prioritize Gaps</div>
+                            <p>Rank gaps by threat relevance, detection feasibility, and data availability.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Create Remediation Plan</div>
+                            <p>Schedule detection development for highest-priority gaps.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Gap Prioritization Matrix</h3>
+                <table>
+                    <thead><tr><th>Factor</th><th>Weight</th><th>Questions to Ask</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Threat Relevance</strong></td>
+                            <td>High</td>
+                            <td>Is this technique used by threat actors targeting our industry?</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Availability</strong></td>
+                            <td>High</td>
+                            <td>Do we have the logs/telemetry needed to detect this?</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Detection Feasibility</strong></td>
+                            <td>Medium</td>
+                            <td>Can we build a reliable detection with acceptable FP rate?</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Business Impact</strong></td>
+                            <td>Medium</td>
+                            <td>What is the impact if this technique succeeds?</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Preventive Controls</strong></td>
+                            <td>Low</td>
+                            <td>Do we have preventive controls that reduce risk?</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Data Source Analysis</h2>
+                <p>Before you can detect a technique, you need the right data:</p>
+
+                <h3>Common Data Sources for Detection</h3>
+                <table>
+                    <thead><tr><th>Data Source</th><th>What It Provides</th><th>Key Techniques Covered</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Windows Security Events</strong></td>
+                            <td>Authentication, account changes, process creation</td>
+                            <td>T1078, T1136, T1098</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sysmon</strong></td>
+                            <td>Process creation, network, file, registry</td>
+                            <td>T1059, T1055, T1547</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PowerShell Logging</strong></td>
+                            <td>Script block, module logging</td>
+                            <td>T1059.001</td>
+                        </tr>
+                        <tr>
+                            <td><strong>EDR Telemetry</strong></td>
+                            <td>Process tree, behaviors, memory</td>
+                            <td>T1003, T1055, T1106</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Network Traffic</strong></td>
+                            <td>Connections, DNS, protocols</td>
+                            <td>T1071, T1572, T1048</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud Audit Logs</strong></td>
+                            <td>API calls, configuration changes</td>
+                            <td>T1078.004, T1562.001</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Data Source Gap Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Check which data sources you're missing</span>
+
+<span style="color: #a78bf6;">Technique:</span> T1055 - Process Injection
+<span style="color: #a78bf6;">Required Data Sources:</span>
+  ✓ Process: Process Creation (Sysmon 1)
+  ✓ Process: Process Access (Sysmon 10)
+  ✗ Process: OS API Execution (EDR required)
+  ✗ Module: Module Load (Sysmon 7 - not configured)
+
+<span style="color: #a78bf6;">Gap:</span> Cannot fully detect process injection without 
+      Sysmon 7 enabled or EDR with API hooking.
+
+<span style="color: #a78bf6;">Remediation:</span> 
+  1. Enable Sysmon Event ID 7 (Image Loaded)
+  2. Consider EDR upgrade for API-level visibility</pre>
+                </div>
+
+                <h2>Coverage Metrics</h2>
+
+                <h3>Key Metrics to Track</h3>
+                <table>
+                    <thead><tr><th>Metric</th><th>Calculation</th><th>Target</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Overall Coverage %</strong></td>
+                            <td>Techniques with detection ÷ Total techniques × 100</td>
+                            <td>60%+ for mature SOC</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tactic Coverage %</strong></td>
+                            <td>Per-tactic coverage percentage</td>
+                            <td>80%+ for critical tactics</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Detection Depth</strong></td>
+                            <td>Avg detections per covered technique</td>
+                            <td>2+ for important techniques</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Threat Actor Coverage</strong></td>
+                            <td>% of threat actor TTPs detected</td>
+                            <td>70%+ for relevant threat actors</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Coverage Dashboard Example</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #5ce0c4;">67%</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Overall Coverage</div>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #6aa3f7;">142</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Active Detections</div>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #f0b756;">48</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Gaps Identified</div>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
+                        <div style="font-size: 2rem; font-weight: 700; color: #f07070;">12</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Critical Gaps</div>
+                    </div>
+                </div>
+
+                <h2>Threat-Informed Prioritization</h2>
+                <p>Not all techniques are equally important. Focus on threats relevant to your organization:</p>
+
+                <h3>Using Threat Intelligence</h3>
+                <ol>
+                    <li><strong>Identify threat actors</strong> targeting your industry (use MITRE Groups)</li>
+                    <li><strong>Extract their TTPs</strong> from threat reports and ATT&CK mappings</li>
+                    <li><strong>Compare against your coverage</strong> to find critical gaps</li>
+                    <li><strong>Prioritize those gaps</strong> for immediate remediation</li>
+                </ol>
+
+                <h3>Example: Financial Sector Focus</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">Threat Actors Targeting Finance:</span>
+- FIN7, FIN8, Carbanak, Lazarus Group
+
+<span style="color: #a78bf6;">Common Techniques Used:</span>
+- T1566.001 Spearphishing Attachment   <span style="color: #5ce0c4;">✓ Detected</span>
+- T1059.001 PowerShell                  <span style="color: #5ce0c4;">✓ Detected</span>
+- T1003.001 LSASS Memory                <span style="color: #5ce0c4;">✓ Detected</span>
+- T1021.001 Remote Desktop              <span style="color: #f0b756;">⚠ Partial</span>
+- T1486 Data Encrypted for Impact       <span style="color: #f07070;">✗ Gap</span>
+- T1105 Ingress Tool Transfer           <span style="color: #f07070;">✗ Gap</span>
+
+<span style="color: #a78bf6;">Priority Gaps to Address:</span>
+1. T1486 - Ransomware detection (Critical)
+2. T1105 - Tool download detection (High)
+3. T1021.001 - Improve RDP monitoring (Medium)</pre>
+                </div>
+
+                <h2>Continuous Improvement</h2>
+
+                <h3>Coverage Review Cadence</h3>
+                <table>
+                    <thead><tr><th>Activity</th><th>Frequency</th><th>Owner</th></tr></thead>
+                    <tbody>
+                        <tr><td>Update detection inventory</td><td>Weekly</td><td>Detection Engineer</td></tr>
+                        <tr><td>Refresh Navigator layer</td><td>Monthly</td><td>Detection Engineer</td></tr>
+                        <tr><td>Gap analysis review</td><td>Quarterly</td><td>SOC Manager</td></tr>
+                        <tr><td>Threat actor TTP update</td><td>Quarterly</td><td>Threat Intel</td></tr>
+                        <tr><td>Executive coverage report</td><td>Quarterly</td><td>CISO</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Tools & Resources</h2>
+                <ul>
+                    <li><a href="https://mitre-attack.github.io/attack-navigator/" target="_blank">ATT&CK Navigator</a> - Visualization tool</li>
+                    <li><a href="https://attack.mitre.org/resources/attack-data-and-tools/" target="_blank">ATT&CK Data & Tools</a> - STIX data</li>
+                    <li><a href="https://github.com/center-for-threat-informed-defense/attack-flow" target="_blank">ATT&CK Flow</a> - Attack sequences</li>
+                    <li><a href="https://github.com/mitre-attack/car" target="_blank">Cyber Analytics Repository (CAR)</a> - Reference detections</li>
+                </ul>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Testing | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Detection Engineering</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="de-nav"><i class="fas fa-crosshairs"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="de-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="lifecycle.html">Detection Lifecycle</a></li>
+                    <li><a href="detection-as-code.html">Detection-as-Code</a></li>
+                    <li><a href="sigma-rules.html">Sigma Rules</a></li>
+                    <li><a href="testing.html" class="active">Testing</a></li>
+                    <li><a href="coverage-analysis.html">Coverage Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Detection Engineering</a><span class="separator">/</span><span>Testing</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-vial" style="color: var(--accent-tertiary);"></i> Detection Testing</h1>
+                <p class="lead">Complete guide to validating your detections before attackers test them for you.</p>
+            </div>
+            <div class="content">
+
+                <!-- TABLE OF CONTENTS -->
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <h3 style="margin-top: 0; color: var(--accent-primary);"><i class="fas fa-list"></i> What You'll Learn</h3>
+                    <ol style="margin: 0; column-count: 2; column-gap: 2rem;">
+                        <li>Why testing is essential</li>
+                        <li>The testing pyramid for detections</li>
+                        <li>Unit testing (syntax & schema)</li>
+                        <li>Integration testing in SIEM</li>
+                        <li>Atomic Red Team step-by-step</li>
+                        <li>False positive analysis</li>
+                        <li>Performance testing</li>
+                        <li>Building a test lab</li>
+                        <li>Automated testing pipelines</li>
+                        <li>Documentation & reporting</li>
+                    </ol>
+                </div>
+
+                <!-- PART 1: WHY TEST -->
+                <h2>Part 1: Why Detection Testing is Critical</h2>
+
+                <h3>The Problem with Untested Detections</h3>
+                <p>An untested detection gives you <strong>false confidence</strong>. You believe you're protected, but you have no evidence. Here's what can go wrong:</p>
+
+                <table>
+                    <thead><tr><th>Risk</th><th>What Happens</th><th>Real-World Impact</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>False Negatives</strong></td>
+                            <td>Detection doesn't fire on actual attacks</td>
+                            <td>Breaches go undetected. You find out from the news.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>False Positives</strong></td>
+                            <td>Detection fires on legitimate activity</td>
+                            <td>Alert fatigue. Analysts ignore all alerts, including real ones.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Broken Syntax</strong></td>
+                            <td>Rule has errors, fails silently</td>
+                            <td>Rule appears enabled but never runs. Zero coverage.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Environment Drift</strong></td>
+                            <td>Rule worked before but not anymore</td>
+                            <td>Log source changed, fields renamed, rule stops matching.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Performance Issues</strong></td>
+                            <td>Rule is too slow or resource-intensive</td>
+                            <td>SIEM degrades. Other detections affected.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-circle"></i> Real Example</div>
+                    <p style="margin: 0.5rem 0 0 0;">A Fortune 500 company had a detection for Mimikatz. It was enabled for 2 years. During a pen test, Mimikatz was run 47 times. Zero alerts. Investigation found: a log source configuration change 18 months prior broke the detection. Nobody noticed because <strong>nobody tested it</strong>.</p>
+                </div>
+
+                <!-- PART 2: TESTING PYRAMID -->
+                <h2>Part 2: The Detection Testing Pyramid</h2>
+
+                <p>Like software testing, detection testing has layers. Start at the bottom (fast, cheap, automated) and work up (slow, expensive, manual).</p>
+
+                <div style="text-align: center; margin: 2rem 0;">
+                    <div style="display: inline-block; text-align: center;">
+                        <div style="width: 140px; margin: 0 auto; padding: 1rem; background: rgba(240,112,112,0.2); border: 1px solid rgba(240,112,112,0.5); font-size: 0.85rem; border-radius: 4px 4px 0 0;">
+                            <strong>Red Team</strong><br>
+                            <span style="font-size: 0.75rem;">Full adversary simulation</span><br>
+                            <span style="color: var(--text-secondary); font-size: 0.7rem;">Quarterly</span>
+                        </div>
+                        <div style="width: 200px; margin: 0 auto; padding: 1rem; background: rgba(240,183,86,0.2); border: 1px solid rgba(240,183,86,0.5); font-size: 0.85rem;">
+                            <strong>Atomic Tests</strong><br>
+                            <span style="font-size: 0.75rem;">Execute real techniques</span><br>
+                            <span style="color: var(--text-secondary); font-size: 0.7rem;">Monthly</span>
+                        </div>
+                        <div style="width: 260px; margin: 0 auto; padding: 1rem; background: rgba(106,163,247,0.2); border: 1px solid rgba(106,163,247,0.5); font-size: 0.85rem;">
+                            <strong>Integration Tests</strong><br>
+                            <span style="font-size: 0.75rem;">Test in SIEM with sample logs</span><br>
+                            <span style="color: var(--text-secondary); font-size: 0.7rem;">Weekly / Per PR</span>
+                        </div>
+                        <div style="width: 320px; margin: 0 auto; padding: 1rem; background: rgba(92,224,196,0.2); border: 1px solid rgba(92,224,196,0.5); font-size: 0.85rem; border-radius: 0 0 4px 4px;">
+                            <strong>Unit Tests</strong><br>
+                            <span style="font-size: 0.75rem;">Syntax, schema, conversion validation</span><br>
+                            <span style="color: var(--text-secondary); font-size: 0.7rem;">Every commit (automated)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PART 3: UNIT TESTING -->
+                <h2>Part 3: Unit Testing (Automated)</h2>
+
+                <p>Unit tests are fast, automated, and run on every code change. They catch basic errors before code is merged.</p>
+
+                <h3>3.1 YAML Syntax Validation</h3>
+                <p>First, ensure your YAML files are syntactically correct:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Install yamllint</span>
+pip install yamllint
+
+<span style="color: #6aa3f7;"># Create a configuration file: .yamllint.yml</span>
+cat > .yamllint.yml << 'EOF'
+extends: default
+rules:
+  line-length:
+    max: 200
+  indentation:
+    spaces: 4
+  document-start: disable
+EOF
+
+<span style="color: #6aa3f7;"># Run yamllint on all detection files</span>
+yamllint detections/
+
+<span style="color: #6aa3f7;"># Example output for a valid file:</span>
+<span style="color: #5ce0c4;">detections/windows/encoded_powershell.yml: OK</span>
+
+<span style="color: #6aa3f7;"># Example output for an invalid file:</span>
+<span style="color: #f07070;">detections/windows/broken_rule.yml
+  4:1       error    wrong indentation: expected 4 but found 2  (indentation)
+  7:10      error    trailing spaces  (trailing-spaces)</span></pre>
+                </div>
+
+                <h3>3.2 Sigma Rule Validation</h3>
+                <p>Validate that rules conform to the Sigma specification:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Install sigma-cli</span>
+pip install sigma-cli
+
+<span style="color: #6aa3f7;"># Validate a single rule</span>
+sigma check detections/windows/encoded_powershell.yml
+
+<span style="color: #6aa3f7;"># Validate all rules in a directory</span>
+sigma check detections/
+
+<span style="color: #6aa3f7;"># Validate with strict mode (catches more issues)</span>
+sigma check --validation-config strict detections/
+
+<span style="color: #6aa3f7;"># Example valid output:</span>
+<span style="color: #5ce0c4;">Checking 47 rules...
+All rules valid!</span>
+
+<span style="color: #6aa3f7;"># Example invalid output:</span>
+<span style="color: #f07070;">Error in detections/windows/bad_rule.yml:
+  - Missing required field: 'logsource'
+  - Invalid detection condition: undefined identifier 'selectoin'</span></pre>
+                </div>
+
+                <h3>3.3 Schema Validation (Custom)</h3>
+                <p>Enforce your organization's standards beyond Sigma requirements:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># File: scripts/validate_rules.py</span>
+<span style="color: #a78bf6;">#!/usr/bin/env python3</span>
+"""
+Custom validation for organizational standards.
+Run: python scripts/validate_rules.py detections/
+"""
+
+import sys
+import yaml
+import re
+from pathlib import Path
+
+<span style="color: #6aa3f7;"># Your organization's required fields</span>
+REQUIRED_FIELDS = ['title', 'id', 'status', 'description', 'author', 
+                   'date', 'logsource', 'detection', 'level', 'tags']
+
+<span style="color: #6aa3f7;"># Valid status values</span>
+VALID_STATUSES = ['experimental', 'test', 'production', 'deprecated']
+
+<span style="color: #6aa3f7;"># Valid severity levels</span>
+VALID_LEVELS = ['informational', 'low', 'medium', 'high', 'critical']
+
+def validate_rule(filepath: Path) -> list:
+    """Validate a single rule file. Returns list of errors."""
+    errors = []
+    
+    try:
+        with open(filepath) as f:
+            rule = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        return [f"YAML parse error: {e}"]
+    
+    if not isinstance(rule, dict):
+        return ["File does not contain a valid YAML dictionary"]
+    
+    <span style="color: #6aa3f7;"># Check required fields</span>
+    for field in REQUIRED_FIELDS:
+        if field not in rule:
+            errors.append(f"Missing required field: '{field}'")
+    
+    <span style="color: #6aa3f7;"># Validate UUID format</span>
+    if 'id' in rule:
+        uuid_pattern = r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        if not re.match(uuid_pattern, str(rule['id']).lower()):
+            errors.append(f"Invalid UUID format: {rule['id']}")
+    
+    <span style="color: #6aa3f7;"># Validate status</span>
+    if 'status' in rule and rule['status'] not in VALID_STATUSES:
+        errors.append(f"Invalid status: {rule['status']}. Must be one of {VALID_STATUSES}")
+    
+    <span style="color: #6aa3f7;"># Validate level</span>
+    if 'level' in rule and rule['level'] not in VALID_LEVELS:
+        errors.append(f"Invalid level: {rule['level']}. Must be one of {VALID_LEVELS}")
+    
+    <span style="color: #6aa3f7;"># Validate MITRE ATT&CK tags</span>
+    if 'tags' in rule:
+        for tag in rule['tags']:
+            if tag.startswith('attack.t'):
+                if not re.match(r'^attack\.t\d{4}(\.\d{3})?$', tag):
+                    errors.append(f"Invalid ATT&CK technique format: {tag}")
+    
+    <span style="color: #6aa3f7;"># Validate description length</span>
+    if 'description' in rule:
+        if len(str(rule['description'])) < 20:
+            errors.append("Description too short (minimum 20 characters)")
+    
+    <span style="color: #6aa3f7;"># Validate falsepositives field exists for production rules</span>
+    if rule.get('status') == 'production' and 'falsepositives' not in rule:
+        errors.append("Production rules must document false positives")
+    
+    return errors
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python validate_rules.py <path>")
+        sys.exit(1)
+    
+    path = Path(sys.argv[1])
+    
+    if path.is_file():
+        files = [path]
+    else:
+        files = list(path.rglob('*.yml')) + list(path.rglob('*.yaml'))
+    
+    total_errors = 0
+    
+    for filepath in files:
+        errors = validate_rule(filepath)
+        if errors:
+            print(f"\n<span style="color: #f07070;">✗ {filepath}</span>")
+            for error in errors:
+                print(f"  - {error}")
+                total_errors += 1
+        else:
+            print(f"<span style="color: #5ce0c4;">✓ {filepath}</span>")
+    
+    print(f"\n{'='*50}")
+    print(f"Files checked: {len(files)}")
+    print(f"Errors found: {total_errors}")
+    
+    sys.exit(1 if total_errors > 0 else 0)
+
+if __name__ == '__main__':
+    main()</pre>
+                </div>
+
+                <h3>3.4 Conversion Testing</h3>
+                <p>Verify rules convert to your target SIEM without errors:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Install pySigma backends</span>
+pip install pysigma-backend-splunk
+pip install pysigma-backend-microsoft365defender
+pip install pysigma-backend-elasticsearch
+
+<span style="color: #6aa3f7;"># Test conversion to Splunk</span>
+sigma convert -t splunk detections/windows/encoded_powershell.yml
+
+<span style="color: #6aa3f7;"># Test conversion to Sentinel/Defender</span>
+sigma convert -t microsoft365defender detections/windows/encoded_powershell.yml
+
+<span style="color: #6aa3f7;"># Test all rules convert without errors</span>
+for file in $(find detections -name "*.yml"); do
+    echo "Converting: $file"
+    sigma convert -t splunk "$file" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "  ERROR: Failed to convert $file"
+        exit 1
+    fi
+done
+echo "All rules convert successfully!"</pre>
+                </div>
+
+                <!-- PART 4: INTEGRATION TESTING -->
+                <h2>Part 4: Integration Testing</h2>
+
+                <p>Integration tests verify that rules work in your actual SIEM environment with real (or realistic) log data.</p>
+
+                <h3>4.1 Test Environment Setup</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-server"></i> What You Need</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Test SIEM instance:</strong> Separate from production (could be free tier, dev license, or Docker)</li>
+                        <li><strong>Sample log data:</strong> Logs containing both malicious and benign activity</li>
+                        <li><strong>API access:</strong> To deploy rules and check for alerts programmatically</li>
+                        <li><strong>Automation:</strong> Scripts to run tests and report results</li>
+                    </ul>
+                </div>
+
+                <h3>4.2 Creating Test Cases</h3>
+                <p>For each detection, create test cases with known-good (should match) and known-bad (should not match) samples:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># File: tests/windows/encoded_powershell_test.yml</span>
+
+<span style="color: #f0b756;">rule_file:</span> detections/windows/process_creation/encoded_powershell.yml
+
+<span style="color: #f0b756;">test_cases:</span>
+
+  <span style="color: #6aa3f7;"># Cases that SHOULD trigger the detection</span>
+  <span style="color: #f0b756;">should_match:</span>
+  
+    - <span style="color: #5ce0c4;">name:</span> "Basic encoded command with -enc flag"
+      <span style="color: #5ce0c4;">description:</span> "Standard encoded PowerShell execution"
+      <span style="color: #5ce0c4;">log:</span>
+        EventID: 1
+        Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+        CommandLine: 'powershell.exe -enc SGVsbG8gV29ybGQh'
+        ParentImage: 'C:\Windows\System32\cmd.exe'
+        User: 'DOMAIN\user'
+      <span style="color: #5ce0c4;">expected_result:</span> ALERT
+      
+    - <span style="color: #5ce0c4;">name:</span> "Encoded with -encodedcommand flag"
+      <span style="color: #5ce0c4;">description:</span> "Full flag name variation"
+      <span style="color: #5ce0c4;">log:</span>
+        EventID: 1
+        Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+        CommandLine: 'powershell.exe -NoProfile -encodedcommand SGVsbG8='
+        ParentImage: 'C:\Windows\explorer.exe'
+        User: 'DOMAIN\admin'
+      <span style="color: #5ce0c4;">expected_result:</span> ALERT
+      
+    - <span style="color: #5ce0c4;">name:</span> "PowerShell Core (pwsh.exe)"
+      <span style="color: #5ce0c4;">description:</span> "PowerShell 7 uses pwsh.exe"
+      <span style="color: #5ce0c4;">log:</span>
+        EventID: 1
+        Image: 'C:\Program Files\PowerShell\7\pwsh.exe'
+        CommandLine: 'pwsh.exe -e SGVsbG8gV29ybGQh'
+        ParentImage: 'C:\Windows\System32\cmd.exe'
+        User: 'DOMAIN\user'
+      <span style="color: #5ce0c4;">expected_result:</span> ALERT
+
+  <span style="color: #6aa3f7;"># Cases that should NOT trigger the detection</span>
+  <span style="color: #f0b756;">should_not_match:</span>
+  
+    - <span style="color: #5ce0c4;">name:</span> "Normal PowerShell without encoding"
+      <span style="color: #5ce0c4;">description:</span> "Regular PowerShell execution - no encoding"
+      <span style="color: #5ce0c4;">log:</span>
+        EventID: 1
+        Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+        CommandLine: 'powershell.exe -ExecutionPolicy Bypass -File C:\Scripts\backup.ps1'
+        ParentImage: 'C:\Windows\System32\services.exe'
+        User: 'SYSTEM'
+      <span style="color: #5ce0c4;">expected_result:</span> NO_ALERT
+      
+    - <span style="color: #5ce0c4;">name:</span> "Different executable entirely"
+      <span style="color: #5ce0c4;">description:</span> "cmd.exe should not match PowerShell rule"
+      <span style="color: #5ce0c4;">log:</span>
+        EventID: 1
+        Image: 'C:\Windows\System32\cmd.exe'
+        CommandLine: 'cmd.exe /c echo hello'
+        ParentImage: 'C:\Windows\explorer.exe'
+        User: 'DOMAIN\user'
+      <span style="color: #5ce0c4;">expected_result:</span> NO_ALERT
+      
+    - <span style="color: #5ce0c4;">name:</span> "Known good application (exclusion)"
+      <span style="color: #5ce0c4;">description:</span> "SCCM uses encoded PowerShell legitimately"
+      <span style="color: #5ce0c4;">log:</span>
+        EventID: 1
+        Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+        CommandLine: 'powershell.exe -enc SGVsbG8= -InputFormat None'
+        ParentImage: 'C:\Windows\CCM\CcmExec.exe'
+        User: 'SYSTEM'
+      <span style="color: #5ce0c4;">expected_result:</span> NO_ALERT  <span style="color: #6aa3f7;"># Assuming SCCM is excluded</span></pre>
+                </div>
+
+                <h3>4.3 Running Integration Tests</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># File: scripts/run_integration_tests.py</span>
+<span style="color: #a78bf6;">#!/usr/bin/env python3</span>
+"""
+Run integration tests against a test SIEM.
+Injects sample logs and verifies detection behavior.
+"""
+
+import yaml
+import json
+import time
+import requests
+from pathlib import Path
+
+<span style="color: #6aa3f7;"># Configuration</span>
+SPLUNK_URL = "https://test-splunk.company.com:8089"
+SPLUNK_TOKEN = "your-token-here"
+
+def inject_log(log_data: dict) -> bool:
+    """Inject a log event into the test SIEM."""
+    url = f"{SPLUNK_URL}/services/receivers/simple"
+    headers = {"Authorization": f"Bearer {SPLUNK_TOKEN}"}
+    
+    response = requests.post(
+        url,
+        headers=headers,
+        data=json.dumps(log_data),
+        params={"sourcetype": "WinEventLog:Security"},
+        verify=False
+    )
+    return response.status_code == 200
+
+def check_for_alert(rule_name: str, timeout: int = 60) -> bool:
+    """Check if an alert was generated within timeout seconds."""
+    url = f"{SPLUNK_URL}/services/search/jobs"
+    headers = {"Authorization": f"Bearer {SPLUNK_TOKEN}"}
+    
+    <span style="color: #6aa3f7;"># Search for triggered alerts</span>
+    search_query = f'index=notable search_name="{rule_name}" | head 1'
+    
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        <span style="color: #6aa3f7;"># Run search and check for results</span>
+        response = requests.post(url, headers=headers, data={"search": search_query})
+        if response.json().get("resultCount", 0) > 0:
+            return True
+        time.sleep(5)
+    
+    return False
+
+def run_test(test_file: Path) -> dict:
+    """Run all tests in a test file."""
+    with open(test_file) as f:
+        tests = yaml.safe_load(f)
+    
+    results = {"passed": 0, "failed": 0, "details": []}
+    
+    <span style="color: #6aa3f7;"># Test cases that should match</span>
+    for test_case in tests.get("should_match", []):
+        print(f"  Testing: {test_case['name']}")
+        
+        <span style="color: #6aa3f7;"># Inject the log</span>
+        inject_log(test_case["log"])
+        
+        <span style="color: #6aa3f7;"># Wait and check for alert</span>
+        alert_fired = check_for_alert(tests["rule_file"], timeout=60)
+        
+        if alert_fired:
+            print(f"    <span style="color: #5ce0c4;">✓ PASS - Alert fired as expected</span>")
+            results["passed"] += 1
+        else:
+            print(f"    <span style="color: #f07070;">✗ FAIL - No alert fired (expected alert)</span>")
+            results["failed"] += 1
+    
+    <span style="color: #6aa3f7;"># Test cases that should NOT match</span>
+    for test_case in tests.get("should_not_match", []):
+        print(f"  Testing: {test_case['name']}")
+        
+        inject_log(test_case["log"])
+        alert_fired = check_for_alert(tests["rule_file"], timeout=30)
+        
+        if not alert_fired:
+            print(f"    <span style="color: #5ce0c4;">✓ PASS - No alert (as expected)</span>")
+            results["passed"] += 1
+        else:
+            print(f"    <span style="color: #f07070;">✗ FAIL - Alert fired (should not have)</span>")
+            results["failed"] += 1
+    
+    return results
+
+def main():
+    test_files = Path("tests").rglob("*_test.yml")
+    
+    total_passed = 0
+    total_failed = 0
+    
+    for test_file in test_files:
+        print(f"\nRunning tests: {test_file}")
+        results = run_test(test_file)
+        total_passed += results["passed"]
+        total_failed += results["failed"]
+    
+    print(f"\n{'='*50}")
+    print(f"Total: {total_passed} passed, {total_failed} failed")
+    
+    return 0 if total_failed == 0 else 1
+
+if __name__ == '__main__':
+    exit(main())</pre>
+                </div>
+
+                <!-- PART 5: ATOMIC RED TEAM -->
+                <h2>Part 5: Atomic Red Team Testing (Step-by-Step)</h2>
+
+                <p>Atomic Red Team executes <strong>real attack techniques</strong> in a controlled way, allowing you to verify detections against actual malicious behavior.</p>
+
+                <h3>5.1 What is Atomic Red Team?</h3>
+                <ul>
+                    <li><strong>Library of attack tests:</strong> 1000+ tests mapped to MITRE ATT&CK</li>
+                    <li><strong>Atomic = small:</strong> Each test is self-contained, minimal, and reversible</li>
+                    <li><strong>Safe for testing:</strong> Designed to be run in lab environments</li>
+                    <li><strong>Open source:</strong> Free, community-maintained</li>
+                </ul>
+
+                <h3>5.2 Installing Atomic Red Team</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># STEP 1: Open PowerShell as Administrator on your TEST machine</span>
+<span style="color: #6aa3f7;"># WARNING: Only run on isolated test systems, never in production!</span>
+
+<span style="color: #a78bf6;"># STEP 2: Install the execution framework</span>
+Install-Module -Name invoke-atomicredteam -Scope CurrentUser -Force
+
+<span style="color: #a78bf6;"># STEP 3: Import the module</span>
+Import-Module invoke-atomicredteam
+
+<span style="color: #a78bf6;"># STEP 4: Download the atomic tests library</span>
+<span style="color: #6aa3f7;"># This downloads all 1000+ test definitions</span>
+Invoke-AtomicTest -InstallAtomicTestsFromGitHub
+
+<span style="color: #a78bf6;"># STEP 5: Verify installation</span>
+Get-AtomicTechnique -All | Measure-Object
+<span style="color: #6aa3f7;"># Should show 200+ techniques with 1000+ tests</span>
+
+<span style="color: #a78bf6;"># STEP 6: See what tests are available for a technique</span>
+Invoke-AtomicTest T1059.001 -ShowDetails
+
+<span style="color: #5ce0c4;"># Output shows available tests:
+# T1059.001-1: Mimikatz
+# T1059.001-2: BloodHound
+# T1059.001-3: Obfuscation Tests
+# ...</span></pre>
+                </div>
+
+                <h3>5.3 Running Your First Atomic Test</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># EXAMPLE: Testing Encoded PowerShell Detection (T1059.001)</span>
+
+<span style="color: #6aa3f7;"># Step 1: See what the test will do (don't run yet)</span>
+Invoke-AtomicTest T1059.001 -TestNumbers 7 -ShowDetails
+
+<span style="color: #5ce0c4;"># Output:
+# Technique: Command and Scripting Interpreter: PowerShell
+# Test Name: Encoded Command
+# Description: Executes PowerShell with an encoded command
+# Command: powershell.exe -enc SQBFAFgAIAAoAE4AZQB3AC0...</span>
+
+<span style="color: #6aa3f7;"># Step 2: Check prerequisites</span>
+Invoke-AtomicTest T1059.001 -TestNumbers 7 -CheckPrereqs
+
+<span style="color: #5ce0c4;"># Output:
+# Prerequisites met: True</span>
+
+<span style="color: #6aa3f7;"># Step 3: Run the test</span>
+Invoke-AtomicTest T1059.001 -TestNumbers 7
+
+<span style="color: #5ce0c4;"># Output:
+# Executing test: Encoded Command
+# Done executing test</span>
+
+<span style="color: #6aa3f7;"># Step 4: Wait for logs to be ingested (usually 1-5 minutes)</span>
+
+<span style="color: #6aa3f7;"># Step 5: Check your SIEM for alerts!</span>
+<span style="color: #6aa3f7;"># - Did the detection fire?</span>
+<span style="color: #6aa3f7;"># - How long did it take?</span>
+<span style="color: #6aa3f7;"># - Is the alert accurate?</span>
+
+<span style="color: #6aa3f7;"># Step 6: Clean up (remove test artifacts)</span>
+Invoke-AtomicTest T1059.001 -TestNumbers 7 -Cleanup
+
+<span style="color: #5ce0c4;"># Output:
+# Cleanup complete</span></pre>
+                </div>
+
+                <h3>5.4 Complete Atomic Testing Workflow</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Identify Detection to Test</div>
+                            <p>Pick a detection rule. Note its MITRE ATT&CK technique ID (e.g., T1059.001).</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Find Relevant Atomic Tests</div>
+                            <p>Run <code>Invoke-AtomicTest TXXXX -ShowDetails</code> to see available tests.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Review Test Details</div>
+                            <p>Understand what the test does. Is it relevant to your detection logic?</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check Prerequisites</div>
+                            <p>Run <code>-CheckPrereqs</code>. Install any missing requirements.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Execute the Test</div>
+                            <p>Run the atomic test on your test machine.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Wait for Log Ingestion</div>
+                            <p>Allow time for logs to flow to SIEM (1-5 minutes typically).</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">7</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Alert</div>
+                            <p>Did your detection fire? If yes, note time-to-detection. If no, investigate why.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">8</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Run Cleanup</div>
+                            <p>Execute <code>-Cleanup</code> to remove test artifacts.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">9</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Document Results</div>
+                            <p>Record pass/fail, timing, and any issues found.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>5.5 Useful Atomic Test Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># List all available techniques</span>
+Get-AtomicTechnique -All
+
+<span style="color: #6aa3f7;"># Search for techniques by name</span>
+Get-AtomicTechnique -All | Where-Object {$_.display_name -like "*PowerShell*"}
+
+<span style="color: #6aa3f7;"># Run all tests for a technique</span>
+Invoke-AtomicTest T1059.001
+
+<span style="color: #6aa3f7;"># Run specific test numbers</span>
+Invoke-AtomicTest T1059.001 -TestNumbers 1,3,5
+
+<span style="color: #6aa3f7;"># Run test and automatically clean up</span>
+Invoke-AtomicTest T1059.001 -TestNumbers 1 -Cleanup
+
+<span style="color: #6aa3f7;"># Run multiple techniques</span>
+Invoke-AtomicTest T1059.001,T1003.001,T1053.005
+
+<span style="color: #6aa3f7;"># Run tests for an entire tactic</span>
+Get-AtomicTechnique -All | Where-Object {$_.attack_technique.tactic -contains "persistence"} | 
+    ForEach-Object { Invoke-AtomicTest $_.attack_technique_id -ShowDetails }
+
+<span style="color: #6aa3f7;"># Generate a test log for reporting</span>
+Invoke-AtomicTest T1059.001 -LoggingModule "Invoke-AtomicLogger"</pre>
+                </div>
+
+                <!-- PART 6: FALSE POSITIVE TESTING -->
+                <h2>Part 6: False Positive Analysis</h2>
+
+                <p>A detection that fires on legitimate activity is sometimes worse than no detection at all. It creates noise, wastes analyst time, and leads to alert fatigue.</p>
+
+                <h3>6.1 Historical Data Analysis</h3>
+                <p>Before deploying a new detection, run it against historical data:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL: Test detection against 30 days of data</span>
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-encoded", "-e ", "-ec ")
+| summarize 
+    Count = count(),
+    Devices = dcount(DeviceName),
+    Users = dcount(AccountName)
+    by InitiatingProcessFileName
+| sort by Count desc
+
+<span style="color: #6aa3f7;">// Results might show:</span>
+<span style="color: #6aa3f7;">// InitiatingProcessFileName  Count   Devices   Users</span>
+<span style="color: #6aa3f7;">// CcmExec.exe               1,247   500       1      ← SCCM - exclude this</span>
+<span style="color: #6aa3f7;">// svchost.exe                 89    12        1      ← Investigate</span>
+<span style="color: #6aa3f7;">// explorer.exe                23    20        18     ← Users - potential FPs</span></pre>
+                </div>
+
+                <h3>6.2 Calculating False Positive Rate</h3>
+                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin: 1rem 0;">
+                    <p style="margin: 0; font-size: 1.1rem; text-align: center;">
+                        <strong>FP Rate = False Positives ÷ (True Positives + False Positives) × 100</strong>
+                    </p>
+                </div>
+
+                <table>
+                    <thead><tr><th>FP Rate</th><th>Assessment</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #5ce0c4;"><strong>&lt; 5%</strong></td>
+                            <td>Excellent</td>
+                            <td>Deploy to production</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #5ce0c4;"><strong>5-10%</strong></td>
+                            <td>Good</td>
+                            <td>Deploy, monitor, tune if needed</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0b756;"><strong>10-20%</strong></td>
+                            <td>Acceptable</td>
+                            <td>Add exclusions, then deploy</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f07070;"><strong>20-50%</strong></td>
+                            <td>Poor</td>
+                            <td>Rework detection logic</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f07070;"><strong>&gt; 50%</strong></td>
+                            <td>Unusable</td>
+                            <td>Do not deploy, redesign</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- PART 7: DOCUMENTATION -->
+                <h2>Part 7: Test Documentation</h2>
+
+                <h3>Test Report Template</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">═══════════════════════════════════════════════════</span>
+<span style="color: #a78bf6;">DETECTION TEST REPORT</span>
+<span style="color: #a78bf6;">═══════════════════════════════════════════════════</span>
+
+<span style="color: #f0b756;">Detection:</span> Encoded PowerShell Command Execution
+<span style="color: #f0b756;">Rule ID:</span> 8e7e3e6d-6a8e-4a5a-9c4e-7f8d9b0c1a2b
+<span style="color: #f0b756;">MITRE ATT&CK:</span> T1059.001
+<span style="color: #f0b756;">Test Date:</span> 2025-01-15
+<span style="color: #f0b756;">Tester:</span> Detection Engineering Team
+<span style="color: #f0b756;">Environment:</span> Test Lab (Windows 10 + Sentinel)
+
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+<span style="color: #a78bf6;">UNIT TESTS</span>
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+[<span style="color: #5ce0c4;">✓</span>] YAML Syntax Valid
+[<span style="color: #5ce0c4;">✓</span>] Sigma Schema Valid  
+[<span style="color: #5ce0c4;">✓</span>] Converts to Splunk SPL
+[<span style="color: #5ce0c4;">✓</span>] Converts to Sentinel KQL
+[<span style="color: #5ce0c4;">✓</span>] Custom Schema Valid (all required fields present)
+
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+<span style="color: #a78bf6;">ATOMIC RED TEAM TESTS</span>
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+Test: T1059.001-7 (Encoded Command)
+  [<span style="color: #5ce0c4;">✓</span>] Test executed successfully
+  [<span style="color: #5ce0c4;">✓</span>] Alert fired within 45 seconds
+  [<span style="color: #5ce0c4;">✓</span>] Alert contains expected fields
+  [<span style="color: #5ce0c4;">✓</span>] Cleanup completed
+
+Test: T1059.001-12 (Obfuscated Encoded)
+  [<span style="color: #5ce0c4;">✓</span>] Test executed successfully
+  [<span style="color: #5ce0c4;">✓</span>] Alert fired within 60 seconds
+  [<span style="color: #5ce0c4;">✓</span>] Alert contains expected fields
+  [<span style="color: #5ce0c4;">✓</span>] Cleanup completed
+
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+<span style="color: #a78bf6;">FALSE POSITIVE ANALYSIS</span>
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+Data Period: 30 days
+Total Matches: 1,359
+Reviewed: 100 (sample)
+
+Results:
+- SCCM/CcmExec.exe: 1,247 events → Added exclusion
+- Legitimate admin scripts: 23 events → Documented as expected FP
+- Actual suspicious activity: 89 events → True positives
+
+False Positive Rate: 8.2% (after exclusions)
+Status: <span style="color: #5ce0c4;">ACCEPTABLE</span>
+
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+<span style="color: #a78bf6;">PERFORMANCE</span>
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+Average Query Time: 4.2 seconds
+Peak Query Time: 12.1 seconds
+CPU Impact: Low
+Status: <span style="color: #5ce0c4;">ACCEPTABLE</span>
+
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+<span style="color: #a78bf6;">DECISION</span>
+<span style="color: #a78bf6;">─────────────────────────────────────────────────────</span>
+[<span style="color: #5ce0c4;">✓</span>] APPROVED FOR PRODUCTION
+
+Notes: 
+- Added exclusion for SCCM parent process
+- Documented expected FPs from admin scripts
+- Schedule retest in 30 days
+
+Next Test Date: 2025-02-15</pre>
+                </div>
+
+                <h2>Testing Checklist</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h4 style="margin-top: 0;">Before Deploying Any Detection:</h4>
+                    <table>
+                        <tbody>
+                            <tr><td>☐</td><td>YAML syntax validated (yamllint)</td></tr>
+                            <tr><td>☐</td><td>Sigma schema validated (sigma check)</td></tr>
+                            <tr><td>☐</td><td>Organization schema validated (custom script)</td></tr>
+                            <tr><td>☐</td><td>Converts to target SIEM without errors</td></tr>
+                            <tr><td>☐</td><td>Atomic test executed and alert fired</td></tr>
+                            <tr><td>☐</td><td>Time-to-detection measured and acceptable</td></tr>
+                            <tr><td>☐</td><td>False positive analysis completed</td></tr>
+                            <tr><td>☐</td><td>FP rate is acceptable (&lt; 20%)</td></tr>
+                            <tr><td>☐</td><td>Exclusions added for known-good activity</td></tr>
+                            <tr><td>☐</td><td>Performance tested (query time acceptable)</td></tr>
+                            <tr><td>☐</td><td>Test report documented</td></tr>
+                            <tr><td>☐</td><td>Peer review completed</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

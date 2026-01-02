@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Exfiltration Investigation | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Data Exfiltration</span></div>
+            <div class="content">
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-INV-008</div>
+                    <h1>Data Exfiltration Investigation</h1>
+                    <p class="lead">Detect and investigate unauthorized data transfers leaving your organization.</p>
+                    <div class="playbook-meta">
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">CRITICAL</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2/L3</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">60-180 min</span></div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                        <span class="mitre-tag">T1041 - Exfiltration Over C2</span>
+                        <span class="mitre-tag">T1567 - Exfiltration Over Web Service</span>
+                        <span class="mitre-tag">T1048 - Exfiltration Over Alternative Protocol</span>
+                    </div>
+                </div>
+
+                <h2>Data Exfiltration Methods</h2>
+                <table>
+                    <thead><tr><th>Method</th><th>Description</th><th>Detection Approach</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Cloud Storage</strong></td><td>Dropbox, Google Drive, OneDrive, Mega</td><td>Proxy logs, DLP alerts, cloud app monitoring</td></tr>
+                        <tr><td><strong>Web Upload</strong></td><td>HTTP POST to external sites</td><td>Large outbound transfers, unusual destinations</td></tr>
+                        <tr><td><strong>Email</strong></td><td>Attachments to personal/external email</td><td>DLP, email gateway, attachment analysis</td></tr>
+                        <tr><td><strong>FTP/SFTP</strong></td><td>File transfer protocols</td><td>Network traffic on ports 21, 22</td></tr>
+                        <tr><td><strong>USB/Removable</strong></td><td>Copy to external drives</td><td>Endpoint DLP, device control logs</td></tr>
+                        <tr><td><strong>DNS Tunneling</strong></td><td>Data encoded in DNS queries</td><td>Unusual DNS patterns, long subdomains</td></tr>
+                        <tr><td><strong>C2 Channel</strong></td><td>Data sent via existing malware C2</td><td>C2 detection, traffic analysis</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 1: Large Data Transfer Detection</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Large outbound data transfers</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteIPType == "Public"
+| where SentBytes > 0
+| summarize 
+    TotalBytesSent = sum(SentBytes),
+    ConnectionCount = count(),
+    UniqueDestinations = dcount(RemoteIP)
+  by DeviceName, InitiatingProcessFileName
+| where TotalBytesSent > 104857600  <span style="color: #6aa3f7;">// > 100 MB</span>
+| extend TotalMB = round(TotalBytesSent / 1048576.0, 2)
+| order by TotalBytesSent desc
+
+<span style="color: #a78bf6;">// KQL: Data transfer to cloud storage domains</span>
+let CloudStorageDomains = dynamic(["dropbox.com", "drive.google.com", "onedrive.live.com",
+    "mega.nz", "mediafire.com", "wetransfer.com", "sendspace.com", "box.com"]);
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteUrl has_any (CloudStorageDomains)
+| summarize TotalBytes = sum(SentBytes) by DeviceName, RemoteUrl, InitiatingProcessAccountName
+| where TotalBytes > 10485760  <span style="color: #6aa3f7;">// > 10 MB</span>
+| order by TotalBytes desc</pre>
+                </div>
+
+                <h2>Part 2: Archive Creation Before Exfil</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Archive tool usage (staging data for exfil)</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("7z.exe", "7za.exe", "rar.exe", "winrar.exe", "zip.exe", "tar.exe")
+    or ProcessCommandLine has_any (".7z", ".rar", ".zip", ".tar.gz", "-p")
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+| order by TimeGenerated asc
+
+<span style="color: #a78bf6;">// KQL: Large archive files created</span>
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "FileCreated"
+| where FileName endswith ".zip" or FileName endswith ".7z" or FileName endswith ".rar"
+| where FileSize > 52428800  <span style="color: #6aa3f7;">// > 50 MB</span>
+| project TimeGenerated, DeviceName, InitiatingProcessAccountName, FileName, FileSize, FolderPath</pre>
+                </div>
+
+                <h2>Part 3: Email Exfiltration</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Large email attachments to external recipients</span>
+EmailEvents
+| where TimeGenerated > ago(7d)
+| where EmailDirection == "Outbound"
+| where RecipientEmailAddress !endswith "@yourdomain.com"
+| where AttachmentCount > 0
+| join kind=inner (
+    EmailAttachmentInfo
+    | where FileSize > 5242880  <span style="color: #6aa3f7;">// > 5 MB attachments</span>
+) on NetworkMessageId
+| project TimeGenerated, SenderFromAddress, RecipientEmailAddress, Subject, FileName, FileSize
+| order by FileSize desc
+
+<span style="color: #a78bf6;">// KQL: Emails to personal email domains</span>
+let PersonalDomains = dynamic(["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", 
+    "protonmail.com", "aol.com", "icloud.com"]);
+EmailEvents
+| where TimeGenerated > ago(7d)
+| where EmailDirection == "Outbound"
+| extend RecipientDomain = tostring(split(RecipientEmailAddress, "@")[1])
+| where RecipientDomain in (PersonalDomains)
+| where AttachmentCount > 0
+| summarize EmailCount = count(), TotalAttachments = sum(AttachmentCount) by SenderFromAddress
+| order by TotalAttachments desc</pre>
+                </div>
+
+                <h2>Part 4: USB/Removable Media</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: USB device connections</span>
+DeviceEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "PnpDeviceConnected"
+| where DeviceDescription has_any ("USB", "Removable", "Mass Storage")
+| project TimeGenerated, DeviceName, DeviceId, DeviceDescription
+
+<span style="color: #a78bf6;">// KQL: Files copied to removable drives</span>
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "FileCreated"
+| where FolderPath matches regex @"^[D-Z]:\\"  <span style="color: #6aa3f7;">// Non-C: drives</span>
+| where FolderPath !startswith "D:\\Windows"  <span style="color: #6aa3f7;">// Exclude system</span>
+| summarize FilesCopied = count(), TotalSize = sum(FileSize) by DeviceName, InitiatingProcessAccountName
+| where FilesCopied > 10
+| order by TotalSize desc</pre>
+                </div>
+
+                <h2>Part 5: Known Exfiltration Tools</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Rclone and similar sync tools</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("rclone.exe", "rsync.exe", "robocopy.exe", "xcopy.exe")
+    or ProcessCommandLine has_any ("rclone", "mega-cmd", "gdrive")
+| where ProcessCommandLine has_any ("copy", "sync", "move")
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine
+
+<span style="color: #a78bf6;">// KQL: FTP/SFTP connections</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(7d)
+| where RemotePort in (21, 22, 990)  <span style="color: #6aa3f7;">// FTP, SFTP, FTPS</span>
+| where RemoteIPType == "Public"
+| summarize TotalBytes = sum(SentBytes), Connections = count() by DeviceName, RemoteIP
+| order by TotalBytes desc</pre>
+                </div>
+
+                <h2>Part 6: Determine What Was Taken</h2>
+                <p>Critical for breach notification and impact assessment:</p>
+                <ul>
+                    <li><strong>File access logs:</strong> What files were accessed before transfer?</li>
+                    <li><strong>DLP logs:</strong> What data classifications were triggered?</li>
+                    <li><strong>Database audit:</strong> Were database exports run?</li>
+                    <li><strong>Archive contents:</strong> Analyze any recovered archives</li>
+                </ul>
+
+                <h2>Containment Actions</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Active exfil in progress</td><td>Network isolate immediately</td></tr>
+                        <tr><td>Cloud storage exfil</td><td>Block domain, revoke user's cloud app access</td></tr>
+                        <tr><td>Email exfil</td><td>Disable email, place legal hold on mailbox</td></tr>
+                        <tr><td>Insider threat suspected</td><td>Coordinate with HR and Legal before action</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>MITRE ATT&CK Mapping</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Examples</th></tr></thead>
+                    <tbody>
+                        <tr><td>Exfiltration Over C2 Channel</td><td>T1041</td><td>Data sent via malware C2</td></tr>
+                        <tr><td>Exfiltration Over Web Service</td><td>T1567</td><td>Cloud storage, code repos</td></tr>
+                        <tr><td>Exfiltration Over Alternative Protocol</td><td>T1048</td><td>DNS, ICMP, FTP</td></tr>
+                        <tr><td>Automated Exfiltration</td><td>T1020</td><td>Scheduled data theft</td></tr>
+                        <tr><td>Data Staged</td><td>T1074</td><td>Archive creation before exfil</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../../js/main.js"></script>
+</body>
+</html>

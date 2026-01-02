@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KQL Fundamentals | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="home-nav"><i class="fas fa-home"></i><span>Home</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="home-nav"><li><a href="../../index.html">Introduction</a></li></ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="sentinel-nav"><i class="fab fa-microsoft"></i><span>Microsoft Sentinel</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="sentinel-nav">
+                    <li><a href="../../pages/sentinel/index.html">Overview</a></li>
+                    <li><a href="../../pages/sentinel/architecture.html">Architecture</a></li>
+                    <li><a href="../../pages/sentinel/data-connectors.html">Data Connectors</a></li>
+                    <li><a href="../../pages/sentinel/kql-fundamentals.html">KQL Fundamentals</a></li>
+                    <li><a href="../../pages/sentinel/kql-intermediate.html">KQL Intermediate</a></li>
+                    <li><a href="../../pages/sentinel/kql-advanced.html">KQL Advanced</a></li>
+                    <li><a href="../../pages/sentinel/analytics-rules.html">Analytics Rules</a></li>
+                    <li><a href="../../pages/sentinel/workbooks.html">Workbooks</a></li>
+                    <li><a href="../../pages/sentinel/automation.html">Automation</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="splunk-nav"><i class="fas fa-search-dollar"></i><span>Splunk</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links" id="splunk-nav">
+                    <li><a href="../../pages/splunk/index.html">Overview</a></li>
+                    <li><a href="../../pages/splunk/spl-fundamentals.html">SPL Fundamentals</a></li>
+                    <li><a href="../../pages/splunk/spl-intermediate.html">SPL Intermediate</a></li>
+                    <li><a href="../../pages/splunk/spl-advanced.html">SPL Advanced</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="content">
+<div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Microsoft Sentinel</a><span class="separator">/</span><span>KQL Fundamentals</span></div>
+<div class="page-header">
+    <h1><i class="fab fa-microsoft" style="color: #0078d4;"></i> KQL Fundamentals</h1>
+    <p class="lead">Complete introduction to Kusto Query Language (KQL) for security analysts. Learn the syntax, operators, and patterns you will use every day.</p>
+</div>
+
+<h2>What is KQL?</h2>
+<p>Kusto Query Language (KQL) is a read-only query language used to query large datasets in Azure services including Microsoft Sentinel, Azure Data Explorer, and Microsoft 365 Defender. As a security analyst, mastering KQL is essential for threat hunting, investigation, and detection engineering.</p>
+
+<div class="info-box info">
+    <div class="info-box-title"><i class="fas fa-info-circle"></i> Why KQL Matters for Security</div>
+    <ul style="margin: 0.5rem 0 0 1rem;">
+        <li>Query security logs across your entire environment</li>
+        <li>Build detection rules (Analytics Rules)</li>
+        <li>Perform threat hunting</li>
+        <li>Create dashboards and workbooks</li>
+        <li>Automate response with playbooks</li>
+    </ul>
+</div>
+
+<h2>Basic Query Structure</h2>
+<p>KQL queries follow a pipeline model where data flows through a series of operators:</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Basic Structure</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Basic KQL query structure</span>
+<span class="table">TableName</span>                           <span class="comment">// 1. Start with a table</span>
+| <span class="keyword">where</span> Condition                   <span class="comment">// 2. Filter rows</span>
+| <span class="keyword">project</span> Column1, Column2          <span class="comment">// 3. Select columns</span>
+| <span class="keyword">order by</span> Column1 <span class="keyword">desc</span>            <span class="comment">// 4. Sort results</span>
+| <span class="keyword">take</span> <span class="number">100</span>                          <span class="comment">// 5. Limit results</span></code></pre>
+    </div>
+</div>
+
+<h2>Essential Tables for Security</h2>
+<table>
+    <thead><tr><th>Table</th><th>Description</th><th>Common Use Cases</th></tr></thead>
+    <tbody>
+        <tr><td><code>SigninLogs</code></td><td>Azure AD interactive sign-ins</td><td>Authentication analysis, impossible travel</td></tr>
+        <tr><td><code>AADNonInteractiveUserSignInLogs</code></td><td>Non-interactive sign-ins</td><td>Token refreshes, service connections</td></tr>
+        <tr><td><code>SecurityEvent</code></td><td>Windows Security events</td><td>Process creation, logon events</td></tr>
+        <tr><td><code>DeviceProcessEvents</code></td><td>MDE process execution</td><td>Suspicious process analysis</td></tr>
+        <tr><td><code>DeviceNetworkEvents</code></td><td>MDE network connections</td><td>C2 detection, lateral movement</td></tr>
+        <tr><td><code>EmailEvents</code></td><td>Email metadata</td><td>Phishing investigation</td></tr>
+        <tr><td><code>OfficeActivity</code></td><td>M365 user activity</td><td>Data access, inbox rules</td></tr>
+        <tr><td><code>AuditLogs</code></td><td>Azure AD audit events</td><td>Permission changes, app consent</td></tr>
+    </tbody>
+</table>
+
+<h2>The where Operator</h2>
+<p>The <code>where</code> operator filters rows based on conditions. This is the most important operator for security queries.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> where Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Filter by time (ALWAYS start with time filter for performance)</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+
+<span class="comment">// Filter by specific value (case-insensitive)</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> UserPrincipalName =~ <span class="string">"user@company.com"</span>
+
+<span class="comment">// Filter by multiple values</span>
+<span class="table">SecurityEvent</span>
+| <span class="keyword">where</span> EventID in (<span class="number">4624</span>, <span class="number">4625</span>, <span class="number">4648</span>)
+
+<span class="comment">// Filter with contains (partial match)</span>
+<span class="table">DeviceProcessEvents</span>
+| <span class="keyword">where</span> ProcessCommandLine contains <span class="string">"powershell"</span>
+
+<span class="comment">// Filter with has (word boundary match - faster)</span>
+<span class="table">DeviceProcessEvents</span>
+| <span class="keyword">where</span> ProcessCommandLine has <span class="string">"encoded"</span>
+
+<span class="comment">// Combine conditions with and/or</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> ResultType != <span class="string">"0"</span> <span class="keyword">and</span> IPAddress != <span class="string">""</span></code></pre>
+    </div>
+</div>
+
+<h3>Comparison Operators</h3>
+<table>
+    <thead><tr><th>Operator</th><th>Description</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr><td><code>==</code></td><td>Equals (case-sensitive)</td><td><code>EventID == 4625</code></td></tr>
+        <tr><td><code>=~</code></td><td>Equals (case-insensitive)</td><td><code>UserPrincipalName =~ "user@company.com"</code></td></tr>
+        <tr><td><code>!=</code></td><td>Not equals</td><td><code>ResultType != "0"</code></td></tr>
+        <tr><td><code>contains</code></td><td>Substring match (case-insensitive)</td><td><code>ProcessCommandLine contains "mimikatz"</code></td></tr>
+        <tr><td><code>has</code></td><td>Word match (faster, case-insensitive)</td><td><code>ProcessCommandLine has "encoded"</code></td></tr>
+        <tr><td><code>startswith</code></td><td>Starts with</td><td><code>FileName startswith "psexec"</code></td></tr>
+        <tr><td><code>endswith</code></td><td>Ends with</td><td><code>FileName endswith ".exe"</code></td></tr>
+        <tr><td><code>matches regex</code></td><td>Regular expression</td><td><code>ProcessCommandLine matches regex @"\d{1,3}\.\d{1,3}"</code></td></tr>
+        <tr><td><code>in</code></td><td>Value in list</td><td><code>EventID in (4624, 4625)</code></td></tr>
+        <tr><td><code>!in</code></td><td>Value not in list</td><td><code>Country !in ("US", "CA")</code></td></tr>
+    </tbody>
+</table>
+
+<div class="info-box tip">
+    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Performance Tip</div>
+    <p style="margin: 0.2rem 0 0 0;">Use <code>has</code> instead of <code>contains</code> when possible. <code>has</code> uses indexed word boundaries and is much faster on large datasets.</p>
+</div>
+
+<h2>The project Operator</h2>
+<p>The <code>project</code> operator selects which columns to include in the output.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> project Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Select specific columns</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">project</span> TimeGenerated, UserPrincipalName, IPAddress, ResultType
+
+<span class="comment">// Rename columns</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">project</span> Time = TimeGenerated, User = UserPrincipalName, IP = IPAddress
+
+<span class="comment">// Create calculated columns</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">project</span> TimeGenerated, UserPrincipalName, 
+    IsSuccess = (ResultType == <span class="string">"0"</span>)
+
+<span class="comment">// project-away removes columns (keep all others)</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">project-away</span> TenantId, OperationName</code></pre>
+    </div>
+</div>
+
+<h2>The extend Operator</h2>
+<p>The <code>extend</code> operator adds new columns while keeping existing ones.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> extend Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Add a calculated column</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">extend</span> IsSuccess = (ResultType == <span class="string">"0"</span>)
+
+<span class="comment">// Extract nested JSON properties</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">extend</span> 
+    City = tostring(LocationDetails.city),
+    Country = tostring(LocationDetails.countryOrRegion),
+    OS = tostring(DeviceDetail.operatingSystem)
+
+<span class="comment">// String manipulation</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">extend</span> Domain = tostring(<span class="function">split</span>(UserPrincipalName, <span class="string">"@"</span>)[<span class="number">1</span>])</code></pre>
+    </div>
+</div>
+
+<h2>The summarize Operator</h2>
+<p>The <code>summarize</code> operator aggregates data, similar to GROUP BY in SQL.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> summarize Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Count events</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">summarize</span> TotalSignins = <span class="function">count</span>()
+
+<span class="comment">// Count by group</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">summarize</span> SigninCount = <span class="function">count</span>() <span class="keyword">by</span> UserPrincipalName
+| <span class="keyword">order by</span> SigninCount <span class="keyword">desc</span>
+
+<span class="comment">// Multiple aggregations</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">summarize</span> 
+    TotalAttempts = <span class="function">count</span>(),
+    SuccessCount = <span class="function">countif</span>(ResultType == <span class="string">"0"</span>),
+    FailCount = <span class="function">countif</span>(ResultType != <span class="string">"0"</span>),
+    UniqueIPs = <span class="function">dcount</span>(IPAddress),
+    Countries = <span class="function">make_set</span>(tostring(LocationDetails.countryOrRegion))
+    <span class="keyword">by</span> UserPrincipalName
+
+<span class="comment">// Time-based aggregation (bin)</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">summarize</span> Count = <span class="function">count</span>() <span class="keyword">by</span> <span class="function">bin</span>(TimeGenerated, <span class="number">1h</span>)
+| <span class="keyword">render</span> timechart</code></pre>
+    </div>
+</div>
+
+<h3>Common Aggregation Functions</h3>
+<table>
+    <thead><tr><th>Function</th><th>Description</th><th>Example</th></tr></thead>
+    <tbody>
+        <tr><td><code>count()</code></td><td>Count of rows</td><td><code>summarize count()</code></td></tr>
+        <tr><td><code>countif(condition)</code></td><td>Count rows matching condition</td><td><code>countif(ResultType == "0")</code></td></tr>
+        <tr><td><code>dcount(column)</code></td><td>Distinct count</td><td><code>dcount(IPAddress)</code></td></tr>
+        <tr><td><code>sum(column)</code></td><td>Sum of values</td><td><code>sum(BytesSent)</code></td></tr>
+        <tr><td><code>avg(column)</code></td><td>Average</td><td><code>avg(Duration)</code></td></tr>
+        <tr><td><code>min(column)</code></td><td>Minimum value</td><td><code>min(TimeGenerated)</code></td></tr>
+        <tr><td><code>max(column)</code></td><td>Maximum value</td><td><code>max(TimeGenerated)</code></td></tr>
+        <tr><td><code>make_set(column)</code></td><td>Unique values as array</td><td><code>make_set(IPAddress)</code></td></tr>
+        <tr><td><code>make_list(column)</code></td><td>All values as array</td><td><code>make_list(EventID)</code></td></tr>
+    </tbody>
+</table>
+
+<h2>Time Functions</h2>
+<p>Working with time is critical for security queries. Always filter by time first for performance.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Time Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Relative time with ago()</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)    <span class="comment">// Last 24 hours</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)     <span class="comment">// Last 7 days</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1h</span>)     <span class="comment">// Last hour</span>
+
+<span class="comment">// Time range with between</span>
+| <span class="keyword">where</span> TimeGenerated between (ago(<span class="number">7d</span>) .. ago(<span class="number">1d</span>))
+
+<span class="comment">// Specific datetime</span>
+| <span class="keyword">where</span> TimeGenerated > datetime(<span class="string">2025-01-01</span>)
+
+<span class="comment">// Extract time components</span>
+| <span class="keyword">extend</span> Hour = <span class="function">hourofday</span>(TimeGenerated)
+| <span class="keyword">extend</span> DayOfWeek = <span class="function">dayofweek</span>(TimeGenerated)
+
+<span class="comment">// Time difference</span>
+| <span class="keyword">extend</span> TimeSinceEvent = <span class="function">datetime_diff</span>(<span class="string">'minute'</span>, <span class="function">now</span>(), TimeGenerated)</code></pre>
+    </div>
+</div>
+
+<h2>Practice Queries</h2>
+<p>Try these queries to practice the fundamentals:</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Practice: Failed Sign-ins by User</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Find users with most failed sign-ins</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> ResultType != <span class="string">"0"</span>
+| <span class="keyword">summarize</span> FailedAttempts = <span class="function">count</span>() <span class="keyword">by</span> UserPrincipalName
+| <span class="keyword">where</span> FailedAttempts > <span class="number">10</span>
+| <span class="keyword">order by</span> FailedAttempts <span class="keyword">desc</span></code></pre>
+    </div>
+</div>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Practice: Sign-ins by Country</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Successful sign-ins by country</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">where</span> ResultType == <span class="string">"0"</span>
+| <span class="keyword">extend</span> Country = tostring(LocationDetails.countryOrRegion)
+| <span class="keyword">summarize</span> Count = <span class="function">count</span>(), Users = <span class="function">dcount</span>(UserPrincipalName) <span class="keyword">by</span> Country
+| <span class="keyword">order by</span> Count <span class="keyword">desc</span></code></pre>
+    </div>
+</div>
+
+<h2>Next Steps</h2>
+<p>Now that you understand the fundamentals, continue to:</p>
+<ul>
+    <li><a href="kql-intermediate.html">KQL Intermediate</a> - Joins, subqueries, and advanced aggregations</li>
+    <li><a href="kql-advanced.html">KQL Advanced</a> - Functions, parsing, and optimization</li>
+    <li><a href="analytics-rules.html">Analytics Rules</a> - Building detection rules</li>
+</ul>
+</div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

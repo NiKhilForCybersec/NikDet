@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BEC Investigation | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>BEC Investigation</span></div>
+            <div class="content">
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-INV-009</div>
+                    <h1>Business Email Compromise (BEC) Investigation</h1>
+                    <p class="lead">Investigate and respond to email account takeovers used for financial fraud, invoice manipulation, and executive impersonation.</p>
+                    <div class="playbook-meta">
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">CRITICAL</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2/L3</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">60-180 min</span></div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                        <span class="mitre-tag">T1566 - Phishing</span>
+                        <span class="mitre-tag">T1534 - Internal Spearphishing</span>
+                        <span class="mitre-tag">T1114 - Email Collection</span>
+                    </div>
+                </div>
+
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Financial Impact</div>
+                    <p style="margin: 0.5rem 0 0 0;">BEC attacks result in billions of dollars in losses annually. Time is critical - wire transfers may be recoverable if caught within 24-48 hours.</p>
+                </div>
+
+                <h2>BEC Attack Types</h2>
+                <table>
+                    <thead><tr><th>Type</th><th>Description</th><th>Target</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>CEO Fraud</strong></td>
+                            <td>Attacker impersonates CEO to request wire transfer</td>
+                            <td>Finance, Controller, CFO</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Invoice Fraud</strong></td>
+                            <td>Attacker modifies payment details on legitimate invoices</td>
+                            <td>Accounts Payable</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Account Compromise</strong></td>
+                            <td>Actual email account taken over and used for fraud</td>
+                            <td>Any employee with financial access</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vendor Impersonation</strong></td>
+                            <td>Attacker poses as vendor requesting payment change</td>
+                            <td>Accounts Payable, Procurement</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Theft</strong></td>
+                            <td>Compromised account used to steal W-2, PII</td>
+                            <td>HR, Payroll</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 1: Confirm Account Compromise</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Check sign-in activity for compromised account</span>
+SigninLogs
+| where TimeGenerated > ago(30d)
+| where UserPrincipalName == "compromised@domain.com"
+| project TimeGenerated, Location, IPAddress, AppDisplayName, 
+    ResultType, ResultDescription, DeviceDetail, 
+    RiskLevelDuringSignIn, RiskState
+| order by TimeGenerated desc
+
+<span style="color: #a78bf6;">// KQL: Sign-ins from unusual locations</span>
+SigninLogs
+| where TimeGenerated > ago(30d)
+| where UserPrincipalName == "compromised@domain.com"
+| where ResultType == 0  <span style="color: #6aa3f7;">// Successful</span>
+| summarize Locations = make_set(Location), IPs = make_set(IPAddress) by bin(TimeGenerated, 1d)
+| order by TimeGenerated desc
+
+<span style="color: #a78bf6;">// KQL: Impossible travel detection</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where UserPrincipalName == "compromised@domain.com"
+| where ResultType == 0
+| order by TimeGenerated asc
+| serialize
+| extend PrevLocation = prev(Location), PrevTime = prev(TimeGenerated)
+| extend TimeDiff = datetime_diff('minute', TimeGenerated, PrevTime)
+| where Location != PrevLocation and TimeDiff < 120  <span style="color: #6aa3f7;">// Different location within 2 hours</span></pre>
+                </div>
+
+                <h2>Part 2: Check for Mailbox Rules</h2>
+                <p>Attackers often create rules to hide their activity:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Inbox rule creation (common BEC persistence)</span>
+OfficeActivity
+| where TimeGenerated > ago(30d)
+| where Operation in ("New-InboxRule", "Set-InboxRule", "Enable-InboxRule")
+| where UserId == "compromised@domain.com"
+| project TimeGenerated, UserId, Operation, Parameters, ClientIP
+| order by TimeGenerated desc
+
+<span style="color: #a78bf6;">// KQL: Suspicious inbox rule keywords</span>
+OfficeActivity
+| where Operation in ("New-InboxRule", "Set-InboxRule")
+| extend RuleParams = tostring(Parameters)
+| where RuleParams has_any ("invoice", "payment", "wire", "bank", "urgent", 
+    "confidential", "delete", "junk", "archive")
+| project TimeGenerated, UserId, RuleParams, ClientIP
+
+<span style="color: #a78bf6;">// PowerShell: List all inbox rules for user</span>
+Get-InboxRule -Mailbox compromised@domain.com | 
+    Select-Object Name, Description, Enabled, MoveToFolder, DeleteMessage, 
+    ForwardTo, RedirectTo | Format-List</pre>
+                </div>
+
+                <h2>Part 3: Email Forwarding Rules</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Email forwarding configuration changes</span>
+OfficeActivity
+| where TimeGenerated > ago(30d)
+| where Operation in ("Set-Mailbox", "New-TransportRule")
+| where Parameters has_any ("ForwardingAddress", "ForwardingSmtpAddress", 
+    "RedirectTo", "ForwardTo")
+| project TimeGenerated, UserId, Operation, Parameters
+
+<span style="color: #a78bf6;">// PowerShell: Check for forwarding</span>
+Get-Mailbox compromised@domain.com | 
+    Select-Object ForwardingAddress, ForwardingSmtpAddress, 
+    DeliverToMailboxAndForward</pre>
+                </div>
+
+                <h2>Part 4: Analyze Sent Emails</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Emails sent during compromise window</span>
+EmailEvents
+| where TimeGenerated > ago(7d)
+| where SenderFromAddress == "compromised@domain.com"
+| where EmailDirection == "Outbound"
+| project TimeGenerated, RecipientEmailAddress, Subject, AttachmentCount
+| order by TimeGenerated desc
+
+<span style="color: #a78bf6;">// KQL: Emails with financial keywords</span>
+EmailEvents
+| where SenderFromAddress == "compromised@domain.com"
+| where Subject has_any ("wire", "transfer", "payment", "invoice", 
+    "bank", "urgent", "confidential", "ACH")
+| project TimeGenerated, RecipientEmailAddress, Subject
+
+<span style="color: #a78bf6;">// KQL: Emails to external recipients during odd hours</span>
+EmailEvents
+| where SenderFromAddress == "compromised@domain.com"
+| where EmailDirection == "Outbound"
+| where RecipientEmailAddress !endswith "@yourdomain.com"
+| extend Hour = datetime_part("hour", TimeGenerated)
+| where Hour < 6 or Hour > 22  <span style="color: #6aa3f7;">// Outside business hours</span></pre>
+                </div>
+
+                <h2>Part 5: Check OAuth/App Consent</h2>
+                <p>Attackers may grant malicious apps access to maintain persistence:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: OAuth app consent grants</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where OperationName == "Consent to application"
+| where InitiatedBy.user.userPrincipalName == "compromised@domain.com"
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend Permissions = tostring(TargetResources[0].modifiedProperties)
+| project TimeGenerated, AppName, Permissions
+
+<span style="color: #a78bf6;">// PowerShell: List OAuth permissions for user</span>
+Get-AzureADUserOAuth2PermissionGrant -ObjectId "user-object-id" | 
+    Select-Object ClientId, Scope, ConsentType</pre>
+                </div>
+
+                <h2>Part 6: Immediate Containment</h2>
+                <table>
+                    <thead><tr><th>Action</th><th>Command/Steps</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Reset Password</strong></td>
+                            <td><code>Set-AzureADUserPassword -ObjectId "user" -Password "NewPass" -ForceChangePasswordNextLogin $true</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Revoke Sessions</strong></td>
+                            <td><code>Revoke-AzureADUserAllRefreshToken -ObjectId "user"</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Disable Account (if needed)</strong></td>
+                            <td><code>Set-AzureADUser -ObjectId "user" -AccountEnabled $false</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Remove Malicious Rules</strong></td>
+                            <td><code>Remove-InboxRule -Mailbox "user" -Identity "RuleName"</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Remove Forwarding</strong></td>
+                            <td><code>Set-Mailbox "user" -ForwardingAddress $null -ForwardingSmtpAddress $null</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Enable MFA</strong></td>
+                            <td>Require MFA re-registration</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 7: Financial Recovery</h2>
+                <ul>
+                    <li><strong>Within 24-48 hours:</strong> Contact bank immediately for wire recall</li>
+                    <li><strong>File FBI IC3 complaint:</strong> ic3.gov - required for potential recovery</li>
+                    <li><strong>Contact recipient bank:</strong> May be able to freeze funds</li>
+                    <li><strong>Document everything:</strong> Preserve all evidence for law enforcement</li>
+                    <li><strong>Notify affected parties:</strong> Vendors, customers who received fraudulent emails</li>
+                </ul>
+
+                <h2>MITRE ATT&CK Mapping</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>BEC Application</th></tr></thead>
+                    <tbody>
+                        <tr><td>Phishing for Information</td><td>T1598</td><td>Credential harvesting to gain access</td></tr>
+                        <tr><td>Email Hiding Rules</td><td>T1564.008</td><td>Inbox rules to hide attacker activity</td></tr>
+                        <tr><td>Email Forwarding Rule</td><td>T1114.003</td><td>Forward copies to attacker</td></tr>
+                        <tr><td>Internal Spearphishing</td><td>T1534</td><td>Using compromised account for further attacks</td></tr>
+                        <tr><td>Application Access Token</td><td>T1550.001</td><td>Malicious OAuth app persistence</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../../js/main.js"></script>
+</body>
+</html>

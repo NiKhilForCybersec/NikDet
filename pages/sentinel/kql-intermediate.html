@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KQL Intermediate | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="home-nav"><i class="fas fa-home"></i><span>Home</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="home-nav"><li><a href="../../index.html">Introduction</a></li></ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="sentinel-nav"><i class="fab fa-microsoft"></i><span>Microsoft Sentinel</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="sentinel-nav">
+                    <li><a href="../../pages/sentinel/index.html">Overview</a></li>
+                    <li><a href="../../pages/sentinel/architecture.html">Architecture</a></li>
+                    <li><a href="../../pages/sentinel/data-connectors.html">Data Connectors</a></li>
+                    <li><a href="../../pages/sentinel/kql-fundamentals.html">KQL Fundamentals</a></li>
+                    <li><a href="../../pages/sentinel/kql-intermediate.html">KQL Intermediate</a></li>
+                    <li><a href="../../pages/sentinel/kql-advanced.html">KQL Advanced</a></li>
+                    <li><a href="../../pages/sentinel/analytics-rules.html">Analytics Rules</a></li>
+                    <li><a href="../../pages/sentinel/workbooks.html">Workbooks</a></li>
+                    <li><a href="../../pages/sentinel/automation.html">Automation</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="splunk-nav"><i class="fas fa-search-dollar"></i><span>Splunk</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links" id="splunk-nav">
+                    <li><a href="../../pages/splunk/index.html">Overview</a></li>
+                    <li><a href="../../pages/splunk/spl-fundamentals.html">SPL Fundamentals</a></li>
+                    <li><a href="../../pages/splunk/spl-intermediate.html">SPL Intermediate</a></li>
+                    <li><a href="../../pages/splunk/spl-advanced.html">SPL Advanced</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="content">
+<div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Microsoft Sentinel</a><span class="separator">/</span><span>KQL Intermediate</span></div>
+<div class="page-header">
+    <h1><i class="fab fa-microsoft" style="color: #0078d4;"></i> KQL Intermediate</h1>
+    <p class="lead">Level up your KQL skills with joins, subqueries, let statements, and advanced aggregations for complex security analysis.</p>
+</div>
+
+<h2>The let Statement</h2>
+<p>The <code>let</code> statement defines variables and subqueries for reuse within your query.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> let Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Define simple variables</span>
+<span class="keyword">let</span> TimeRange = <span class="number">7d</span>;
+<span class="keyword">let</span> TargetUser = <span class="string">"user@company.com"</span>;
+<span class="keyword">let</span> FailureThreshold = <span class="number">10</span>;
+
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(TimeRange)
+| <span class="keyword">where</span> UserPrincipalName =~ TargetUser
+
+<span class="comment">// Define a list</span>
+<span class="keyword">let</span> SuspiciousCountries = <span class="keyword">dynamic</span>([<span class="string">"RU"</span>, <span class="string">"CN"</span>, <span class="string">"KP"</span>, <span class="string">"IR"</span>]);
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">extend</span> Country = tostring(LocationDetails.countryOrRegion)
+| <span class="keyword">where</span> Country in (SuspiciousCountries)
+
+<span class="comment">// Define a subquery (tabular)</span>
+<span class="keyword">let</span> FailedUsers = 
+    <span class="table">SigninLogs</span>
+    | <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1h</span>)
+    | <span class="keyword">where</span> ResultType != <span class="string">"0"</span>
+    | <span class="keyword">summarize</span> Failures = <span class="function">count</span>() <span class="keyword">by</span> UserPrincipalName
+    | <span class="keyword">where</span> Failures > <span class="number">5</span>
+    | <span class="keyword">project</span> UserPrincipalName;
+
+<span class="comment">// Use the subquery</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1h</span>)
+| <span class="keyword">where</span> UserPrincipalName in (FailedUsers)
+| <span class="keyword">where</span> ResultType == <span class="string">"0"</span>  <span class="comment">// Successful after failures</span></code></pre>
+    </div>
+</div>
+
+<h2>Joins</h2>
+<p>Joins combine data from multiple tables based on matching columns.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Join Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Inner join - only matching rows</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">where</span> ResultType == <span class="string">"0"</span>
+| <span class="keyword">join</span> <span class="keyword">kind</span>=inner (
+    <span class="table">AuditLogs</span>
+    | <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+    | <span class="keyword">where</span> OperationName == <span class="string">"Add member to role"</span>
+) <span class="keyword">on</span> $left.UserPrincipalName == $right.InitiatedBy.user.userPrincipalName
+
+<span class="comment">// Left outer join - all rows from left, matching from right</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">join</span> <span class="keyword">kind</span>=leftouter (
+    <span class="table">IdentityInfo</span>
+    | <span class="keyword">project</span> AccountUPN, Department, JobTitle
+) <span class="keyword">on</span> $left.UserPrincipalName == $right.AccountUPN
+
+<span class="comment">// Anti join - rows in left NOT in right</span>
+<span class="keyword">let</span> KnownGoodIPs = 
+    <span class="table">_GetWatchlist</span>(<span class="string">'AllowedIPs'</span>) 
+    | <span class="keyword">project</span> IPAddress;
+
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">join</span> <span class="keyword">kind</span>=leftanti (KnownGoodIPs) <span class="keyword">on</span> IPAddress</code></pre>
+    </div>
+</div>
+
+<h3>Join Types</h3>
+<table>
+    <thead><tr><th>Type</th><th>Description</th><th>Use Case</th></tr></thead>
+    <tbody>
+        <tr><td><code>inner</code></td><td>Only matching rows from both</td><td>Correlate events that must exist in both tables</td></tr>
+        <tr><td><code>leftouter</code></td><td>All left rows, matching right</td><td>Enrich data while keeping all original rows</td></tr>
+        <tr><td><code>rightouter</code></td><td>All right rows, matching left</td><td>Less common, opposite of leftouter</td></tr>
+        <tr><td><code>fullouter</code></td><td>All rows from both</td><td>Combine data keeping everything</td></tr>
+        <tr><td><code>leftanti</code></td><td>Left rows NOT in right</td><td>Find events not in allow list</td></tr>
+        <tr><td><code>leftsemi</code></td><td>Left rows that ARE in right</td><td>Filter to matching only (no right columns)</td></tr>
+    </tbody>
+</table>
+
+<h2>Union</h2>
+<p>The <code>union</code> operator combines rows from multiple tables or queries.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Union Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Combine multiple tables</span>
+<span class="function">union</span> <span class="table">SigninLogs</span>, <span class="table">AADNonInteractiveUserSignInLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">where</span> UserPrincipalName =~ <span class="string">"user@company.com"</span>
+
+<span class="comment">// Union with wildcard (all tables matching pattern)</span>
+<span class="function">union</span> <span class="table">Device*</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1h</span>)
+| <span class="keyword">where</span> DeviceName =~ <span class="string">"WORKSTATION01"</span>
+| <span class="keyword">summarize</span> <span class="function">count</span>() <span class="keyword">by</span> Type
+
+<span class="comment">// Union with isfuzzy (ignore missing tables)</span>
+<span class="function">union</span> isfuzzy=true <span class="table">SigninLogs</span>, <span class="table">CustomSecurityLog_CL</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)</code></pre>
+    </div>
+</div>
+
+<h2>Advanced Aggregations</h2>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Advanced Aggregations</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// arg_max - row with maximum value</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">summarize</span> <span class="function">arg_max</span>(TimeGenerated, *) <span class="keyword">by</span> UserPrincipalName
+
+<span class="comment">// Percentiles</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">summarize</span> <span class="function">percentiles</span>(DurationMs, <span class="number">50</span>, <span class="number">90</span>, <span class="number">99</span>)
+
+<span class="comment">// make_set with limit</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">summarize</span> IPAddresses = <span class="function">make_set</span>(IPAddress, <span class="number">100</span>) <span class="keyword">by</span> UserPrincipalName
+
+<span class="comment">// bag_pack - create JSON object</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">summarize</span> Details = <span class="function">bag_pack</span>(
+    <span class="string">"TotalCount"</span>, <span class="function">count</span>(),
+    <span class="string">"SuccessCount"</span>, <span class="function">countif</span>(ResultType == <span class="string">"0"</span>),
+    <span class="string">"FailCount"</span>, <span class="function">countif</span>(ResultType != <span class="string">"0"</span>)
+) <span class="keyword">by</span> UserPrincipalName</code></pre>
+    </div>
+</div>
+
+<h2>Row Operations</h2>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Row Operations</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// prev() - access previous row value</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">where</span> UserPrincipalName =~ <span class="string">"user@company.com"</span>
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">asc</span>
+| <span class="keyword">extend</span> PreviousIP = <span class="function">prev</span>(IPAddress)
+| <span class="keyword">where</span> IPAddress != PreviousIP
+
+<span class="comment">// next() - access next row value</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">asc</span>
+| <span class="keyword">extend</span> NextEventTime = <span class="function">next</span>(TimeGenerated)
+| <span class="keyword">extend</span> TimeBetweenEvents = <span class="function">datetime_diff</span>(<span class="string">'second'</span>, NextEventTime, TimeGenerated)
+
+<span class="comment">// row_number() - add sequential numbers</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">desc</span>
+| <span class="keyword">extend</span> RowNum = <span class="function">row_number</span>()</code></pre>
+    </div>
+</div>
+
+<h2>Practical Examples</h2>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Detect Impossible Travel</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Detect impossible travel for all users</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">where</span> ResultType == <span class="string">"0"</span>
+| <span class="keyword">extend</span> Country = tostring(LocationDetails.countryOrRegion)
+| <span class="keyword">order by</span> UserPrincipalName, TimeGenerated <span class="keyword">asc</span>
+| <span class="keyword">extend</span> 
+    PrevCountry = <span class="function">prev</span>(Country, <span class="number">1</span>, <span class="string">""</span>),
+    PrevUser = <span class="function">prev</span>(UserPrincipalName, <span class="number">1</span>, <span class="string">""</span>),
+    PrevTime = <span class="function">prev</span>(TimeGenerated)
+| <span class="keyword">where</span> UserPrincipalName == PrevUser
+| <span class="keyword">where</span> Country != PrevCountry
+| <span class="keyword">extend</span> MinutesBetween = <span class="function">datetime_diff</span>(<span class="string">'minute'</span>, TimeGenerated, PrevTime)
+| <span class="keyword">where</span> MinutesBetween < <span class="number">120</span>
+| <span class="keyword">project</span> TimeGenerated, UserPrincipalName, FromCountry = PrevCountry, ToCountry = Country, MinutesBetween</code></pre>
+    </div>
+</div>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> First Time Country Access</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Users accessing from a country for the first time</span>
+<span class="keyword">let</span> LookbackDays = <span class="number">30</span>;
+<span class="keyword">let</span> HistoricalCountries = 
+    <span class="table">SigninLogs</span>
+    | <span class="keyword">where</span> TimeGenerated between (ago(LookbackDays) .. ago(<span class="number">1d</span>))
+    | <span class="keyword">where</span> ResultType == <span class="string">"0"</span>
+    | <span class="keyword">extend</span> Country = tostring(LocationDetails.countryOrRegion)
+    | <span class="keyword">summarize</span> Countries = <span class="function">make_set</span>(Country) <span class="keyword">by</span> UserPrincipalName;
+
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1d</span>)
+| <span class="keyword">where</span> ResultType == <span class="string">"0"</span>
+| <span class="keyword">extend</span> Country = tostring(LocationDetails.countryOrRegion)
+| <span class="keyword">join</span> <span class="keyword">kind</span>=leftouter (HistoricalCountries) <span class="keyword">on</span> UserPrincipalName
+| <span class="keyword">where</span> Country !in (Countries)
+| <span class="keyword">project</span> TimeGenerated, UserPrincipalName, NewCountry = Country, IPAddress</code></pre>
+    </div>
+</div>
+
+<h2>Next Steps</h2>
+<ul>
+    <li><a href="kql-advanced.html">KQL Advanced</a> - Custom functions, parsing, and optimization</li>
+    <li><a href="analytics-rules.html">Analytics Rules</a> - Turn queries into detections</li>
+</ul>
+</div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

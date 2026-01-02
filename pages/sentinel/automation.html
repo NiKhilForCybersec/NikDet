@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Automation | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Microsoft Sentinel</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="sent-nav"><i class="fas fa-shield-alt"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="sent-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="kql-basics.html">KQL Basics</a></li>
+                    <li><a href="kql-advanced.html">KQL Advanced</a></li>
+                    <li><a href="analytics-rules.html">Analytics Rules</a></li>
+                    <li><a href="data-connectors.html">Data Connectors</a></li>
+                    <li><a href="architecture.html">Architecture</a></li>
+                    <li><a href="automation.html" class="active">Automation</a></li>
+                    <li><a href="workbooks.html">Workbooks</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Sentinel</a><span class="separator">/</span><span>Automation</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-robot" style="color: var(--accent-tertiary);"></i> Sentinel Automation (SOAR)</h1>
+                <p class="lead">Automate incident response with playbooks and automation rules.</p>
+            </div>
+            <div class="content">
+
+                <h2>Automation Components</h2>
+                <table>
+                    <thead><tr><th>Component</th><th>Purpose</th><th>Trigger</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Automation Rules</strong></td>
+                            <td>Lightweight actions on incidents (assign, tag, severity)</td>
+                            <td>Incident created/updated</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Playbooks (Logic Apps)</strong></td>
+                            <td>Complex workflows with external integrations</td>
+                            <td>Incident, alert, or manual</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Automation Rules</h2>
+                <p>Automation rules run automatically when incidents are created or updated. Use for simple, fast actions.</p>
+
+                <h3>Common Use Cases</h3>
+                <table>
+                    <thead><tr><th>Use Case</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Auto-assign by analytics rule</strong></td>
+                            <td>If rule name contains "Phishing" → Assign to Phishing Team</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Auto-close false positives</strong></td>
+                            <td>If entity contains "testuser@" → Close as False Positive</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Add tags based on severity</strong></td>
+                            <td>If severity = High → Add tag "Priority"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trigger playbook</strong></td>
+                            <td>If rule = "Suspicious Login" → Run enrichment playbook</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Change severity</strong></td>
+                            <td>If entity contains "VIP-" → Increase severity to High</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Creating an Automation Rule</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Navigate to Automation</div>
+                            <p>Sentinel → Automation → Create → Automation rule</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Define Trigger</div>
+                            <p>Select: "When incident is created" or "When incident is updated"</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Set Conditions</div>
+                            <p>Add conditions: Analytics rule name, Severity, Entity types, Tags, etc.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Define Actions</div>
+                            <p>Choose: Assign owner, Change severity, Add tags, Run playbook, Close incident</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>Playbooks (Logic Apps)</h2>
+                <p>Playbooks are Azure Logic Apps connected to Sentinel. They enable complex automation with external systems.</p>
+
+                <h3>Playbook Triggers</h3>
+                <table>
+                    <thead><tr><th>Trigger</th><th>When It Fires</th><th>Available Data</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Incident Trigger</strong></td>
+                            <td>New incident created</td>
+                            <td>Incident details, entities, alerts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Alert Trigger</strong></td>
+                            <td>New alert generated</td>
+                            <td>Alert details, entities (before incident)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Entity Trigger</strong></td>
+                            <td>Manual on entity</td>
+                            <td>Specific entity (IP, account, host, etc.)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Common Playbook Patterns</h3>
+
+                <h4>Pattern 1: Enrichment Playbook</h4>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">INCIDENT ENRICHMENT FLOW</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Incident   │────▶│  Get Entity  │────▶│  Lookup IP   │
+│   Created    │     │     (IP)     │     │ (VirusTotal) │
+└──────────────┘     └──────────────┘     └──────────────┘
+                                                 │
+                     ┌──────────────┐     ┌──────────────┐
+                     │  Add Comment │◀────│  Lookup Geo  │
+                     │ to Incident  │     │  (IPStack)   │
+                     └──────────────┘     └──────────────┘
+
+<span style="color: #6aa3f7;">Result: Incident enriched with threat intel and geolocation</span></pre>
+                </div>
+
+                <h4>Pattern 2: Containment Playbook</h4>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">USER CONTAINMENT FLOW</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Incident   │────▶│  Get Entity  │────▶│   Disable    │
+│   Created    │     │   (User)     │     │ Azure AD Acc │
+└──────────────┘     └──────────────┘     └──────────────┘
+                                                 │
+                     ┌──────────────┐     ┌──────────────┐
+                     │  Add Comment │◀────│  Revoke      │
+                     │ + Close      │     │  Sessions    │
+                     └──────────────┘     └──────────────┘
+
+<span style="color: #6aa3f7;">Result: Compromised user disabled and sessions revoked</span></pre>
+                </div>
+
+                <h4>Pattern 3: Notification Playbook</h4>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">TEAMS NOTIFICATION FLOW</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Incident   │────▶│  Condition:  │────▶│  Post to     │
+│   Created    │     │Severity=High │     │Teams Channel │
+└──────────────┘     └──────────────┘     └──────────────┘
+
+<span style="color: #6aa3f7;">Message includes: Incident title, severity, entities, link</span></pre>
+                </div>
+
+                <h3>Building a Playbook Step-by-Step</h3>
+
+                <h4>Example: IP Enrichment Playbook</h4>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Create Logic App</div>
+                            <p>Sentinel → Automation → Create → Playbook with incident trigger</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Add Action: Get Entities</div>
+                            <p>Search "Sentinel" → Entities - Get IPs → Select incident ARM ID from trigger</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Add For Each Loop</div>
+                            <p>For each IP in IPs output → Add enrichment actions</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Add HTTP Action (VirusTotal)</div>
+                            <p>GET https://www.virustotal.com/api/v3/ip_addresses/{IP}<br>Headers: x-apikey: YOUR_API_KEY</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Add Comment to Incident</div>
+                            <p>Parse VirusTotal response → Add incident comment with reputation score</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Save and Test</div>
+                            <p>Save playbook → Attach to automation rule or run manually on incident</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>Useful Connectors for Playbooks</h2>
+                <table>
+                    <thead><tr><th>Connector</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Microsoft Sentinel</strong></td><td>Get/update incidents, add comments, get entities</td></tr>
+                        <tr><td><strong>Azure AD</strong></td><td>Disable users, revoke sessions, reset passwords</td></tr>
+                        <tr><td><strong>Microsoft Teams</strong></td><td>Post notifications, adaptive cards for approval</td></tr>
+                        <tr><td><strong>ServiceNow</strong></td><td>Create tickets, update CIs</td></tr>
+                        <tr><td><strong>HTTP</strong></td><td>Call any REST API (VirusTotal, AbuseIPDB, etc.)</td></tr>
+                        <tr><td><strong>Defender for Endpoint</strong></td><td>Isolate machine, run AV scan, collect forensics</td></tr>
+                        <tr><td><strong>Outlook</strong></td><td>Send email notifications</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Best Practices</h2>
+                <ul>
+                    <li><strong>Start simple:</strong> Begin with enrichment and notification playbooks</li>
+                    <li><strong>Use Managed Identity:</strong> Avoid storing credentials in playbooks</li>
+                    <li><strong>Add error handling:</strong> Use "Configure run after" for failure paths</li>
+                    <li><strong>Log playbook runs:</strong> Add logging for troubleshooting</li>
+                    <li><strong>Test thoroughly:</strong> Test with sample incidents before production</li>
+                    <li><strong>Require approval for containment:</strong> Use Teams adaptive cards for human approval on destructive actions</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

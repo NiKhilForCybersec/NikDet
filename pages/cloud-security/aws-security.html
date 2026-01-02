@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Security | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Cloud Security</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="cs-nav"><i class="fas fa-cloud"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="cs-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="azure-security.html">Azure Security</a></li>
+                    <li><a href="aws-security.html" class="active">AWS Security</a></li>
+                    <li><a href="m365-security.html">Microsoft 365</a></li>
+                    <li><a href="cloud-detection.html">Cloud Detection</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Cloud Security</a><span class="separator">/</span><span>AWS Security</span></div>
+            <div class="page-header">
+                <h1><i class="fab fa-aws" style="color: #ff9900;"></i> AWS Security Monitoring</h1>
+                <p class="lead">Detect and respond to threats across Amazon Web Services environments.</p>
+            </div>
+            <div class="content">
+                <h2>AWS Security Services</h2>
+                <table>
+                    <thead><tr><th>Service</th><th>Purpose</th><th>Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>CloudTrail</strong></td><td>API activity logging</td><td>All management plane activity</td></tr>
+                        <tr><td><strong>GuardDuty</strong></td><td>Threat detection</td><td>Built-in threat intelligence</td></tr>
+                        <tr><td><strong>Security Hub</strong></td><td>Centralized findings</td><td>Aggregated alerts</td></tr>
+                        <tr><td><strong>VPC Flow Logs</strong></td><td>Network traffic</td><td>Network anomalies</td></tr>
+                        <tr><td><strong>Config</strong></td><td>Configuration tracking</td><td>Compliance drift</td></tr>
+                        <tr><td><strong>IAM Access Analyzer</strong></td><td>Permission analysis</td><td>Excessive permissions</td></tr>
+                        <tr><td><strong>Macie</strong></td><td>Data discovery</td><td>Sensitive data exposure</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>CloudTrail Events</h2>
+                <h3>Event Structure</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;">{
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDA...",
+    "arn": "arn:aws:iam::123456789012:user/admin",
+    "accountId": "123456789012",
+    "userName": "admin"
+  },
+  "eventTime": "2025-01-15T14:30:00Z",
+  "eventSource": "ec2.amazonaws.com",
+  "eventName": "RunInstances",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "203.0.113.50",
+  "userAgent": "aws-cli/2.0",
+  "requestParameters": {...},
+  "responseElements": {...}
+}</pre>
+                </div>
+
+                <h3>Critical CloudTrail Events</h3>
+                <table>
+                    <thead><tr><th>Event</th><th>Service</th><th>Risk</th></tr></thead>
+                    <tbody>
+                        <tr><td>ConsoleLogin (Root)</td><td>IAM</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>CreateUser</td><td>IAM</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>CreateAccessKey</td><td>IAM</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>AttachUserPolicy (Admin)</td><td>IAM</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>StopLogging</td><td>CloudTrail</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>DeleteTrail</td><td>CloudTrail</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>PutBucketPolicy (public)</td><td>S3</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>AuthorizeSecurityGroupIngress</td><td>EC2</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>RunInstances</td><td>EC2</td><td style="color: #5ce0c4;">Medium</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Detection Queries</h2>
+
+                <h3>Root Account Usage</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Root account should never be used for daily operations</span>
+AWSCloudTrail
+| where UserIdentityType == "Root"
+| project TimeGenerated, EventName, SourceIpAddress, 
+    UserAgent, AWSRegion, ErrorCode</pre>
+                </div>
+
+                <h3>IAM User Created</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// New IAM user - potential persistence</span>
+AWSCloudTrail
+| where EventName == "CreateUser"
+| extend NewUser = tostring(parse_json(RequestParameters).userName)
+| project TimeGenerated, UserIdentityArn, NewUser, SourceIpAddress</pre>
+                </div>
+
+                <h3>Access Key Created</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// New access key - persistence or credential theft</span>
+AWSCloudTrail
+| where EventName == "CreateAccessKey"
+| extend TargetUser = tostring(parse_json(RequestParameters).userName)
+| project TimeGenerated, UserIdentityArn, TargetUser, SourceIpAddress</pre>
+                </div>
+
+                <h3>CloudTrail Disabled</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Defense evasion - disable logging</span>
+AWSCloudTrail
+| where EventName in ("StopLogging", "DeleteTrail", "UpdateTrail")
+| project TimeGenerated, UserIdentityArn, EventName, 
+    SourceIpAddress, ErrorCode</pre>
+                </div>
+
+                <h3>S3 Bucket Made Public</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Public bucket exposure</span>
+AWSCloudTrail
+| where EventName in ("PutBucketAcl", "PutBucketPolicy")
+| where tostring(RequestParameters) has "AllUsers" 
+    or tostring(RequestParameters) has "AuthenticatedUsers"
+| extend BucketName = tostring(parse_json(RequestParameters).bucketName)
+| project TimeGenerated, UserIdentityArn, BucketName, EventName</pre>
+                </div>
+
+                <h3>Security Group Opened</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Inbound rule added - check for 0.0.0.0/0</span>
+AWSCloudTrail
+| where EventName == "AuthorizeSecurityGroupIngress"
+| extend SGId = tostring(parse_json(RequestParameters).groupId)
+| where tostring(RequestParameters) has "0.0.0.0/0"
+| project TimeGenerated, UserIdentityArn, SGId, SourceIpAddress</pre>
+                </div>
+
+                <h2>GuardDuty Finding Types</h2>
+                <table>
+                    <thead><tr><th>Category</th><th>Finding Type</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td rowspan="2"><strong>IAM</strong></td><td>UnauthorizedAccess:IAMUser/...</td><td>Suspicious API calls</td></tr>
+                        <tr><td>CredentialAccess:IAMUser/...</td><td>Credential theft attempt</td></tr>
+                        <tr><td rowspan="2"><strong>EC2</strong></td><td>Backdoor:EC2/...</td><td>C2 communication</td></tr>
+                        <tr><td>CryptoCurrency:EC2/...</td><td>Crypto mining</td></tr>
+                        <tr><td rowspan="2"><strong>S3</strong></td><td>Exfiltration:S3/...</td><td>Data exfiltration</td></tr>
+                        <tr><td>Policy:S3/BucketPublicAccess...</td><td>Public bucket</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>AWS Attack Patterns</h2>
+                <table>
+                    <thead><tr><th>Attack</th><th>CloudTrail Events</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Credential Theft</strong></td>
+                            <td>CreateAccessKey, GetSessionToken</td>
+                            <td>New keys, keys used from new IP</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Privilege Escalation</strong></td>
+                            <td>AttachUserPolicy, PutUserPolicy</td>
+                            <td>Self-assignment of admin policy</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Persistence</strong></td>
+                            <td>CreateUser, CreateRole</td>
+                            <td>New principals with high privileges</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Defense Evasion</strong></td>
+                            <td>StopLogging, DeleteTrail</td>
+                            <td>CloudTrail modifications</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Exfiltration</strong></td>
+                            <td>GetObject (high volume)</td>
+                            <td>Unusual S3 access patterns</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Resource Hijacking</strong></td>
+                            <td>RunInstances</td><td>Unusual instance types/regions</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Best Practices</h2>
+                <ul>
+                    <li><strong>Enable CloudTrail</strong> in all regions with S3 logging</li>
+                    <li><strong>Enable GuardDuty</strong> for automated threat detection</li>
+                    <li><strong>Use Security Hub</strong> to aggregate findings</li>
+                    <li><strong>Implement SCPs</strong> to prevent dangerous actions</li>
+                    <li><strong>Monitor root account</strong> - should rarely be used</li>
+                    <li><strong>Enable MFA Delete</strong> on critical S3 buckets</li>
+                </ul>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

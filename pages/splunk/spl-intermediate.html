@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL Intermediate | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Splunk</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="spl-nav"><i class="fas fa-search"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="spl-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="spl-basics.html">SPL Basics</a></li>
+                    <li><a href="spl-intermediate.html" class="active">SPL Intermediate</a></li>
+                    <li><a href="spl-advanced.html">SPL Advanced</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Splunk</a><span class="separator">/</span><span>SPL Intermediate</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-chart-line" style="color: var(--accent-warning);"></i> SPL Intermediate</h1>
+                <p class="lead">Level up your SPL skills with transforming commands, subsearches, and correlation techniques.</p>
+            </div>
+            <div class="content">
+
+                <h2>Transforming Commands Deep Dive</h2>
+
+                <h3>stats - Comprehensive Guide</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Basic aggregation functions</span>
+| stats count                              <span style="color: #6aa3f7;">// Total count</span>
+| stats count by src_ip                    <span style="color: #6aa3f7;">// Count per group</span>
+| stats dc(user) as unique_users           <span style="color: #6aa3f7;">// Distinct count</span>
+| stats sum(bytes) as total_bytes          <span style="color: #6aa3f7;">// Sum</span>
+| stats avg(duration) as avg_duration      <span style="color: #6aa3f7;">// Average</span>
+| stats min(timestamp), max(timestamp)     <span style="color: #6aa3f7;">// Min/Max</span>
+| stats earliest(_time), latest(_time)     <span style="color: #6aa3f7;">// First/Last time</span>
+
+<span style="color: #6aa3f7;">// Multiple aggregations</span>
+| stats count, dc(user) as users, sum(bytes) as bytes by src_ip
+
+<span style="color: #6aa3f7;">// List and values (collect unique values)</span>
+| stats values(user) as users by src_ip    <span style="color: #6aa3f7;">// Unique values</span>
+| stats list(user) as users by src_ip      <span style="color: #6aa3f7;">// All values (with duplicates)</span>
+
+<span style="color: #6aa3f7;">// First/Last value per group</span>
+| stats first(action) as first_action, last(action) as last_action by user
+
+<span style="color: #6aa3f7;">// Security example: Failed logins by source</span>
+index=windows EventCode=4625
+| stats count as failed_attempts, 
+        dc(TargetUserName) as unique_users,
+        values(TargetUserName) as targeted_users
+  by IpAddress
+| where failed_attempts > 10</pre>
+                </div>
+
+                <h3>eval - Field Calculations</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// String functions</span>
+| eval lower_user = lower(user)
+| eval upper_user = upper(user)
+| eval domain = mvindex(split(user, "\\"), 0)
+| eval username = mvindex(split(user, "\\"), 1)
+| eval combined = user . " from " . src_ip
+
+<span style="color: #6aa3f7;">// Conditional logic</span>
+| eval severity = if(count > 100, "high", "low")
+| eval severity = case(
+    count > 100, "critical",
+    count > 50, "high",
+    count > 10, "medium",
+    true(), "low"
+  )
+
+<span style="color: #6aa3f7;">// Coalesce (first non-null value)</span>
+| eval ip = coalesce(src_ip, client_ip, source_address)
+
+<span style="color: #6aa3f7;">// Type conversions</span>
+| eval bytes_num = tonumber(bytes)
+| eval time_str = strftime(_time, "%Y-%m-%d %H:%M:%S")
+| eval time_epoch = strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+
+<span style="color: #6aa3f7;">// Math operations</span>
+| eval bytes_mb = bytes / 1024 / 1024
+| eval percentage = round((success / total) * 100, 2)
+
+<span style="color: #6aa3f7;">// Security example: Classify login locations</span>
+| eval location_type = case(
+    cidrmatch("10.0.0.0/8", src_ip), "internal",
+    cidrmatch("192.168.0.0/16", src_ip), "internal",
+    cidrmatch("172.16.0.0/12", src_ip), "internal",
+    true(), "external"
+  )</pre>
+                </div>
+
+                <h3>timechart - Time Series Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Basic time series</span>
+| timechart count                          <span style="color: #6aa3f7;">// Auto span</span>
+| timechart span=1h count                  <span style="color: #6aa3f7;">// Hourly buckets</span>
+| timechart span=5m count                  <span style="color: #6aa3f7;">// 5-minute buckets</span>
+
+<span style="color: #6aa3f7;">// Split by field</span>
+| timechart span=1h count by action        <span style="color: #6aa3f7;">// Separate line per action</span>
+| timechart span=1h count by src_ip limit=10  <span style="color: #6aa3f7;">// Top 10 sources</span>
+
+<span style="color: #6aa3f7;">// Multiple aggregations</span>
+| timechart span=1h count, dc(user) as unique_users
+
+<span style="color: #6aa3f7;">// Security example: Detect traffic spikes</span>
+index=firewall action=blocked
+| timechart span=5m count as blocked_count
+| where blocked_count > 1000
+
+<span style="color: #6aa3f7;">// Security example: Login activity over time by result</span>
+index=windows EventCode IN (4624, 4625)
+| eval result = if(EventCode=4624, "success", "failure")
+| timechart span=1h count by result</pre>
+                </div>
+
+                <h2>Subsearches</h2>
+                <p>Subsearches allow you to use the results of one search as input to another.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Basic subsearch - find activity from failed login sources</span>
+index=firewall src_ip IN [
+    search index=windows EventCode=4625 earliest=-1h
+    | stats count by IpAddress
+    | where count > 10
+    | fields IpAddress
+    | rename IpAddress as src_ip
+]
+
+<span style="color: #6aa3f7;">// Subsearch with format - returns as OR list</span>
+index=proxy 
+    [ search index=threat_intel type=malicious
+      | fields domain
+      | format ]
+
+<span style="color: #6aa3f7;">// Security example: Find all activity from compromised accounts</span>
+index=* 
+    [ search index=windows EventCode=4625 
+      | stats count by TargetUserName 
+      | where count > 50
+      | fields TargetUserName
+      | rename TargetUserName as user ]
+
+<span style="color: #6aa3f7;">// Note: Subsearches have limits (default 10K results, 60 sec timeout)</span>
+<span style="color: #6aa3f7;">// For large datasets, use join or lookups instead</span></pre>
+                </div>
+
+                <h2>join Command</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Inner join - only matching records</span>
+index=windows EventCode=4624
+| join user [
+    search index=hr_system status=terminated
+    | fields user, termination_date
+]
+<span style="color: #6aa3f7;">// Result: Only logins from terminated users</span>
+
+<span style="color: #6aa3f7;">// Left join - all from left, matching from right</span>
+index=windows EventCode=4624
+| join type=left user [
+    search index=hr_system
+    | fields user, department
+]
+<span style="color: #6aa3f7;">// Result: All logins, with department if available</span>
+
+<span style="color: #6aa3f7;">// Security example: Enrich alerts with asset info</span>
+index=alerts severity=high
+| join type=left dest_ip [
+    search index=asset_inventory
+    | fields ip, hostname, owner, criticality
+    | rename ip as dest_ip
+]</pre>
+                </div>
+
+                <h2>Lookups</h2>
+                <p>Lookups enrich events with data from CSV files or external sources.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Create lookup file: threat_intel.csv</span>
+<span style="color: #6aa3f7;">// ip,threat_type,confidence</span>
+<span style="color: #6aa3f7;">// 192.168.1.100,botnet,high</span>
+<span style="color: #6aa3f7;">// 10.0.0.50,c2,medium</span>
+
+<span style="color: #6aa3f7;">// Basic lookup</span>
+index=firewall
+| lookup threat_intel.csv ip as src_ip OUTPUT threat_type, confidence
+
+<span style="color: #6aa3f7;">// Lookup with default value</span>
+| lookup threat_intel.csv ip as src_ip OUTPUT threat_type
+| fillnull value="clean" threat_type
+
+<span style="color: #6aa3f7;">// Automatic lookup (defined in transforms.conf)</span>
+<span style="color: #6aa3f7;">// Enriches all events automatically at search time</span>
+
+<span style="color: #6aa3f7;">// Geo lookup (built-in)</span>
+index=firewall
+| iplocation src_ip
+| stats count by Country, City
+
+<span style="color: #6aa3f7;">// Security example: VIP user lookup</span>
+index=windows EventCode=4624
+| lookup vip_users.csv user OUTPUT is_vip, department
+| where is_vip="true"
+| stats count by user, department</pre>
+                </div>
+
+                <h2>Transaction Command</h2>
+                <p>Groups events into transactions based on shared field values and time.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Group events by session</span>
+index=web_logs
+| transaction session_id maxspan=30m
+
+<span style="color: #6aa3f7;">// Start and end conditions</span>
+index=windows
+| transaction ComputerName startswith="EventCode=4624" endswith="EventCode=4634" maxspan=8h
+<span style="color: #6aa3f7;">// Groups login (4624) to logoff (4634) per computer</span>
+
+<span style="color: #6aa3f7;">// Transaction fields created:</span>
+<span style="color: #6aa3f7;">// duration - time span of transaction</span>
+<span style="color: #6aa3f7;">// eventcount - number of events in transaction</span>
+
+<span style="color: #6aa3f7;">// Security example: Detect rapid failed then successful login</span>
+index=windows EventCode IN (4624, 4625)
+| transaction TargetUserName maxspan=5m
+| where eventcount > 5 AND match(_raw, "4624")
+<span style="color: #6aa3f7;">// Find users with multiple events ending in success (potential brute force)</span></pre>
+                </div>
+
+                <h2>rex - Regular Expression Extraction</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Extract field from raw log</span>
+| rex field=_raw "user=(?P&lt;extracted_user&gt;[^\s]+)"
+
+<span style="color: #6aa3f7;">// Extract multiple fields</span>
+| rex field=_raw "src=(?P&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+).*dst=(?P&lt;dst_ip&gt;\d+\.\d+\.\d+\.\d+)"
+
+<span style="color: #6aa3f7;">// Extract from specific field</span>
+| rex field=url "https?://(?P&lt;domain&gt;[^/]+)"
+
+<span style="color: #6aa3f7;">// Replace/mask sensitive data</span>
+| rex field=email mode=sed "s/[^@]+@/REDACTED@/g"
+
+<span style="color: #6aa3f7;">// Security example: Extract domain from email</span>
+index=email
+| rex field=sender "(?P&lt;sender_domain&gt;@[^\s]+)"
+| stats count by sender_domain
+| sort -count</pre>
+                </div>
+
+                <h2>Security Detection Patterns</h2>
+
+                <h3>Threshold-Based Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Failed login threshold</span>
+index=windows EventCode=4625 earliest=-1h
+| stats count as failed_logins by IpAddress, TargetUserName
+| where failed_logins > 10
+
+<span style="color: #6aa3f7;">// Large data transfer detection</span>
+index=firewall earliest=-1h
+| stats sum(bytes_out) as total_bytes by src_ip
+| where total_bytes > 1073741824  <span style="color: #6aa3f7;">// > 1 GB</span>
+| eval total_gb = round(total_bytes/1024/1024/1024, 2)</pre>
+                </div>
+
+                <h3>Baseline Deviation Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Compare current to historical average</span>
+index=firewall action=blocked earliest=-1h
+| stats count as current_count
+| appendcols [
+    search index=firewall action=blocked earliest=-7d@d latest=-1d@d
+    | stats avg(eval(if(_time >= relative_time(now(), "-7d"), 1, 0))) as avg_hourly
+]
+| eval deviation = current_count / avg_hourly
+| where deviation > 3  <span style="color: #6aa3f7;">// 3x normal is anomalous</span></pre>
+                </div>
+
+                <h3>Rare Value Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find first-time connections to rare destinations</span>
+index=firewall earliest=-24h
+| stats count, earliest(_time) as first_seen by dest_ip
+| where count < 3 AND first_seen > relative_time(now(), "-1h")
+
+<span style="color: #6aa3f7;">// Using rare command</span>
+index=windows EventCode=4688
+| rare limit=20 Process_Command_Line</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

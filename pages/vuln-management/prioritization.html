@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerability Prioritization | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Vulnerability Management</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="vm-nav"><i class="fas fa-bug"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="vm-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="cvss-scoring.html">CVSS Scoring</a></li>
+                    <li><a href="prioritization.html" class="active">Prioritization</a></li>
+                    <li><a href="scanning.html">Scanning</a></li>
+                    <li><a href="remediation.html">Remediation</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Vulnerability Management</a><span class="separator">/</span><span>Prioritization</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-sort-amount-down" style="color: var(--accent-primary);"></i> Vulnerability Prioritization</h1>
+                <p class="lead">Focus remediation efforts on vulnerabilities that matter most to your organization.</p>
+            </div>
+            <div class="content">
+                <h2>Why Prioritization Matters</h2>
+                <p>Organizations face thousands of vulnerabilities. With limited resources, you must prioritize effectively. CVSS alone isn't enough - a vulnerability with CVSS 9.0 on an isolated test system is less urgent than a CVSS 7.0 on an internet-facing production server.</p>
+
+                <h2>Risk-Based Prioritization Framework</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); text-align: center; margin: 1rem 0;">
+                    <p style="font-size: 1.25rem; margin: 0; color: var(--text-primary);">
+                        <strong>Risk = Severity × Exploitability × Asset Value × Exposure</strong>
+                    </p>
+                </div>
+
+                <h3>Factor 1: Severity (CVSS)</h3>
+                <p>The base CVSS score provides initial severity context.</p>
+
+                <h3>Factor 2: Exploitability</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Source</th><th>Weight</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Actively Exploited (KEV)</strong></td>
+                            <td>CISA KEV Catalog</td>
+                            <td style="color: #f07070;">Critical - Immediate action</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Public Exploit Available</strong></td>
+                            <td>Exploit-DB, GitHub, Metasploit</td>
+                            <td style="color: #f0b756;">High - Prioritize</td>
+                        </tr>
+                        <tr>
+                            <td><strong>High EPSS Score (&gt;0.5)</strong></td>
+                            <td>EPSS API</td>
+                            <td style="color: #f0b756;">High - Likely exploitation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PoC Only</strong></td>
+                            <td>Security research</td>
+                            <td style="color: #5ce0c4;">Medium</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Theoretical</strong></td>
+                            <td>No known exploit</td>
+                            <td style="color: #6aa3f7;">Lower</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Factor 3: Asset Value</h3>
+                <table>
+                    <thead><tr><th>Asset Type</th><th>Examples</th><th>Priority</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Crown Jewels</strong></td><td>Domain controllers, databases with PII, financial systems</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td><strong>Business Critical</strong></td><td>Production servers, core applications</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td><strong>Standard Business</strong></td><td>Workstations, internal tools</td><td style="color: #5ce0c4;">Medium</td></tr>
+                        <tr><td><strong>Low Value</strong></td><td>Test systems, non-production</td><td style="color: #6aa3f7;">Low</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Factor 4: Exposure</h3>
+                <table>
+                    <thead><tr><th>Exposure Level</th><th>Description</th><th>Priority</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Internet-Facing</strong></td><td>Directly accessible from internet</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td><strong>DMZ</strong></td><td>In perimeter network</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td><strong>Internal Reachable</strong></td><td>Accessible from user network</td><td style="color: #5ce0c4;">Medium</td></tr>
+                        <tr><td><strong>Isolated</strong></td><td>Air-gapped or heavily segmented</td><td style="color: #6aa3f7;">Lower</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>EPSS - Exploit Prediction Scoring System</h2>
+                <p>EPSS provides a probability (0-1) that a vulnerability will be exploited in the next 30 days.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Query EPSS API</span>
+curl "https://api.first.org/data/v1/epss?cve=CVE-2021-44228"
+
+<span style="color: #6aa3f7;"># Response</span>
+{
+  "data": [{
+    "cve": "CVE-2021-44228",
+    "epss": "0.97565",
+    "percentile": "0.99996"
+  }]
+}</pre>
+                </div>
+
+                <h3>EPSS Interpretation</h3>
+                <table>
+                    <thead><tr><th>EPSS Score</th><th>Interpretation</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>&gt; 0.7</strong></td><td>Very likely to be exploited</td><td style="color: #f07070;">Immediate remediation</td></tr>
+                        <tr><td><strong>0.4 - 0.7</strong></td><td>Probable exploitation</td><td style="color: #f0b756;">Prioritize highly</td></tr>
+                        <tr><td><strong>0.1 - 0.4</strong></td><td>Possible exploitation</td><td style="color: #5ce0c4;">Standard priority</td></tr>
+                        <tr><td><strong>&lt; 0.1</strong></td><td>Less likely exploitation</td><td>Normal remediation cycle</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>CISA KEV Catalog</h2>
+                <p>CISA's Known Exploited Vulnerabilities catalog lists CVEs with confirmed active exploitation.</p>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-circle"></i> KEV = Top Priority</div>
+                    <p style="margin: 0.5rem 0 0 0;">If a vulnerability is in the KEV catalog, it is being actively exploited. These should be treated as emergencies and remediated immediately according to CISA's due dates.</p>
+                </div>
+
+                <h2>SSVC - Stakeholder-Specific Vulnerability Categorization</h2>
+                <p>SSVC uses decision trees to determine response actions based on exploitation status, technical impact, and mission impact.</p>
+
+                <h3>SSVC Decision Outcomes</h3>
+                <table>
+                    <thead><tr><th>Decision</th><th>Meaning</th><th>Timeframe</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f07070;"><strong>Act</strong></td><td>Remediate immediately</td><td>As fast as possible</td></tr>
+                        <tr><td style="color: #f0b756;"><strong>Attend</strong></td><td>Focus attention, may require out-of-cycle patch</td><td>Days to weeks</td></tr>
+                        <tr><td style="color: #5ce0c4;"><strong>Track*</strong></td><td>Closely monitor for changes</td><td>Normal patch cycle, watch closely</td></tr>
+                        <tr><td><strong>Track</strong></td><td>Monitor, patch in regular cycle</td><td>Normal patch cycle</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Practical Prioritization Matrix</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">PRIORITY CALCULATION</span>
+━━━━━━━━━━━━━━━━━━━━
+
+<span style="color: #f07070;">P1 - CRITICAL (Remediate within 24-48 hours)</span>
+✓ In CISA KEV (actively exploited) OR
+✓ CVSS ≥ 9.0 + EPSS ≥ 0.5 + Internet-facing
+
+<span style="color: #f0b756;">P2 - HIGH (Remediate within 7 days)</span>
+✓ CVSS ≥ 7.0 + Public exploit + Internet-facing OR
+✓ CVSS ≥ 9.0 + Any asset OR
+✓ Any CVSS + Crown jewel asset + EPSS ≥ 0.3
+
+<span style="color: #5ce0c4;">P3 - MEDIUM (Remediate within 30 days)</span>
+✓ CVSS ≥ 7.0 + Internal systems OR
+✓ CVSS 4.0-6.9 + Internet-facing OR
+✓ Any critical asset with exploitable vuln
+
+<span style="color: #6aa3f7;">P4 - LOW (Remediate within 90 days)</span>
+✓ CVSS < 7.0 + Internal systems OR
+✓ Isolated systems OR
+✓ Low-value assets</pre>
+                </div>
+
+                <h2>Automation Example</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Python: Calculate priority score</span>
+def calculate_priority(vuln):
+    score = 0
+    
+    <span style="color: #5ce0c4;"># CVSS contribution</span>
+    score += vuln['cvss'] * 10
+    
+    <span style="color: #5ce0c4;"># EPSS contribution</span>
+    score += vuln['epss'] * 30
+    
+    <span style="color: #5ce0c4;"># KEV bonus</span>
+    if vuln['in_kev']:
+        score += 50
+    
+    <span style="color: #5ce0c4;"># Exposure multiplier</span>
+    if vuln['internet_facing']:
+        score *= 1.5
+    
+    <span style="color: #5ce0c4;"># Asset value multiplier</span>
+    asset_multipliers = {
+        'crown_jewel': 2.0,
+        'critical': 1.5,
+        'standard': 1.0,
+        'low': 0.5
+    }
+    score *= asset_multipliers.get(vuln['asset_type'], 1.0)
+    
+    return score</pre>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

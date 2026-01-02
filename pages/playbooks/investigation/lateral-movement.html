@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lateral Movement Investigation | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Playbooks</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header"><i class="fas fa-book"></i><span>Investigation</span></div>
+                <ul class="nav-links expanded">
+                    <li><a href="phishing.html">Phishing</a></li>
+                    <li><a href="ransomware.html">Ransomware</a></li>
+                    <li><a href="lateral-movement.html" class="active">Lateral Movement</a></li>
+                    <li><a href="account-compromise.html">Account Compromise</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Lateral Movement</span></div>
+            <div class="content">
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-INV-005</div>
+                    <h1>Lateral Movement Investigation</h1>
+                    <p class="lead">Investigate and trace attackers moving between systems within your network after initial compromise.</p>
+                    <div class="playbook-meta">
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">HIGH</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2/L3</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">45-120 min</span></div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                        <span class="mitre-tag">T1021 - Remote Services</span>
+                        <span class="mitre-tag">T1570 - Lateral Tool Transfer</span>
+                        <span class="mitre-tag">T1550 - Use Alternate Authentication</span>
+                    </div>
+                </div>
+
+                <h2>What is Lateral Movement?</h2>
+                <p>Lateral movement is the technique attackers use to move through a network after gaining initial access. The goal is to reach high-value targets like domain controllers, file servers, or systems containing sensitive data.</p>
+
+                <h2>Part 1: Identify the Movement Technique</h2>
+
+                <h3>Common Lateral Movement Methods</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>Protocol/Port</th><th>Key Indicators</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>RDP</strong></td>
+                            <td>TCP 3389</td>
+                            <td>Event 4624 LogonType 10, TerminalServices logs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SMB/Admin Shares</strong></td>
+                            <td>TCP 445</td>
+                            <td>Access to C$, ADMIN$, IPC$ shares</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PsExec</strong></td>
+                            <td>TCP 445 + Service</td>
+                            <td>PSEXESVC service creation, Event 7045</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WMI</strong></td>
+                            <td>TCP 135 + DCOM</td>
+                            <td>WmiPrvSE.exe spawning processes, Event 4648</td>
+                        </tr>
+                        <tr>
+                            <td><strong>WinRM/PowerShell Remoting</strong></td>
+                            <td>TCP 5985/5986</td>
+                            <td>wsmprovhost.exe, PowerShell script block logs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SSH</strong></td>
+                            <td>TCP 22</td>
+                            <td>SSH authentication logs, network connections</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pass-the-Hash</strong></td>
+                            <td>NTLM auth</td>
+                            <td>Event 4624 with NTLM, no prior 4768</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pass-the-Ticket</strong></td>
+                            <td>Kerberos</td>
+                            <td>Event 4768/4769 anomalies</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 2: RDP Lateral Movement</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: RDP connections between internal hosts</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4624 and LogonType == 10  <span style="color: #6aa3f7;">// RemoteInteractive</span>
+| where IpAddress !startswith "10." and IpAddress !startswith "192.168." <span style="color: #6aa3f7;">// NOT external</span>
+| where IpAddress != "-" and IpAddress != "127.0.0.1"
+| project TimeGenerated, SourceIP = IpAddress, TargetHost = Computer, 
+    User = TargetUserName, LogonID = TargetLogonId
+| order by TimeGenerated asc
+
+<span style="color: #a78bf6;">// KQL: RDP sessions with timeline</span>
+let RDPLogons = SecurityEvent
+| where EventID == 4624 and LogonType == 10
+| project LogonTime = TimeGenerated, Computer, User = TargetUserName, 
+    SourceIP = IpAddress, LogonID = TargetLogonId;
+let RDPLogoffs = SecurityEvent
+| where EventID == 4634 and LogonType == 10
+| project LogoffTime = TimeGenerated, Computer, LogonID = TargetLogonId;
+RDPLogons
+| join kind=leftouter RDPLogoffs on Computer, LogonID
+| extend SessionDuration = LogoffTime - LogonTime
+| project LogonTime, Computer, User, SourceIP, SessionDuration</pre>
+                </div>
+
+                <h2>Part 3: PsExec/SMB Lateral Movement</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: PsExec service installation</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 7045  <span style="color: #6aa3f7;">// Service installed</span>
+| where ServiceName has_any ("psexe", "paexec", "remcom", "csexec")
+| project TimeGenerated, Computer, ServiceName, ServiceFileName = ServiceFileName, 
+    AccountName
+
+<span style="color: #a78bf6;">// KQL: Admin share access (C$, ADMIN$)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 5140  <span style="color: #6aa3f7;">// Network share accessed</span>
+| where ShareName in ("\\\\*\\C$", "\\\\*\\ADMIN$", "\\\\*\\IPC$")
+| project TimeGenerated, Computer, ShareName, SubjectUserName, IpAddress
+| order by TimeGenerated asc
+
+<span style="color: #a78bf6;">// KQL: SMB file copy to remote system</span>
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where FolderPath startswith "\\\\"  <span style="color: #6aa3f7;">// UNC path</span>
+| where ActionType == "FileCreated"
+| project TimeGenerated, DeviceName, InitiatingProcessAccountName, 
+    FileName, FolderPath</pre>
+                </div>
+
+                <h2>Part 4: WMI Lateral Movement</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: WMI process creation on remote systems</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where InitiatingProcessFileName =~ "wmiprvse.exe"
+| where FileName !in~ ("wmiprvse.exe", "wmiapsrv.exe", "scrcons.exe")
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+| order by TimeGenerated asc
+
+<span style="color: #a78bf6;">// KQL: Explicit credentials used (often WMI/PSExec)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4648  <span style="color: #6aa3f7;">// Explicit credential logon</span>
+| where TargetServerName != Computer  <span style="color: #6aa3f7;">// Different target</span>
+| project TimeGenerated, SourceHost = Computer, TargetHost = TargetServerName,
+    SubjectUser = SubjectUserName, TargetUser = TargetUserName
+| order by TimeGenerated asc</pre>
+                </div>
+
+                <h2>Part 5: Pass-the-Hash Detection</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: NTLM authentication without preceding Kerberos TGT</span>
+<span style="color: #6aa3f7;">// Pass-the-Hash uses NTLM directly, skipping Kerberos</span>
+let KerberosTGT = SecurityEvent
+| where EventID == 4768  <span style="color: #6aa3f7;">// TGT requested</span>
+| summarize TGTTime = max(TimeGenerated) by TargetUserName, Computer;
+SecurityEvent
+| where EventID == 4624
+| where AuthenticationPackageName == "NTLM"
+| where LogonType == 3  <span style="color: #6aa3f7;">// Network logon</span>
+| join kind=leftanti KerberosTGT on TargetUserName
+| where IpAddress != "127.0.0.1" and IpAddress != "-"
+| project TimeGenerated, Computer, TargetUserName, IpAddress, LogonProcessName
+| order by TimeGenerated asc</pre>
+                </div>
+
+                <h2>Part 6: Build the Attack Path</h2>
+                <p>Map the sequence of systems the attacker accessed:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">LATERAL MOVEMENT PATH DIAGRAM</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[Initial Access]     [Hop 1]           [Hop 2]           [Target]
+ WORKSTATION-01  ──▶ FILE-SERVER  ──▶ DC-PRIMARY   ──▶ Exfiltration
+   (User: john)       (RDP)            (PsExec)
+   08:15 UTC          09:30 UTC        10:45 UTC        11:20 UTC
+
+<span style="color: #6aa3f7;">Document each hop:</span>
+- Source system
+- Destination system  
+- Movement method (RDP/SMB/WMI/etc.)
+- Account used
+- Timestamp
+- Evidence (Event IDs, EDR alerts)</pre>
+                </div>
+
+                <h2>Part 7: Containment Actions</h2>
+                <table>
+                    <thead><tr><th>If You Find...</th><th>Immediate Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Compromised user account</td><td>Disable account, reset password, revoke sessions</td></tr>
+                        <tr><td>Active attacker on system</td><td>Network isolate via EDR</td></tr>
+                        <tr><td>Malicious service installed</td><td>Stop service, collect sample, remove</td></tr>
+                        <tr><td>Stolen credentials (hashes)</td><td>Force password reset for affected accounts</td></tr>
+                        <tr><td>Lateral movement to DC</td><td>CRITICAL - assume full domain compromise</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>MITRE ATT&CK Mapping</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td>Remote Desktop Protocol</td><td>T1021.001</td><td>Event 4624 LogonType 10</td></tr>
+                        <tr><td>SMB/Windows Admin Shares</td><td>T1021.002</td><td>Event 5140, 5145</td></tr>
+                        <tr><td>Windows Remote Management</td><td>T1021.006</td><td>WinRM logs, wsmprovhost.exe</td></tr>
+                        <tr><td>Pass the Hash</td><td>T1550.002</td><td>NTLM without Kerberos</td></tr>
+                        <tr><td>Pass the Ticket</td><td>T1550.003</td><td>Kerberos anomalies</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../../js/main.js"></script>
+</body>
+</html>

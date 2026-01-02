@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KQL Advanced | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="home-nav"><i class="fas fa-home"></i><span>Home</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="home-nav"><li><a href="../../index.html">Introduction</a></li></ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="sentinel-nav"><i class="fab fa-microsoft"></i><span>Microsoft Sentinel</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="sentinel-nav">
+                    <li><a href="../../pages/sentinel/index.html">Overview</a></li>
+                    <li><a href="../../pages/sentinel/architecture.html">Architecture</a></li>
+                    <li><a href="../../pages/sentinel/data-connectors.html">Data Connectors</a></li>
+                    <li><a href="../../pages/sentinel/kql-fundamentals.html">KQL Fundamentals</a></li>
+                    <li><a href="../../pages/sentinel/kql-intermediate.html">KQL Intermediate</a></li>
+                    <li><a href="../../pages/sentinel/kql-advanced.html">KQL Advanced</a></li>
+                    <li><a href="../../pages/sentinel/analytics-rules.html">Analytics Rules</a></li>
+                    <li><a href="../../pages/sentinel/workbooks.html">Workbooks</a></li>
+                    <li><a href="../../pages/sentinel/automation.html">Automation</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="splunk-nav"><i class="fas fa-search-dollar"></i><span>Splunk</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links" id="splunk-nav">
+                    <li><a href="../../pages/splunk/index.html">Overview</a></li>
+                    <li><a href="../../pages/splunk/spl-fundamentals.html">SPL Fundamentals</a></li>
+                    <li><a href="../../pages/splunk/spl-intermediate.html">SPL Intermediate</a></li>
+                    <li><a href="../../pages/splunk/spl-advanced.html">SPL Advanced</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="content">
+<div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Microsoft Sentinel</a><span class="separator">/</span><span>KQL Advanced</span></div>
+<div class="page-header">
+    <h1><i class="fab fa-microsoft" style="color: #0078d4;"></i> KQL Advanced</h1>
+    <p class="lead">Master advanced KQL techniques including parsing, custom functions, performance optimization, and complex detection patterns.</p>
+</div>
+
+<h2>String Parsing</h2>
+<p>Extract structured data from unstructured strings using parse operators.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Parse Examples</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// parse - extract values from structured strings</span>
+<span class="table">SecurityEvent</span>
+| <span class="keyword">where</span> EventID == <span class="number">4688</span>
+| <span class="keyword">parse</span> CommandLine <span class="keyword">with</span> * <span class="string">"-enc "</span> EncodedCommand
+| <span class="keyword">where</span> <span class="function">isnotempty</span>(EncodedCommand)
+
+<span class="comment">// parse_json - parse JSON strings</span>
+<span class="table">AuditLogs</span>
+| <span class="keyword">extend</span> ModifiedProperties = <span class="function">parse_json</span>(tostring(TargetResources[<span class="number">0</span>].modifiedProperties))
+
+<span class="comment">// parse_url - extract URL components</span>
+<span class="table">UrlClickEvents</span>
+| <span class="keyword">extend</span> UrlParts = <span class="function">parse_url</span>(Url)
+| <span class="keyword">extend</span> 
+    Host = tostring(UrlParts.Host),
+    Path = tostring(UrlParts.Path),
+    Query = tostring(UrlParts.Query)
+
+<span class="comment">// extract with regex</span>
+<span class="table">SecurityEvent</span>
+| <span class="keyword">extend</span> IPAddress = <span class="function">extract</span>(<span class="string">@"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"</span>, <span class="number">1</span>, CommandLine)
+
+<span class="comment">// split - break string into array</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">extend</span> Domain = tostring(<span class="function">split</span>(UserPrincipalName, <span class="string">"@"</span>)[<span class="number">1</span>])</code></pre>
+    </div>
+</div>
+
+<h2>User-Defined Functions</h2>
+<p>Create reusable functions for common operations.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Functions</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Scalar function (returns single value)</span>
+<span class="keyword">let</span> GetDomain = (upn:string) {
+    tostring(<span class="function">split</span>(upn, <span class="string">"@"</span>)[<span class="number">1</span>])
+};
+<span class="table">SigninLogs</span>
+| <span class="keyword">extend</span> Domain = GetDomain(UserPrincipalName)
+
+<span class="comment">// Tabular function (returns table)</span>
+<span class="keyword">let</span> GetUserSignins = (user:string, lookback:timespan) {
+    <span class="table">SigninLogs</span>
+    | <span class="keyword">where</span> TimeGenerated > ago(lookback)
+    | <span class="keyword">where</span> UserPrincipalName =~ user
+};
+GetUserSignins(<span class="string">"user@company.com"</span>, <span class="number">7d</span>)
+| <span class="keyword">summarize</span> <span class="function">count</span>() <span class="keyword">by</span> ResultType
+
+<span class="comment">// Decode base64</span>
+<span class="keyword">let</span> DecodeBase64 = (encoded:string) {
+    <span class="function">base64_decode_tostring</span>(encoded)
+};
+<span class="table">DeviceProcessEvents</span>
+| <span class="keyword">where</span> ProcessCommandLine has <span class="string">"-enc"</span>
+| <span class="keyword">parse</span> ProcessCommandLine <span class="keyword">with</span> * <span class="string">"-enc "</span> EncodedPart
+| <span class="keyword">extend</span> DecodedCommand = DecodeBase64(EncodedPart)</code></pre>
+    </div>
+</div>
+
+<h2>mv-expand and mv-apply</h2>
+<p>Work with arrays and dynamic data.</p>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Array Operations</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// mv-expand - expand array to rows</span>
+<span class="table">SecurityEvent</span>
+| <span class="keyword">where</span> EventID == <span class="number">4688</span>
+| <span class="keyword">take</span> <span class="number">10</span>
+| <span class="keyword">extend</span> CommandParts = <span class="function">split</span>(CommandLine, <span class="string">" "</span>)
+| <span class="keyword">mv-expand</span> CommandParts
+| <span class="keyword">project</span> TimeGenerated, CommandParts
+
+<span class="comment">// mv-apply - apply operations to each array element</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1d</span>)
+| <span class="keyword">summarize</span> IPs = <span class="function">make_set</span>(IPAddress) <span class="keyword">by</span> UserPrincipalName
+| <span class="keyword">mv-apply</span> IP = IPs <span class="keyword">to typeof</span>(string) <span class="keyword">on</span> (
+    <span class="keyword">summarize</span> IPCount = <span class="function">count</span>()
+)
+
+<span class="comment">// Working with JSON arrays</span>
+<span class="table">AuditLogs</span>
+| <span class="keyword">where</span> OperationName == <span class="string">"Update user"</span>
+| <span class="keyword">mv-expand</span> TargetResources
+| <span class="keyword">mv-expand</span> ModifiedProperty = TargetResources.modifiedProperties
+| <span class="keyword">extend</span> PropertyName = tostring(ModifiedProperty.displayName)</code></pre>
+    </div>
+</div>
+
+<h2>Performance Optimization</h2>
+<div class="info-box tip">
+    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Performance Best Practices</div>
+    <ul style="margin: 0.5rem 0 0 1rem;">
+        <li><strong>Always filter by time first</strong> - TimeGenerated filter should be the first where clause</li>
+        <li><strong>Use has instead of contains</strong> - <code>has</code> uses indexes, <code>contains</code> does full scan</li>
+        <li><strong>Avoid regex when possible</strong> - Regex is slow; use has/startswith/endswith</li>
+        <li><strong>Project early</strong> - Remove unneeded columns early to reduce data volume</li>
+        <li><strong>Use materialize</strong> - Cache subquery results used multiple times</li>
+        <li><strong>Limit join size</strong> - Filter tables before joining</li>
+    </ul>
+</div>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Optimized Query</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// BAD - slow query</span>
+<span class="table">SecurityEvent</span>
+| <span class="keyword">where</span> CommandLine contains <span class="string">"mimikatz"</span>  <span class="comment">// Contains is slow</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)  <span class="comment">// Time filter should be first</span>
+
+<span class="comment">// GOOD - optimized query</span>
+<span class="table">SecurityEvent</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">7d</span>)  <span class="comment">// Time filter first</span>
+| <span class="keyword">where</span> CommandLine has <span class="string">"mimikatz"</span>  <span class="comment">// has uses index</span>
+
+<span class="comment">// materialize for subquery reuse</span>
+<span class="keyword">let</span> RiskyUsers = <span class="function">materialize</span>(
+    <span class="table">SigninLogs</span>
+    | <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1d</span>)
+    | <span class="keyword">where</span> RiskState == <span class="string">"atRisk"</span>
+    | <span class="keyword">distinct</span> UserPrincipalName
+);
+<span class="function">union</span>
+    (<span class="table">OfficeActivity</span> | <span class="keyword">where</span> UserId in (RiskyUsers)),
+    (<span class="table">AuditLogs</span> | <span class="keyword">where</span> InitiatedBy.user.userPrincipalName in (RiskyUsers))</code></pre>
+    </div>
+</div>
+
+<h2>Complex Detection Patterns</h2>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Beaconing Detection</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Detect regular interval connections (C2 beaconing)</span>
+<span class="table">DeviceNetworkEvents</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">where</span> ActionType == <span class="string">"ConnectionSuccess"</span>
+| <span class="keyword">summarize</span> 
+    ConnectionCount = <span class="function">count</span>(),
+    Timestamps = <span class="function">make_list</span>(TimeGenerated)
+    <span class="keyword">by</span> DeviceName, RemoteIP
+| <span class="keyword">where</span> ConnectionCount > <span class="number">20</span>
+| <span class="keyword">mv-apply</span> Timestamps <span class="keyword">to typeof</span>(datetime) <span class="keyword">on</span> (
+    <span class="keyword">order by</span> Timestamps <span class="keyword">asc</span>
+    | <span class="keyword">extend</span> NextTime = <span class="function">next</span>(Timestamps)
+    | <span class="keyword">extend</span> Interval = <span class="function">datetime_diff</span>(<span class="string">'second'</span>, NextTime, Timestamps)
+    | <span class="keyword">summarize</span> 
+        AvgInterval = <span class="function">avg</span>(Interval),
+        StdDevInterval = <span class="function">stdev</span>(Interval)
+)
+| <span class="keyword">where</span> StdDevInterval < <span class="number">60</span>  <span class="comment">// Low variance = regular beaconing</span>
+| <span class="keyword">where</span> AvgInterval between (<span class="number">30</span> .. <span class="number">3600</span>)</code></pre>
+    </div>
+</div>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Password Spray Detection</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Detect password spray: many users, few attempts each, same IP</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">1h</span>)
+| <span class="keyword">where</span> ResultType == <span class="string">"50126"</span>  <span class="comment">// Invalid password</span>
+| <span class="keyword">summarize</span> 
+    TargetedUsers = <span class="function">dcount</span>(UserPrincipalName),
+    UserList = <span class="function">make_set</span>(UserPrincipalName, <span class="number">100</span>),
+    AttemptsPerUser = <span class="function">count</span>() / <span class="function">dcount</span>(UserPrincipalName),
+    TotalAttempts = <span class="function">count</span>()
+    <span class="keyword">by</span> IPAddress
+| <span class="keyword">where</span> TargetedUsers > <span class="number">10</span>  <span class="comment">// Many users</span>
+| <span class="keyword">where</span> AttemptsPerUser < <span class="number">3</span>  <span class="comment">// Few attempts per user</span></code></pre>
+    </div>
+</div>
+
+<h2>Working with Watchlists</h2>
+
+<div class="query-example">
+    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Watchlist Queries</span></div>
+    <div class="query-body">
+<pre class="code-block"><code><span class="comment">// Get watchlist data</span>
+<span class="keyword">let</span> VIPUsers = <span class="table">_GetWatchlist</span>(<span class="string">'VIPUsers'</span>) | <span class="keyword">project</span> UserPrincipalName;
+<span class="keyword">let</span> KnownBadIPs = <span class="table">_GetWatchlist</span>(<span class="string">'ThreatIntelIPs'</span>) | <span class="keyword">project</span> IPAddress;
+
+<span class="comment">// Use watchlist in query</span>
+<span class="table">SigninLogs</span>
+| <span class="keyword">where</span> TimeGenerated > ago(<span class="number">24h</span>)
+| <span class="keyword">where</span> UserPrincipalName in (VIPUsers)
+| <span class="keyword">where</span> IPAddress in (KnownBadIPs)</code></pre>
+    </div>
+</div>
+
+<h2>Next Steps</h2>
+<ul>
+    <li><a href="analytics-rules.html">Analytics Rules</a> - Build detections from your queries</li>
+    <li><a href="../detection-engineering/index.html">Detection Engineering</a> - Complete detection lifecycle</li>
+</ul>
+</div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

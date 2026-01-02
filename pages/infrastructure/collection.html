@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Collection | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Infrastructure</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="infra-nav"><i class="fas fa-server"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="infra-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="log-sources.html">Log Sources</a></li>
+                    <li><a href="collection.html" class="active">Collection</a></li>
+                    <li><a href="parsing.html">Parsing</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Infrastructure</a><span class="separator">/</span><span>Collection</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-download" style="color: var(--accent-secondary);"></i> Log Collection</h1>
+                <p class="lead">How to get logs from sources to your SIEM reliably and efficiently.</p>
+            </div>
+            <div class="content">
+
+                <h2>Collection Architecture</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">LOG COLLECTION FLOW</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌──────────┐
+│ Log Sources │───▶│ Collectors/ │───▶│  Forwarder/ │───▶│   SIEM   │
+│             │    │   Agents    │    │   Ingestion │    │          │
+└─────────────┘    └─────────────┘    └─────────────┘    └──────────┘
+     │                   │                  │                  │
+     │                   │                  │                  │
+  Servers           Lightweight         Aggregation       Storage
+  Network           collection         & forwarding       & Search
+  Cloud                                                         
+  Endpoints                                                     
+</pre>
+                </div>
+
+                <h2>Collection Methods</h2>
+                <table>
+                    <thead><tr><th>Method</th><th>Description</th><th>Best For</th><th>Examples</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Agent-Based</strong></td>
+                            <td>Software installed on endpoints</td>
+                            <td>Windows, Linux, Mac endpoints</td>
+                            <td>Splunk UF, Elastic Agent, Microsoft MMA/AMA</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Syslog</strong></td>
+                            <td>Network protocol (UDP/TCP/TLS)</td>
+                            <td>Network devices, firewalls, Linux</td>
+                            <td>rsyslog, syslog-ng, Logstash</td>
+                        </tr>
+                        <tr>
+                            <td><strong>API Polling</strong></td>
+                            <td>SIEM pulls logs via REST API</td>
+                            <td>Cloud services, SaaS applications</td>
+                            <td>Azure AD, AWS CloudTrail, M365</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Webhook/Push</strong></td>
+                            <td>Source pushes to SIEM endpoint</td>
+                            <td>Modern cloud services, alerts</td>
+                            <td>AWS EventBridge, Azure Event Hub</td>
+                        </tr>
+                        <tr>
+                            <td><strong>File-Based</strong></td>
+                            <td>Read log files from disk</td>
+                            <td>Legacy applications, batch processing</td>
+                            <td>Filebeat, NXLog, Splunk UF</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Database Query</strong></td>
+                            <td>Query database for audit logs</td>
+                            <td>Database audit, application logs</td>
+                            <td>JDBC input, DB connectors</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Agent-Based Collection</h2>
+
+                <h3>Windows: Splunk Universal Forwarder</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Install Splunk UF silently</span>
+msiexec /i splunkforwarder-9.0.0-x64.msi AGREETOLICENSE=yes ^
+  RECEIVING_INDEXER="splunk-hf.company.com:9997" ^
+  SPLUNKPASSWORD=changeme /quiet
+
+<span style="color: #6aa3f7;"># Configure inputs (inputs.conf)</span>
+[WinEventLog://Security]
+disabled = 0
+index = windows
+sourcetype = WinEventLog:Security
+
+[WinEventLog://System]
+disabled = 0
+index = windows
+sourcetype = WinEventLog:System
+
+[WinEventLog://Microsoft-Windows-Sysmon/Operational]
+disabled = 0
+index = windows
+sourcetype = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
+renderXml = true</pre>
+                </div>
+
+                <h3>Windows: Microsoft Azure Monitor Agent (AMA)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Install AMA via PowerShell</span>
+$ResourceGroup = "rg-security"
+$WorkspaceId = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+$WorkspaceKey = "your-workspace-key"
+
+<span style="color: #6aa3f7;"># For Azure VMs - use Azure extension</span>
+az vm extension set --name AzureMonitorWindowsAgent --publisher Microsoft.Azure.Monitor ^
+  --vm-name MyVM --resource-group $ResourceGroup
+
+<span style="color: #6aa3f7;"># Create Data Collection Rule (DCR) for Windows Security Events</span>
+<span style="color: #6aa3f7;"># This is configured in Azure Portal or via ARM template</span></pre>
+                </div>
+
+                <h3>Linux: Elastic Agent</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Download and install</span>
+curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.11.0-linux-x86_64.tar.gz
+tar xzvf elastic-agent-8.11.0-linux-x86_64.tar.gz
+cd elastic-agent-8.11.0-linux-x86_64
+
+<span style="color: #6aa3f7;"># Enroll with Fleet server</span>
+sudo ./elastic-agent install --url=https://fleet.company.com:8220 \
+  --enrollment-token=YOUR_ENROLLMENT_TOKEN
+
+<span style="color: #6aa3f7;"># Verify status</span>
+sudo elastic-agent status</pre>
+                </div>
+
+                <h2>Syslog Collection</h2>
+
+                <h3>Syslog Server Configuration (rsyslog)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># /etc/rsyslog.conf - Enable TCP syslog listener</span>
+
+<span style="color: #6aa3f7;"># Load modules</span>
+module(load="imtcp")
+input(type="imtcp" port="514")
+
+<span style="color: #6aa3f7;"># For TLS (recommended for security)</span>
+module(load="imtcp" StreamDriver.Name="gtls" 
+       StreamDriver.Mode="1" 
+       StreamDriver.AuthMode="x509/name")
+
+<span style="color: #6aa3f7;"># Write logs to files by source</span>
+template(name="RemoteLogs" type="string"
+         string="/var/log/remote/%HOSTNAME%/%PROGRAMNAME%.log")
+
+if $fromhost-ip != '127.0.0.1' then {
+    action(type="omfile" dynaFile="RemoteLogs")
+}
+
+<span style="color: #6aa3f7;"># Forward to SIEM</span>
+*.* action(type="omfwd" target="siem.company.com" port="514" protocol="tcp")</pre>
+                </div>
+
+                <h3>Network Device Syslog Configuration</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Cisco ASA</span>
+logging enable
+logging host inside 10.0.0.50 UDP/514
+logging trap informational
+logging facility 20
+
+<span style="color: #6aa3f7;"># Palo Alto</span>
+set deviceconfig system log-settings syslog syslog-server siem-server server 10.0.0.50
+set deviceconfig system log-settings syslog syslog-server siem-server transport UDP
+set deviceconfig system log-settings syslog syslog-server siem-server port 514
+set deviceconfig system log-settings syslog syslog-server siem-server format BSD
+
+<span style="color: #6aa3f7;"># Fortinet FortiGate</span>
+config log syslogd setting
+  set status enable
+  set server 10.0.0.50
+  set port 514
+end</pre>
+                </div>
+
+                <h2>Cloud Log Collection</h2>
+
+                <h3>AWS CloudTrail to SIEM</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Option 1: S3 bucket polling (Splunk Add-on for AWS)</span>
+<span style="color: #6aa3f7;"># Configure in Splunk: Settings → Data inputs → AWS S3</span>
+
+<span style="color: #6aa3f7;"># Option 2: CloudWatch Logs subscription filter to Kinesis/Lambda</span>
+<span style="color: #6aa3f7;"># Then forward to SIEM via HTTP Event Collector</span>
+
+<span style="color: #6aa3f7;"># Option 3: EventBridge to SIEM webhook</span>
+aws events put-rule --name cloudtrail-to-siem \
+  --event-pattern '{"source": ["aws.cloudtrail"]}'
+
+aws events put-targets --rule cloudtrail-to-siem \
+  --targets "Id"="1","Arn"="arn:aws:events:us-east-1:ACCOUNT:api-destination/siem"</pre>
+                </div>
+
+                <h3>Azure Activity Logs to Sentinel</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Enable Azure Activity Logs connector in Sentinel</span>
+<span style="color: #6aa3f7;"># Data Connectors → Azure Activity → Connect</span>
+
+<span style="color: #6aa3f7;"># Or via Azure CLI:</span>
+az monitor diagnostic-settings create \
+  --name "send-to-sentinel" \
+  --resource "/subscriptions/SUBSCRIPTION_ID" \
+  --workspace "LOG_ANALYTICS_WORKSPACE_ID" \
+  --logs '[{"category": "Administrative", "enabled": true}]'</pre>
+                </div>
+
+                <h2>Collection Best Practices</h2>
+                <table>
+                    <thead><tr><th>Practice</th><th>Why It Matters</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Use TLS for syslog</strong></td><td>Prevents eavesdropping and tampering</td></tr>
+                        <tr><td><strong>Implement buffering</strong></td><td>Prevents log loss during SIEM outages</td></tr>
+                        <tr><td><strong>Monitor collection health</strong></td><td>Detect gaps in log coverage immediately</td></tr>
+                        <tr><td><strong>Normalize timestamps</strong></td><td>Ensure all logs use UTC for correlation</td></tr>
+                        <tr><td><strong>Document source configs</strong></td><td>Easier troubleshooting and onboarding</td></tr>
+                        <tr><td><strong>Test failover</strong></td><td>Verify logs still flow when primary collector fails</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Troubleshooting Collection Issues</h2>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>No logs arriving</td><td>Firewall blocking traffic</td><td>Check firewall rules for syslog/agent ports</td></tr>
+                        <tr><td>Intermittent gaps</td><td>Network congestion, UDP drops</td><td>Switch to TCP/TLS, add buffering</td></tr>
+                        <tr><td>Delayed logs</td><td>Collection queue backlog</td><td>Scale collectors, increase throughput</td></tr>
+                        <tr><td>Parsing errors</td><td>Unexpected log format</td><td>Update sourcetype/parser configuration</td></tr>
+                        <tr><td>Agent not running</td><td>Service crashed or disabled</td><td>Check service status, enable autostart</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

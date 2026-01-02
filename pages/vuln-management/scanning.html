@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vulnerability Scanning | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Vulnerability Management</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="vm-nav"><i class="fas fa-bug"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="vm-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="cvss-scoring.html">CVSS Scoring</a></li>
+                    <li><a href="prioritization.html">Prioritization</a></li>
+                    <li><a href="scanning.html" class="active">Scanning</a></li>
+                    <li><a href="remediation.html">Remediation</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Vulnerability Management</a><span class="separator">/</span><span>Scanning</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-radar" style="color: var(--accent-secondary);"></i> Vulnerability Scanning</h1>
+                <p class="lead">Techniques and tools for discovering vulnerabilities across your environment.</p>
+            </div>
+            <div class="content">
+                <h2>Scanning Types</h2>
+                <table>
+                    <thead><tr><th>Type</th><th>Description</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Network Scanning</strong></td>
+                            <td>Scans hosts over the network for vulnerabilities</td>
+                            <td>General infrastructure assessment</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Authenticated Scanning</strong></td>
+                            <td>Logs into systems for deeper inspection</td>
+                            <td>Comprehensive assessment (recommended)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Agent-Based</strong></td>
+                            <td>Local agent reports vulnerabilities</td>
+                            <td>Continuous monitoring, remote workers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Web Application</strong></td>
+                            <td>Tests web apps for OWASP vulnerabilities</td>
+                            <td>Web application security</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Container Scanning</strong></td>
+                            <td>Scans container images for vulnerabilities</td>
+                            <td>DevSecOps, CI/CD pipelines</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud Configuration</strong></td>
+                            <td>Checks cloud misconfigurations (CSPM)</td>
+                            <td>Cloud security posture</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Authenticated vs. Unauthenticated</h2>
+                <table>
+                    <thead><tr><th>Aspect</th><th>Unauthenticated</th><th>Authenticated</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Visibility</strong></td><td>Network-visible services only</td><td>Full system including local apps</td></tr>
+                        <tr><td><strong>Accuracy</strong></td><td>Higher false positives</td><td>More accurate results</td></tr>
+                        <tr><td><strong>Coverage</strong></td><td>~30% of vulnerabilities</td><td>~90%+ of vulnerabilities</td></tr>
+                        <tr><td><strong>Setup</strong></td><td>Simple</td><td>Requires credentials</td></tr>
+                        <tr><td><strong>Risk</strong></td><td>Low</td><td>Credential management needed</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box success">
+                    <div class="info-box-title"><i class="fas fa-check-circle"></i> Best Practice</div>
+                    <p style="margin: 0.5rem 0 0 0;">Always use authenticated scanning when possible. Unauthenticated scans miss a significant portion of vulnerabilities.</p>
+                </div>
+
+                <h2>Scanning Frequency</h2>
+                <table>
+                    <thead><tr><th>Asset Type</th><th>Recommended Frequency</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Internet-Facing</strong></td><td>Weekly or continuous</td><td>High exposure, prime target</td></tr>
+                        <tr><td><strong>Critical Internal</strong></td><td>Weekly</td><td>High business impact</td></tr>
+                        <tr><td><strong>Standard Internal</strong></td><td>Monthly</td><td>Balance of coverage and resources</td></tr>
+                        <tr><td><strong>Development/Test</strong></td><td>Before deployment</td><td>Catch before production</td></tr>
+                        <tr><td><strong>Container Images</strong></td><td>On build + continuous</td><td>DevSecOps integration</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Scanner Configuration</h2>
+
+                <h3>Nessus Example</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Nessus CLI scan</span>
+nessuscli scan --policy "Advanced Network Scan" \
+  --targets 192.168.1.0/24 \
+  --credentials windows:admin:P@ssw0rd \
+  --output results.nessus
+
+<span style="color: #6aa3f7;"># Key scan policies:</span>
+- Basic Network Scan: Quick unauthenticated scan
+- Advanced Scan: Customizable, recommended
+- Credentialed Patch Audit: Best for patch compliance
+- Web Application Tests: OWASP vulnerabilities</pre>
+                </div>
+
+                <h3>OpenVAS Example</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># OpenVAS scan with GVM</span>
+gvm-cli --gmp-username admin --gmp-password secret \
+  socket --xml "<create_target><name>Network</name>
+  <hosts>192.168.1.0/24</hosts></create_target>"
+
+<span style="color: #6aa3f7;"># Create task and start scan</span>
+gvm-cli ... --xml "<create_task>
+  <name>Weekly Scan</name>
+  <target id='target-id'/>
+  <config id='full-and-fast'/>
+</create_task>"</pre>
+                </div>
+
+                <h2>Container Scanning</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Trivy - scan container image</span>
+trivy image nginx:latest
+
+<span style="color: #6aa3f7;"># Trivy - scan with severity filter</span>
+trivy image --severity HIGH,CRITICAL nginx:latest
+
+<span style="color: #6aa3f7;"># Trivy - scan filesystem/IaC</span>
+trivy fs --security-checks vuln,config /path/to/project
+
+<span style="color: #6aa3f7;"># Grype - scan image</span>
+grype nginx:latest
+
+<span style="color: #6aa3f7;"># Scan in CI/CD pipeline</span>
+trivy image --exit-code 1 --severity CRITICAL $IMAGE_NAME</pre>
+                </div>
+
+                <h2>Web Application Scanning</h2>
+                <table>
+                    <thead><tr><th>Tool</th><th>Type</th><th>Best For</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>OWASP ZAP</strong></td><td>DAST (Open Source)</td><td>General web app testing</td></tr>
+                        <tr><td><strong>Burp Suite</strong></td><td>DAST</td><td>Manual + automated testing</td></tr>
+                        <tr><td><strong>Nuclei</strong></td><td>Template-based</td><td>Fast, customizable scanning</td></tr>
+                        <tr><td><strong>Acunetix</strong></td><td>DAST</td><td>Enterprise web scanning</td></tr>
+                        <tr><td><strong>Checkmarx</strong></td><td>SAST</td><td>Code analysis</td></tr>
+                        <tr><td><strong>SonarQube</strong></td><td>SAST</td><td>Code quality + security</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Nuclei Example</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Update templates</span>
+nuclei -update-templates
+
+<span style="color: #6aa3f7;"># Scan with all templates</span>
+nuclei -u https://target.com
+
+<span style="color: #6aa3f7;"># Scan with specific severity</span>
+nuclei -u https://target.com -severity critical,high
+
+<span style="color: #6aa3f7;"># Scan multiple targets</span>
+nuclei -l targets.txt -severity critical,high -o results.txt
+
+<span style="color: #6aa3f7;"># Scan for specific CVEs</span>
+nuclei -u https://target.com -tags cve</pre>
+                </div>
+
+                <h2>Scan Results Management</h2>
+                <ul>
+                    <li><strong>Deduplicate:</strong> Remove duplicate findings across scans</li>
+                    <li><strong>Enrich:</strong> Add context (asset owner, criticality, EPSS)</li>
+                    <li><strong>Correlate:</strong> Link to threat intel (KEV, exploit availability)</li>
+                    <li><strong>Prioritize:</strong> Apply risk-based scoring</li>
+                    <li><strong>Track:</strong> Monitor remediation progress</li>
+                </ul>
+
+                <h2>False Positive Management</h2>
+                <table>
+                    <thead><tr><th>Action</th><th>When to Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Accept Risk</strong></td><td>Vulnerability exists but compensating controls in place</td></tr>
+                        <tr><td><strong>Mark False Positive</strong></td><td>Scanner incorrectly identified vulnerability</td></tr>
+                        <tr><td><strong>Defer</strong></td><td>Cannot remediate now, schedule for later</td></tr>
+                        <tr><td><strong>Exception</strong></td><td>Business justification to not remediate</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

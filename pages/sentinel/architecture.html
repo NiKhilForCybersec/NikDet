@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Architecture | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Microsoft Sentinel</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="sent-nav"><i class="fas fa-shield-alt"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="sent-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="kql-basics.html">KQL Basics</a></li>
+                    <li><a href="kql-advanced.html">KQL Advanced</a></li>
+                    <li><a href="analytics-rules.html">Analytics Rules</a></li>
+                    <li><a href="data-connectors.html">Data Connectors</a></li>
+                    <li><a href="architecture.html" class="active">Architecture</a></li>
+                    <li><a href="automation.html">Automation</a></li>
+                    <li><a href="workbooks.html">Workbooks</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Sentinel</a><span class="separator">/</span><span>Architecture</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-sitemap" style="color: var(--accent-primary);"></i> Sentinel Architecture</h1>
+                <p class="lead">Understanding Microsoft Sentinel's components and design patterns.</p>
+            </div>
+            <div class="content">
+
+                <h2>Sentinel Components</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">MICROSOFT SENTINEL ARCHITECTURE</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────────────────────────────────────────────────────┐
+│  <span style="color: #5ce0c4;">MICROSOFT SENTINEL</span> (SIEM + SOAR)                                   │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐   │
+│  │  Analytics  │ │  Incidents  │ │  Workbooks  │ │  Hunting    │   │
+│  │   Rules     │ │  & Cases    │ │ (Dashboards)│ │  Queries    │   │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘   │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐   │
+│  │  Automation │ │  Notebooks  │ │  Watchlists │ │   Threat    │   │
+│  │  (Playbooks)│ │ (Jupyter)   │ │             │ │   Intel     │   │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↑
+┌─────────────────────────────────────────────────────────────────────┐
+│  <span style="color: #f0b756;">LOG ANALYTICS WORKSPACE</span>                                            │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  Tables: SecurityEvent, SigninLogs, AzureActivity, etc.    │   │
+│  │  KQL Query Engine | Data Retention | RBAC                   │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↑
+┌─────────────────────────────────────────────────────────────────────┐
+│  <span style="color: #6aa3f7;">DATA INGESTION</span>                                                     │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐      │
+│  │ Native  │ │  CEF/   │ │   REST  │ │  Azure  │ │ Custom  │      │
+│  │ M365    │ │ Syslog  │ │   API   │ │ Monitor │ │  Logs   │      │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘      │
+└─────────────────────────────────────────────────────────────────────┘
+</pre>
+                </div>
+
+                <h2>Key Components Explained</h2>
+                <table>
+                    <thead><tr><th>Component</th><th>Purpose</th><th>Key Features</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Log Analytics Workspace</strong></td>
+                            <td>Data storage and query engine</td>
+                            <td>KQL queries, retention policies, RBAC</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Connectors</strong></td>
+                            <td>Ingest data from sources</td>
+                            <td>Native Microsoft, Syslog/CEF, REST API</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Analytics Rules</strong></td>
+                            <td>Detect threats and create incidents</td>
+                            <td>Scheduled, NRT, Fusion, anomaly rules</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Incidents</strong></td>
+                            <td>Case management</td>
+                            <td>Alert grouping, assignment, investigation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Automation</strong></td>
+                            <td>Response orchestration</td>
+                            <td>Logic Apps playbooks, automation rules</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Workbooks</strong></td>
+                            <td>Visualization and reporting</td>
+                            <td>Interactive dashboards, templates</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hunting</strong></td>
+                            <td>Proactive threat search</td>
+                            <td>Saved queries, bookmarks, livestream</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Workspace Design Patterns</h2>
+
+                <h3>Single Workspace (Simple)</h3>
+                <ul>
+                    <li><strong>Best for:</strong> Small to medium organizations</li>
+                    <li><strong>Pros:</strong> Simple to manage, unified view, easier correlation</li>
+                    <li><strong>Cons:</strong> Single point of failure, limited data segregation</li>
+                </ul>
+
+                <h3>Multiple Workspaces (Complex)</h3>
+                <ul>
+                    <li><strong>Best for:</strong> Large enterprises, MSSPs, compliance requirements</li>
+                    <li><strong>Reasons to use:</strong>
+                        <ul>
+                            <li>Data residency (different regions)</li>
+                            <li>Billing separation (per business unit)</li>
+                            <li>Access control (tenant separation)</li>
+                            <li>Compliance (isolate regulated data)</li>
+                        </ul>
+                    </li>
+                    <li><strong>Cons:</strong> Complex to manage, cross-workspace queries needed</li>
+                </ul>
+
+                <h3>Cross-Workspace Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Query across multiple workspaces</span>
+union 
+    workspace("workspace1").SecurityEvent,
+    workspace("workspace2").SecurityEvent
+| where EventID == 4625
+| summarize count() by Computer
+
+<span style="color: #6aa3f7;">// Using workspace() function</span>
+let ws1 = workspace("prod-sentinel").SigninLogs;
+let ws2 = workspace("dev-sentinel").SigninLogs;
+union ws1, ws2
+| where ResultType != 0</pre>
+                </div>
+
+                <h2>Data Retention & Costs</h2>
+                <table>
+                    <thead><tr><th>Tier</th><th>Retention</th><th>Query Access</th><th>Cost</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Analytics (Hot)</strong></td>
+                            <td>Default 90 days</td>
+                            <td>Full KQL</td>
+                            <td>Per GB ingested</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Basic Logs</strong></td>
+                            <td>8 days interactive</td>
+                            <td>Limited KQL</td>
+                            <td>~50% cheaper</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Archive</strong></td>
+                            <td>Up to 12 years</td>
+                            <td>Search jobs only</td>
+                            <td>Lowest cost</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Cost Optimization Tips</h3>
+                <ul>
+                    <li><strong>Use Basic Logs:</strong> For high-volume, low-value logs (e.g., verbose firewall)</li>
+                    <li><strong>Filter at ingestion:</strong> Use DCRs to drop unnecessary data</li>
+                    <li><strong>Commitment tiers:</strong> Pre-purchase capacity for discounts</li>
+                    <li><strong>Review ingestion:</strong> Regularly check what's being ingested</li>
+                </ul>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Check daily ingestion by table</span>
+Usage
+| where TimeGenerated > ago(30d)
+| summarize TotalGB = sum(Quantity) / 1000 by DataType
+| order by TotalGB desc
+
+<span style="color: #6aa3f7;">// Check billable data</span>
+Usage
+| where TimeGenerated > ago(1d)
+| where IsBillable == true
+| summarize BillableGB = sum(Quantity) / 1000</pre>
+                </div>
+
+                <h2>RBAC (Role-Based Access Control)</h2>
+                <table>
+                    <thead><tr><th>Role</th><th>Permissions</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Microsoft Sentinel Reader</strong></td><td>View data, incidents, workbooks (read-only)</td></tr>
+                        <tr><td><strong>Microsoft Sentinel Responder</strong></td><td>Reader + manage incidents</td></tr>
+                        <tr><td><strong>Microsoft Sentinel Contributor</strong></td><td>Responder + create rules, workbooks</td></tr>
+                        <tr><td><strong>Microsoft Sentinel Automation Contributor</strong></td><td>Add playbooks to automation rules</td></tr>
+                        <tr><td><strong>Logic App Contributor</strong></td><td>Create and manage Logic Apps</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Integration with Defender XDR</h2>
+                <p>Microsoft Sentinel integrates with the unified security operations platform:</p>
+                <ul>
+                    <li><strong>Unified incidents:</strong> Defender XDR and Sentinel incidents in one portal</li>
+                    <li><strong>Advanced hunting:</strong> Query both Defender and Sentinel data</li>
+                    <li><strong>Automated investigation:</strong> Leverage Defender's AIR capabilities</li>
+                    <li><strong>Entity pages:</strong> Unified view of users, devices, IPs</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

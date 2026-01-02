@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Forensics | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Digital Forensics</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="df-nav"><i class="fas fa-search"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="df-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="evidence-collection.html">Evidence Collection</a></li>
+                    <li><a href="memory-forensics.html" class="active">Memory Forensics</a></li>
+                    <li><a href="disk-forensics.html">Disk Forensics</a></li>
+                    <li><a href="timeline-analysis.html">Timeline Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Forensics</a><span class="separator">/</span><span>Memory Forensics</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-memory" style="color: var(--accent-primary);"></i> Memory Forensics</h1>
+                <p class="lead">Analyze RAM to uncover malware, credentials, and attacker activity invisible to disk forensics.</p>
+            </div>
+            <div class="content">
+                <h2>Why Memory Forensics?</h2>
+                <p>Memory forensics reveals what disk forensics cannot - running processes, network connections, injected code, and encryption keys that exist only in RAM.</p>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> What Memory Contains</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Running processes and their command lines</li>
+                        <li>Loaded DLLs and injected code</li>
+                        <li>Network connections (including closed ones)</li>
+                        <li>Registry hives in memory</li>
+                        <li>Decrypted data and credentials</li>
+                        <li>Malware that never touches disk (fileless)</li>
+                    </ul>
+                </div>
+
+                <h2>Memory Acquisition</h2>
+                <h3>Acquisition Tools</h3>
+                <table>
+                    <thead><tr><th>Tool</th><th>Platform</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>WinPmem</strong></td><td>Windows</td><td>Free, creates raw dump</td></tr>
+                        <tr><td><strong>DumpIt</strong></td><td>Windows</td><td>Simple one-click tool</td></tr>
+                        <tr><td><strong>FTK Imager</strong></td><td>Windows</td><td>GUI, also does disk</td></tr>
+                        <tr><td><strong>AVML</strong></td><td>Linux</td><td>Microsoft's Linux memory tool</td></tr>
+                        <tr><td><strong>LiME</strong></td><td>Linux</td><td>Loadable kernel module</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Acquisition Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Windows - WinPmem</span>
+winpmem_mini_x64.exe memory.raw
+
+<span style="color: #6aa3f7;"># Windows - DumpIt (run as admin)</span>
+DumpIt.exe
+
+<span style="color: #6aa3f7;"># Linux - AVML</span>
+./avml memory.lime
+
+<span style="color: #6aa3f7;"># Linux - LiME</span>
+insmod lime.ko "path=/tmp/memory.lime format=lime"</pre>
+                </div>
+
+                <h2>Volatility 3 Analysis</h2>
+                <p>Volatility is the industry standard for memory analysis.</p>
+
+                <h3>Basic Usage</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Identify OS profile</span>
+vol -f memory.raw windows.info
+
+<span style="color: #6aa3f7;"># List processes</span>
+vol -f memory.raw windows.pslist
+
+<span style="color: #6aa3f7;"># Process tree (parent-child)</span>
+vol -f memory.raw windows.pstree
+
+<span style="color: #6aa3f7;"># Hidden processes</span>
+vol -f memory.raw windows.psscan
+
+<span style="color: #6aa3f7;"># Network connections</span>
+vol -f memory.raw windows.netscan
+
+<span style="color: #6aa3f7;"># Command history</span>
+vol -f memory.raw windows.cmdline</pre>
+                </div>
+
+                <h3>Essential Volatility Plugins</h3>
+                <table>
+                    <thead><tr><th>Plugin</th><th>Purpose</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>windows.pslist</code></td><td>List processes</td><td>Running malware, suspicious processes</td></tr>
+                        <tr><td><code>windows.pstree</code></td><td>Process tree</td><td>Unusual parent-child relationships</td></tr>
+                        <tr><td><code>windows.psscan</code></td><td>Scan for processes</td><td>Hidden/terminated processes</td></tr>
+                        <tr><td><code>windows.netscan</code></td><td>Network connections</td><td>C2 connections, lateral movement</td></tr>
+                        <tr><td><code>windows.malfind</code></td><td>Find injected code</td><td>Process injection, shellcode</td></tr>
+                        <tr><td><code>windows.dlllist</code></td><td>List loaded DLLs</td><td>DLL injection, hijacking</td></tr>
+                        <tr><td><code>windows.handles</code></td><td>Open handles</td><td>File/registry access</td></tr>
+                        <tr><td><code>windows.registry</code></td><td>Registry hives</td><td>Persistence, configuration</td></tr>
+                        <tr><td><code>windows.hashdump</code></td><td>Extract hashes</td><td>Credential theft evidence</td></tr>
+                        <tr><td><code>windows.filescan</code></td><td>Find files in memory</td><td>Malware, documents</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Detection Techniques</h2>
+
+                <h3>1. Process Anomalies</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Look for suspicious parent-child relationships</span>
+vol -f memory.raw windows.pstree
+
+<span style="color: #f07070;">Suspicious patterns:</span>
+- Word.exe → cmd.exe → powershell.exe
+- svchost.exe with wrong parent (not services.exe)
+- explorer.exe spawning cmd.exe
+- lsass.exe spawning anything</pre>
+                </div>
+
+                <h3>2. Process Injection Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Scan for injected code</span>
+vol -f memory.raw windows.malfind
+
+<span style="color: #f07070;">What malfind detects:</span>
+- Memory regions with PAGE_EXECUTE_READWRITE
+- Injected shellcode (often starts with MZ header or shellcode stubs)
+- Process hollowing
+- Reflective DLL injection</pre>
+                </div>
+
+                <h3>3. Network Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Get all network connections</span>
+vol -f memory.raw windows.netscan
+
+<span style="color: #f07070;">Look for:</span>
+- Connections from suspicious processes
+- Connections to unusual ports (4444, 5555, 8080, 9001)
+- Multiple connections to same external IP
+- ESTABLISHED connections during incident timeframe</pre>
+                </div>
+
+                <h3>4. DLL Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># List DLLs for specific process</span>
+vol -f memory.raw windows.dlllist --pid 1234
+
+<span style="color: #f07070;">Suspicious indicators:</span>
+- DLLs loaded from Temp or AppData
+- DLLs with random names
+- Missing or inconsistent file paths
+- DLLs not matching expected signatures</pre>
+                </div>
+
+                <h2>Investigation Workflow</h2>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Identify OS and Profile</div>
+                            <p>Run <code>windows.info</code> to identify the operating system and ensure correct analysis.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Process Analysis</div>
+                            <p>Run <code>pslist</code>, <code>pstree</code>, and <code>psscan</code> to identify suspicious processes.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Network Connections</div>
+                            <p>Use <code>netscan</code> to find C2 connections and lateral movement.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Injection Detection</div>
+                            <p>Run <code>malfind</code> to detect code injection and shellcode.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Deep Dive</div>
+                            <p>Use <code>dlllist</code>, <code>handles</code>, <code>cmdline</code> on suspicious processes.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">6</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Extract Evidence</div>
+                            <p>Dump suspicious processes, DLLs, or memory regions for further analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>Common Findings</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Indicates</th><th>Next Steps</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Process with no parent</td>
+                            <td>Parent terminated or DKOM</td>
+                            <td>Check psscan for hidden parent</td>
+                        </tr>
+                        <tr>
+                            <td>svchost without services.exe parent</td>
+                            <td>Malware impersonating svchost</td>
+                            <td>Dump process, analyze binary</td>
+                        </tr>
+                        <tr>
+                            <td>malfind hits with MZ header</td>
+                            <td>Reflective DLL injection</td>
+                            <td>Dump region, analyze as PE</td>
+                        </tr>
+                        <tr>
+                            <td>ESTABLISHED connections to unusual IPs</td>
+                            <td>Active C2 communication</td>
+                            <td>Check process, block IP, hunt</td>
+                        </tr>
+                        <tr>
+                            <td>PowerShell with encoded command</td>
+                            <td>Script-based attack</td>
+                            <td>Decode command, trace origin</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Extracting Evidence</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Dump a suspicious process</span>
+vol -f memory.raw windows.pslist --pid 1234 --dump
+
+<span style="color: #6aa3f7;"># Dump memory region from malfind</span>
+vol -f memory.raw windows.malfind --pid 1234 --dump
+
+<span style="color: #6aa3f7;"># Extract a file from memory</span>
+vol -f memory.raw windows.filescan | grep "suspicious.exe"
+vol -f memory.raw windows.dumpfiles --physaddr 0x12345678</pre>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

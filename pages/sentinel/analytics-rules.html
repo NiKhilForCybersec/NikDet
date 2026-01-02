@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft Sentinel Analytics Rules | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..."><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Sentinel</a><span class="separator">/</span><span>Analytics Rules</span></div>
+            <div class="page-header">
+                <h1><i class="fab fa-microsoft" style="color: #0078d4;"></i> Analytics Rules</h1>
+                <p class="lead">Build effective detection rules in Microsoft Sentinel to automatically identify threats and generate alerts.</p>
+            </div>
+            <div class="content">
+                <h2>What Are Analytics Rules?</h2>
+                <p>Analytics rules are automated queries that run on a schedule to detect suspicious activity. When a rule matches, it creates an alert or incident for analyst review.</p>
+
+                <h2>Rule Types</h2>
+                <table>
+                    <thead><tr><th>Type</th><th>Description</th><th>Best For</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Scheduled</strong></td><td>KQL query runs on schedule (5min to 14 days)</td><td>Most custom detections</td></tr>
+                        <tr><td><strong>NRT (Near Real-Time)</strong></td><td>Runs every minute, limited query</td><td>Critical, time-sensitive threats</td></tr>
+                        <tr><td><strong>Microsoft Security</strong></td><td>Ingests alerts from Microsoft products</td><td>M365 Defender, Azure Defender</td></tr>
+                        <tr><td><strong>Fusion</strong></td><td>ML-based correlation of low-fidelity alerts</td><td>Multi-stage attacks</td></tr>
+                        <tr><td><strong>ML Behavior Analytics</strong></td><td>Anomaly detection with ML</td><td>Unusual behavior patterns</td></tr>
+                        <tr><td><strong>Threat Intelligence</strong></td><td>Matches IOCs against logs</td><td>Known malicious indicators</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Creating a Scheduled Rule</h2>
+                <h3>Rule Components</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Description</th><th>Best Practice</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Name</strong></td><td>Rule identifier</td><td>Descriptive, include technique ID</td></tr>
+                        <tr><td><strong>Description</strong></td><td>What it detects</td><td>Include MITRE mapping, FP guidance</td></tr>
+                        <tr><td><strong>Severity</strong></td><td>Alert priority</td><td>High=credential theft, Low=recon</td></tr>
+                        <tr><td><strong>Tactics</strong></td><td>MITRE ATT&CK mapping</td><td>Always map to framework</td></tr>
+                        <tr><td><strong>Query</strong></td><td>KQL detection logic</td><td>Test thoroughly, optimize</td></tr>
+                        <tr><td><strong>Entity Mapping</strong></td><td>Extract key entities</td><td>Account, Host, IP, File hash</td></tr>
+                        <tr><td><strong>Alert Grouping</strong></td><td>How alerts combine</td><td>Group by entity to reduce noise</td></tr>
+                        <tr><td><strong>Schedule</strong></td><td>How often to run</td><td>Match to threat urgency</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Example: Suspicious PowerShell Detection</h2>
+                <div class="query-example">
+                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Complete Rule Query</span></div>
+                    <div class="query-body">
+<pre class="code-block"><code>// Rule: Suspicious Encoded PowerShell Execution
+// MITRE: T1059.001 - PowerShell
+// Severity: High
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-encoded", "-e ")
+| extend DecodedCommand = base64_decode_tostring(
+    extract(@"-e[nc]*\s+([A-Za-z0-9+/=]+)", 1, ProcessCommandLine)
+)
+| where DecodedCommand has_any (
+    "downloadstring", "invoke-webrequest", "webclient",
+    "invoke-expression", "iex ", "bypass"
+)
+| project 
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    ProcessCommandLine,
+    DecodedCommand,
+    InitiatingProcessFileName,
+    InitiatingProcessCommandLine
+| extend 
+    AccountCustomEntity = AccountName,
+    HostCustomEntity = DeviceName</code></pre>
+                    </div>
+                </div>
+
+                <h3>Rule Settings</h3>
+                <ul>
+                    <li><strong>Run every:</strong> 1 hour</li>
+                    <li><strong>Lookup data from:</strong> Last 1 hour</li>
+                    <li><strong>Alert threshold:</strong> Greater than 0</li>
+                    <li><strong>Event grouping:</strong> Group all events into single alert</li>
+                </ul>
+
+                <h2>Entity Mapping</h2>
+                <p>Entity mapping extracts key information for investigation:</p>
+                <table>
+                    <thead><tr><th>Entity Type</th><th>Identifier</th><th>Column Example</th></tr></thead>
+                    <tbody>
+                        <tr><td>Account</td><td>Name, UPNSuffix, AadUserId</td><td>AccountName, AccountUpn</td></tr>
+                        <tr><td>Host</td><td>HostName, DnsDomain, AzureID</td><td>DeviceName, Computer</td></tr>
+                        <tr><td>IP</td><td>Address</td><td>IPAddress, RemoteIP</td></tr>
+                        <tr><td>File</td><td>Name, Directory, Hash</td><td>FileName, SHA256</td></tr>
+                        <tr><td>URL</td><td>Url</td><td>Url, RemoteUrl</td></tr>
+                        <tr><td>Process</td><td>CommandLine, ProcessId</td><td>ProcessCommandLine</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Tuning Rules</h2>
+                <h3>Reducing False Positives</h3>
+                <ul>
+                    <li><strong>Add exclusions</strong> - Known good processes, service accounts</li>
+                    <li><strong>Increase specificity</strong> - Add more conditions</li>
+                    <li><strong>Use allow lists</strong> - Watchlists for known-good</li>
+                    <li><strong>Threshold tuning</strong> - Adjust count thresholds</li>
+                </ul>
+
+                <div class="query-example">
+                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Adding Exclusions</span></div>
+                    <div class="query-body">
+<pre class="code-block"><code>// Exclude known admin scripts
+let ExcludedPaths = dynamic([
+    "C:\AdminScripts\",
+    "C:\Program Files\Company\Tools\"
+]);
+let ExcludedAccounts = dynamic(["svc_automation", "svc_deploy"]);
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| where FileName =~ "powershell.exe"
+| where not(FolderPath has_any (ExcludedPaths))
+| where not(AccountName has_any (ExcludedAccounts))
+// ... rest of detection logic</code></pre>
+                    </div>
+                </div>
+
+                <h2>Best Practices</h2>
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Rule Development Best Practices</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Test before deploy</strong> - Run query manually first</li>
+                        <li><strong>Start broad, then tune</strong> - Easier to add exclusions than miss threats</li>
+                        <li><strong>Document exclusions</strong> - Record why each was added</li>
+                        <li><strong>Review regularly</strong> - Rules need maintenance</li>
+                        <li><strong>Map to MITRE</strong> - Always include technique IDs</li>
+                        <li><strong>Include FP guidance</strong> - Help analysts distinguish real from false</li>
+                        <li><strong>Version control</strong> - Store rules in git</li>
+                    </ul>
+                </div>
+
+                <h2>Common Mistakes</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-times-circle"></i> Avoid These</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>No time filter - query scans entire table</li>
+                        <li>Using contains instead of has - slow performance</li>
+                        <li>No entity mapping - harder to investigate</li>
+                        <li>Too broad detection - alert fatigue</li>
+                        <li>No MITRE mapping - missed context</li>
+                        <li>Not testing on historical data - missed FPs</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sysmon Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Log Analysis</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="la-nav"><i class="fas fa-file-alt"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="la-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="windows-events.html">Windows Events</a></li>
+                    <li><a href="sysmon.html" class="active">Sysmon</a></li>
+                    <li><a href="linux-logs.html">Linux Logs</a></li>
+                    <li><a href="network-logs.html">Network Logs</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Log Analysis</a><span class="separator">/</span><span>Sysmon</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-microscope" style="color: var(--accent-secondary);"></i> Sysmon Complete Guide</h1>
+                <p class="lead">System Monitor (Sysmon) provides detailed information about process creations, network connections, and changes to file creation time.</p>
+            </div>
+            <div class="content">
+                <h2>What is Sysmon?</h2>
+                <p>Sysmon is a Windows system service and device driver that logs system activity to the Windows event log. It provides detailed information about process creations, network connections, file changes, and more - far beyond what native Windows logging provides.</p>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Why Sysmon is Essential</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Detailed process info:</strong> Full command line, hashes, parent process</li>
+                        <li><strong>Network visibility:</strong> Source/destination with process context</li>
+                        <li><strong>File operations:</strong> Creates, deletes with file hashes</li>
+                        <li><strong>Registry changes:</strong> Key/value modifications</li>
+                        <li><strong>Low overhead:</strong> Efficient kernel-level monitoring</li>
+                    </ul>
+                </div>
+
+                <h2>Sysmon Event IDs</h2>
+                <p>Sysmon logs events to: <code>Microsoft-Windows-Sysmon/Operational</code></p>
+
+                <h3 style="color: #f07070;"><i class="fas fa-star"></i> Most Critical Events</h3>
+                <table>
+                    <thead><tr><th>ID</th><th>Event</th><th>Security Value</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1</strong></td>
+                            <td>Process Creation</td>
+                            <td style="color: #f07070;">Critical</td>
+                            <td>Malware execution, LOLBins, suspicious commands</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3</strong></td>
+                            <td>Network Connection</td>
+                            <td style="color: #f07070;">Critical</td>
+                            <td>C2 communication, data exfiltration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>10</strong></td>
+                            <td>Process Access</td>
+                            <td style="color: #f07070;">Critical</td>
+                            <td>LSASS access, credential dumping</td>
+                        </tr>
+                        <tr>
+                            <td><strong>11</strong></td>
+                            <td>File Created</td>
+                            <td style="color: #f0b756;">High</td>
+                            <td>Malware drops, persistence</td>
+                        </tr>
+                        <tr>
+                            <td><strong>22</strong></td>
+                            <td>DNS Query</td>
+                            <td style="color: #f0b756;">High</td>
+                            <td>C2 domains, DNS tunneling</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 2rem;">Complete Event ID Reference</h3>
+                <table>
+                    <thead><tr><th>ID</th><th>Event</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>Process Creation</td><td>New process created with full details</td></tr>
+                        <tr><td>2</td><td>File Creation Time Changed</td><td>Timestomping detection</td></tr>
+                        <tr><td>3</td><td>Network Connection</td><td>TCP/UDP connection made</td></tr>
+                        <tr><td>4</td><td>Sysmon Service State Changed</td><td>Service start/stop</td></tr>
+                        <tr><td>5</td><td>Process Terminated</td><td>Process ended</td></tr>
+                        <tr><td>6</td><td>Driver Loaded</td><td>Kernel driver loaded</td></tr>
+                        <tr><td>7</td><td>Image Loaded</td><td>DLL loaded into process</td></tr>
+                        <tr><td>8</td><td>CreateRemoteThread</td><td>Thread created in another process</td></tr>
+                        <tr><td>9</td><td>RawAccessRead</td><td>Raw disk access</td></tr>
+                        <tr><td>10</td><td>ProcessAccess</td><td>Process opened another process</td></tr>
+                        <tr><td>11</td><td>FileCreate</td><td>File created or overwritten</td></tr>
+                        <tr><td>12</td><td>RegistryEvent (Create/Delete)</td><td>Registry key/value created or deleted</td></tr>
+                        <tr><td>13</td><td>RegistryEvent (Value Set)</td><td>Registry value set</td></tr>
+                        <tr><td>14</td><td>RegistryEvent (Rename)</td><td>Registry key/value renamed</td></tr>
+                        <tr><td>15</td><td>FileCreateStreamHash</td><td>Alternate data stream created</td></tr>
+                        <tr><td>17</td><td>PipeEvent (Created)</td><td>Named pipe created</td></tr>
+                        <tr><td>18</td><td>PipeEvent (Connected)</td><td>Named pipe connection</td></tr>
+                        <tr><td>19</td><td>WmiEvent (Filter)</td><td>WMI filter registered</td></tr>
+                        <tr><td>20</td><td>WmiEvent (Consumer)</td><td>WMI consumer registered</td></tr>
+                        <tr><td>21</td><td>WmiEvent (Binding)</td><td>WMI consumer binding</td></tr>
+                        <tr><td>22</td><td>DNSEvent</td><td>DNS query made</td></tr>
+                        <tr><td>23</td><td>FileDelete (Archived)</td><td>File deleted (archived copy)</td></tr>
+                        <tr><td>24</td><td>ClipboardChange</td><td>Clipboard content changed</td></tr>
+                        <tr><td>25</td><td>ProcessTampering</td><td>Process image change</td></tr>
+                        <tr><td>26</td><td>FileDeleteDetected</td><td>File deletion logged</td></tr>
+                        <tr><td>27</td><td>FileBlockExecutable</td><td>Blocked executable file</td></tr>
+                        <tr><td>28</td><td>FileBlockShredding</td><td>Blocked file shredding</td></tr>
+                        <tr><td>29</td><td>FileExecutableDetected</td><td>Executable file detected</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Key Event Details</h2>
+
+                <h3>Event ID 1: Process Creation</h3>
+                <p>The most valuable Sysmon event. Contains everything needed to detect malicious execution.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Key Fields:</span>
+<span style="color: #a78bf6;">UtcTime:</span>          Timestamp of process creation
+<span style="color: #a78bf6;">ProcessGuid:</span>      Unique identifier for this process
+<span style="color: #a78bf6;">ProcessId:</span>        PID
+<span style="color: #a78bf6;">Image:</span>            Full path to executable
+<span style="color: #a78bf6;">CommandLine:</span>      Complete command line with arguments
+<span style="color: #a78bf6;">CurrentDirectory:</span> Working directory
+<span style="color: #a78bf6;">User:</span>             User that started the process
+<span style="color: #a78bf6;">ParentProcessGuid:</span> GUID of parent process
+<span style="color: #a78bf6;">ParentProcessId:</span>  Parent PID
+<span style="color: #a78bf6;">ParentImage:</span>      Parent executable path
+<span style="color: #a78bf6;">ParentCommandLine:</span> Parent's command line
+<span style="color: #a78bf6;">Hashes:</span>           MD5, SHA1, SHA256, IMPHASH</pre>
+                </div>
+
+                <h4 style="margin-top: 1rem;">Detection Examples</h4>
+                <ul>
+                    <li><strong>Encoded PowerShell:</strong> CommandLine contains "-enc" or "-encoded"</li>
+                    <li><strong>Suspicious parent:</strong> ParentImage is Word/Excel spawning cmd/powershell</li>
+                    <li><strong>LOLBins:</strong> Image is certutil, mshta, regsvr32 with suspicious args</li>
+                    <li><strong>Unusual paths:</strong> Image running from Temp, AppData, Downloads</li>
+                </ul>
+
+                <h3>Event ID 3: Network Connection</h3>
+                <p>Logs TCP/UDP connections with process context.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Key Fields:</span>
+<span style="color: #a78bf6;">Image:</span>           Process making the connection
+<span style="color: #a78bf6;">SourceIp:</span>        Local IP address
+<span style="color: #a78bf6;">SourcePort:</span>      Local port
+<span style="color: #a78bf6;">DestinationIp:</span>   Remote IP address
+<span style="color: #a78bf6;">DestinationPort:</span> Remote port
+<span style="color: #a78bf6;">Protocol:</span>        TCP or UDP
+<span style="color: #a78bf6;">Initiated:</span>       true if outbound</pre>
+                </div>
+
+                <h4 style="margin-top: 1rem;">Detection Examples</h4>
+                <ul>
+                    <li><strong>C2 beaconing:</strong> Regular connections to same IP</li>
+                    <li><strong>Unusual processes:</strong> notepad.exe, calc.exe making network connections</li>
+                    <li><strong>Suspicious ports:</strong> Connections on uncommon ports</li>
+                </ul>
+
+                <h3>Event ID 10: Process Access</h3>
+                <p>Logs when a process opens another process. Critical for credential dumping detection.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Key Fields:</span>
+<span style="color: #a78bf6;">SourceImage:</span>     Process doing the accessing
+<span style="color: #a78bf6;">TargetImage:</span>     Process being accessed
+<span style="color: #a78bf6;">GrantedAccess:</span>   Access rights granted (hex)
+<span style="color: #a78bf6;">CallTrace:</span>       Stack trace of the access</pre>
+                </div>
+
+                <h4 style="margin-top: 1rem;">Critical Detection: LSASS Access</h4>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> High-Fidelity Alert</div>
+                    <p style="margin: 0.5rem 0;">TargetImage = lsass.exe + GrantedAccess = 0x1010, 0x1038, 0x1410, 0x1fffff = Credential dumping attempt</p>
+                </div>
+
+                <h3>Event ID 22: DNS Query</h3>
+                <p>Logs DNS queries with the requesting process.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Key Fields:</span>
+<span style="color: #a78bf6;">Image:</span>       Process making the query
+<span style="color: #a78bf6;">QueryName:</span>   Domain being queried
+<span style="color: #a78bf6;">QueryStatus:</span> Success/failure
+<span style="color: #a78bf6;">QueryResults:</span> Resolved IP addresses</pre>
+                </div>
+
+                <h2>Sysmon Configuration</h2>
+                <p>Sysmon behavior is controlled by an XML configuration file:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;">&lt;Sysmon schemaversion="4.90"&gt;
+  &lt;HashAlgorithms&gt;SHA256,MD5&lt;/HashAlgorithms&gt;
+  &lt;EventFiltering&gt;
+    <span style="color: #6aa3f7;">&lt;!-- Log all process creation --&gt;</span>
+    &lt;ProcessCreate onmatch="exclude"&gt;
+      <span style="color: #6aa3f7;">&lt;!-- Exclude noisy but benign --&gt;</span>
+      &lt;Image condition="is"&gt;C:\Windows\System32\conhost.exe&lt;/Image&gt;
+    &lt;/ProcessCreate&gt;
+    
+    <span style="color: #6aa3f7;">&lt;!-- Log network connections --&gt;</span>
+    &lt;NetworkConnect onmatch="include"&gt;
+      &lt;Initiated condition="is"&gt;true&lt;/Initiated&gt;
+    &lt;/NetworkConnect&gt;
+    
+    <span style="color: #6aa3f7;">&lt;!-- Log LSASS access --&gt;</span>
+    &lt;ProcessAccess onmatch="include"&gt;
+      &lt;TargetImage condition="is"&gt;C:\Windows\System32\lsass.exe&lt;/TargetImage&gt;
+    &lt;/ProcessAccess&gt;
+  &lt;/EventFiltering&gt;
+&lt;/Sysmon&gt;</pre>
+                </div>
+
+                <h3>Recommended Configs</h3>
+                <ul>
+                    <li><a href="https://github.com/SwiftOnSecurity/sysmon-config" target="_blank">SwiftOnSecurity Sysmon Config</a> - Balanced, production-ready</li>
+                    <li><a href="https://github.com/olafhartong/sysmon-modular" target="_blank">Sysmon Modular</a> - Modular, customizable</li>
+                    <li><a href="https://github.com/Neo23x0/sysmon-config" target="_blank">Neo23x0 Sysmon Config</a> - Security-focused</li>
+                </ul>
+
+                <h2>Installation</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
+                    <span style="color: #6aa3f7;"># Download from Microsoft Sysinternals</span><br><br>
+                    <span style="color: #6aa3f7;"># Install with config</span><br>
+                    sysmon64.exe -accepteula -i sysmonconfig.xml<br><br>
+                    <span style="color: #6aa3f7;"># Update config</span><br>
+                    sysmon64.exe -c sysmonconfig.xml<br><br>
+                    <span style="color: #6aa3f7;"># Check current config</span><br>
+                    sysmon64.exe -c<br><br>
+                    <span style="color: #6aa3f7;"># Uninstall</span><br>
+                    sysmon64.exe -u
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

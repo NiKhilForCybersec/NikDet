@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows Event Logs | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .event-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 1rem 0; overflow: hidden; }
+        .event-card-header { padding: 0.75rem 1rem; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+        .event-id { font-family: var(--font-mono); font-weight: 700; color: var(--accent-primary); }
+        .event-name { font-weight: 600; }
+        .event-card-body { padding: 1rem; }
+        .event-importance { padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 600; }
+        .event-importance.critical { background: rgba(240,112,112,0.2); color: #f07070; }
+        .event-importance.high { background: rgba(240,183,86,0.2); color: #f0b756; }
+        .event-importance.medium { background: rgba(106,163,247,0.2); color: #6aa3f7; }
+        .field-table { margin: 0.5rem 0; font-size: 0.85rem; }
+        .field-table td { padding: 0.25rem 0.5rem; }
+        .field-name { font-family: var(--font-mono); color: var(--accent-secondary); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Log Analysis</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="la-nav"><i class="fas fa-file-alt"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="la-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="windows-events.html" class="active">Windows Events</a></li>
+                    <li><a href="sysmon.html">Sysmon</a></li>
+                    <li><a href="linux-logs.html">Linux Logs</a></li>
+                    <li><a href="network-logs.html">Network Logs</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Log Analysis</a><span class="separator">/</span><span>Windows Events</span></div>
+            <div class="page-header">
+                <h1><i class="fab fa-windows" style="color: #0078d4;"></i> Windows Event Logs</h1>
+                <p class="lead">Master the Windows Event Log - the foundation of Windows security monitoring.</p>
+            </div>
+            <div class="content">
+                <h2>Windows Event Log Overview</h2>
+                <p>Windows Event Logs are the primary source of security telemetry on Windows systems. Understanding these logs is essential for every SOC analyst.</p>
+
+                <h3>Log Locations</h3>
+                <table>
+                    <thead><tr><th>Log Name</th><th>Path</th><th>Security Value</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Security</strong></td><td><code>%SystemRoot%\System32\Winevt\Logs\Security.evtx</code></td><td>Authentication, authorization, audit events</td></tr>
+                        <tr><td><strong>System</strong></td><td><code>%SystemRoot%\System32\Winevt\Logs\System.evtx</code></td><td>Service changes, driver loading</td></tr>
+                        <tr><td><strong>Application</strong></td><td><code>%SystemRoot%\System32\Winevt\Logs\Application.evtx</code></td><td>Application errors, some security events</td></tr>
+                        <tr><td><strong>PowerShell</strong></td><td><code>Microsoft-Windows-PowerShell/Operational</code></td><td>PowerShell execution, scripts</td></tr>
+                        <tr><td><strong>Sysmon</strong></td><td><code>Microsoft-Windows-Sysmon/Operational</code></td><td>Enhanced process/network/file monitoring</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Critical Security Events</h2>
+                <p>These are the most important Event IDs for security monitoring. Learn them by heart.</p>
+
+                <h3 style="color: #6aa3f7;"><i class="fas fa-key"></i> Authentication Events</h3>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">4624</span> - <span class="event-name">Successful Logon</span></div>
+                        <span class="event-importance critical">Critical</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>Generated when a user successfully logs on. One of the most important events for tracking user activity.</p>
+                        <h4>Key Fields</h4>
+                        <table class="field-table">
+                            <tr><td class="field-name">SubjectUserName</td><td>Account that performed the logon operation</td></tr>
+                            <tr><td class="field-name">TargetUserName</td><td>Account that was logged on</td></tr>
+                            <tr><td class="field-name">LogonType</td><td>How the logon occurred (see table below)</td></tr>
+                            <tr><td class="field-name">IpAddress</td><td>Source IP for network logons</td></tr>
+                            <tr><td class="field-name">WorkstationName</td><td>Source hostname</td></tr>
+                        </table>
+                        <h4>Logon Types</h4>
+                        <table>
+                            <thead><tr><th>Type</th><th>Name</th><th>Description</th><th>Security Notes</th></tr></thead>
+                            <tbody>
+                                <tr><td>2</td><td>Interactive</td><td>Console logon</td><td>Physical or KVM access</td></tr>
+                                <tr><td>3</td><td>Network</td><td>SMB, mapped drive</td><td>Common for lateral movement</td></tr>
+                                <tr><td>4</td><td>Batch</td><td>Scheduled task</td><td>Check for suspicious tasks</td></tr>
+                                <tr><td>5</td><td>Service</td><td>Service started</td><td>Service account usage</td></tr>
+                                <tr><td>7</td><td>Unlock</td><td>Workstation unlock</td><td>User returned to workstation</td></tr>
+                                <tr><td>10</td><td>RemoteInteractive</td><td>RDP session</td><td>Monitor for unusual sources</td></tr>
+                                <tr><td>11</td><td>CachedInteractive</td><td>Cached domain creds</td><td>Offline logon</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">4625</span> - <span class="event-name">Failed Logon</span></div>
+                        <span class="event-importance critical">Critical</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>Generated when a logon attempt fails. Essential for detecting brute force and password spray attacks.</p>
+                        <h4>Common Status Codes</h4>
+                        <table>
+                            <thead><tr><th>Status</th><th>SubStatus</th><th>Meaning</th></tr></thead>
+                            <tbody>
+                                <tr><td>0xC000006D</td><td>0xC000006A</td><td>Bad password</td></tr>
+                                <tr><td>0xC000006D</td><td>0xC0000064</td><td>User doesn't exist</td></tr>
+                                <tr><td>0xC0000234</td><td>-</td><td>Account locked out</td></tr>
+                                <tr><td>0xC0000072</td><td>-</td><td>Account disabled</td></tr>
+                                <tr><td>0xC0000193</td><td>-</td><td>Account expired</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <h3 style="color: #5ce0c4; margin-top: 2rem;"><i class="fas fa-cog"></i> Process Events</h3>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">4688</span> - <span class="event-name">Process Creation</span></div>
+                        <span class="event-importance critical">Critical</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>Generated when a new process is created. Foundation of endpoint detection.</p>
+                        <h4>Key Fields</h4>
+                        <table class="field-table">
+                            <tr><td class="field-name">NewProcessName</td><td>Full path to executable</td></tr>
+                            <tr><td class="field-name">CommandLine</td><td>Full command line (requires GPO)</td></tr>
+                            <tr><td class="field-name">ParentProcessName</td><td>Process that launched this one</td></tr>
+                            <tr><td class="field-name">SubjectUserName</td><td>User who started the process</td></tr>
+                        </table>
+                        <div class="info-box info" style="margin-top: 1rem;">
+                            <div class="info-box-title"><i class="fas fa-info-circle"></i> Enable Command Line Logging</div>
+                            <p style="margin: 0.5rem 0;">Command line is NOT logged by default. Enable via Group Policy.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="color: #f0b756; margin-top: 2rem;"><i class="fas fa-users"></i> Account Management</h3>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">4720</span> - <span class="event-name">User Account Created</span></div>
+                        <span class="event-importance high">High</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>A new user account was created. Could be legitimate provisioning or attacker persistence.</p>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">4728/4732/4756</span> - <span class="event-name">Member Added to Group</span></div>
+                        <span class="event-importance high">High</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>A member was added to a security group. Critical for privilege escalation detection.</p>
+                        <p><strong>4728:</strong> Global group | <strong>4732:</strong> Local group | <strong>4756:</strong> Universal group</p>
+                    </div>
+                </div>
+
+                <h3 style="color: #a78bf6; margin-top: 2rem;"><i class="fas fa-clock"></i> Persistence Mechanisms</h3>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">4698</span> - <span class="event-name">Scheduled Task Created</span></div>
+                        <span class="event-importance high">High</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>A scheduled task was created. Common persistence mechanism for attackers.</p>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">7045</span> - <span class="event-name">Service Installed (System Log)</span></div>
+                        <span class="event-importance high">High</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>A new service was installed. Note: This is in the System log, not Security.</p>
+                    </div>
+                </div>
+
+                <h3 style="color: #f07070; margin-top: 2rem;"><i class="fas fa-exclamation-triangle"></i> Defense Evasion</h3>
+
+                <div class="event-card">
+                    <div class="event-card-header">
+                        <div><span class="event-id">1102</span> - <span class="event-name">Audit Log Cleared</span></div>
+                        <span class="event-importance critical">Critical</span>
+                    </div>
+                    <div class="event-card-body">
+                        <p>The Security event log was cleared. Strong indicator of attacker covering tracks.</p>
+                        <div class="info-box danger" style="margin-top: 1rem;">
+                            <div class="info-box-title"><i class="fas fa-skull"></i> Always Investigate</div>
+                            <p style="margin: 0;">This event should ALWAYS trigger an investigation. There is almost never a legitimate reason to clear the Security log.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>Quick Reference Table</h2>
+                <table>
+                    <thead><tr><th>Event ID</th><th>Name</th><th>Log</th><th>Priority</th></tr></thead>
+                    <tbody>
+                        <tr><td>4624</td><td>Successful Logon</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>4625</td><td>Failed Logon</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>4648</td><td>Explicit Credential Logon</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>4688</td><td>Process Creation</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>4720</td><td>User Created</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>4728/32/56</td><td>Member Added to Group</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>4698</td><td>Scheduled Task Created</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>4768</td><td>Kerberos TGT Request</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
+                        <tr><td>4769</td><td>Kerberos Service Ticket</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
+                        <tr><td>4776</td><td>NTLM Authentication</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
+                        <tr><td>5140</td><td>Network Share Accessed</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
+                        <tr><td>7045</td><td>Service Installed</td><td>System</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>1102</td><td>Audit Log Cleared</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

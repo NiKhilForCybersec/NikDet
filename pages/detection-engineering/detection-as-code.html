@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection-as-Code | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Detection Engineering</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="de-nav"><i class="fas fa-crosshairs"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="de-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="lifecycle.html">Detection Lifecycle</a></li>
+                    <li><a href="detection-as-code.html" class="active">Detection-as-Code</a></li>
+                    <li><a href="sigma-rules.html">Sigma Rules</a></li>
+                    <li><a href="testing.html">Testing</a></li>
+                    <li><a href="coverage-analysis.html">Coverage Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Detection Engineering</a><span class="separator">/</span><span>Detection-as-Code</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-code-branch" style="color: var(--accent-secondary);"></i> Detection-as-Code</h1>
+                <p class="lead">Complete step-by-step guide to managing detection rules like software code - from understanding the concept to full production deployment.</p>
+            </div>
+            <div class="content">
+
+                <!-- TABLE OF CONTENTS -->
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                    <h3 style="margin-top: 0; color: var(--accent-primary);"><i class="fas fa-list"></i> What You'll Learn</h3>
+                    <ol style="margin: 0; column-count: 2; column-gap: 2rem;">
+                        <li>What problem does Detection-as-Code solve?</li>
+                        <li>Understanding Git from scratch</li>
+                        <li>YAML format explained</li>
+                        <li>Setting up your first repository</li>
+                        <li>Writing your first detection rule</li>
+                        <li>Testing rules before deployment</li>
+                        <li>Automated pipelines with GitHub Actions</li>
+                        <li>Deploying to your SIEM</li>
+                        <li>Complete working examples</li>
+                        <li>Troubleshooting common issues</li>
+                    </ol>
+                </div>
+
+                <!-- PART 1: THE PROBLEM -->
+                <h2>Part 1: Understanding the Problem</h2>
+                
+                <h3>Why Do We Need Detection-as-Code?</h3>
+                <p>Let me tell you a story that happens in almost every SOC:</p>
+
+                <div style="background: linear-gradient(135deg, rgba(240,112,112,0.1), transparent); border-left: 4px solid #f07070; padding: 1.5rem; margin: 1rem 0; border-radius: 0 var(--radius-md) var(--radius-md) 0;">
+                    <h4 style="color: #f07070; margin-top: 0;"><i class="fas fa-times-circle"></i> Scenario: The Detection Disaster</h4>
+                    <p><strong>Monday 9 AM:</strong> Senior analyst Sarah creates a new detection rule for encoded PowerShell. She clicks through the Splunk GUI and saves it.</p>
+                    <p><strong>Wednesday 2 PM:</strong> The rule is firing too many alerts. Junior analyst Mike "fixes" it by adding an exclusion in the GUI.</p>
+                    <p><strong>Friday 10 AM:</strong> A real attack happens. The rule doesn't fire. Why? Nobody knows what Mike changed.</p>
+                    <p><strong>Next Monday:</strong> Sarah tries to figure out what went wrong. There's no history. No documentation. Mike is on vacation.</p>
+                    <p style="margin-bottom: 0;"><strong>Result:</strong> Hours wasted. Attack missed. Trust in detections damaged.</p>
+                </div>
+
+                <p><strong>This happens because of five fundamental problems:</strong></p>
+
+                <table>
+                    <thead><tr><th>Problem</th><th>What Happens</th><th>Real Impact</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1. No Version History</strong></td>
+                            <td>Changes aren't tracked. No record of who changed what or when.</td>
+                            <td>Can't revert bad changes. Can't understand why rules behave differently than before.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>2. No Peer Review</strong></td>
+                            <td>Anyone can change any rule directly in production.</td>
+                            <td>Mistakes go live immediately. No quality control. Junior mistakes affect production.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3. No Testing</strong></td>
+                            <td>Rules are only tested when real attacks happen (or don't).</td>
+                            <td>Broken rules aren't discovered until it's too late. False negatives go unnoticed.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>4. Environment Drift</strong></td>
+                            <td>Dev and production have different rules. No single source of truth.</td>
+                            <td>Confusion about which version is correct. Rules that work in dev fail in prod.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>5. Knowledge Loss</strong></td>
+                            <td>Rules exist only in the SIEM. No external documentation.</td>
+                            <td>When people leave, knowledge leaves. Team must reverse-engineer existing rules.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>What is Detection-as-Code?</h3>
+                <p>Detection-as-Code (DaC) applies software development practices to security detection rules:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: center;">
+                        <div style="text-align: center;">
+                            <h4 style="color: #f07070; margin: 0;">Old Way</h4>
+                            <p style="margin: 0.5rem 0 0 0;">Create rules in SIEM GUI</p>
+                            <p style="margin: 0;">No history, no review</p>
+                            <p style="margin: 0;">Deploy directly to production</p>
+                        </div>
+                        <div style="font-size: 2rem; color: var(--accent-primary);">→</div>
+                        <div style="text-align: center;">
+                            <h4 style="color: #5ce0c4; margin: 0;">New Way (DaC)</h4>
+                            <p style="margin: 0.5rem 0 0 0;">Write rules as YAML files</p>
+                            <p style="margin: 0;">Store in Git with full history</p>
+                            <p style="margin: 0;">Test → Review → Deploy automatically</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PART 2: GIT FUNDAMENTALS -->
+                <h2>Part 2: Git Fundamentals (From Zero)</h2>
+                
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> If You Already Know Git</div>
+                    <p style="margin: 0;">Skip to Part 3. This section is for people who have never used Git before.</p>
+                </div>
+
+                <h3>What is Git?</h3>
+                <p>Git is a <strong>version control system</strong>. Think of it like Google Docs' version history, but much more powerful:</p>
+
+                <ul>
+                    <li>It tracks every change ever made to your files</li>
+                    <li>You can see who made each change and when</li>
+                    <li>You can go back to any previous version</li>
+                    <li>Multiple people can work on the same files without conflicts</li>
+                </ul>
+
+                <h3>Key Git Concepts Explained</h3>
+
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <h4 style="color: #6aa3f7; margin-top: 0;">1. Repository (Repo)</h4>
+                    <p><strong>What it is:</strong> A folder that Git is tracking. Contains your files plus hidden Git data.</p>
+                    <p><strong>Analogy:</strong> Like a project folder, but with a time machine built in.</p>
+                    <p style="margin-bottom: 0;"><strong>For DaC:</strong> Your detection rules repo contains all your YAML rule files.</p>
+                </div>
+
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <h4 style="color: #6aa3f7; margin-top: 0;">2. Commit</h4>
+                    <p><strong>What it is:</strong> A snapshot of your files at a specific moment. Like pressing "Save" but keeping all previous saves.</p>
+                    <p><strong>Analogy:</strong> Like taking a photo of your document. You can always go back and look at any photo.</p>
+                    <p><strong>What it includes:</strong></p>
+                    <ul style="margin-bottom: 0;">
+                        <li>The changed files</li>
+                        <li>A message describing what changed (you write this)</li>
+                        <li>Who made the change</li>
+                        <li>When it was made</li>
+                    </ul>
+                </div>
+
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <h4 style="color: #6aa3f7; margin-top: 0;">3. Branch</h4>
+                    <p><strong>What it is:</strong> A separate line of development. Like making a copy of your folder to experiment with.</p>
+                    <p><strong>Analogy:</strong> Imagine you're writing a book. The "main" branch is the published version. You create a "draft" branch to write a new chapter. If the chapter is good, you add it to main. If not, you delete the draft.</p>
+                    <p><strong>For DaC:</strong></p>
+                    <ul style="margin-bottom: 0;">
+                        <li><code>main</code> branch = Production rules (what's deployed)</li>
+                        <li>Feature branches = Rules being developed (not yet deployed)</li>
+                    </ul>
+                </div>
+
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <h4 style="color: #6aa3f7; margin-top: 0;">4. Pull Request (PR) / Merge Request (MR)</h4>
+                    <p><strong>What it is:</strong> A request to merge your branch into main. Allows others to review before merging.</p>
+                    <p><strong>Why it matters:</strong> This is where peer review happens. Other team members can:</p>
+                    <ul>
+                        <li>See exactly what you changed</li>
+                        <li>Comment on specific lines</li>
+                        <li>Request changes if something is wrong</li>
+                        <li>Approve the changes</li>
+                    </ul>
+                    <p style="margin-bottom: 0;"><strong>For DaC:</strong> No rule goes to production without being reviewed and approved.</p>
+                </div>
+
+                <h3>Git Workflow Visualized</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; overflow-x: auto;">
+<pre style="margin: 0;">
+<span style="color: #a78bf6;">THE GIT WORKFLOW FOR DETECTION-AS-CODE</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<span style="color: #6aa3f7;">Step 1: Clone the Repository</span>
+┌──────────────────────────────────────────────────────────────┐
+│  Your Computer                    GitHub                     │
+│  ┌─────────────┐                 ┌─────────────┐            │
+│  │             │  ◄── clone ──── │  detection- │            │
+│  │   (empty)   │                 │    rules    │            │
+│  │             │                 │    repo     │            │
+│  └─────────────┘                 └─────────────┘            │
+└──────────────────────────────────────────────────────────────┘
+
+Command: git clone https://github.com/yourorg/detection-rules.git
+
+<span style="color: #6aa3f7;">Step 2: Create a Branch</span>
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│  main ────●────●────●                                       │
+│                     │                                        │
+│                     └──● feature/new-powershell-rule        │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+Command: git checkout -b feature/new-powershell-rule
+
+<span style="color: #6aa3f7;">Step 3: Make Changes and Commit</span>
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│  main ────●────●────●                                       │
+│                     │                                        │
+│                     └──●────● feature/new-powershell-rule   │
+│                              ↑                               │
+│                              Your new commits                │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+Commands:
+  git add detections/windows/encoded_powershell.yml
+  git commit -m "Add detection for encoded PowerShell"
+  git push origin feature/new-powershell-rule
+
+<span style="color: #6aa3f7;">Step 4: Create Pull Request (on GitHub)</span>
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ Pull Request: Add encoded PowerShell detection      │    │
+│  │                                                     │    │
+│  │ Reviewer: @senior-analyst                          │    │
+│  │ Status: Awaiting review                            │    │
+│  │                                                     │    │
+│  │ Files changed: 1                                   │    │
+│  │ + detections/windows/encoded_powershell.yml        │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+<span style="color: #6aa3f7;">Step 5: Review and Merge</span>
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
+│  main ────●────●────●──────────────●                        │
+│                     │              ↑                         │
+│                     └──●────●──────┘                        │
+│                              ↑                               │
+│                        Merged!                               │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+After merge: Your rule is now in main and deployed to production!
+</pre>
+                </div>
+
+                <h3>Installing Git</h3>
+                <table>
+                    <thead><tr><th>Operating System</th><th>How to Install</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Windows</strong></td>
+                            <td>Download from <code>git-scm.com</code> and run the installer. Accept defaults.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Mac</strong></td>
+                            <td>Open Terminal and run: <code>xcode-select --install</code> (Git is included)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Linux (Ubuntu/Debian)</strong></td>
+                            <td><code>sudo apt update && sudo apt install git</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Essential Git Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># First time setup (run once after installing Git)</span>
+git config --global user.name "Your Name"
+git config --global user.email "your.email@company.com"
+
+<span style="color: #a78bf6;"># Clone a repository (download it)</span>
+git clone https://github.com/yourorg/detection-rules.git
+cd detection-rules    <span style="color: #6aa3f7;"># Enter the folder</span>
+
+<span style="color: #a78bf6;"># Create a new branch for your work</span>
+git checkout -b feature/my-new-detection
+<span style="color: #6aa3f7;"># What this means: Create (-b) and switch to a new branch named "feature/my-new-detection"</span>
+
+<span style="color: #a78bf6;"># Check what files you've changed</span>
+git status
+<span style="color: #6aa3f7;"># Shows: modified files, new files, deleted files</span>
+
+<span style="color: #a78bf6;"># Stage files (prepare them to be committed)</span>
+git add filename.yml                    <span style="color: #6aa3f7;"># Add specific file</span>
+git add .                               <span style="color: #6aa3f7;"># Add all changed files</span>
+git add detections/windows/            <span style="color: #6aa3f7;"># Add all files in a folder</span>
+
+<span style="color: #a78bf6;"># Commit (save your changes)</span>
+git commit -m "Add detection for encoded PowerShell execution"
+<span style="color: #6aa3f7;"># The message should describe WHAT you changed and WHY</span>
+
+<span style="color: #a78bf6;"># Push to GitHub (upload your branch)</span>
+git push origin feature/my-new-detection
+<span style="color: #6aa3f7;"># Now go to GitHub to create a Pull Request</span>
+
+<span style="color: #a78bf6;"># After your PR is merged, update your local main</span>
+git checkout main           <span style="color: #6aa3f7;"># Switch to main branch</span>
+git pull origin main        <span style="color: #6aa3f7;"># Download latest changes</span>
+
+<span style="color: #a78bf6;"># Delete your feature branch (it's merged, no longer needed)</span>
+git branch -d feature/my-new-detection</pre>
+                </div>
+
+                <!-- PART 3: YAML -->
+                <h2>Part 3: YAML Format Explained</h2>
+
+                <p>Detection rules are written in YAML (YAML Ain't Markup Language). It's designed to be human-readable.</p>
+
+                <h3>YAML Basics</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># YAML BASICS - Everything you need to know</span>
+
+<span style="color: #6aa3f7;"># 1. KEY-VALUE PAIRS</span>
+<span style="color: #6aa3f7;"># The most basic structure. Key on left, value on right, colon in between.</span>
+name: My Detection Rule
+author: John Smith
+severity: high
+enabled: true
+
+<span style="color: #6aa3f7;"># 2. LISTS (ARRAYS)</span>
+<span style="color: #6aa3f7;"># Multiple values under one key. Each item starts with a dash.</span>
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - powershell
+
+<span style="color: #6aa3f7;"># You can also write lists on one line:</span>
+tags: [attack.execution, attack.t1059.001, powershell]
+
+<span style="color: #6aa3f7;"># 3. NESTED OBJECTS</span>
+<span style="color: #6aa3f7;"># Objects inside objects. Use indentation (spaces, NOT tabs!).</span>
+logsource:
+  category: process_creation
+  product: windows
+
+detection:
+  selection:
+    CommandLine|contains: "-enc"
+  condition: selection
+
+<span style="color: #6aa3f7;"># 4. MULTI-LINE STRINGS</span>
+<span style="color: #6aa3f7;"># Use | for preserving line breaks:</span>
+description: |
+  This is line one.
+  This is line two.
+  All line breaks are preserved.
+
+<span style="color: #6aa3f7;"># Use > for folding into one line (line breaks become spaces):</span>
+description: >
+  This will all become
+  one single line when
+  parsed by the computer.
+
+<span style="color: #6aa3f7;"># 5. COMMENTS</span>
+<span style="color: #6aa3f7;"># Anything after # is a comment and ignored by the computer.</span>
+severity: high  <span style="color: #6aa3f7;"># This is a comment explaining severity</span></pre>
+                </div>
+
+                <h3>YAML Common Mistakes</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> YAML Errors That Will Break Your Rules</div>
+                </div>
+
+                <table>
+                    <thead><tr><th>Mistake</th><th>Wrong</th><th>Correct</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Using tabs</strong></td>
+                            <td><code>→logsource:</code> (tab character)</td>
+                            <td><code>  logsource:</code> (spaces)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Inconsistent indentation</strong></td>
+                            <td>Mixing 2 and 4 spaces</td>
+                            <td>Always use same number of spaces</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Colon in value without quotes</strong></td>
+                            <td><code>description: Error: failed</code></td>
+                            <td><code>description: "Error: failed"</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Special characters without quotes</strong></td>
+                            <td><code>pattern: [suspicious]</code></td>
+                            <td><code>pattern: "[suspicious]"</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Missing space after colon</strong></td>
+                            <td><code>name:My Rule</code></td>
+                            <td><code>name: My Rule</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- PART 4: SETTING UP REPOSITORY -->
+                <h2>Part 4: Setting Up Your Detection Rules Repository</h2>
+
+                <h3>Step 4.1: Create the Repository on GitHub</h3>
+                <ol>
+                    <li>Go to <code>github.com</code> and sign in</li>
+                    <li>Click the <strong>+</strong> icon → <strong>New repository</strong></li>
+                    <li>Name it: <code>detection-rules</code></li>
+                    <li>Select: <strong>Private</strong> (unless you want it public)</li>
+                    <li>Check: <strong>Add a README file</strong></li>
+                    <li>Click: <strong>Create repository</strong></li>
+                </ol>
+
+                <h3>Step 4.2: Clone and Set Up Folder Structure</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Clone your new repository</span>
+git clone https://github.com/yourorg/detection-rules.git
+cd detection-rules
+
+<span style="color: #6aa3f7;"># Create the folder structure</span>
+mkdir -p detections/windows
+mkdir -p detections/linux
+mkdir -p detections/cloud/azure
+mkdir -p detections/cloud/aws
+mkdir -p detections/cloud/m365
+mkdir -p detections/network
+mkdir -p tests
+mkdir -p .github/workflows
+
+<span style="color: #6aa3f7;"># Create initial files</span>
+touch detections/.gitkeep
+touch tests/.gitkeep</pre>
+                </div>
+
+                <h3>Recommended Folder Structure</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;">detection-rules/
+├── README.md                     <span style="color: #6aa3f7;"># Project documentation</span>
+├── .github/
+│   └── workflows/
+│       └── test-and-deploy.yml   <span style="color: #6aa3f7;"># CI/CD pipeline</span>
+├── detections/
+│   ├── windows/
+│   │   ├── process_creation/
+│   │   │   ├── encoded_powershell.yml
+│   │   │   ├── suspicious_parent_child.yml
+│   │   │   └── lolbin_execution.yml
+│   │   ├── registry/
+│   │   └── network/
+│   ├── linux/
+│   │   ├── process/
+│   │   └── authentication/
+│   ├── cloud/
+│   │   ├── azure/
+│   │   ├── aws/
+│   │   └── m365/
+│   └── network/
+├── tests/
+│   └── windows/
+│       └── encoded_powershell_test.yml
+└── scripts/
+    ├── validate.py               <span style="color: #6aa3f7;"># Validation script</span>
+    └── deploy.py                 <span style="color: #6aa3f7;"># Deployment script</span></pre>
+                </div>
+
+                <!-- PART 5: WRITING DETECTION RULES -->
+                <h2>Part 5: Writing Your First Detection Rule</h2>
+
+                <h3>Step 5.1: Understand the Sigma Rule Format</h3>
+                <p>Sigma is the standard format for detection rules. It's SIEM-agnostic - you write once and convert to any SIEM.</p>
+
+                <h3>Step 5.2: Complete Sigma Rule Explained</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># COMPLETE SIGMA RULE WITH EXPLANATIONS</span>
+<span style="color: #a78bf6;"># File: detections/windows/process_creation/encoded_powershell.yml</span>
+
+<span style="color: #f0b756;">title:</span> Encoded PowerShell Command Execution
+<span style="color: #6aa3f7;"># ↑ Human-readable name. Be specific but concise.</span>
+
+<span style="color: #f0b756;">id:</span> 8e7e3e6d-6a8e-4a5a-9c4e-7f8d9b0c1a2b
+<span style="color: #6aa3f7;"># ↑ Unique identifier. Generate with: uuidgen (Linux/Mac) or online UUID generator</span>
+<span style="color: #6aa3f7;">#   Never reuse IDs. Never change IDs after creation.</span>
+
+<span style="color: #f0b756;">status:</span> production
+<span style="color: #6aa3f7;"># ↑ Options: experimental → test → production (lifecycle stages)</span>
+
+<span style="color: #f0b756;">description:</span> |
+    Detects execution of PowerShell with encoded (Base64) commands.
+    Attackers frequently use encoding to obfuscate malicious commands
+    and evade simple string-based detection.
+<span style="color: #6aa3f7;"># ↑ Explain: What does this detect? Why is it suspicious? </span>
+
+<span style="color: #f0b756;">author:</span> Your Name
+<span style="color: #6aa3f7;"># ↑ Your name or team name</span>
+
+<span style="color: #f0b756;">date:</span> 2025/01/02
+<span style="color: #6aa3f7;"># ↑ When rule was created (YYYY/MM/DD)</span>
+
+<span style="color: #f0b756;">modified:</span> 2025/01/02
+<span style="color: #6aa3f7;"># ↑ When rule was last changed</span>
+
+<span style="color: #f0b756;">references:</span>
+    - https://attack.mitre.org/techniques/T1059/001/
+    - https://attack.mitre.org/techniques/T1027/
+<span style="color: #6aa3f7;"># ↑ Links to documentation, threat intel, attack references</span>
+
+<span style="color: #f0b756;">tags:</span>
+    - attack.execution
+    - attack.t1059.001
+    - attack.defense_evasion
+    - attack.t1027
+<span style="color: #6aa3f7;"># ↑ MITRE ATT&CK mappings. Format: attack.tactic or attack.technique_id</span>
+
+<span style="color: #f0b756;">logsource:</span>
+    <span style="color: #5ce0c4;">category:</span> process_creation
+    <span style="color: #5ce0c4;">product:</span> windows
+<span style="color: #6aa3f7;"># ↑ What type of log does this rule apply to?</span>
+<span style="color: #6aa3f7;">#   category: process_creation, file_event, registry_event, network_connection, etc.</span>
+<span style="color: #6aa3f7;">#   product: windows, linux, azure, aws, etc.</span>
+
+<span style="color: #f0b756;">detection:</span>
+    <span style="color: #5ce0c4;">selection_process:</span>
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+    <span style="color: #6aa3f7;"># ↑ First condition: Process must be PowerShell</span>
+    <span style="color: #6aa3f7;">#   Image|endswith means "the Image field ends with"</span>
+
+    <span style="color: #5ce0c4;">selection_encoded:</span>
+        CommandLine|contains:
+            - ' -enc '
+            - ' -encoded '
+            - ' -e '
+            - ' -ec '
+            - ' -encodedcommand '
+    <span style="color: #6aa3f7;"># ↑ Second condition: Command line contains encoding flags</span>
+    <span style="color: #6aa3f7;">#   CommandLine|contains means "CommandLine field contains any of these"</span>
+
+    <span style="color: #5ce0c4;">filter_known_good:</span>
+        CommandLine|contains:
+            - 'SomeKnownGoodScript.ps1'
+            - 'C:\\Program Files\\LegitApp\\'
+    <span style="color: #6aa3f7;"># ↑ Known false positives to exclude</span>
+
+    <span style="color: #5ce0c4;">condition:</span> selection_process and selection_encoded and not filter_known_good
+<span style="color: #6aa3f7;"># ↑ Logic: Match PowerShell AND encoded flag AND not a known good</span>
+<span style="color: #6aa3f7;">#   Operators: and, or, not, 1 of selection*, all of selection*</span>
+
+<span style="color: #f0b756;">falsepositives:</span>
+    - Legitimate administrative scripts using encoding
+    - SCCM/Intune deployments
+    - Some backup software
+<span style="color: #6aa3f7;"># ↑ Document expected false positives for analysts</span>
+
+<span style="color: #f0b756;">level:</span> medium
+<span style="color: #6aa3f7;"># ↑ Severity: informational, low, medium, high, critical</span>
+</pre>
+                </div>
+
+                <h3>Step 5.3: Sigma Detection Logic Reference</h3>
+                <table>
+                    <thead><tr><th>Modifier</th><th>Meaning</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><code>contains</code></td>
+                            <td>Field contains the value anywhere</td>
+                            <td><code>CommandLine|contains: 'mimikatz'</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>startswith</code></td>
+                            <td>Field starts with the value</td>
+                            <td><code>Image|startswith: 'C:\Windows\Temp\'</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>endswith</code></td>
+                            <td>Field ends with the value</td>
+                            <td><code>Image|endswith: '\cmd.exe'</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>re</code></td>
+                            <td>Regular expression match</td>
+                            <td><code>CommandLine|re: '.*\s-e[nc]\s.*'</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>base64offset</code></td>
+                            <td>Match Base64 encoded strings</td>
+                            <td><code>CommandLine|base64offset: 'http'</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>all</code></td>
+                            <td>All values must match</td>
+                            <td><code>CommandLine|all|contains: ['wget', 'http']</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Step 5.4: Condition Logic</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Simple: All conditions in one selection</span>
+condition: selection
+
+<span style="color: #6aa3f7;"># AND: Both must match</span>
+condition: selection_process and selection_commandline
+
+<span style="color: #6aa3f7;"># OR: Either matches</span>
+condition: selection_method1 or selection_method2
+
+<span style="color: #6aa3f7;"># NOT: Exclude matches</span>
+condition: selection and not filter
+
+<span style="color: #6aa3f7;"># Combined</span>
+condition: (selection_process and selection_encoded) and not filter_known_good
+
+<span style="color: #6aa3f7;"># Match any of multiple selections</span>
+condition: 1 of selection_*
+
+<span style="color: #6aa3f7;"># Match all selections</span>
+condition: all of selection_*
+
+<span style="color: #6aa3f7;"># Match at least 2 of selections</span>
+condition: 2 of selection_*</pre>
+                </div>
+
+                <!-- PART 6: TESTING -->
+                <h2>Part 6: Testing Your Detection Rules</h2>
+
+                <h3>Why Testing Matters</h3>
+                <p>Without testing, you don't know if your rule:</p>
+                <ul>
+                    <li>Actually detects the attack (false negative risk)</li>
+                    <li>Fires on legitimate activity (false positive risk)</li>
+                    <li>Has valid syntax (deployment will fail)</li>
+                    <li>Works after SIEM conversion</li>
+                </ul>
+
+                <h3>Step 6.1: Install Testing Tools</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Install Python (if not installed)</span>
+<span style="color: #6aa3f7;"># Download from python.org or use package manager</span>
+
+<span style="color: #6aa3f7;"># Install pySigma (Sigma rule toolkit)</span>
+pip install pysigma
+pip install pysigma-backend-splunk    <span style="color: #6aa3f7;"># For Splunk</span>
+pip install pysigma-backend-microsoft365defender  <span style="color: #6aa3f7;"># For Sentinel/Defender</span>
+
+<span style="color: #6aa3f7;"># Install sigma-cli (command line tool)</span>
+pip install sigma-cli
+
+<span style="color: #6aa3f7;"># Verify installation</span>
+sigma version
+sigma list backends</pre>
+                </div>
+
+                <h3>Step 6.2: Validate Rule Syntax</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Validate a single rule</span>
+sigma check detections/windows/process_creation/encoded_powershell.yml
+
+<span style="color: #6aa3f7;"># Validate all rules in a folder</span>
+sigma check detections/
+
+<span style="color: #6aa3f7;"># Output if valid:</span>
+<span style="color: #5ce0c4;">Checking rule detections/windows/process_creation/encoded_powershell.yml
+Rule is valid!</span>
+
+<span style="color: #6aa3f7;"># Output if invalid:</span>
+<span style="color: #f07070;">Error in rule detections/windows/process_creation/encoded_powershell.yml
+  Line 15: Invalid field modifier 'containss' - did you mean 'contains'?</span></pre>
+                </div>
+
+                <h3>Step 6.3: Convert to SIEM Query</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Convert to Splunk SPL</span>
+sigma convert -t splunk detections/windows/process_creation/encoded_powershell.yml
+
+<span style="color: #6aa3f7;"># Output:</span>
+<span style="color: #5ce0c4;">source="WinEventLog:*" (Image="*\\powershell.exe" OR Image="*\\pwsh.exe") 
+(CommandLine="* -enc *" OR CommandLine="* -encoded *" OR CommandLine="* -e *")</span>
+
+<span style="color: #6aa3f7;"># Convert to Microsoft Sentinel KQL</span>
+sigma convert -t microsoft365defender detections/windows/process_creation/encoded_powershell.yml
+
+<span style="color: #6aa3f7;"># Output:</span>
+<span style="color: #5ce0c4;">DeviceProcessEvents
+| where (FolderPath endswith "\\powershell.exe" or FolderPath endswith "\\pwsh.exe")
+| where (ProcessCommandLine contains " -enc " or ProcessCommandLine contains " -encoded ")</span>
+
+<span style="color: #6aa3f7;"># Save to file</span>
+sigma convert -t splunk detections/windows/process_creation/encoded_powershell.yml -o queries/splunk/encoded_powershell.spl</pre>
+                </div>
+
+                <h3>Step 6.4: Test Against Sample Logs</h3>
+                <p>Create test cases with known-good and known-bad log samples:</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># File: tests/windows/encoded_powershell_test.yml</span>
+
+<span style="color: #f0b756;">rule:</span> detections/windows/process_creation/encoded_powershell.yml
+
+<span style="color: #f0b756;">should_match:</span>
+  - name: "Basic encoded command"
+    log:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -enc SGVsbG8gV29ybGQ='
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+    
+  - name: "Encoded with other flags"
+    log:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -NoProfile -WindowStyle Hidden -encodedcommand SGVsbG8='
+      ParentImage: 'C:\Windows\explorer.exe'
+
+  - name: "PowerShell Core (pwsh)"
+    log:
+      Image: 'C:\Program Files\PowerShell\7\pwsh.exe'
+      CommandLine: 'pwsh.exe -e SGVsbG8gV29ybGQ='
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+
+<span style="color: #f0b756;">should_not_match:</span>
+  - name: "Normal PowerShell without encoding"
+    log:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -ExecutionPolicy Bypass -File script.ps1'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+
+  - name: "Different process entirely"
+    log:
+      Image: 'C:\Windows\System32\cmd.exe'
+      CommandLine: 'cmd.exe /c echo hello'
+      ParentImage: 'C:\Windows\explorer.exe'
+
+  - name: "Known good exclusion"
+    log:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -enc SGVsbG8= C:\Program Files\LegitApp\script.ps1'
+      ParentImage: 'C:\Windows\System32\services.exe'</pre>
+                </div>
+
+                <!-- PART 7: CI/CD -->
+                <h2>Part 7: Automated Testing with GitHub Actions</h2>
+
+                <p>GitHub Actions runs tests automatically when you push code. Here's a complete working pipeline:</p>
+
+                <h3>Step 7.1: Create the Workflow File</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.65rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># File: .github/workflows/test-and-deploy.yml</span>
+
+<span style="color: #f0b756;">name:</span> Test and Deploy Detection Rules
+
+<span style="color: #6aa3f7;"># When does this pipeline run?</span>
+<span style="color: #f0b756;">on:</span>
+  <span style="color: #5ce0c4;">push:</span>
+    branches: [ main ]                    <span style="color: #6aa3f7;"># Run on push to main</span>
+    paths:
+      - 'detections/**'                   <span style="color: #6aa3f7;"># Only if detection files changed</span>
+  <span style="color: #5ce0c4;">pull_request:</span>
+    branches: [ main ]                    <span style="color: #6aa3f7;"># Run on PRs to main</span>
+    paths:
+      - 'detections/**'
+
+<span style="color: #f0b756;">jobs:</span>
+  <span style="color: #5ce0c4;">validate:</span>
+    name: Validate Sigma Rules
+    runs-on: ubuntu-latest
+    
+    steps:
+      <span style="color: #6aa3f7;"># Step 1: Download the code</span>
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      <span style="color: #6aa3f7;"># Step 2: Set up Python</span>
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      <span style="color: #6aa3f7;"># Step 3: Install Sigma tools</span>
+      - name: Install dependencies
+        run: |
+          pip install sigma-cli
+          pip install pysigma
+          pip install pysigma-backend-splunk
+          pip install pysigma-backend-microsoft365defender
+
+      <span style="color: #6aa3f7;"># Step 4: Validate all rules</span>
+      - name: Validate Sigma rules
+        run: |
+          echo "Validating all Sigma rules..."
+          sigma check detections/ --fail-on-error
+          echo "✓ All rules are valid!"
+
+      <span style="color: #6aa3f7;"># Step 5: Test conversion to Splunk</span>
+      - name: Test Splunk conversion
+        run: |
+          echo "Testing conversion to Splunk SPL..."
+          for rule in $(find detections -name "*.yml"); do
+            echo "Converting: $rule"
+            sigma convert -t splunk "$rule" > /dev/null
+          done
+          echo "✓ All rules convert to Splunk successfully!"
+
+      <span style="color: #6aa3f7;"># Step 6: Test conversion to Sentinel</span>
+      - name: Test Sentinel conversion
+        run: |
+          echo "Testing conversion to Microsoft Sentinel..."
+          for rule in $(find detections -name "*.yml"); do
+            echo "Converting: $rule"
+            sigma convert -t microsoft365defender "$rule" > /dev/null
+          done
+          echo "✓ All rules convert to Sentinel successfully!"
+
+  <span style="color: #5ce0c4;">deploy:</span>
+    name: Deploy to SIEM
+    needs: validate                       <span style="color: #6aa3f7;"># Only runs if validate passes</span>
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'  <span style="color: #6aa3f7;"># Only on main push</span>
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install sigma-cli pysigma pysigma-backend-splunk
+
+      <span style="color: #6aa3f7;"># Convert and deploy to Splunk (example)</span>
+      - name: Convert rules to Splunk
+        run: |
+          mkdir -p output/splunk
+          for rule in $(find detections -name "*.yml"); do
+            rulename=$(basename "$rule" .yml)
+            sigma convert -t splunk "$rule" > "output/splunk/${rulename}.spl"
+          done
+
+      <span style="color: #6aa3f7;"># Add your SIEM deployment script here</span>
+      - name: Deploy to Splunk
+        env:
+          SPLUNK_URL: ${{ secrets.SPLUNK_URL }}
+          SPLUNK_TOKEN: ${{ secrets.SPLUNK_TOKEN }}
+        run: |
+          echo "Deploying to Splunk..."
+          <span style="color: #6aa3f7;"># python scripts/deploy_to_splunk.py output/splunk/</span>
+          echo "✓ Deployment complete!"</pre>
+                </div>
+
+                <h3>Step 7.2: Understanding the Pipeline</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;">
+<span style="color: #a78bf6;">WHAT HAPPENS WHEN YOU PUSH CODE</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<span style="color: #6aa3f7;">1. You create a branch and add a new rule</span>
+   git checkout -b feature/new-detection
+   <span style="color: #6aa3f7;"># Edit files...</span>
+   git add detections/windows/my_new_rule.yml
+   git commit -m "Add detection for new technique"
+   git push origin feature/new-detection
+
+<span style="color: #6aa3f7;">2. You create a Pull Request on GitHub</span>
+   <span style="color: #f0b756;">→ Pipeline runs automatically</span>
+   
+   ┌─────────────────────────────────────────┐
+   │ GitHub Actions                          │
+   │                                         │
+   │ ✓ Validate Sigma Rules         2m 15s  │
+   │   ├── Checkout code                    │
+   │   ├── Install Python & tools           │
+   │   ├── sigma check detections/          │
+   │   ├── Test Splunk conversion           │
+   │   └── Test Sentinel conversion         │
+   │                                         │
+   │ ○ Deploy to SIEM              (skipped)│
+   │   (Only runs on merge to main)         │
+   └─────────────────────────────────────────┘
+
+<span style="color: #6aa3f7;">3. If validation fails</span>
+   ┌─────────────────────────────────────────┐
+   │ ✗ Validate Sigma Rules         FAILED  │
+   │                                         │
+   │ Error in encoded_powershell.yml:       │
+   │ Line 23: Unknown field modifier 'cont' │
+   └─────────────────────────────────────────┘
+   
+   <span style="color: #f07070;">You cannot merge until you fix the error!</span>
+
+<span style="color: #6aa3f7;">4. After fixing and getting approval</span>
+   <span style="color: #5ce0c4;">Reviewer clicks "Approve" and "Merge"</span>
+   
+   ┌─────────────────────────────────────────┐
+   │ ✓ Validate Sigma Rules         2m 15s  │
+   │ ✓ Deploy to SIEM               1m 30s  │
+   │   ├── Convert rules                    │
+   │   └── Deploy to Splunk                 │
+   └─────────────────────────────────────────┘
+   
+   <span style="color: #5ce0c4;">Your rule is now live in production!</span>
+</pre>
+                </div>
+
+                <!-- PART 8: DEPLOYMENT -->
+                <h2>Part 8: Deploying to Your SIEM</h2>
+
+                <h3>Option A: Splunk Deployment Script</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># File: scripts/deploy_to_splunk.py</span>
+<span style="color: #a78bf6;">#!/usr/bin/env python3</span>
+"""
+Deploy Sigma rules to Splunk as saved searches.
+"""
+
+import os
+import sys
+import requests
+import subprocess
+from pathlib import Path
+
+<span style="color: #6aa3f7;"># Configuration from environment variables</span>
+SPLUNK_URL = os.environ.get('SPLUNK_URL', 'https://splunk.company.com:8089')
+SPLUNK_TOKEN = os.environ.get('SPLUNK_TOKEN')
+SPLUNK_APP = os.environ.get('SPLUNK_APP', 'search')
+
+def convert_to_splunk(sigma_file: Path) -> str:
+    """Convert a Sigma rule to Splunk SPL."""
+    result = subprocess.run(
+        ['sigma', 'convert', '-t', 'splunk', str(sigma_file)],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        raise Exception(f"Conversion failed: {result.stderr}")
+    return result.stdout.strip()
+
+def deploy_saved_search(name: str, search: str, description: str = ""):
+    """Deploy a saved search to Splunk."""
+    url = f"{SPLUNK_URL}/servicesNS/nobody/{SPLUNK_APP}/saved/searches"
+    
+    payload = {
+        'name': name,
+        'search': search,
+        'description': description,
+        'is_scheduled': 1,
+        'cron_schedule': '*/15 * * * *',  <span style="color: #6aa3f7;"># Every 15 minutes</span>
+        'alert_type': 'number of events',
+        'alert_comparator': 'greater than',
+        'alert_threshold': 0,
+        'actions': 'notable',  <span style="color: #6aa3f7;"># Enterprise Security notable event</span>
+    }
+    
+    headers = {'Authorization': f'Bearer {SPLUNK_TOKEN}'}
+    
+    response = requests.post(url, data=payload, headers=headers, verify=False)
+    
+    if response.status_code in [200, 201]:
+        print(f"✓ Deployed: {name}")
+    elif response.status_code == 409:  <span style="color: #6aa3f7;"># Already exists, update it</span>
+        update_url = f"{url}/{name}"
+        response = requests.post(update_url, data=payload, headers=headers, verify=False)
+        if response.status_code == 200:
+            print(f"✓ Updated: {name}")
+        else:
+            print(f"✗ Failed to update {name}: {response.text}")
+    else:
+        print(f"✗ Failed to deploy {name}: {response.text}")
+
+def main():
+    if not SPLUNK_TOKEN:
+        print("Error: SPLUNK_TOKEN environment variable not set")
+        sys.exit(1)
+    
+    detections_dir = Path('detections')
+    
+    for sigma_file in detections_dir.rglob('*.yml'):
+        try:
+            print(f"Processing: {sigma_file}")
+            spl_query = convert_to_splunk(sigma_file)
+            rule_name = f"DaC_{sigma_file.stem}"
+            deploy_saved_search(rule_name, spl_query)
+        except Exception as e:
+            print(f"✗ Error processing {sigma_file}: {e}")
+
+if __name__ == '__main__':
+    main()</pre>
+                </div>
+
+                <h3>Option B: Microsoft Sentinel Deployment</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;"># File: scripts/deploy_to_sentinel.py</span>
+<span style="color: #a78bf6;">#!/usr/bin/env python3</span>
+"""
+Deploy Sigma rules to Microsoft Sentinel as Analytics Rules.
+"""
+
+import os
+import subprocess
+from pathlib import Path
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.securityinsight import SecurityInsights
+
+<span style="color: #6aa3f7;"># Configuration</span>
+SUBSCRIPTION_ID = os.environ.get('AZURE_SUBSCRIPTION_ID')
+RESOURCE_GROUP = os.environ.get('AZURE_RESOURCE_GROUP')
+WORKSPACE_NAME = os.environ.get('AZURE_WORKSPACE_NAME')
+
+def convert_to_kql(sigma_file: Path) -> str:
+    """Convert Sigma rule to KQL."""
+    result = subprocess.run(
+        ['sigma', 'convert', '-t', 'microsoft365defender', str(sigma_file)],
+        capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        raise Exception(f"Conversion failed: {result.stderr}")
+    return result.stdout.strip()
+
+def deploy_analytics_rule(client, rule_id: str, kql_query: str, 
+                          display_name: str, description: str, severity: str):
+    """Deploy an analytics rule to Sentinel."""
+    
+    rule_params = {
+        'kind': 'Scheduled',
+        'properties': {
+            'displayName': display_name,
+            'description': description,
+            'severity': severity.capitalize(),
+            'enabled': True,
+            'query': kql_query,
+            'queryFrequency': 'PT15M',      <span style="color: #6aa3f7;"># Every 15 minutes</span>
+            'queryPeriod': 'PT15M',
+            'triggerOperator': 'GreaterThan',
+            'triggerThreshold': 0,
+            'suppressionDuration': 'PT1H',
+            'suppressionEnabled': False,
+            'tactics': [],  <span style="color: #6aa3f7;"># Add based on Sigma tags</span>
+        }
+    }
+    
+    try:
+        client.alert_rules.create_or_update(
+            resource_group_name=RESOURCE_GROUP,
+            workspace_name=WORKSPACE_NAME,
+            rule_id=rule_id,
+            alert_rule=rule_params
+        )
+        print(f"✓ Deployed: {display_name}")
+    except Exception as e:
+        print(f"✗ Failed: {display_name} - {e}")
+
+def main():
+    credential = DefaultAzureCredential()
+    client = SecurityInsights(credential, SUBSCRIPTION_ID)
+    
+    detections_dir = Path('detections')
+    
+    for sigma_file in detections_dir.rglob('*.yml'):
+        try:
+            print(f"Processing: {sigma_file}")
+            kql_query = convert_to_kql(sigma_file)
+            rule_id = sigma_file.stem
+            deploy_analytics_rule(
+                client, rule_id, kql_query,
+                display_name=f"[DaC] {rule_id}",
+                description="Deployed via Detection-as-Code",
+                severity="Medium"
+            )
+        except Exception as e:
+            print(f"✗ Error: {sigma_file} - {e}")
+
+if __name__ == '__main__':
+    main()</pre>
+                </div>
+
+                <!-- PART 9: TROUBLESHOOTING -->
+                <h2>Part 9: Troubleshooting Common Issues</h2>
+
+                <table>
+                    <thead><tr><th>Problem</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>YAML syntax error</strong></td>
+                            <td>Incorrect indentation or special characters</td>
+                            <td>Use a YAML linter. Check for tabs vs spaces. Quote special characters.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>sigma check fails</strong></td>
+                            <td>Invalid Sigma rule structure</td>
+                            <td>Check required fields: title, logsource, detection, condition</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Conversion produces empty query</strong></td>
+                            <td>Logsource not mapped for backend</td>
+                            <td>Check logsource category/product matches backend expectations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule doesn't fire in SIEM</strong></td>
+                            <td>Field names don't match your SIEM</td>
+                            <td>Create field mappings in pySigma pipeline</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Git push rejected</strong></td>
+                            <td>Remote has changes you don't have</td>
+                            <td><code>git pull origin main</code> then push again</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Merge conflict</strong></td>
+                            <td>Same file edited by multiple people</td>
+                            <td>Manually resolve conflicts in the file, then commit</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- PART 10: CHECKLIST -->
+                <h2>Part 10: Getting Started Checklist</h2>
+
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md);">
+                    <h4 style="margin-top: 0;">Step-by-Step Setup Checklist</h4>
+                    <table>
+                        <tbody>
+                            <tr><td>☐</td><td>Install Git on your computer</td></tr>
+                            <tr><td>☐</td><td>Create a GitHub account (if needed)</td></tr>
+                            <tr><td>☐</td><td>Create the detection-rules repository</td></tr>
+                            <tr><td>☐</td><td>Clone the repository locally</td></tr>
+                            <tr><td>☐</td><td>Set up folder structure</td></tr>
+                            <tr><td>☐</td><td>Install Python and Sigma tools</td></tr>
+                            <tr><td>☐</td><td>Create the GitHub Actions workflow file</td></tr>
+                            <tr><td>☐</td><td>Write your first detection rule</td></tr>
+                            <tr><td>☐</td><td>Create a branch, commit, push, and create PR</td></tr>
+                            <tr><td>☐</td><td>Watch the pipeline run</td></tr>
+                            <tr><td>☐</td><td>Get approval and merge</td></tr>
+                            <tr><td>☐</td><td>Verify deployment to your SIEM</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

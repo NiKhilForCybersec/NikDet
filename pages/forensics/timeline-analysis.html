@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Analysis | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Digital Forensics</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="df-nav"><i class="fas fa-search"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="df-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="evidence-collection.html">Evidence Collection</a></li>
+                    <li><a href="memory-forensics.html">Memory Forensics</a></li>
+                    <li><a href="disk-forensics.html">Disk Forensics</a></li>
+                    <li><a href="timeline-analysis.html" class="active">Timeline Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Forensics</a><span class="separator">/</span><span>Timeline Analysis</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-clock" style="color: var(--accent-tertiary);"></i> Timeline Analysis</h1>
+                <p class="lead">Reconstruct the sequence of events to understand what happened and when during an incident.</p>
+            </div>
+            <div class="content">
+                <h2>Why Timeline Analysis?</h2>
+                <p>Timeline analysis correlates events from multiple sources into a single chronological view, revealing the complete story of an incident.</p>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Timeline Analysis Answers</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>When</strong> did the initial compromise occur?</li>
+                        <li><strong>What</strong> actions did the attacker take?</li>
+                        <li><strong>How long</strong> was the attacker in the environment?</li>
+                        <li><strong>What</strong> data was accessed or exfiltrated?</li>
+                        <li><strong>What</strong> persistence mechanisms were established?</li>
+                    </ul>
+                </div>
+
+                <h2>Timeline Sources</h2>
+                <table>
+                    <thead><tr><th>Source</th><th>Timestamp Type</th><th>Events</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Windows Event Logs</strong></td>
+                            <td>Event timestamp</td>
+                            <td>Logins, process creation, security events</td>
+                        </tr>
+                        <tr>
+                            <td><strong>$MFT</strong></td>
+                            <td>MACB timestamps</td>
+                            <td>File creation, modification, access</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Prefetch</strong></td>
+                            <td>Last run times</td>
+                            <td>Program execution</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Registry</strong></td>
+                            <td>Last write time</td>
+                            <td>Configuration changes, persistence</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Browser History</strong></td>
+                            <td>Visit timestamp</td>
+                            <td>Web activity, downloads</td>
+                        </tr>
+                        <tr>
+                            <td><strong>$UsnJrnl</strong></td>
+                            <td>Change timestamp</td>
+                            <td>File system changes</td>
+                        </tr>
+                        <tr>
+                            <td><strong>LNK Files</strong></td>
+                            <td>Creation/access times</td>
+                            <td>File access, USB usage</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Plaso / Log2Timeline</h2>
+                <p>Plaso is the industry-standard tool for creating super timelines from multiple forensic artifacts.</p>
+
+                <h3>Basic Workflow</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Extract with log2timeline</div>
+                            <p>Parse disk image or artifacts into Plaso storage file (.plaso)</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Process with psort</div>
+                            <p>Filter and output timeline to CSV or other format</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Analyze with Timeline Explorer</div>
+                            <p>View and filter timeline in Timeline Explorer or Excel</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Plaso Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Create timeline from disk image</span>
+log2timeline.py --storage-file timeline.plaso disk_image.E01
+
+<span style="color: #6aa3f7;"># Create timeline from mounted image</span>
+log2timeline.py --storage-file timeline.plaso /mnt/image
+
+<span style="color: #6aa3f7;"># Create timeline from KAPE output</span>
+log2timeline.py --storage-file timeline.plaso /path/to/kape/output
+
+<span style="color: #6aa3f7;"># Filter by date range and output to CSV</span>
+psort.py -o l2tcsv -w timeline.csv timeline.plaso \
+  "date > '2025-01-01' AND date < '2025-01-15'"
+
+<span style="color: #6aa3f7;"># Filter by specific artifact type</span>
+psort.py -o l2tcsv -w timeline.csv timeline.plaso \
+  "parser contains 'prefetch'"
+
+<span style="color: #6aa3f7;"># Output to Elasticsearch (for Timesketch)</span>
+psort.py -o elastic --server 127.0.0.1 timeline.plaso</pre>
+                </div>
+
+                <h2>KAPE Timeline</h2>
+                <p>KAPE can collect artifacts and create timelines in one workflow.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Collect and parse with timeline</span>
+kape.exe --tsource C: --target KapeTriage --tdest E:\Evidence ^
+         --mdest E:\Evidence\Parsed --module !EZParser
+
+<span style="color: #6aa3f7;"># Output includes parsed artifacts ready for timeline</span></pre>
+                </div>
+
+                <h2>Timesketch</h2>
+                <p>Timesketch is a web-based collaborative timeline analysis platform.</p>
+
+                <h3>Features</h3>
+                <ul>
+                    <li><strong>Collaborative:</strong> Multiple analysts work on same timeline</li>
+                    <li><strong>Tagging:</strong> Tag events of interest</li>
+                    <li><strong>Saved searches:</strong> Store common queries</li>
+                    <li><strong>Sigma support:</strong> Run Sigma rules against timeline</li>
+                    <li><strong>Aggregation:</strong> View event counts over time</li>
+                </ul>
+
+                <h3>Common Searches</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Find PowerShell execution</span>
+data_type:"windows:prefetch:execution" AND filename:*POWERSHELL*
+
+<span style="color: #6aa3f7;"># Find file downloads</span>
+data_type:"chrome:history:file_downloaded"
+
+<span style="color: #6aa3f7;"># Find scheduled task creation</span>
+data_type:"windows:evtx:record" AND event_identifier:4698
+
+<span style="color: #6aa3f7;"># Find RDP logins</span>
+data_type:"windows:evtx:record" AND event_identifier:4624 AND logon_type:10</pre>
+                </div>
+
+                <h2>Timeline Analysis Methodology</h2>
+
+                <h3>Step 1: Establish Timeframe</h3>
+                <p>Start by identifying key timestamps:</p>
+                <ul>
+                    <li><strong>Known good:</strong> Last backup, last security scan</li>
+                    <li><strong>Alert time:</strong> When detection fired</li>
+                    <li><strong>Known bad:</strong> Confirmed malicious activity</li>
+                </ul>
+
+                <h3>Step 2: Pivot Points</h3>
+                <p>Look for events around known timestamps:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md);">
+<pre style="margin: 0; font-family: var(--font-mono); font-size: 0.8rem;"><span style="color: #f0b756;">Known: Malware executed at 14:32:15</span>
+
+<span style="color: #6aa3f7;">Questions to answer:</span>
+- What happened in the 5 minutes BEFORE? (delivery method)
+- What happened in the 5 minutes AFTER? (post-exploitation)
+- What user was logged in?
+- What network connections were made?</pre>
+                </div>
+
+                <h3>Step 3: Track Lateral Movement</h3>
+                <p>Look for spread to other systems:</p>
+                <ul>
+                    <li>RDP connections (Event 4624 Type 10)</li>
+                    <li>SMB access (Event 5140, 5145)</li>
+                    <li>Remote service creation (Event 7045)</li>
+                    <li>PSRemoting (Event 4103, 4104)</li>
+                </ul>
+
+                <h3>Step 4: Identify Persistence</h3>
+                <p>Look for mechanisms that survive reboot:</p>
+                <ul>
+                    <li>Scheduled tasks (Event 4698)</li>
+                    <li>Services (Event 7045)</li>
+                    <li>Registry Run keys (registry last write time)</li>
+                    <li>Startup folder (file creation time)</li>
+                </ul>
+
+                <h2>MACB Timestamps</h2>
+                <p>NTFS stores four timestamps for each file:</p>
+                <table>
+                    <thead><tr><th>Letter</th><th>Timestamp</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>M</strong></td><td>Modified</td><td>Content was changed</td></tr>
+                        <tr><td><strong>A</strong></td><td>Accessed</td><td>File was read (often disabled)</td></tr>
+                        <tr><td><strong>C</strong></td><td>Changed ($MFT)</td><td>MFT record was modified</td></tr>
+                        <tr><td><strong>B</strong></td><td>Birth (Created)</td><td>File was created</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Timestomping Detection</h3>
+                <p>Attackers may modify timestamps to hide activity. Look for:</p>
+                <ul>
+                    <li><strong>$STANDARD_INFO ≠ $FILE_NAME:</strong> SI timestamps modified but FN preserved</li>
+                    <li><strong>Creation > Modified:</strong> Impossible normally</li>
+                    <li><strong>Round timestamps:</strong> Exactly midnight suggests modification</li>
+                    <li><strong>Future timestamps:</strong> Dates ahead of current time</li>
+                </ul>
+
+                <h2>Example Timeline</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; overflow-x: auto;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">Timestamp            Source          Event</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2025-01-15 14:28:32  Email           User received phishing email with attachment
+2025-01-15 14:29:15  Prefetch        OUTLOOK.EXE executed
+2025-01-15 14:30:01  MFT             Invoice.docm created in Downloads
+2025-01-15 14:30:45  Prefetch        WINWORD.EXE executed
+2025-01-15 14:31:02  Event 4688      Word spawned cmd.exe
+2025-01-15 14:31:03  Event 4688      cmd.exe spawned powershell.exe -enc ...
+2025-01-15 14:31:15  Sysmon 3        PowerShell connected to 45.33.32.156:443
+2025-01-15 14:31:20  MFT             update.exe created in C:\Users\Public
+2025-01-15 14:31:22  Prefetch        UPDATE.EXE executed
+2025-01-15 14:31:30  Event 4698      Scheduled task "WindowsUpdate" created
+2025-01-15 14:32:00  Sysmon 10       update.exe accessed lsass.exe
+2025-01-15 14:35:00  Event 4624      RDP login to FILESERVER01 (Type 10)
+<span style="color: #f07070;">         ↑ Lateral movement begins</span></pre>
+                </div>
+
+                <h2>Timeline Explorer</h2>
+                <p>Eric Zimmerman's Timeline Explorer is excellent for viewing CSV timelines:</p>
+                <ul>
+                    <li>Filter by any column</li>
+                    <li>Color-code events</li>
+                    <li>Export filtered results</li>
+                    <li>Handle millions of events</li>
+                </ul>
+
+                <h3>Useful Filters</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Filter by source type</span>
+Source Contains "prefetch"
+Source Contains "evtx"
+
+<span style="color: #6aa3f7;"># Filter by filename</span>
+Message Contains "powershell"
+Message Contains "mimikatz"
+
+<span style="color: #6aa3f7;"># Filter by path</span>
+Message Contains "C:\Users\Public"
+Message Contains "C:\Windows\Temp"</pre>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

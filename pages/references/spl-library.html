@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPL Query Library | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .query-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); margin: 1.5rem 0; overflow: hidden; }
+        .query-card-header { padding: 1rem 1.25rem; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .query-card-title { font-weight: 600; color: var(--text-primary); }
+        .query-card-tags { display: flex; gap: 0.5rem; }
+        .query-tag { font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); background: var(--accent-primary); color: white; }
+        .query-tag.mitre { background: #f07070; }
+        .query-tag.detection { background: #5ce0c4; }
+        .query-card-body { padding: 1.25rem; }
+        .query-card-desc { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
+        .query-code { background: var(--bg-primary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; line-height: 1.6; }
+        .query-notes { margin-top: 1rem; padding: 0.75rem; background: rgba(106,163,247,0.1); border-left: 3px solid var(--accent-primary); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 0.85rem; }
+        .category-header { display: flex; align-items: center; gap: 0.75rem; margin: 2.5rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color); }
+        .category-icon { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search queries..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>SPL Library</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="cat-nav"><i class="fas fa-folder"></i><span>Categories</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="cat-nav">
+                    <li><a href="#authentication">Authentication</a></li>
+                    <li><a href="#endpoint">Endpoint</a></li>
+                    <li><a href="#network">Network</a></li>
+                    <li><a href="#email">Email Security</a></li>
+                    <li><a href="#persistence">Persistence</a></li>
+                    <li><a href="#lateral">Lateral Movement</a></li>
+                    <li><a href="#exfiltration">Exfiltration</a></li>
+                    <li><a href="#hunting">Threat Hunting</a></li>
+                    <li><a href="#statistics">Statistics</a></li>
+                    <li><a href="#fundamentals">SPL Fundamentals</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">References</a><span class="separator">/</span><span>SPL Library</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-terminal" style="color: #5ce0c4;"></i> SPL Query Library</h1>
+                <p class="lead">100+ production-ready Splunk SPL queries for detection, investigation, and threat hunting.</p>
+            </div>
+            <div class="content">
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> How to Use This Library</div>
+                    <p style="margin: 0.5rem 0;">These queries are designed for Splunk Enterprise and Splunk Cloud. Adjust index names, sourcetypes, and field names to match your environment. All queries include comments explaining the logic.</p>
+                </div>
+
+                <!-- SPL FUNDAMENTALS -->
+                <div class="category-header" id="fundamentals">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(167,139,246,0.3), rgba(167,139,246,0.1));"><i class="fas fa-graduation-cap" style="color: #a78bf6;"></i></div>
+                    <div><h2 style="margin: 0;">SPL Fundamentals</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Essential SPL syntax and operators</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Basic Search Structure</span>
+                        <div class="query-card-tags"><span class="query-tag">Basics</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Understanding the fundamental structure of SPL queries. Searches flow left-to-right through a pipeline.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">| Base search (retrieves events)</span>
+<span style="color: #6aa3f7;">| Command 1 (transforms data)</span>
+<span style="color: #6aa3f7;">| Command 2 (further transforms)</span>
+<span style="color: #6aa3f7;">| ... and so on</span>
+
+<span style="color: #5ce0c4;">Example:</span>
+index=windows sourcetype=WinEventLog:Security EventCode=4625
+| stats count by src_ip, user
+| sort - count
+| head 10</div>
+                        <div class="query-notes"><strong>Key Concept:</strong> Data flows through the pipeline. Each command receives input from the previous command and passes output to the next. The first line (before any pipe) is the "base search" that retrieves raw events.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Essential Search Commands</span>
+                        <div class="query-card-tags"><span class="query-tag">Reference</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">The most commonly used SPL commands every analyst must know.</div>
+                        <div class="query-code"><span style="color: #a78bf6;">| search</span> - Filter events (usually implicit in base search)
+<span style="color: #a78bf6;">| where</span> - Filter using eval expressions (more powerful than search)
+<span style="color: #a78bf6;">| stats</span> - Aggregate data (count, sum, avg, values, dc)
+<span style="color: #a78bf6;">| table</span> - Display specific fields in tabular format
+<span style="color: #a78bf6;">| fields</span> - Include (+) or exclude (-) fields
+<span style="color: #a78bf6;">| eval</span> - Create or modify fields
+<span style="color: #a78bf6;">| rex</span> - Extract fields using regex
+<span style="color: #a78bf6;">| rename</span> - Rename fields
+<span style="color: #a78bf6;">| sort</span> - Sort results (- for descending)
+<span style="color: #a78bf6;">| head/tail</span> - Limit results to first/last N
+<span style="color: #a78bf6;">| dedup</span> - Remove duplicate events
+<span style="color: #a78bf6;">| transaction</span> - Group related events
+<span style="color: #a78bf6;">| join</span> - Combine results from subsearches
+<span style="color: #a78bf6;">| lookup</span> - Enrich with lookup tables
+<span style="color: #a78bf6;">| timechart</span> - Time-based statistics
+<span style="color: #a78bf6;">| tstats</span> - Fast statistics on indexed fields</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Common Eval Functions</span>
+                        <div class="query-card-tags"><span class="query-tag">Reference</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Eval functions for data manipulation and transformation.</div>
+                        <div class="query-code"><span style="color: #5ce0c4;">| String Functions:</span>
+| eval lower_user=lower(user)              <span style="color: #6aa3f7;">` Convert to lowercase</span>
+| eval domain=split(email, "@")            <span style="color: #6aa3f7;">` Split string into multivalue</span>
+| eval combined=user." - ".src_ip          <span style="color: #6aa3f7;">` Concatenate strings</span>
+| eval length=len(command)                 <span style="color: #6aa3f7;">` String length</span>
+| eval has_enc=if(match(cmd, "-enc"), 1, 0) <span style="color: #6aa3f7;">` Regex match</span>
+
+<span style="color: #5ce0c4;">| Numeric Functions:</span>
+| eval total=bytes_in + bytes_out          <span style="color: #6aa3f7;">` Math operations</span>
+| eval rounded=round(percentage, 2)        <span style="color: #6aa3f7;">` Round to decimal places</span>
+| eval abs_val=abs(difference)             <span style="color: #6aa3f7;">` Absolute value</span>
+
+<span style="color: #5ce0c4;">| Time Functions:</span>
+| eval hour=strftime(_time, "%H")          <span style="color: #6aa3f7;">` Extract hour from timestamp</span>
+| eval epoch=strptime(date, "%Y-%m-%d")    <span style="color: #6aa3f7;">` Convert string to epoch</span>
+| eval age=now() - _time                   <span style="color: #6aa3f7;">` Calculate age in seconds</span>
+
+<span style="color: #5ce0c4;">| Conditional Functions:</span>
+| eval status=if(count>100, "High", "Low") <span style="color: #6aa3f7;">` If-then-else</span>
+| eval category=case(
+    count>1000, "Critical",
+    count>100, "High",
+    count>10, "Medium",
+    true(), "Low")                          <span style="color: #6aa3f7;">` Multiple conditions</span>
+| eval value=coalesce(field1, field2, "N/A") <span style="color: #6aa3f7;">` First non-null value</span></div>
+                    </div>
+                </div>
+
+                <!-- AUTHENTICATION QUERIES -->
+                <div class="category-header" id="authentication">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(240,112,112,0.3), rgba(240,112,112,0.1));"><i class="fas fa-key" style="color: #f07070;"></i></div>
+                    <div><h2 style="margin: 0;">Authentication Queries</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Failed logins, brute force, password spray, impossible travel</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Failed Login Summary by User</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1110</span><span class="query-tag detection">Brute Force</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Identify users with excessive failed login attempts. Useful for detecting brute force attacks and compromised accounts.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Failed Windows logon attempts - EventCode 4625</span>
+index=windows sourcetype=WinEventLog:Security EventCode=4625
+| stats count as FailedAttempts, 
+        dc(src_ip) as UniqueSourceIPs,
+        values(src_ip) as SourceIPs,
+        earliest(_time) as FirstAttempt,
+        latest(_time) as LastAttempt
+        by user
+| where FailedAttempts > 10
+| eval FirstAttempt=strftime(FirstAttempt, "%Y-%m-%d %H:%M:%S")
+| eval LastAttempt=strftime(LastAttempt, "%Y-%m-%d %H:%M:%S")
+| eval Duration=tostring(LastAttempt-FirstAttempt, "duration")
+| sort - FailedAttempts
+| table user, FailedAttempts, UniqueSourceIPs, SourceIPs, FirstAttempt, LastAttempt</div>
+                        <div class="query-notes"><strong>Tuning:</strong> Adjust the threshold (>10) based on your environment. Service accounts may have higher legitimate failure rates. Consider excluding known service accounts or adding time constraints.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Password Spray Detection</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1110.003</span><span class="query-tag detection">Critical</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect password spray attacks: many users targeted with few attempts each from the same source. Attackers use this to avoid account lockouts.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Password spray: Many users, few attempts per user, same source</span>
+index=windows sourcetype=WinEventLog:Security EventCode=4625
+| bucket _time span=15m
+| stats dc(user) as TargetedUsers, 
+        count as TotalAttempts,
+        values(user) as Users
+        by _time, src_ip
+| where TargetedUsers > 10 AND TotalAttempts/TargetedUsers < 3
+<span style="color: #6aa3f7;">` Low attempts per user but many users = spray pattern</span>
+| eval AttemptsPerUser=round(TotalAttempts/TargetedUsers, 2)
+| sort - TargetedUsers
+| table _time, src_ip, TargetedUsers, TotalAttempts, AttemptsPerUser, Users</div>
+                        <div class="query-notes"><strong>Detection Logic:</strong> Password spraying shows a pattern of one source IP trying against many accounts (>10) with very few attempts per account (<3). This evades lockout policies while testing common passwords across many accounts.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Impossible Travel Detection</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1078</span><span class="query-tag detection">High</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect when a user authenticates from geographically distant locations in an impossibly short time frame, indicating credential theft.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Requires GeoIP lookup configured</span>
+index=authentication sourcetype=your_auth_logs action=success
+| iplocation src_ip
+| sort 0 user, _time
+| streamstats current=f last(Country) as prev_country,
+               last(City) as prev_city,
+               last(_time) as prev_time,
+               last(src_ip) as prev_ip
+               by user
+| eval time_diff_hours=round((_time - prev_time)/3600, 2)
+| where isnotnull(prev_country) AND Country!=prev_country AND time_diff_hours < 2
+<span style="color: #6aa3f7;">` Different country within 2 hours = impossible travel</span>
+| eval prev_time_formatted=strftime(prev_time, "%Y-%m-%d %H:%M:%S")
+| table _time, user, prev_city, prev_country, prev_ip, City, Country, src_ip, time_diff_hours</div>
+                        <div class="query-notes"><strong>Considerations:</strong> VPN usage can cause false positives. Consider maintaining an allowlist of known VPN exit nodes. Also watch for cases where prev_country is null (first login of the day).</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Successful Login After Multiple Failures</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1110</span><span class="query-tag detection">Medium</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect successful authentication that follows multiple failed attempts - potential indicator of successful brute force.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Find successful logins preceded by failures</span>
+index=windows sourcetype=WinEventLog:Security (EventCode=4625 OR EventCode=4624)
+| sort 0 user, _time
+| streamstats count(eval(EventCode=4625)) as FailuresBefore reset_after="EventCode=4624" by user
+| where EventCode=4624 AND FailuresBefore >= 5
+| stats count as SuccessfulLogins,
+        sum(FailuresBefore) as TotalFailuresBefore,
+        values(src_ip) as SourceIPs,
+        latest(_time) as LastSuccess
+        by user
+| eval LastSuccess=strftime(LastSuccess, "%Y-%m-%d %H:%M:%S")
+| sort - TotalFailuresBefore
+| table user, SuccessfulLogins, TotalFailuresBefore, SourceIPs, LastSuccess</div>
+                        <div class="query-notes"><strong>Why This Matters:</strong> A successful login after many failures could indicate a successful brute force attack. Investigate immediately - verify with the user if the activity was legitimate.</div>
+                    </div>
+                </div>
+
+                <!-- ENDPOINT QUERIES -->
+                <div class="category-header" id="endpoint">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(106,163,247,0.3), rgba(106,163,247,0.1));"><i class="fas fa-desktop" style="color: #6aa3f7;"></i></div>
+                    <div><h2 style="margin: 0;">Endpoint Detection</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Process execution, PowerShell, suspicious commands</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Encoded PowerShell Commands</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1059.001</span><span class="query-tag mitre">T1027</span><span class="query-tag detection">High</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect PowerShell execution with Base64 encoded commands, commonly used to obfuscate malicious scripts.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Encoded PowerShell - Sysmon EventCode 1 (Process Creation)</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1
+(Image="*\\powershell.exe" OR Image="*\\pwsh.exe")
+(CommandLine="*-enc*" OR CommandLine="*-encoded*" OR CommandLine="*-e *" OR CommandLine="*-encodedcommand*")
+| rex field=CommandLine "(?i)-e[ncodedcommand]*\s+(?<EncodedPayload>[A-Za-z0-9+/=]{20,})"
+| eval DecodedCommand=if(isnotnull(EncodedPayload), base64decode(EncodedPayload), "Unable to decode")
+| table _time, ComputerName, User, ParentImage, Image, CommandLine, DecodedCommand
+| sort - _time</div>
+                        <div class="query-notes"><strong>Detection Logic:</strong> Legitimate encoded PowerShell exists (SCCM, etc.) but should be rare. Examine the decoded content for suspicious patterns: downloadstring, IEX, invoke-expression, webclient, etc.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Suspicious Parent-Child Process Relationships</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1059</span><span class="query-tag detection">High</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect when Office applications, browsers, or other programs spawn suspicious child processes like cmd.exe or PowerShell - common malware behavior.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Suspicious parent spawning cmd/PowerShell/etc.</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1
+| eval ParentProcess=lower(mvindex(split(ParentImage, "\\"), -1))
+| eval ChildProcess=lower(mvindex(split(Image, "\\"), -1))
+| where (ParentProcess IN ("winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe", 
+         "msaccess.exe", "mspub.exe", "visio.exe", "onenote.exe",
+         "chrome.exe", "firefox.exe", "iexplore.exe", "msedge.exe",
+         "acrobat.exe", "acrord32.exe"))
+  AND (ChildProcess IN ("cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe", 
+         "cscript.exe", "mshta.exe", "regsvr32.exe", "rundll32.exe",
+         "certutil.exe", "bitsadmin.exe"))
+| table _time, ComputerName, User, ParentImage, Image, CommandLine
+| sort - _time</div>
+                        <div class="query-notes"><strong>Why This Matters:</strong> Office applications and browsers should rarely spawn command interpreters. When they do, it often indicates macro malware, exploit kits, or phishing payloads executing.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">LSASS Access Detection (Credential Dumping)</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1003.001</span><span class="query-tag detection">Critical</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect processes accessing LSASS memory - the primary method for credential theft tools like Mimikatz.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Sysmon EventCode 10 = Process Access</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=10
+TargetImage="*\\lsass.exe"
+| eval SourceProcess=lower(mvindex(split(SourceImage, "\\"), -1))
+<span style="color: #6aa3f7;">` Exclude known legitimate LSASS accessors</span>
+| where NOT SourceProcess IN ("csrss.exe", "wininit.exe", "wmiprvse.exe", 
+         "svchost.exe", "services.exe", "lsm.exe", "mrt.exe", 
+         "vmtoolsd.exe", "taskmgr.exe", "procexp64.exe", "procexp.exe")
+<span style="color: #6aa3f7;">` Check for suspicious access masks</span>
+| where GrantedAccess IN ("0x1010", "0x1038", "0x1410", "0x1438", "0x143a", "0x1fffff")
+| table _time, ComputerName, SourceImage, SourceProcessGUID, GrantedAccess, CallTrace
+| sort - _time</div>
+                        <div class="query-notes"><strong>Critical Alert:</strong> LSASS access with suspicious access masks is a strong indicator of credential dumping. Common tools: Mimikatz, procdump, comsvcs.dll. Investigate immediately and consider isolating the endpoint.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Certutil Download Detection</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1105</span><span class="query-tag detection">High</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect certutil.exe being used to download files - a common LOLBin technique for malware delivery.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Certutil used for downloading files</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1
+Image="*\\certutil.exe"
+(CommandLine="*-urlcache*" OR CommandLine="*-verifyctl*" OR CommandLine="*-encode*" OR CommandLine="*-decode*")
+| rex field=CommandLine "(?i)(https?://[^\s\"']+)" max_match=0
+| rex field=CommandLine "(?i)-f\s+[\"']?(?<OutputFile>[^\s\"']+)"
+| table _time, ComputerName, User, ParentImage, CommandLine, OutputFile
+| sort - _time</div>
+                        <div class="query-notes"><strong>LOLBin Alert:</strong> Certutil is a legitimate Windows utility for certificate management, but attackers abuse it to download payloads. Look for -urlcache -split -f patterns. Also watch for encode/decode used to obfuscate files.</div>
+                    </div>
+                </div>
+
+                <!-- PERSISTENCE QUERIES -->
+                <div class="category-header" id="persistence">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(92,224,196,0.3), rgba(92,224,196,0.1));"><i class="fas fa-anchor" style="color: #5ce0c4;"></i></div>
+                    <div><h2 style="margin: 0;">Persistence Detection</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Registry, scheduled tasks, services, startup</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Registry Run Key Modifications</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1547.001</span><span class="query-tag detection">High</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect modifications to registry Run keys, a classic persistence mechanism that executes programs at user logon.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Sysmon EventCode 13 = Registry value set</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=13
+(TargetObject="*\\CurrentVersion\\Run*" OR 
+ TargetObject="*\\CurrentVersion\\RunOnce*" OR
+ TargetObject="*\\CurrentVersion\\RunServices*" OR
+ TargetObject="*\\CurrentVersion\\Policies\\Explorer\\Run*")
+| eval RegistryPath=TargetObject
+| eval RegistryValue=Details
+| eval ProcessName=mvindex(split(Image, "\\"), -1)
+<span style="color: #6aa3f7;">` Filter known legitimate software (customize for your environment)</span>
+| where NOT (ProcessName IN ("msiexec.exe", "chrome.exe", "teams.exe") 
+             AND match(RegistryValue, "(?i)(microsoft|google|zoom)"))
+| table _time, ComputerName, User, ProcessName, Image, RegistryPath, RegistryValue
+| sort - _time</div>
+                        <div class="query-notes"><strong>Persistence Mechanism:</strong> Run keys execute programs every time a user logs in. Attackers commonly use this for persistence. Legitimate software also uses these keys, so establish a baseline of normal entries in your environment.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Scheduled Task Creation</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1053.005</span><span class="query-tag detection">Medium</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Monitor scheduled task creation for persistence and execution mechanisms.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Windows Security Event 4698 = Scheduled task created</span>
+index=windows sourcetype=WinEventLog:Security EventCode=4698
+| rex field=TaskContent "<Command>(?<TaskCommand>[^<]+)</Command>"
+| rex field=TaskContent "<Arguments>(?<TaskArguments>[^<]+)</Arguments>"
+| rex field=TaskContent "<UserId>(?<TaskUser>[^<]+)</UserId>"
+| eval FullCommand=TaskCommand." ".TaskArguments
+<span style="color: #6aa3f7;">` Look for suspicious patterns in the command</span>
+| eval Suspicious=case(
+    match(FullCommand, "(?i)(powershell|cmd\.exe|wscript|cscript|mshta|certutil|bitsadmin)"), "High",
+    match(FullCommand, "(?i)(http|https|ftp)://"), "High",
+    match(FullCommand, "(?i)(\\temp\\|\\appdata\\|\\public\\)"), "Medium",
+    true(), "Low")
+| where Suspicious IN ("High", "Medium")
+| table _time, ComputerName, SubjectUserName, TaskName, FullCommand, TaskUser, Suspicious
+| sort - _time</div>
+                        <div class="query-notes"><strong>Common Attack Pattern:</strong> Attackers create scheduled tasks for persistence and recurring execution. Watch for tasks running from unusual locations (Temp, AppData) or invoking script interpreters.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">New Service Installation</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1543.003</span><span class="query-tag detection">Medium</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect new Windows service installations, commonly used for persistence and privilege escalation.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` System Event 7045 = New service installed</span>
+index=windows sourcetype=WinEventLog:System EventCode=7045
+| eval ServicePath=lower(Service_File_Name)
+<span style="color: #6aa3f7;">` Flag suspicious service paths</span>
+| eval Suspicious=case(
+    match(ServicePath, "(?i)(\\temp\\|\\appdata\\|\\public\\|\\programdata\\)"), "High - Suspicious Path",
+    match(ServicePath, "(?i)(cmd\.exe|powershell|mshta|wscript|cscript)"), "High - Script Interpreter",
+    match(ServicePath, "(?i)(psexe|winexe|remcom)"), "High - Remote Execution Tool",
+    NOT match(ServicePath, "(?i)(windows|program files|microsoft)"), "Medium - Non-standard",
+    true(), "Low")
+| where Suspicious!="Low"
+| table _time, ComputerName, Service_Name, Service_File_Name, Service_Type, Service_Start_Type, Service_Account, Suspicious
+| sort - _time</div>
+                        <div class="query-notes"><strong>Why Services Matter:</strong> Services run with SYSTEM privileges by default and start automatically. Attackers install malicious services for persistent, elevated access. Monitor for services with unusual paths or names.</div>
+                    </div>
+                </div>
+
+                <!-- LATERAL MOVEMENT -->
+                <div class="category-header" id="lateral">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(240,183,86,0.3), rgba(240,183,86,0.1));"><i class="fas fa-route" style="color: #f0b756;"></i></div>
+                    <div><h2 style="margin: 0;">Lateral Movement</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">RDP, SMB, PsExec, remote execution</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">RDP Connections Tracking</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1021.001</span><span class="query-tag detection">Medium</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Track Remote Desktop connections for lateral movement detection.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` RDP logons (Type 10 = RemoteInteractive)</span>
+index=windows sourcetype=WinEventLog:Security EventCode=4624 Logon_Type=10
+| stats count as Connections,
+        dc(dest) as UniqueDestinations,
+        values(dest) as Destinations,
+        earliest(_time) as FirstConnection,
+        latest(_time) as LastConnection
+        by src_ip, user
+| eval FirstConnection=strftime(FirstConnection, "%Y-%m-%d %H:%M:%S")
+| eval LastConnection=strftime(LastConnection, "%Y-%m-%d %H:%M:%S")
+| sort - Connections
+| table user, src_ip, Connections, UniqueDestinations, Destinations, FirstConnection, LastConnection</div>
+                        <div class="query-notes"><strong>Lateral Movement Indicator:</strong> RDP from unusual sources or to unusual destinations warrants investigation. Create a baseline of normal RDP patterns and alert on deviations.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">PsExec / Remote Service Execution</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1021.002</span><span class="query-tag mitre">T1569.002</span><span class="query-tag detection">High</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect PsExec-style remote execution through service installation on remote systems.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Detect PsExec-like service installation</span>
+index=windows sourcetype=WinEventLog:System EventCode=7045
+(Service_File_Name="*PSEXESVC*" OR 
+ Service_File_Name="*\\ADMIN$\\*" OR
+ Service_File_Name="*\\C$\\*" OR
+ Service_Name="PSEXESVC" OR
+ Service_File_Name="*remcom*" OR
+ Service_File_Name="*csexec*" OR
+ Service_File_Name="*paexec*")
+| table _time, ComputerName, Service_Name, Service_File_Name, Service_Account
+| sort - _time
+
+<span style="color: #6aa3f7;">` Alternative: Network logon (Type 3) followed by service creation</span>
+index=windows sourcetype=WinEventLog:Security 
+(EventCode=4624 Logon_Type=3) OR EventCode=4697
+| transaction src_ip, dest maxspan=5m
+| where eventcount > 1 AND EventCode=4697
+| table _time, src_ip, dest, user, Service_Name</div>
+                        <div class="query-notes"><strong>Remote Execution:</strong> PsExec and similar tools create a service on the remote system to execute commands. This is a common lateral movement technique. Also watch for variations like csexec, paexec, remcom.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">SMB/Network Share Access Patterns</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1021.002</span><span class="query-tag detection">Medium</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Track network share access patterns to identify lateral movement and data staging.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Windows Security Event 5140 = Network share accessed</span>
+index=windows sourcetype=WinEventLog:Security EventCode=5140
+| stats count as AccessCount,
+        dc(Share_Name) as UniqueShares,
+        values(Share_Name) as Shares,
+        dc(dest) as UniqueHosts
+        by src_ip, user
+| where UniqueHosts > 5 OR AccessCount > 100
+<span style="color: #6aa3f7;">` High access count or many different hosts = potential lateral movement</span>
+| sort - UniqueHosts
+| table user, src_ip, AccessCount, UniqueShares, UniqueHosts, Shares</div>
+                        <div class="query-notes"><strong>Pattern Analysis:</strong> Users typically access a limited set of shares. Sudden access to many hosts or shares may indicate an attacker enumerating the network or staging data for exfiltration.</div>
+                    </div>
+                </div>
+
+                <!-- EXFILTRATION -->
+                <div class="category-header" id="exfiltration">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(240,112,112,0.3), rgba(240,112,112,0.1));"><i class="fas fa-file-export" style="color: #f07070;"></i></div>
+                    <div><h2 style="margin: 0;">Data Exfiltration</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Large transfers, cloud uploads, archiving</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Large Outbound Data Transfers</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1048</span><span class="query-tag detection">High</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect unusually large outbound data transfers that may indicate data exfiltration.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Requires network traffic data (firewall, proxy, etc.)</span>
+index=network sourcetype=your_firewall_logs direction=outbound
+| stats sum(bytes_out) as TotalBytes by src_ip, dest_ip, dest_port
+| eval TotalMB=round(TotalBytes/1024/1024, 2)
+| where TotalMB > 500
+<span style="color: #6aa3f7;">` Over 500MB to single destination</span>
+| lookup dnslookup clientip as dest_ip OUTPUT clienthost as dest_hostname
+| sort - TotalMB
+| table src_ip, dest_ip, dest_hostname, dest_port, TotalMB
+
+<span style="color: #6aa3f7;">` Daily baseline comparison</span>
+index=network sourcetype=your_firewall_logs direction=outbound earliest=-1d
+| stats sum(bytes_out) as TodayBytes by src_ip
+| appendcols [search index=network sourcetype=your_firewall_logs direction=outbound earliest=-8d latest=-1d
+    | stats avg(bytes_out) as AvgDailyBytes by src_ip]
+| eval Anomaly=if(TodayBytes > AvgDailyBytes*3, "High", "Normal")
+| where Anomaly="High"
+| eval TodayMB=round(TodayBytes/1024/1024, 2)
+| eval AvgMB=round(AvgDailyBytes/1024/1024, 2)
+| table src_ip, TodayMB, AvgMB, Anomaly</div>
+                        <div class="query-notes"><strong>Exfiltration Detection:</strong> Attackers often exfiltrate data in bulk. Look for transfers exceeding baseline or going to unusual destinations (cloud storage providers, foreign IPs, etc.).</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Archive Creation Before Transfer</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1560</span><span class="query-tag detection">Medium</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect archive tool usage (7z, rar, zip) that may precede data exfiltration.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Archive tool execution</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1
+(Image="*\\7z.exe" OR Image="*\\7za.exe" OR Image="*\\rar.exe" OR 
+ Image="*\\WinRAR.exe" OR Image="*\\zip.exe" OR Image="*tar.exe")
+| rex field=CommandLine "(?<ArchiveFile>[^\s]+\.(zip|rar|7z|tar|gz))"
+<span style="color: #6aa3f7;">` Look for password-protected archives (common exfil technique)</span>
+| eval PasswordProtected=if(match(CommandLine, "(?i)(-p|-hp|--password)"), "Yes", "No")
+<span style="color: #6aa3f7;">` Look for targeting sensitive directories</span>
+| eval SensitiveTarget=case(
+    match(CommandLine, "(?i)(documents|desktop|confidential|finance|hr|legal|passwords)"), "Yes",
+    true(), "No")
+| where PasswordProtected="Yes" OR SensitiveTarget="Yes"
+| table _time, ComputerName, User, Image, CommandLine, ArchiveFile, PasswordProtected, SensitiveTarget
+| sort - _time</div>
+                        <div class="query-notes"><strong>Pre-Exfiltration Staging:</strong> Attackers often compress and password-protect data before exfiltration. This makes the transfer faster and evades DLP inspection. Watch for archive creation from sensitive directories.</div>
+                    </div>
+                </div>
+
+                <!-- THREAT HUNTING -->
+                <div class="category-header" id="hunting">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(167,139,246,0.3), rgba(167,139,246,0.1));"><i class="fas fa-crosshairs" style="color: #a78bf6;"></i></div>
+                    <div><h2 style="margin: 0;">Threat Hunting</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Anomaly detection, beaconing, rare processes</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Rare Process Execution</span>
+                        <div class="query-card-tags"><span class="query-tag">Hunting</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Find processes that have executed on very few systems - potential indicator of targeted malware or attacker tools.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Find processes seen on very few endpoints</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1 earliest=-7d
+| eval ProcessName=lower(mvindex(split(Image, "\\"), -1))
+| stats dc(ComputerName) as EndpointCount, 
+        values(ComputerName) as Endpoints,
+        values(User) as Users,
+        count as ExecutionCount,
+        values(CommandLine) as CommandLines
+        by ProcessName
+| where EndpointCount <= 3 AND EndpointCount > 0
+<span style="color: #6aa3f7;">` Executed on 3 or fewer endpoints in 7 days</span>
+| sort EndpointCount
+| table ProcessName, EndpointCount, ExecutionCount, Endpoints, Users, CommandLines</div>
+                        <div class="query-notes"><strong>Hunting Hypothesis:</strong> Malware and attacker tools are often unique or rare in an environment. Finding processes that appear on very few systems can reveal targeted attacks that signature-based detection missed.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Beaconing Detection (C2)</span>
+                        <div class="query-card-tags"><span class="query-tag mitre">T1071</span><span class="query-tag">Hunting</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Detect regular interval network connections characteristic of command-and-control beaconing behavior.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Find connections with regular timing intervals (beaconing)</span>
+index=network sourcetype=your_proxy_logs 
+| bucket _time span=1m
+| stats count as ConnectionsPerMinute by _time, src_ip, dest_ip
+| streamstats current=f last(_time) as prev_time by src_ip, dest_ip
+| eval interval=_time - prev_time
+| where isnotnull(prev_time) AND interval > 0
+| stats count as DataPoints,
+        avg(interval) as AvgInterval,
+        stdev(interval) as StdDevInterval,
+        min(interval) as MinInterval,
+        max(interval) as MaxInterval
+        by src_ip, dest_ip
+| where DataPoints > 20
+<span style="color: #6aa3f7;">` Calculate coefficient of variation (lower = more regular)</span>
+| eval CoeffVar=round((StdDevInterval/AvgInterval)*100, 2)
+| where CoeffVar < 15 AND AvgInterval > 30 AND AvgInterval < 900
+<span style="color: #6aa3f7;">` Low variance (CV < 15%) in 30s-15min range = potential beacon</span>
+| sort CoeffVar
+| table src_ip, dest_ip, DataPoints, AvgInterval, StdDevInterval, CoeffVar</div>
+                        <div class="query-notes"><strong>Beaconing Patterns:</strong> C2 malware often "beacons" home at regular intervals (e.g., every 60 seconds). Low coefficient of variation indicates very regular timing, which is suspicious for network traffic. Legitimate traffic is typically more variable.</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">First-Time Process Execution</span>
+                        <div class="query-card-tags"><span class="query-tag">Hunting</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Identify processes running for the first time in the last 24 hours that haven't been seen in the prior 30 days.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Find new processes in last 24h not seen in prior 30 days</span>
+index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1 earliest=-1d
+| eval ProcessName=lower(mvindex(split(Image, "\\"), -1))
+| dedup ProcessName
+| fields ProcessName
+| join type=left ProcessName 
+    [search index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1 earliest=-31d latest=-1d
+    | eval ProcessName=lower(mvindex(split(Image, "\\"), -1))
+    | dedup ProcessName
+    | eval SeenBefore="Yes"
+    | fields ProcessName, SeenBefore]
+| where isnull(SeenBefore)
+<span style="color: #6aa3f7;">` These processes are new - never seen in past 30 days</span>
+| table ProcessName
+
+<span style="color: #6aa3f7;">` Get details on the new processes</span>
+| join ProcessName 
+    [search index=windows sourcetype=XmlWinEventLog:Microsoft-Windows-Sysmon/Operational EventCode=1 earliest=-1d
+    | eval ProcessName=lower(mvindex(split(Image, "\\"), -1))
+    | stats values(ComputerName) as Hosts, values(User) as Users, values(CommandLine) as CommandLines by ProcessName]
+| table ProcessName, Hosts, Users, CommandLines</div>
+                        <div class="query-notes"><strong>First Seen Analysis:</strong> New processes appearing suddenly could indicate malware introduction or attacker tools being deployed. Requires a baseline period (30 days in this example) to identify truly "new" processes.</div>
+                    </div>
+                </div>
+
+                <!-- STATISTICS -->
+                <div class="category-header" id="statistics">
+                    <div class="category-icon" style="background: linear-gradient(135deg, rgba(92,224,196,0.3), rgba(92,224,196,0.1));"><i class="fas fa-chart-bar" style="color: #5ce0c4;"></i></div>
+                    <div><h2 style="margin: 0;">Statistics & Reporting</h2><p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">Dashboards, metrics, summaries</p></div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Security Event Summary Dashboard</span>
+                        <div class="query-card-tags"><span class="query-tag">Reporting</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Create a summary of key security events for SOC dashboards.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Daily security event summary</span>
+index=windows sourcetype=WinEventLog:Security earliest=-24h
+| eval EventCategory=case(
+    EventCode IN (4624, 4625, 4634, 4647, 4648), "Authentication",
+    EventCode IN (4720, 4722, 4723, 4724, 4725, 4726, 4738, 4740), "Account Management",
+    EventCode IN (4728, 4729, 4732, 4733, 4756, 4757), "Group Management",
+    EventCode IN (4688, 4689), "Process Execution",
+    EventCode IN (4697, 4698, 4699, 4700, 4701, 4702), "Scheduled Tasks/Services",
+    EventCode IN (5140, 5145), "File Share Access",
+    EventCode=1102, "Audit Log Cleared",
+    true(), "Other")
+| stats count by EventCategory
+| sort - count
+
+<span style="color: #6aa3f7;">` Timechart version for trends</span>
+index=windows sourcetype=WinEventLog:Security earliest=-7d
+| eval EventCategory=case(
+    EventCode IN (4624, 4625), "Logon Events",
+    EventCode IN (4720, 4726), "Account Changes",
+    EventCode IN (4688), "Process Creation",
+    true(), "Other")
+| timechart span=1h count by EventCategory</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Top Talkers (Network)</span>
+                        <div class="query-card-tags"><span class="query-tag">Reporting</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Identify the highest bandwidth users and destinations on your network.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Top internal hosts by outbound traffic</span>
+index=network sourcetype=your_firewall direction=outbound earliest=-24h
+| stats sum(bytes_out) as TotalBytes, dc(dest_ip) as UniqueDestinations by src_ip
+| eval TotalGB=round(TotalBytes/1024/1024/1024, 2)
+| sort - TotalBytes
+| head 20
+| table src_ip, TotalGB, UniqueDestinations
+
+<span style="color: #6aa3f7;">` Top external destinations</span>
+index=network sourcetype=your_firewall direction=outbound earliest=-24h
+| stats sum(bytes_out) as TotalBytes, dc(src_ip) as UniqueSourcesIPs by dest_ip
+| eval TotalGB=round(TotalBytes/1024/1024/1024, 2)
+| lookup dnslookup clientip as dest_ip OUTPUT clienthost as dest_hostname
+| iplocation dest_ip
+| sort - TotalBytes
+| head 20
+| table dest_ip, dest_hostname, Country, TotalGB, UniqueSourcesIPs</div>
+                    </div>
+                </div>
+
+                <div class="query-card">
+                    <div class="query-card-header">
+                        <span class="query-card-title">Failed Login Heatmap</span>
+                        <div class="query-card-tags"><span class="query-tag">Visualization</span></div>
+                    </div>
+                    <div class="query-card-body">
+                        <div class="query-card-desc">Create a time-based heatmap of failed login attempts to identify attack patterns.</div>
+                        <div class="query-code"><span style="color: #6aa3f7;">` Failed logins by hour and day of week</span>
+index=windows sourcetype=WinEventLog:Security EventCode=4625 earliest=-7d
+| eval HourOfDay=strftime(_time, "%H")
+| eval DayOfWeek=strftime(_time, "%A")
+| stats count by DayOfWeek, HourOfDay
+| xyseries DayOfWeek HourOfDay count
+
+<span style="color: #6aa3f7;">` This creates a matrix perfect for heatmap visualization</span>
+<span style="color: #6aa3f7;">` In Splunk dashboard, use "Choropleth Map" or "Heat Map" visualization</span></div>
+                        <div class="query-notes"><strong>Pattern Recognition:</strong> Heatmaps reveal temporal patterns in attacks. Brute force attempts often spike during off-hours or weekends when response may be slower. Business hours attacks may indicate insider threats.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

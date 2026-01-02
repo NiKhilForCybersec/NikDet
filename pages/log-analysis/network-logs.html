@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Logs | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Log Analysis</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="la-nav"><i class="fas fa-file-alt"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="la-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="windows-events.html">Windows Events</a></li>
+                    <li><a href="sysmon.html">Sysmon</a></li>
+                    <li><a href="linux-logs.html">Linux Logs</a></li>
+                    <li><a href="network-logs.html" class="active">Network Logs</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Log Analysis</a><span class="separator">/</span><span>Network Logs</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-network-wired" style="color: var(--accent-tertiary);"></i> Network Log Analysis</h1>
+                <p class="lead">Visibility into network traffic for detecting lateral movement, C2, and exfiltration.</p>
+            </div>
+            <div class="content">
+                <h2>Network Log Sources</h2>
+                <table>
+                    <thead><tr><th>Source</th><th>What It Provides</th><th>Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Firewall Logs</strong></td><td>Allowed/denied connections</td><td>Policy violations, scanning, blocked attacks</td></tr>
+                        <tr><td><strong>Proxy Logs</strong></td><td>HTTP/HTTPS requests</td><td>C2 callbacks, malware downloads</td></tr>
+                        <tr><td><strong>DNS Logs</strong></td><td>DNS queries/responses</td><td>C2 domains, tunneling, DGA</td></tr>
+                        <tr><td><strong>NetFlow/IPFIX</strong></td><td>Connection metadata</td><td>Traffic patterns, beaconing, exfil</td></tr>
+                        <tr><td><strong>IDS/IPS</strong></td><td>Signature-based alerts</td><td>Known attack patterns</td></tr>
+                        <tr><td><strong>Zeek (Bro)</strong></td><td>Rich connection logs</td><td>Detailed protocol analysis</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Firewall Logs</h2>
+                <h3>Common Fields</h3>
+                <table>
+                    <thead><tr><th>Field</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>src_ip</strong></td><td>Source IP address</td><td>192.168.1.100</td></tr>
+                        <tr><td><strong>dst_ip</strong></td><td>Destination IP</td><td>8.8.8.8</td></tr>
+                        <tr><td><strong>src_port</strong></td><td>Source port</td><td>52341</td></tr>
+                        <tr><td><strong>dst_port</strong></td><td>Destination port</td><td>443</td></tr>
+                        <tr><td><strong>protocol</strong></td><td>IP protocol</td><td>TCP, UDP, ICMP</td></tr>
+                        <tr><td><strong>action</strong></td><td>Allow/deny/drop</td><td>allow</td></tr>
+                        <tr><td><strong>bytes_sent</strong></td><td>Outbound bytes</td><td>1024</td></tr>
+                        <tr><td><strong>bytes_recv</strong></td><td>Inbound bytes</td><td>50234</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Key Detection Patterns</h3>
+                <table>
+                    <thead><tr><th>Pattern</th><th>Query Approach</th><th>Indicates</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Port Scanning</strong></td>
+                            <td>Same src_ip → many dst_ports, action=deny</td>
+                            <td>Reconnaissance</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lateral Movement</strong></td>
+                            <td>Internal → Internal on RDP/SMB/WinRM</td>
+                            <td>Attack progression</td>
+                        </tr>
+                        <tr>
+                            <td><strong>C2 Beaconing</strong></td>
+                            <td>Regular intervals to same destination</td>
+                            <td>Malware communication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Exfiltration</strong></td>
+                            <td>Large bytes_sent to external IP</td>
+                            <td>Data theft</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Suspicious Ports</strong></td>
+                            <td>Outbound on 4444, 5555, 8080, etc.</td>
+                            <td>Reverse shells, C2</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Proxy Logs</h2>
+                <h3>Common Fields</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">timestamp:</span>     2025-01-15T14:23:45Z
+<span style="color: #a78bf6;">src_ip:</span>        192.168.1.100
+<span style="color: #a78bf6;">user:</span>          jsmith
+<span style="color: #a78bf6;">method:</span>        GET
+<span style="color: #a78bf6;">url:</span>           https://malware.bad/payload.exe
+<span style="color: #a78bf6;">host:</span>          malware.bad
+<span style="color: #a78bf6;">user_agent:</span>    Mozilla/5.0 (Windows NT 10.0; Win64; x64)...
+<span style="color: #a78bf6;">status_code:</span>   200
+<span style="color: #a78bf6;">bytes:</span>         524288
+<span style="color: #a78bf6;">category:</span>      Malware
+<span style="color: #a78bf6;">action:</span>        blocked</pre>
+                </div>
+
+                <h3>Suspicious Indicators</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Example</th><th>Why Suspicious</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Direct IP Access</strong></td>
+                            <td>http://45.33.32.156/file.exe</td>
+                            <td>Bypasses DNS, indicates C2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rare TLDs</strong></td>
+                            <td>.xyz, .top, .tk, .ml</td>
+                            <td>Often used for malware</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Long URLs</strong></td>
+                            <td>base64-encoded parameters</td>
+                            <td>Data exfil, C2 commands</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unusual User-Agent</strong></td>
+                            <td>curl, wget, python-requests</td>
+                            <td>Scripted downloads</td>
+                        </tr>
+                        <tr>
+                            <td><strong>POST to rare domains</strong></td>
+                            <td>POST to newly registered domain</td>
+                            <td>Data exfiltration</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>DNS Logs</h2>
+                <p>DNS logs are incredibly valuable for threat detection. Every network connection starts with DNS.</p>
+
+                <h3>Common Fields</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">timestamp:</span>     2025-01-15T14:23:45Z
+<span style="color: #a78bf6;">src_ip:</span>        192.168.1.100
+<span style="color: #a78bf6;">query:</span>         malware.bad
+<span style="color: #a78bf6;">query_type:</span>    A
+<span style="color: #a78bf6;">response:</span>      45.33.32.156
+<span style="color: #a78bf6;">response_code:</span> NOERROR</pre>
+                </div>
+
+                <h3>DNS Detection Techniques</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>What to Look For</th><th>Indicates</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Known Bad Domains</strong></td>
+                            <td>Match against threat intel feeds</td>
+                            <td>Known malware/C2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DGA Detection</strong></td>
+                            <td>High entropy domain names</td>
+                            <td>Domain Generation Algorithm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DNS Tunneling</strong></td>
+                            <td>Long subdomains, many TXT queries</td>
+                            <td>Data exfiltration via DNS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NXDOMAIN Spikes</strong></td>
+                            <td>Many failed lookups</td>
+                            <td>DGA or scanning</td>
+                        </tr>
+                        <tr>
+                            <td><strong>New Domains</strong></td>
+                            <td>Query to newly registered domain</td>
+                            <td>Phishing, malware</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>DGA Example</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Normal domains</span>
+google.com
+microsoft.com
+salesforce.com
+
+<span style="color: #6aa3f7;"># DGA domains (suspicious - high entropy)</span>
+asd8f7asdf8a7sdf.com
+kjh3k4jh5kjh345.net
+xyzzy123abc456.xyz</pre>
+                </div>
+
+                <h2>NetFlow/IPFIX</h2>
+                <p>Flow data provides connection metadata without full packet capture.</p>
+
+                <h3>Flow Record Fields</h3>
+                <table>
+                    <thead><tr><th>Field</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>src_ip / dst_ip</strong></td><td>Source and destination IP</td></tr>
+                        <tr><td><strong>src_port / dst_port</strong></td><td>Source and destination ports</td></tr>
+                        <tr><td><strong>protocol</strong></td><td>IP protocol number</td></tr>
+                        <tr><td><strong>bytes</strong></td><td>Total bytes transferred</td></tr>
+                        <tr><td><strong>packets</strong></td><td>Packet count</td></tr>
+                        <tr><td><strong>start_time / end_time</strong></td><td>Flow duration</td></tr>
+                        <tr><td><strong>tcp_flags</strong></td><td>TCP flags seen</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Beaconing Detection</h3>
+                <p>C2 malware often "beacons" at regular intervals:</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Look for consistent intervals between connections</span>
+
+192.168.1.100 → 45.33.32.156:443  @ 14:00:00
+192.168.1.100 → 45.33.32.156:443  @ 14:05:00  <span style="color: #5ce0c4;">(+5 min)</span>
+192.168.1.100 → 45.33.32.156:443  @ 14:10:00  <span style="color: #5ce0c4;">(+5 min)</span>
+192.168.1.100 → 45.33.32.156:443  @ 14:15:00  <span style="color: #5ce0c4;">(+5 min)</span>
+
+<span style="color: #f07070;">⚠ Regular 5-minute intervals = likely beaconing</span></pre>
+                </div>
+
+                <h2>Zeek (Bro) Logs</h2>
+                <p>Zeek provides rich, protocol-aware network logs.</p>
+
+                <h3>Key Zeek Log Files</h3>
+                <table>
+                    <thead><tr><th>Log File</th><th>Contents</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>conn.log</strong></td><td>All connections</td><td>Traffic analysis, baselining</td></tr>
+                        <tr><td><strong>dns.log</strong></td><td>DNS queries</td><td>C2 detection, DGA</td></tr>
+                        <tr><td><strong>http.log</strong></td><td>HTTP requests</td><td>Web attacks, downloads</td></tr>
+                        <tr><td><strong>ssl.log</strong></td><td>TLS handshakes</td><td>Certificate analysis</td></tr>
+                        <tr><td><strong>files.log</strong></td><td>File transfers</td><td>Malware downloads</td></tr>
+                        <tr><td><strong>notice.log</strong></td><td>Zeek alerts</td><td>Built-in detections</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Sample conn.log</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; overflow-x: auto;">
+<pre style="margin: 0;">ts              uid             id.orig_h       id.orig_p  id.resp_h       id.resp_p  proto  duration  orig_bytes  resp_bytes
+1705330800.123  CHhAvVGS1Dh...  192.168.1.100   52341      8.8.8.8         443        tcp    0.523     1024        2048</pre>
+                </div>
+
+                <h2>Investigation Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL: Find potential beaconing</span>
+NetworkEvents
+| where TimeGenerated > ago(24h)
+| summarize 
+    count(),
+    make_list(TimeGenerated)
+    by SourceIP, DestinationIP, DestinationPort
+| where array_length(list_TimeGenerated) > 10
+| extend intervals = array_sort_asc(list_TimeGenerated)
+
+<span style="color: #6aa3f7;">// SPL: Large data transfers</span>
+index=firewall 
+| stats sum(bytes_out) as total_bytes by src_ip, dst_ip
+| where total_bytes > 100000000
+| sort -total_bytes
+
+<span style="color: #6aa3f7;">// KQL: DNS to rare TLDs</span>
+DnsEvents
+| where Name endswith ".xyz" or Name endswith ".top" or Name endswith ".tk"
+| summarize count() by Name, ClientIP
+| sort by count_ desc</pre>
+                </div>
+
+                <h2>Network Detection Checklist</h2>
+                <ul>
+                    <li><strong>Firewall:</strong> Denied connections, unusual ports, internal scanning</li>
+                    <li><strong>Proxy:</strong> Direct IP access, rare TLDs, suspicious downloads</li>
+                    <li><strong>DNS:</strong> DGA patterns, tunneling, known bad domains</li>
+                    <li><strong>Flow:</strong> Beaconing, large transfers, unusual destinations</li>
+                    <li><strong>Time:</strong> Activity outside business hours</li>
+                </ul>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Hunting | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Threat Hunting</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="th-nav"><i class="fas fa-crosshairs"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="th-nav">
+                    <li><a href="index.html" class="active">Hunting Overview</a></li>
+                    <li><a href="methodology.html">Methodology</a></li>
+                    <li><a href="hypothesis.html">Hypothesis Development</a></li>
+                    <li><a href="hunt-playbooks.html">Hunt Playbooks</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Threat Hunting</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-crosshairs" style="color: var(--accent-tertiary);"></i> Threat Hunting</h1>
+                <p class="lead">Proactively search for threats that evade automated detection.</p>
+            </div>
+            <div class="content">
+                <h2>What is Threat Hunting?</h2>
+                <p>Threat hunting is the <strong>proactive, human-driven</strong> search for threats that have evaded existing security controls and automated detection. Unlike reactive incident response, hunting assumes the adversary is already inside and actively seeks to find them.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: linear-gradient(135deg, rgba(92,224,196,0.15), transparent); border: 1px solid rgba(92,224,196,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #5ce0c4; margin-top: 0;"><i class="fas fa-search"></i> Proactive</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Hunt before alerts fire. Don't wait for detections to trigger.</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(106,163,247,0.15), transparent); border: 1px solid rgba(106,163,247,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #6aa3f7; margin-top: 0;"><i class="fas fa-brain"></i> Hypothesis-Driven</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Start with a theory about attacker behavior, then test it.</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(167,139,246,0.15), transparent); border: 1px solid rgba(167,139,246,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #a78bf6; margin-top: 0;"><i class="fas fa-user"></i> Human-Led</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Analyst creativity and intuition drive the search.</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(240,183,86,0.15), transparent); border: 1px solid rgba(240,183,86,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #f0b756; margin-top: 0;"><i class="fas fa-sync"></i> Iterative</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Refine hypotheses based on findings. Each hunt informs the next.</p>
+                    </div>
+                </div>
+
+                <h2>Hunting vs. Detection vs. Incident Response</h2>
+                <table>
+                    <thead><tr><th>Aspect</th><th>Threat Hunting</th><th>Detection</th><th>Incident Response</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Trigger</strong></td><td>Hypothesis/schedule</td><td>Automated alert</td><td>Confirmed incident</td></tr>
+                        <tr><td><strong>Approach</strong></td><td>Proactive search</td><td>Rule-based matching</td><td>Reactive investigation</td></tr>
+                        <tr><td><strong>Assumption</strong></td><td>Attacker may be present</td><td>Known bad patterns</td><td>Attacker confirmed present</td></tr>
+                        <tr><td><strong>Outcome</strong></td><td>New detections or incidents</td><td>Alerts for triage</td><td>Containment/remediation</td></tr>
+                        <tr><td><strong>Driver</strong></td><td>Human analyst</td><td>Automation</td><td>Alert or escalation</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>The Hunting Loop</h2>
+                <div style="text-align: center; margin: 2rem 0;">
+                    <div style="display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; align-items: center;">
+                        <div style="width: 120px; padding: 1rem; background: rgba(106,163,247,0.2); border: 2px solid #6aa3f7; border-radius: var(--radius-md); text-align: center;">
+                            <i class="fas fa-lightbulb" style="font-size: 1.5rem; color: #6aa3f7;"></i>
+                            <div style="margin-top: 0.5rem; font-weight: 600;">1. Hypothesis</div>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                        <div style="width: 120px; padding: 1rem; background: rgba(92,224,196,0.2); border: 2px solid #5ce0c4; border-radius: var(--radius-md); text-align: center;">
+                            <i class="fas fa-database" style="font-size: 1.5rem; color: #5ce0c4;"></i>
+                            <div style="margin-top: 0.5rem; font-weight: 600;">2. Collect</div>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                        <div style="width: 120px; padding: 1rem; background: rgba(167,139,246,0.2); border: 2px solid #a78bf6; border-radius: var(--radius-md); text-align: center;">
+                            <i class="fas fa-search" style="font-size: 1.5rem; color: #a78bf6;"></i>
+                            <div style="margin-top: 0.5rem; font-weight: 600;">3. Analyze</div>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                        <div style="width: 120px; padding: 1rem; background: rgba(240,183,86,0.2); border: 2px solid #f0b756; border-radius: var(--radius-md); text-align: center;">
+                            <i class="fas fa-file-alt" style="font-size: 1.5rem; color: #f0b756;"></i>
+                            <div style="margin-top: 0.5rem; font-weight: 600;">4. Document</div>
+                        </div>
+                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                        <div style="width: 120px; padding: 1rem; background: rgba(240,112,112,0.2); border: 2px solid #f07070; border-radius: var(--radius-md); text-align: center;">
+                            <i class="fas fa-cogs" style="font-size: 1.5rem; color: #f07070;"></i>
+                            <div style="margin-top: 0.5rem; font-weight: 600;">5. Automate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Loop Steps Explained</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Form Hypothesis</div>
+                            <p>Develop a testable theory about attacker presence or behavior based on threat intelligence, attack trends, or gaps in detection coverage.</p>
+                            <p><strong>Example:</strong> "Attackers are using certutil.exe to download malware from external URLs in our environment."</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Collect Data</div>
+                            <p>Identify data sources needed to test the hypothesis. Query SIEM, EDR, or other tools to gather relevant events.</p>
+                            <p><strong>Example:</strong> Query for all certutil.exe executions with "-urlcache" in command line over last 30 days.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Analyze</div>
+                            <p>Examine the data for anomalies, patterns, or evidence of malicious activity. Pivot on findings to expand scope.</p>
+                            <p><strong>Example:</strong> Found 3 instances from marketing workstations downloading from suspicious domains.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Document</div>
+                            <p>Record methodology, queries, findings, and conclusions. Document both successful and unsuccessful hunts.</p>
+                            <p><strong>Example:</strong> Create hunt report with timeline, affected hosts, IOCs, and recommendations.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Automate</div>
+                            <p>If hunt reveals detection gap, create automated detection rule. Convert successful hunt queries into production alerts.</p>
+                            <p><strong>Example:</strong> Deploy new detection: "Certutil External URL Download" based on hunt findings.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>Types of Hunts</h2>
+                <table>
+                    <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Hypothesis-Driven</strong></td>
+                            <td>Start with theory about attacker TTPs</td>
+                            <td>"Hunt for LOLBin abuse in engineering department"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Intelligence-Driven</strong></td>
+                            <td>Based on specific threat intel or IOCs</td>
+                            <td>"Hunt for TTPs from recent APT report"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Anomaly-Driven</strong></td>
+                            <td>Look for statistical outliers</td>
+                            <td>"Find users with unusual login times"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Asset-Focused</strong></td>
+                            <td>Focus on high-value targets</td>
+                            <td>"Hunt for threats on domain controllers"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Technique-Focused</strong></td>
+                            <td>Based on ATT&CK technique</td>
+                            <td>"Hunt for T1003 Credential Dumping"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Hypothesis Examples</h2>
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Strong Hypothesis Characteristics</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Specific:</strong> Clearly defines what you're looking for</li>
+                        <li><strong>Testable:</strong> Can be validated with available data</li>
+                        <li><strong>Threat-based:</strong> Grounded in real attacker behaviors</li>
+                        <li><strong>Scoped:</strong> Reasonable timeframe and data volume</li>
+                    </ul>
+                </div>
+
+                <h3>Sample Hypotheses by Tactic</h3>
+                <table>
+                    <thead><tr><th>Tactic</th><th>Hypothesis</th><th>Data Sources</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Initial Access</strong></td>
+                            <td>Attackers delivered malware via phishing that bypassed email filters</td>
+                            <td>Email logs, endpoint telemetry</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Execution</strong></td>
+                            <td>Malicious scripts are running via WMIC on workstations</td>
+                            <td>Sysmon, Windows Security</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Persistence</strong></td>
+                            <td>Unauthorized scheduled tasks exist on servers</td>
+                            <td>Sysmon, Task Scheduler logs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Credential Access</strong></td>
+                            <td>Attackers are dumping credentials from LSASS</td>
+                            <td>Sysmon 10, EDR</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lateral Movement</strong></td>
+                            <td>Attackers using stolen creds for RDP access</td>
+                            <td>Windows Security, RDP logs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exfiltration</strong></td>
+                            <td>Data being staged in unusual locations before exfil</td>
+                            <td>File system logs, DLP</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Hunt Metrics</h2>
+                <table>
+                    <thead><tr><th>Metric</th><th>Description</th><th>Target</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Hunts Completed</strong></td><td>Number of hunts per period</td><td>4-8 per month</td></tr>
+                        <tr><td><strong>Findings Rate</strong></td><td>% of hunts with actionable findings</td><td>20-30%</td></tr>
+                        <tr><td><strong>Detections Created</strong></td><td>New rules from hunt findings</td><td>1-2 per hunt</td></tr>
+                        <tr><td><strong>Incidents Found</strong></td><td>Active threats discovered</td><td>Track, no target</td></tr>
+                        <tr><td><strong>Hunt Duration</strong></td><td>Average time per hunt</td><td>4-8 hours</td></tr>
+                        <tr><td><strong>ATT&CK Coverage</strong></td><td>Techniques hunted</td><td>Increase over time</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Getting Started</h2>
+                <ol>
+                    <li><strong>Start small:</strong> Begin with 1-2 hunts per month</li>
+                    <li><strong>Use ATT&CK:</strong> Pick techniques relevant to your threat model</li>
+                    <li><strong>Leverage existing queries:</strong> Build on KQL/SPL library</li>
+                    <li><strong>Document everything:</strong> Even "no findings" is valuable</li>
+                    <li><strong>Create detections:</strong> Turn successful hunts into automated rules</li>
+                    <li><strong>Build a program:</strong> Develop repeatable methodology and playbooks</li>
+                </ol>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

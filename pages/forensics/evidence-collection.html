@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evidence Collection | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Digital Forensics</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="df-nav"><i class="fas fa-search"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="df-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="evidence-collection.html" class="active">Evidence Collection</a></li>
+                    <li><a href="memory-forensics.html">Memory Forensics</a></li>
+                    <li><a href="disk-forensics.html">Disk Forensics</a></li>
+                    <li><a href="timeline-analysis.html">Timeline Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Forensics</a><span class="separator">/</span><span>Evidence Collection</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-archive" style="color: var(--accent-secondary);"></i> Evidence Collection</h1>
+                <p class="lead">Properly collect, preserve, and document digital evidence to maintain integrity and legal admissibility.</p>
+            </div>
+            <div class="content">
+                <h2>Evidence Collection Principles</h2>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Golden Rules</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Never modify evidence:</strong> Work on copies, not originals</li>
+                        <li><strong>Collect volatile first:</strong> Memory before disk, network before logs</li>
+                        <li><strong>Document everything:</strong> Photos, notes, timestamps</li>
+                        <li><strong>Maintain chain of custody:</strong> Track who handled what and when</li>
+                        <li><strong>Hash everything:</strong> Verify integrity with cryptographic hashes</li>
+                    </ul>
+                </div>
+
+                <h2>Order of Volatility</h2>
+                <p>Collect evidence in order from most volatile to least volatile:</p>
+                <table>
+                    <thead><tr><th>Priority</th><th>Evidence Type</th><th>Volatility</th><th>Collection Method</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>CPU Registers, Cache</td><td style="color: #f07070;">Nanoseconds</td><td>Special tools (rarely collected)</td></tr>
+                        <tr><td>2</td><td>Memory (RAM)</td><td style="color: #f07070;">Seconds-Minutes</td><td>WinPmem, AVML, LiME</td></tr>
+                        <tr><td>3</td><td>Network State</td><td style="color: #f0b756;">Minutes</td><td>netstat, connection logs</td></tr>
+                        <tr><td>4</td><td>Running Processes</td><td style="color: #f0b756;">Minutes</td><td>Memory dump, process list</td></tr>
+                        <tr><td>5</td><td>Disk (Non-volatile)</td><td style="color: #5ce0c4;">Stable</td><td>Disk imaging</td></tr>
+                        <tr><td>6</td><td>Backup/Archive</td><td style="color: #5ce0c4;">Stable</td><td>Copy from backup system</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Live System Collection</h2>
+                <h3>Before You Start</h3>
+                <ul>
+                    <li>Document system state: take photos of screen, note running applications</li>
+                    <li>Note current time and timezone</li>
+                    <li>Prepare write-protected external storage</li>
+                    <li>Use trusted tools from USB (don't trust tools on compromised system)</li>
+                </ul>
+
+                <h3>Windows Live Collection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Collect system information</span>
+systeminfo > E:\Evidence\systeminfo.txt
+hostname > E:\Evidence\hostname.txt
+date /t > E:\Evidence\datetime.txt
+time /t >> E:\Evidence\datetime.txt
+
+<span style="color: #6aa3f7;"># Network connections</span>
+netstat -anob > E:\Evidence\netstat.txt
+ipconfig /all > E:\Evidence\ipconfig.txt
+arp -a > E:\Evidence\arp.txt
+route print > E:\Evidence\routes.txt
+
+<span style="color: #6aa3f7;"># Running processes</span>
+tasklist /v > E:\Evidence\tasklist.txt
+wmic process list full > E:\Evidence\processes.txt
+
+<span style="color: #6aa3f7;"># Logged-in users</span>
+query user > E:\Evidence\users.txt
+net session > E:\Evidence\sessions.txt
+
+<span style="color: #6aa3f7;"># Scheduled tasks</span>
+schtasks /query /fo csv /v > E:\Evidence\schtasks.csv
+
+<span style="color: #6aa3f7;"># Services</span>
+sc query state= all > E:\Evidence\services.txt
+
+<span style="color: #6aa3f7;"># Memory acquisition</span>
+winpmem_mini_x64.exe E:\Evidence\memory.raw</pre>
+                </div>
+
+                <h3>Linux Live Collection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># System information</span>
+uname -a > /mnt/evidence/uname.txt
+hostname > /mnt/evidence/hostname.txt
+date > /mnt/evidence/datetime.txt
+
+<span style="color: #6aa3f7;"># Network</span>
+netstat -antp > /mnt/evidence/netstat.txt
+ss -antp > /mnt/evidence/ss.txt
+ip addr > /mnt/evidence/ipaddr.txt
+
+<span style="color: #6aa3f7;"># Processes</span>
+ps auxf > /mnt/evidence/ps.txt
+lsof > /mnt/evidence/lsof.txt
+
+<span style="color: #6aa3f7;"># Users</span>
+w > /mnt/evidence/users.txt
+last -a > /mnt/evidence/last.txt
+
+<span style="color: #6aa3f7;"># Cron jobs</span>
+cat /etc/crontab > /mnt/evidence/crontab.txt
+ls -la /etc/cron.* > /mnt/evidence/crondirs.txt
+
+<span style="color: #6aa3f7;"># Memory acquisition</span>
+./avml /mnt/evidence/memory.lime</pre>
+                </div>
+
+                <h2>KAPE - Fast Artifact Collection</h2>
+                <p>Kroll Artifact Parser and Extractor (KAPE) automates forensic artifact collection.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Collect triage artifacts</span>
+kape.exe --tsource C: --target KapeTriage --tdest E:\Evidence\KAPE
+
+<span style="color: #6aa3f7;"># Collect and parse</span>
+kape.exe --tsource C: --target KapeTriage --tdest E:\Evidence\KAPE ^
+         --mdest E:\Evidence\KAPE\Parsed --module !EZParser
+
+<span style="color: #6aa3f7;"># Common KAPE targets:</span>
+# KapeTriage      - Comprehensive triage collection
+# EventLogs       - Windows event logs
+# RegistryHives   - Registry files
+# Prefetch        - Prefetch files
+# Amcache         - Amcache.hve
+# SRUM            - System Resource Usage Monitor
+# $MFT            - Master File Table</pre>
+                </div>
+
+                <h2>Disk Imaging</h2>
+                <h3>Imaging Tools</h3>
+                <table>
+                    <thead><tr><th>Tool</th><th>Platform</th><th>Output Format</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>FTK Imager</strong></td><td>Windows</td><td>E01, DD, AD1</td></tr>
+                        <tr><td><strong>dc3dd</strong></td><td>Linux</td><td>Raw (DD)</td></tr>
+                        <tr><td><strong>Guymager</strong></td><td>Linux (GUI)</td><td>E01, AFF, DD</td></tr>
+                        <tr><td><strong>dd</strong></td><td>Linux</td><td>Raw (DD)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Imaging Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Linux - dc3dd (preferred over dd)</span>
+dc3dd if=/dev/sda of=/mnt/evidence/disk.raw hash=sha256 log=disk.log
+
+<span style="color: #6aa3f7;"># Split into segments</span>
+dc3dd if=/dev/sda of=/mnt/evidence/disk.raw.000 ofs=disk.raw ofsz=2G hash=sha256
+
+<span style="color: #6aa3f7;"># Verify hash</span>
+sha256sum /mnt/evidence/disk.raw</pre>
+                </div>
+
+                <h2>Evidence Hashing</h2>
+                <p>Always calculate and document hashes to verify evidence integrity.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Windows - PowerShell</span>
+Get-FileHash -Algorithm SHA256 E:\Evidence\memory.raw
+
+<span style="color: #6aa3f7;"># Linux</span>
+sha256sum /mnt/evidence/memory.raw
+md5sum /mnt/evidence/memory.raw
+
+<span style="color: #6aa3f7;"># Multiple files</span>
+sha256sum /mnt/evidence/* > /mnt/evidence/hashes.txt</pre>
+                </div>
+
+                <h2>Chain of Custody</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">═══════════════════════════════════════════════════════════════════</span>
+<span style="color: #a78bf6;">                    CHAIN OF CUSTODY FORM</span>
+<span style="color: #a78bf6;">═══════════════════════════════════════════════════════════════════</span>
+
+<span style="color: #6aa3f7;">CASE INFORMATION</span>
+Case Number:      IR-2025-001
+Case Name:        Suspected Compromise - Finance Server
+Investigating:    Security Operations Team
+
+<span style="color: #6aa3f7;">EVIDENCE DETAILS</span>
+Evidence ID:      E001
+Type:             Memory Dump
+Description:      RAM capture from FINSERVER01
+File Name:        memory_FINSERVER01_20250115.raw
+File Size:        16,384,000,000 bytes (16 GB)
+SHA256:           a1b2c3d4e5f6789...
+
+<span style="color: #6aa3f7;">COLLECTION</span>
+Collected By:     John Smith
+Date/Time:        2025-01-15 14:32:00 UTC
+Location:         Server Room A, Rack 12
+Method:           WinPmem v4.0
+Notes:            System was powered on, suspected active C2
+
+<span style="color: #6aa3f7;">CUSTODY LOG</span>
+┌──────────────────┬───────────────┬───────────────┬──────────────┐
+│ Date/Time        │ From          │ To            │ Purpose      │
+├──────────────────┼───────────────┼───────────────┼──────────────┤
+│ 2025-01-15 14:32 │ -             │ John Smith    │ Collection   │
+│ 2025-01-15 15:00 │ John Smith    │ Evidence Safe │ Storage      │
+│ 2025-01-16 09:00 │ Evidence Safe │ Jane Doe      │ Analysis     │
+│ 2025-01-16 17:00 │ Jane Doe      │ Evidence Safe │ Storage      │
+└──────────────────┴───────────────┴───────────────┴──────────────┘
+
+<span style="color: #6aa3f7;">SIGNATURES</span>
+Collected By: _______________ Date: ___________
+Received By:  _______________ Date: ___________</pre>
+                </div>
+
+                <h2>Evidence Storage</h2>
+                <ul>
+                    <li><strong>Physical security:</strong> Locked cabinet or safe, limited access</li>
+                    <li><strong>Digital security:</strong> Encrypted storage, access logging</li>
+                    <li><strong>Redundancy:</strong> At least two copies in different locations</li>
+                    <li><strong>Labeling:</strong> Case number, date, description, hash</li>
+                    <li><strong>Access log:</strong> Record all access to evidence</li>
+                </ul>
+
+                <h2>Evidence Collection Checklist</h2>
+                <table>
+                    <thead><tr><th>Item</th><th>Collected</th><th>Hash Verified</th><th>Documented</th></tr></thead>
+                    <tbody>
+                        <tr><td>Memory dump</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Network connections</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Running processes</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Disk image</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Event logs (KAPE)</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Registry hives</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Prefetch files</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Browser history</td><td>☐</td><td>☐</td><td>☐</td></tr>
+                        <tr><td>Photos of system</td><td>☐</td><td>N/A</td><td>☐</td></tr>
+                        <tr><td>Chain of custody form</td><td>☐</td><td>N/A</td><td>☐</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

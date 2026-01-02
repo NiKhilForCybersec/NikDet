@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunt Playbooks | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Threat Hunting</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="th-nav"><i class="fas fa-crosshairs"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="th-nav">
+                    <li><a href="index.html">Hunting Overview</a></li>
+                    <li><a href="methodology.html">Methodology</a></li>
+                    <li><a href="hypothesis.html">Hypothesis Development</a></li>
+                    <li><a href="hunt-playbooks.html" class="active">Hunt Playbooks</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Threat Hunting</a><span class="separator">/</span><span>Hunt Playbooks</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-book" style="color: var(--accent-secondary);"></i> Hunt Playbooks</h1>
+                <p class="lead">Ready-to-use threat hunting playbooks with queries, analysis steps, and detection outputs.</p>
+            </div>
+            <div class="content">
+                <h2>How to Use These Playbooks</h2>
+                <p>Each playbook provides a complete hunting workflow including hypothesis, data requirements, queries, analysis guidance, and detection opportunities.</p>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Playbook Structure</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Hypothesis:</strong> What you're looking for and why</li>
+                        <li><strong>ATT&CK Mapping:</strong> Relevant techniques</li>
+                        <li><strong>Data Requirements:</strong> Required log sources</li>
+                        <li><strong>Hunt Queries:</strong> KQL and SPL queries</li>
+                        <li><strong>Analysis Steps:</strong> How to interpret results</li>
+                        <li><strong>Detection Output:</strong> Automated rules from findings</li>
+                    </ul>
+                </div>
+
+                <!-- Playbook 1: Encoded PowerShell -->
+                <h2 style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <i class="fas fa-terminal" style="color: #6aa3f7;"></i> Hunt: Encoded PowerShell Execution
+                </h2>
+
+                <h3>Hypothesis</h3>
+                <p>Attackers are using Base64-encoded PowerShell commands to execute malicious payloads while evading command-line based detection rules.</p>
+
+                <h3>ATT&CK Mapping</h3>
+                <table>
+                    <tr><td><strong>Technique</strong></td><td>T1059.001 - PowerShell</td></tr>
+                    <tr><td><strong>Sub-technique</strong></td><td>T1027 - Obfuscated Files or Information</td></tr>
+                    <tr><td><strong>Tactic</strong></td><td>Execution, Defense Evasion</td></tr>
+                </table>
+
+                <h3>Data Requirements</h3>
+                <ul>
+                    <li>Sysmon Event ID 1 (Process Creation) OR</li>
+                    <li>Windows Security Event 4688 with command line auditing</li>
+                    <li>PowerShell Script Block Logging (Event ID 4104) - optional but helpful</li>
+                </ul>
+
+                <h3>Hunt Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Microsoft Sentinel</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(30d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-encoded", "-e ", "-ec ")
+        or ProcessCommandLine matches regex @"[A-Za-z0-9+/=]{50,}"
+| extend DecodedCommand = base64_decode_tostring(
+    extract(@"[A-Za-z0-9+/=]{50,}", 0, ProcessCommandLine))
+| project TimeGenerated, DeviceName, AccountName, 
+    ProcessCommandLine, DecodedCommand, 
+    InitiatingProcessFileName, InitiatingProcessCommandLine
+| sort by TimeGenerated desc</pre>
+                </div>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin-top: 1rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// SPL - Splunk</span>
+index=sysmon EventCode=1 
+    (Image="*\\powershell.exe" OR Image="*\\pwsh.exe")
+    (CommandLine="*-enc*" OR CommandLine="*-encoded*" 
+     OR CommandLine="*-e *" OR CommandLine="*-ec *")
+| rex field=CommandLine "(?<encoded_blob>[A-Za-z0-9+/=]{50,})"
+| eval decoded=base64decode(encoded_blob)
+| table _time, ComputerName, User, CommandLine, decoded, 
+    ParentImage, ParentCommandLine
+| sort -_time</pre>
+                </div>
+
+                <h3>Analysis Steps</h3>
+                <ol>
+                    <li><strong>Review encoded commands:</strong> Decode Base64 to see actual command</li>
+                    <li><strong>Check parent process:</strong> Office apps, browsers = likely phishing. cmd.exe = possible persistence</li>
+                    <li><strong>Look for patterns:</strong> Download cradles (IEX, DownloadString), reflective loading</li>
+                    <li><strong>Pivot on user:</strong> What else did this user execute?</li>
+                    <li><strong>Pivot on host:</strong> What other suspicious activity on this endpoint?</li>
+                </ol>
+
+                <h3>Suspicious Indicators</h3>
+                <ul>
+                    <li>Parent process is Office application or browser</li>
+                    <li>Decoded command contains: IEX, Invoke-Expression, DownloadString, WebClient</li>
+                    <li>Decoded command references external URLs or IPs</li>
+                    <li>Execution during non-business hours</li>
+                    <li>User not typically running PowerShell</li>
+                </ul>
+
+                <h3>Detection Output</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Sigma Rule Output</span>
+title: Encoded PowerShell Execution
+id: a1234567-1234-1234-1234-123456789abc
+status: production
+description: Detects Base64 encoded PowerShell commands
+author: SOC Team
+date: 2025/01/15
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.defense_evasion
+    - attack.t1027
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+        CommandLine|contains:
+            - '-enc'
+            - '-encoded'
+    condition: selection
+falsepositives:
+    - Legitimate automation scripts (document in allowlist)
+    - SCCM/Intune deployments
+level: medium</pre>
+                </div>
+
+                <!-- Playbook 2: LSASS Access -->
+                <h2 style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <i class="fas fa-key" style="color: #f07070;"></i> Hunt: LSASS Credential Dumping
+                </h2>
+
+                <h3>Hypothesis</h3>
+                <p>Attackers have accessed LSASS memory to extract credentials using tools like Mimikatz, ProcDump, or direct memory access.</p>
+
+                <h3>ATT&CK Mapping</h3>
+                <table>
+                    <tr><td><strong>Technique</strong></td><td>T1003.001 - OS Credential Dumping: LSASS Memory</td></tr>
+                    <tr><td><strong>Tactic</strong></td><td>Credential Access</td></tr>
+                </table>
+
+                <h3>Data Requirements</h3>
+                <ul>
+                    <li>Sysmon Event ID 10 (Process Access) - <strong>Required</strong></li>
+                    <li>Windows Defender alerts (optional)</li>
+                    <li>EDR telemetry (optional)</li>
+                </ul>
+
+                <h3>Hunt Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Microsoft Sentinel</span>
+Sysmon
+| where TimeGenerated > ago(30d)
+| where EventID == 10
+| where TargetImage endswith "\\lsass.exe"
+| where GrantedAccess in ("0x1010", "0x1038", "0x1410", "0x1fffff", "0x1f3fff")
+| where SourceImage !endswith "\\lsass.exe"
+| where SourceImage !endswith "\\csrss.exe"
+| where SourceImage !endswith "\\wmiprvse.exe"
+| where SourceImage !endswith "\\svchost.exe"
+| where SourceImage !has "Windows Defender"
+| where SourceImage !has "MsMpEng"
+| project TimeGenerated, Computer, SourceImage, TargetImage, 
+    GrantedAccess, SourceUser, CallTrace
+| sort by TimeGenerated desc</pre>
+                </div>
+
+                <h3>Access Mask Reference</h3>
+                <table>
+                    <thead><tr><th>GrantedAccess</th><th>Permissions</th><th>Suspicion Level</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>0x1010</code></td><td>PROCESS_QUERY_LIMITED_INFORMATION + PROCESS_VM_READ</td><td style="color: #f0b756;">Medium</td></tr>
+                        <tr><td><code>0x1410</code></td><td>Above + PROCESS_QUERY_INFORMATION</td><td style="color: #f07070;">High</td></tr>
+                        <tr><td><code>0x1fffff</code></td><td>PROCESS_ALL_ACCESS</td><td style="color: #f07070;">Critical</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Analysis Steps</h3>
+                <ol>
+                    <li><strong>Identify source process:</strong> What process accessed LSASS?</li>
+                    <li><strong>Check legitimacy:</strong> Is this a known security tool or system process?</li>
+                    <li><strong>Examine CallTrace:</strong> Look for ntdll.dll!NtReadVirtualMemory, dbgcore.dll, or unknown DLLs</li>
+                    <li><strong>Check user context:</strong> Who ran the accessing process?</li>
+                    <li><strong>Look for prior activity:</strong> How did attacker get to this point?</li>
+                </ol>
+
+                <h3>Suspicious Indicators</h3>
+                <ul>
+                    <li>Source process is procdump.exe, rundll32.exe, or unknown executable</li>
+                    <li>Source process running from Temp, AppData, or Downloads</li>
+                    <li>GrantedAccess is 0x1fffff (full access)</li>
+                    <li>CallTrace contains dbgcore.dll or comsvcs.dll</li>
+                    <li>Source user is not SYSTEM or a known security tool service account</li>
+                </ul>
+
+                <!-- Playbook 3: Beaconing Detection -->
+                <h2 style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <i class="fas fa-satellite-dish" style="color: #5ce0c4;"></i> Hunt: C2 Beaconing
+                </h2>
+
+                <h3>Hypothesis</h3>
+                <p>Malware is communicating with command and control infrastructure at regular intervals (beaconing behavior).</p>
+
+                <h3>ATT&CK Mapping</h3>
+                <table>
+                    <tr><td><strong>Technique</strong></td><td>T1071 - Application Layer Protocol</td></tr>
+                    <tr><td><strong>Tactic</strong></td><td>Command and Control</td></tr>
+                </table>
+
+                <h3>Data Requirements</h3>
+                <ul>
+                    <li>Firewall/proxy logs with connection timestamps</li>
+                    <li>Sysmon Event ID 3 (Network Connection) or</li>
+                    <li>NetFlow/Zeek conn.log</li>
+                </ul>
+
+                <h3>Hunt Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Beaconing Detection with Statistics</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteIPType == "Public"
+| summarize 
+    ConnectionCount = count(),
+    TimestampList = make_list(TimeGenerated),
+    BytesSentTotal = sum(SentBytes)
+    by DeviceName, RemoteIP, RemotePort
+| where ConnectionCount > 20
+| extend SortedTimestamps = array_sort_asc(TimestampList)
+| mv-expand with_itemindex=i Timestamp = SortedTimestamps to typeof(datetime)
+| extend NextTimestamp = SortedTimestamps[i+1]
+| extend IntervalSeconds = datetime_diff('second', todatetime(NextTimestamp), Timestamp)
+| where isnotnull(IntervalSeconds)
+| summarize 
+    AvgInterval = avg(IntervalSeconds),
+    StdDevInterval = stdev(IntervalSeconds),
+    MinInterval = min(IntervalSeconds),
+    MaxInterval = max(IntervalSeconds),
+    ConnectionCount = count()
+    by DeviceName, RemoteIP, RemotePort
+| extend Jitter = StdDevInterval / AvgInterval
+| where Jitter < 0.15  <span style="color: #6aa3f7;">// Low jitter = consistent intervals = suspicious</span>
+| where AvgInterval between (10 .. 3600)  <span style="color: #6aa3f7;">// 10 sec to 1 hour intervals</span>
+| sort by Jitter asc</pre>
+                </div>
+
+                <h3>Analysis Steps</h3>
+                <ol>
+                    <li><strong>Calculate interval consistency:</strong> Look for low standard deviation (jitter)</li>
+                    <li><strong>Check destination:</strong> Is this a known service or suspicious IP?</li>
+                    <li><strong>Examine process:</strong> What process is making these connections?</li>
+                    <li><strong>Check threat intel:</strong> Is destination IP/domain known bad?</li>
+                    <li><strong>Validate with baseline:</strong> Is this normal for this host/user?</li>
+                </ol>
+
+                <h3>Beaconing Characteristics</h3>
+                <table>
+                    <thead><tr><th>Characteristic</th><th>Typical C2</th><th>Normal Traffic</th></tr></thead>
+                    <tbody>
+                        <tr><td>Interval Consistency</td><td>Very consistent (low jitter)</td><td>Random/variable</td></tr>
+                        <tr><td>Connection Count</td><td>High over time</td><td>Varies by use</td></tr>
+                        <tr><td>Data Size</td><td>Small, similar sizes</td><td>Variable</td></tr>
+                        <tr><td>Time of Day</td><td>24/7 including off-hours</td><td>Business hours</td></tr>
+                        <tr><td>Destination</td><td>Uncommon domains/IPs</td><td>Known services</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Hunt Report Template</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">HUNT REPORT</span>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+<span style="color: #a78bf6;">Hunt ID:</span>        HUNT-2025-XXX
+<span style="color: #a78bf6;">Date:</span>           YYYY-MM-DD
+<span style="color: #a78bf6;">Hunter:</span>         [Your Name]
+<span style="color: #a78bf6;">Duration:</span>       X hours
+
+<span style="color: #a78bf6;">HYPOTHESIS:</span>
+[Your hypothesis statement]
+
+<span style="color: #a78bf6;">ATT&CK MAPPING:</span>
+- Technique: TXXXX.XXX
+- Tactic: [Tactic Name]
+
+<span style="color: #a78bf6;">DATA SOURCES USED:</span>
+- [Log source 1]
+- [Log source 2]
+
+<span style="color: #a78bf6;">QUERIES EXECUTED:</span>
+[Include key queries]
+
+<span style="color: #a78bf6;">FINDINGS:</span>
+- Total events analyzed: XXX
+- Suspicious events identified: X
+- Confirmed malicious: X
+- False positives: X
+
+<span style="color: #a78bf6;">DETAILED FINDINGS:</span>
+[Describe each finding]
+
+<span style="color: #a78bf6;">ACTIONS TAKEN:</span>
+1. [Action 1]
+2. [Action 2]
+
+<span style="color: #a78bf6;">DETECTIONS CREATED:</span>
+- [Detection name and ID]
+
+<span style="color: #a78bf6;">RECOMMENDATIONS:</span>
+1. [Recommendation 1]
+2. [Recommendation 2]
+
+<span style="color: #a78bf6;">NEXT HUNT:</span>
+[Follow-up hypothesis]
+
+<span style="color: #a78bf6;">STATUS:</span> Complete / In Progress / Escalated</pre>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

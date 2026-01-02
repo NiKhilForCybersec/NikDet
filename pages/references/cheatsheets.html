@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Cheatsheets | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>References</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="ref-nav"><i class="fas fa-book"></i><span>References</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="ref-nav">
+                    <li><a href="kql-library.html">KQL Library</a></li>
+                    <li><a href="spl-library.html">SPL Library</a></li>
+                    <li><a href="cheatsheets.html" class="active">Cheatsheets</a></li>
+                    <li><a href="glossary.html">Glossary</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">References</a><span class="separator">/</span><span>Cheatsheets</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-file-alt" style="color: var(--accent-warning);"></i> Security Cheatsheets</h1>
+                <p class="lead">Quick reference guides for SOC analysts. Print these, bookmark them, keep them handy.</p>
+            </div>
+            <div class="content">
+                <!-- Windows Event IDs -->
+                <h2 id="windows-events">Windows Security Event IDs</h2>
+                <table>
+                    <thead><tr><th>Event ID</th><th>Description</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>4624</code></td><td>Successful logon</td><td>Track logons, lateral movement</td></tr>
+                        <tr><td><code>4625</code></td><td>Failed logon</td><td>Brute force, password spray</td></tr>
+                        <tr><td><code>4634</code></td><td>Logoff</td><td>Session tracking</td></tr>
+                        <tr><td><code>4648</code></td><td>Explicit credential logon</td><td>RunAs, credential usage</td></tr>
+                        <tr><td><code>4672</code></td><td>Special privileges assigned</td><td>Admin logon detection</td></tr>
+                        <tr><td><code>4688</code></td><td>Process creation</td><td>Command execution tracking</td></tr>
+                        <tr><td><code>4689</code></td><td>Process termination</td><td>Process lifecycle</td></tr>
+                        <tr><td><code>4698</code></td><td>Scheduled task created</td><td>Persistence detection</td></tr>
+                        <tr><td><code>4699</code></td><td>Scheduled task deleted</td><td>Cleanup after persistence</td></tr>
+                        <tr><td><code>4720</code></td><td>User account created</td><td>Account creation monitoring</td></tr>
+                        <tr><td><code>4722</code></td><td>User account enabled</td><td>Account changes</td></tr>
+                        <tr><td><code>4723</code></td><td>Password change attempt</td><td>Credential changes</td></tr>
+                        <tr><td><code>4724</code></td><td>Password reset attempt</td><td>Credential changes</td></tr>
+                        <tr><td><code>4725</code></td><td>User account disabled</td><td>Account lifecycle</td></tr>
+                        <tr><td><code>4726</code></td><td>User account deleted</td><td>Account cleanup</td></tr>
+                        <tr><td><code>4728</code></td><td>Member added to global group</td><td>Group membership changes</td></tr>
+                        <tr><td><code>4732</code></td><td>Member added to local group</td><td>Local admin changes</td></tr>
+                        <tr><td><code>4738</code></td><td>User account changed</td><td>Account modifications</td></tr>
+                        <tr><td><code>4768</code></td><td>Kerberos TGT request</td><td>Authentication tracking</td></tr>
+                        <tr><td><code>4769</code></td><td>Kerberos service ticket request</td><td>Kerberoasting detection</td></tr>
+                        <tr><td><code>4770</code></td><td>Kerberos service ticket renewed</td><td>Ticket tracking</td></tr>
+                        <tr><td><code>4771</code></td><td>Kerberos pre-auth failed</td><td>AS-REP roasting</td></tr>
+                        <tr><td><code>4776</code></td><td>NTLM authentication</td><td>Pass-the-hash detection</td></tr>
+                        <tr><td><code>5140</code></td><td>Network share accessed</td><td>File share access</td></tr>
+                        <tr><td><code>5145</code></td><td>Network share object access</td><td>Detailed share access</td></tr>
+                        <tr><td><code>7045</code></td><td>Service installed</td><td>Persistence, lateral movement</td></tr>
+                        <tr><td><code>1102</code></td><td>Audit log cleared</td><td>Anti-forensics detection</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Logon Types (4624)</h3>
+                <table>
+                    <thead><tr><th>Type</th><th>Name</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>2</code></td><td>Interactive</td><td>Console logon (keyboard)</td></tr>
+                        <tr><td><code>3</code></td><td>Network</td><td>SMB, mapped drives</td></tr>
+                        <tr><td><code>4</code></td><td>Batch</td><td>Scheduled task</td></tr>
+                        <tr><td><code>5</code></td><td>Service</td><td>Service account logon</td></tr>
+                        <tr><td><code>7</code></td><td>Unlock</td><td>Workstation unlock</td></tr>
+                        <tr><td><code>8</code></td><td>NetworkCleartext</td><td>IIS basic auth</td></tr>
+                        <tr><td><code>9</code></td><td>NewCredentials</td><td>RunAs /netonly</td></tr>
+                        <tr><td><code>10</code></td><td>RemoteInteractive</td><td>RDP</td></tr>
+                        <tr><td><code>11</code></td><td>CachedInteractive</td><td>Cached credentials</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- Sysmon Event IDs -->
+                <h2 id="sysmon">Sysmon Event IDs</h2>
+                <table>
+                    <thead><tr><th>Event ID</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>1</code></td><td>Process creation</td><td>Command execution, malware</td></tr>
+                        <tr><td><code>2</code></td><td>File creation time changed</td><td>Timestomping</td></tr>
+                        <tr><td><code>3</code></td><td>Network connection</td><td>C2, data exfil</td></tr>
+                        <tr><td><code>5</code></td><td>Process terminated</td><td>Process lifecycle</td></tr>
+                        <tr><td><code>6</code></td><td>Driver loaded</td><td>Rootkits, vulnerable drivers</td></tr>
+                        <tr><td><code>7</code></td><td>Image loaded</td><td>DLL loading, injection</td></tr>
+                        <tr><td><code>8</code></td><td>CreateRemoteThread</td><td>Process injection</td></tr>
+                        <tr><td><code>9</code></td><td>RawAccessRead</td><td>Disk access</td></tr>
+                        <tr><td><code>10</code></td><td>Process access</td><td>LSASS access, credential theft</td></tr>
+                        <tr><td><code>11</code></td><td>File created</td><td>Malware drops, staging</td></tr>
+                        <tr><td><code>12</code></td><td>Registry object added/deleted</td><td>Persistence</td></tr>
+                        <tr><td><code>13</code></td><td>Registry value set</td><td>Persistence, config changes</td></tr>
+                        <tr><td><code>14</code></td><td>Registry object renamed</td><td>Registry manipulation</td></tr>
+                        <tr><td><code>15</code></td><td>FileCreateStreamHash</td><td>ADS (Alternate Data Streams)</td></tr>
+                        <tr><td><code>17</code></td><td>Pipe created</td><td>Named pipes (C2, lateral)</td></tr>
+                        <tr><td><code>18</code></td><td>Pipe connected</td><td>Named pipe connections</td></tr>
+                        <tr><td><code>19</code></td><td>WMI filter</td><td>WMI persistence</td></tr>
+                        <tr><td><code>20</code></td><td>WMI consumer</td><td>WMI persistence</td></tr>
+                        <tr><td><code>21</code></td><td>WMI binding</td><td>WMI persistence</td></tr>
+                        <tr><td><code>22</code></td><td>DNS query</td><td>C2, DNS tunneling</td></tr>
+                        <tr><td><code>23</code></td><td>File delete</td><td>Anti-forensics</td></tr>
+                        <tr><td><code>25</code></td><td>Process tampering</td><td>Process hollowing</td></tr>
+                        <tr><td><code>26</code></td><td>File delete detected</td><td>File deletion tracking</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- Common Ports -->
+                <h2 id="ports">Common Ports Reference</h2>
+                <table>
+                    <thead><tr><th>Port</th><th>Service</th><th>Security Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>21</td><td>FTP</td><td>Cleartext, commonly attacked</td></tr>
+                        <tr><td>22</td><td>SSH</td><td>Brute force target</td></tr>
+                        <tr><td>23</td><td>Telnet</td><td>Cleartext, should be disabled</td></tr>
+                        <tr><td>25</td><td>SMTP</td><td>Email relay abuse</td></tr>
+                        <tr><td>53</td><td>DNS</td><td>DNS tunneling, exfil</td></tr>
+                        <tr><td>80</td><td>HTTP</td><td>C2, web attacks</td></tr>
+                        <tr><td>88</td><td>Kerberos</td><td>Kerberoasting</td></tr>
+                        <tr><td>135</td><td>RPC</td><td>Lateral movement, exploitation</td></tr>
+                        <tr><td>139</td><td>NetBIOS</td><td>Legacy, should be blocked</td></tr>
+                        <tr><td>389</td><td>LDAP</td><td>AD enumeration</td></tr>
+                        <tr><td>443</td><td>HTTPS</td><td>Encrypted C2</td></tr>
+                        <tr><td>445</td><td>SMB</td><td>Lateral movement, ransomware</td></tr>
+                        <tr><td>636</td><td>LDAPS</td><td>Secure LDAP</td></tr>
+                        <tr><td>1433</td><td>MSSQL</td><td>Database attacks</td></tr>
+                        <tr><td>3306</td><td>MySQL</td><td>Database attacks</td></tr>
+                        <tr><td>3389</td><td>RDP</td><td>Brute force, lateral movement</td></tr>
+                        <tr><td>5985</td><td>WinRM HTTP</td><td>Remote management, lateral</td></tr>
+                        <tr><td>5986</td><td>WinRM HTTPS</td><td>Secure remote management</td></tr>
+                        <tr><td>8080</td><td>HTTP Alt</td><td>Proxy, web apps</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- LOLBins -->
+                <h2 id="lolbins">Living Off the Land Binaries (LOLBins)</h2>
+                <p>Legitimate Windows binaries commonly abused by attackers:</p>
+                <table>
+                    <thead><tr><th>Binary</th><th>Malicious Use</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>certutil.exe</code></td><td>Download files, encode/decode</td><td>-urlcache, -encode, -decode flags</td></tr>
+                        <tr><td><code>bitsadmin.exe</code></td><td>Download files</td><td>/transfer parameter</td></tr>
+                        <tr><td><code>mshta.exe</code></td><td>Execute HTA files</td><td>Any execution from user context</td></tr>
+                        <tr><td><code>rundll32.exe</code></td><td>Execute DLLs, proxy execution</td><td>Unusual DLL paths, javascript:</td></tr>
+                        <tr><td><code>regsvr32.exe</code></td><td>Execute scripts via COM</td><td>/s /n /u /i flags with URLs</td></tr>
+                        <tr><td><code>wmic.exe</code></td><td>Remote execution, recon</td><td>process call create, /node:</td></tr>
+                        <tr><td><code>msiexec.exe</code></td><td>Execute MSI from URL</td><td>/q /i with http:// paths</td></tr>
+                        <tr><td><code>cscript/wscript.exe</code></td><td>Execute scripts</td><td>Execution from temp/downloads</td></tr>
+                        <tr><td><code>powershell.exe</code></td><td>Script execution</td><td>-enc, -nop, -w hidden, IEX</td></tr>
+                        <tr><td><code>cmd.exe</code></td><td>Command execution</td><td>Spawned from Office, browsers</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- Persistence Locations -->
+                <h2 id="persistence">Common Persistence Locations</h2>
+                <h3>Registry Keys</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto;">
+                    HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run<br>
+                    HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce<br>
+                    HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run<br>
+                    HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce<br>
+                    HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Shell<br>
+                    HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit<br>
+                    HKLM\SYSTEM\CurrentControlSet\Services<br>
+                </div>
+
+                <h3>File System Locations</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto;">
+                    C:\Users\[User]\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup<br>
+                    C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup<br>
+                    C:\Windows\System32\Tasks<br>
+                    C:\Windows\System32\drivers<br>
+                </div>
+
+                <!-- Hash Types -->
+                <h2 id="hashes">Hash Types</h2>
+                <table>
+                    <thead><tr><th>Type</th><th>Length</th><th>Example Pattern</th></tr></thead>
+                    <tbody>
+                        <tr><td>MD5</td><td>32 chars</td><td><code>d41d8cd98f00b204e9800998ecf8427e</code></td></tr>
+                        <tr><td>SHA1</td><td>40 chars</td><td><code>da39a3ee5e6b4b0d3255bfef95601890afd80709</code></td></tr>
+                        <tr><td>SHA256</td><td>64 chars</td><td><code>e3b0c44298fc1c149afbf4c8996fb924...</code></td></tr>
+                    </tbody>
+                </table>
+
+                <!-- Quick Commands -->
+                <h2 id="commands">Quick Investigation Commands</h2>
+                <h3>Windows</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto;">
+                    # List scheduled tasks<br>
+                    schtasks /query /fo LIST /v<br><br>
+                    # List services<br>
+                    sc query<br><br>
+                    # List network connections<br>
+                    netstat -ano<br><br>
+                    # List running processes<br>
+                    tasklist /v<br><br>
+                    # List startup programs<br>
+                    wmic startup list full<br><br>
+                    # List installed programs<br>
+                    wmic product get name,version<br><br>
+                    # Get file hash<br>
+                    certutil -hashfile [file] SHA256
+                </div>
+
+                <h3>Linux</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto;">
+                    # List network connections<br>
+                    ss -tulpn<br>
+                    netstat -tulpn<br><br>
+                    # List running processes<br>
+                    ps auxf<br><br>
+                    # List cron jobs<br>
+                    crontab -l<br>
+                    ls -la /etc/cron.*<br><br>
+                    # List users<br>
+                    cat /etc/passwd<br><br>
+                    # Recent logins<br>
+                    last<br>
+                    lastlog<br><br>
+                    # File hash<br>
+                    sha256sum [file]
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

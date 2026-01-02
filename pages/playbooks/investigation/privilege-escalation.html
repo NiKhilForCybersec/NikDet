@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privilege Escalation Investigation | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Privilege Escalation</span></div>
+            <div class="content">
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-INV-010</div>
+                    <h1>Privilege Escalation Investigation</h1>
+                    <p class="lead">Investigate unauthorized elevation of privileges from standard user to administrator or SYSTEM level access.</p>
+                    <div class="playbook-meta">
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">HIGH</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2/L3</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">30-90 min</span></div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                        <span class="mitre-tag">T1068 - Exploitation for Privilege Escalation</span>
+                        <span class="mitre-tag">T1548 - Abuse Elevation Control Mechanism</span>
+                        <span class="mitre-tag">T1134 - Access Token Manipulation</span>
+                    </div>
+                </div>
+
+                <h2>Privilege Escalation Techniques</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>Description</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Credential Theft</strong></td><td>Steal admin credentials (Mimikatz, LSASS dump)</td><td>LSASS access, credential dumping tools</td></tr>
+                        <tr><td><strong>Local Exploit</strong></td><td>Exploit vulnerability for SYSTEM</td><td>Known exploit patterns, unusual process chains</td></tr>
+                        <tr><td><strong>UAC Bypass</strong></td><td>Bypass User Account Control</td><td>UAC bypass techniques, auto-elevate abuse</td></tr>
+                        <tr><td><strong>Service Manipulation</strong></td><td>Modify services to run as SYSTEM</td><td>Service creation/modification events</td></tr>
+                        <tr><td><strong>Scheduled Task</strong></td><td>Create task running as SYSTEM</td><td>Task creation with elevated privileges</td></tr>
+                        <tr><td><strong>Token Manipulation</strong></td><td>Impersonate higher-privileged token</td><td>Token impersonation, SeDebugPrivilege use</td></tr>
+                        <tr><td><strong>DLL Hijacking</strong></td><td>Replace DLL loaded by privileged process</td><td>DLL loads from unusual paths</td></tr>
+                        <tr><td><strong>Group Modification</strong></td><td>Add user to admin groups</td><td>Event 4728, 4732, 4756</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 1: Detect Credential Theft</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: LSASS access (credential dumping)</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "lsass.exe"
+| where ActionType == "ProcessAccessed"
+| where InitiatingProcessFileName !in~ ("csrss.exe", "services.exe", "svchost.exe", "wininit.exe")
+| project TimeGenerated, DeviceName, InitiatingProcessFileName, 
+    InitiatingProcessCommandLine, AccountName
+
+<span style="color: #a78bf6;">// KQL: Mimikatz and credential dumping tools</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any ("sekurlsa", "logonpasswords", "lsadump", 
+    "kerberos::list", "crypto::capi", "privilege::debug", "mimikatz")
+    or FileName in~ ("mimikatz.exe", "procdump.exe", "lazagne.exe")
+| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+
+<span style="color: #a78bf6;">// KQL: Comsvcs.dll LSASS dump (LOLBin)</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has "comsvcs.dll" and ProcessCommandLine has "MiniDump"
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine</pre>
+                </div>
+
+                <h2>Part 2: Detect UAC Bypass</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Common UAC bypass techniques</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where InitiatingProcessFileName in~ ("fodhelper.exe", "eventvwr.exe", 
+    "sdclt.exe", "slui.exe", "computerdefaults.exe")
+| where InitiatingProcessIntegrityLevel == "High"  <span style="color: #6aa3f7;">// Auto-elevated</span>
+| where FileName !in~ ("mmc.exe", "control.exe")  <span style="color: #6aa3f7;">// Expected children</span>
+| project TimeGenerated, DeviceName, AccountName, 
+    InitiatingProcessFileName, FileName, ProcessCommandLine
+
+<span style="color: #a78bf6;">// KQL: Environment variable hijacking for UAC bypass</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(7d)
+| where RegistryKey has @"Environment\windir" 
+    or RegistryKey has @"Environment\systemroot"
+| project TimeGenerated, DeviceName, AccountName, RegistryKey, RegistryValueData</pre>
+                </div>
+
+                <h2>Part 3: Detect Service/Scheduled Task Abuse</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Service creation (Event 7045)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 7045  <span style="color: #6aa3f7;">// Service installed</span>
+| where ServiceAccount in ("LocalSystem", "NT AUTHORITY\\SYSTEM")
+| project TimeGenerated, Computer, ServiceName, ServiceFileName, ServiceAccount
+
+<span style="color: #a78bf6;">// KQL: Scheduled task creation with SYSTEM privileges</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "schtasks.exe"
+| where ProcessCommandLine has_any ("/ru system", "/ru \"system\"", 
+    "highest", "SYSTEM")
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine
+
+<span style="color: #a78bf6;">// KQL: Service binary path modification</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(7d)
+| where RegistryKey has @"SYSTEM\CurrentControlSet\Services\"
+| where RegistryValueName == "ImagePath"
+| project TimeGenerated, DeviceName, AccountName, RegistryKey, RegistryValueData</pre>
+                </div>
+
+                <h2>Part 4: Detect Group Membership Changes</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: User added to privileged groups</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID in (4728, 4732, 4756)  <span style="color: #6aa3f7;">// Member added to security groups</span>
+| where TargetUserName has_any ("Admin", "Domain Admins", "Enterprise Admins",
+    "Schema Admins", "Backup Operators", "Account Operators")
+| project TimeGenerated, Computer, SubjectUserName, MemberName, TargetUserName
+
+<span style="color: #a78bf6;">// KQL: Azure AD role assignment</span>
+AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName has "Add member to role"
+| where TargetResources[0].displayName has_any ("Global Administrator", 
+    "Privileged Role Administrator", "Security Administrator")
+| project TimeGenerated, InitiatedBy.user.userPrincipalName, 
+    TargetResources[0].displayName, TargetResources[0].userPrincipalName</pre>
+                </div>
+
+                <h2>Part 5: Token Manipulation</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: SeDebugPrivilege use (required for token theft)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4673  <span style="color: #6aa3f7;">// Privileged service called</span>
+| where PrivilegeList has "SeDebugPrivilege"
+| where ProcessName !has "lsass.exe"  <span style="color: #6aa3f7;">// Expected</span>
+| project TimeGenerated, Computer, SubjectUserName, ProcessName, PrivilegeList
+
+<span style="color: #a78bf6;">// KQL: Token impersonation indicators</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any ("token::", "getsystem", "incognito", 
+    "impersonate", "steal_token")
+| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine</pre>
+                </div>
+
+                <h2>Containment Actions</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Credential theft confirmed</td><td>Reset all affected credentials, rotate service accounts</td></tr>
+                        <tr><td>Admin group modification</td><td>Remove unauthorized members, investigate who added them</td></tr>
+                        <tr><td>Malicious service created</td><td>Stop service, remove binary, delete service</td></tr>
+                        <tr><td>UAC bypass successful</td><td>Isolate system, investigate what was executed</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>MITRE ATT&CK Mapping</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td>Exploitation for Privilege Escalation</td><td>T1068</td><td>Known exploit patterns</td></tr>
+                        <tr><td>Bypass UAC</td><td>T1548.002</td><td>Auto-elevate binary abuse</td></tr>
+                        <tr><td>Access Token Manipulation</td><td>T1134</td><td>Token theft/impersonation</td></tr>
+                        <tr><td>Create or Modify System Process</td><td>T1543</td><td>Service creation/modification</td></tr>
+                        <tr><td>Scheduled Task/Job</td><td>T1053</td><td>Task creation with SYSTEM</td></tr>
+                        <tr><td>Valid Accounts: Local</td><td>T1078.003</td><td>Admin credential use</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../../js/main.js"></script>
+</body>
+</html>

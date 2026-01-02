@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insider Threat Investigation | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Insider Threat</span></div>
+            <div class="content">
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-INV-011</div>
+                    <h1>Insider Threat Investigation</h1>
+                    <p class="lead">Investigate potential malicious or negligent insider activity including data theft, sabotage, and policy violations.</p>
+                    <div class="playbook-meta">
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">HIGH</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L3/Legal</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">Variable (days-weeks)</span></div>
+                    </div>
+                </div>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-balance-scale"></i> Legal and HR Coordination Required</div>
+                    <p style="margin: 0.5rem 0 0 0;">Insider investigations have legal implications. <strong>Always coordinate with HR and Legal before taking action.</strong> Document everything meticulously for potential legal proceedings.</p>
+                </div>
+
+                <h2>Insider Threat Categories</h2>
+                <table>
+                    <thead><tr><th>Category</th><th>Description</th><th>Indicators</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Malicious Insider</strong></td><td>Intentional harm (theft, sabotage, espionage)</td><td>Data exfil, unauthorized access, policy bypasses</td></tr>
+                        <tr><td><strong>Negligent Insider</strong></td><td>Unintentional harm (carelessness, mistakes)</td><td>Policy violations, accidental exposure</td></tr>
+                        <tr><td><strong>Compromised Insider</strong></td><td>Account taken over by external attacker</td><td>Unusual login patterns, impossible travel</td></tr>
+                        <tr><td><strong>Departing Employee</strong></td><td>Data theft before leaving organization</td><td>Mass downloads, USB use, cloud uploads</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 1: Behavioral Indicators</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: After-hours access patterns</span>
+SigninLogs
+| where TimeGenerated > ago(30d)
+| where UserPrincipalName == "subject@domain.com"
+| extend Hour = datetime_part("hour", TimeGenerated)
+| extend DayOfWeek = dayofweek(TimeGenerated)
+| where Hour < 6 or Hour > 20 or DayOfWeek in (6, 0)  <span style="color: #6aa3f7;">// Off-hours/weekends</span>
+| summarize Count = count() by bin(TimeGenerated, 1d), Hour
+| order by TimeGenerated desc
+
+<span style="color: #a78bf6;">// KQL: Access to sensitive resources</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where InitiatedBy.user.userPrincipalName == "subject@domain.com"
+| where TargetResources[0].displayName has_any ("HR", "Finance", "Executive", 
+    "Confidential", "Restricted", "Legal")
+| project TimeGenerated, OperationName, TargetResources[0].displayName
+
+<span style="color: #a78bf6;">// KQL: Large file downloads</span>
+OfficeActivity
+| where TimeGenerated > ago(30d)
+| where UserId == "subject@domain.com"
+| where Operation in ("FileDownloaded", "FileSyncDownloadedFull")
+| summarize TotalDownloads = count(), UniqueFiles = dcount(SourceFileName) 
+  by bin(TimeGenerated, 1d)
+| order by TotalDownloads desc</pre>
+                </div>
+
+                <h2>Part 2: Data Movement Analysis</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: USB device usage</span>
+DeviceEvents
+| where TimeGenerated > ago(30d)
+| where DeviceName in (computers_used_by_subject)
+| where ActionType == "PnpDeviceConnected"
+| where DeviceDescription has_any ("USB", "Removable", "Mass Storage")
+| project TimeGenerated, DeviceName, DeviceId, DeviceDescription
+
+<span style="color: #a78bf6;">// KQL: Cloud storage uploads</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(30d)
+| where InitiatingProcessAccountName == "subject"
+| where RemoteUrl has_any ("dropbox.com", "drive.google.com", "onedrive.live.com",
+    "mega.nz", "box.com", "wetransfer.com")
+| summarize TotalBytes = sum(SentBytes) by RemoteUrl, bin(TimeGenerated, 1d)
+
+<span style="color: #a78bf6;">// KQL: Email to personal accounts</span>
+EmailEvents
+| where TimeGenerated > ago(30d)
+| where SenderFromAddress == "subject@domain.com"
+| extend RecipientDomain = tostring(split(RecipientEmailAddress, "@")[1])
+| where RecipientDomain in ("gmail.com", "yahoo.com", "hotmail.com", 
+    "outlook.com", "protonmail.com")
+| where AttachmentCount > 0
+| project TimeGenerated, RecipientEmailAddress, Subject, AttachmentCount</pre>
+                </div>
+
+                <h2>Part 3: Access Pattern Analysis</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Accessing resources outside normal scope</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where InitiatedBy.user.userPrincipalName == "subject@domain.com"
+| summarize AccessCount = count() by TargetResources[0].displayName
+| join kind=leftanti (
+    <span style="color: #6aa3f7;">// Compare to their historical normal access</span>
+    AuditLogs
+    | where TimeGenerated between (ago(90d) .. ago(30d))
+    | where InitiatedBy.user.userPrincipalName == "subject@domain.com"
+    | summarize by TargetResources[0].displayName
+) on $left.TargetResources_0_displayName == $right.TargetResources_0_displayName
+<span style="color: #6aa3f7;">// Result: Resources accessed in last 30 days but NOT in prior 60 days (new access)</span>
+
+<span style="color: #a78bf6;">// KQL: SharePoint/OneDrive mass access</span>
+OfficeActivity
+| where TimeGenerated > ago(7d)
+| where UserId == "subject@domain.com"
+| where Operation in ("FileAccessed", "FileDownloaded")
+| summarize 
+    UniqueFiles = dcount(SourceFileName),
+    UniqueFolders = dcount(SourceRelativeUrl)
+  by bin(TimeGenerated, 1h)
+| where UniqueFiles > 50  <span style="color: #6aa3f7;">// Unusual volume</span></pre>
+                </div>
+
+                <h2>Part 4: Departing Employee Checklist</h2>
+                <table>
+                    <thead><tr><th>Check</th><th>Query/Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Recent file downloads</td><td>Check last 30-90 days of file access</td></tr>
+                        <tr><td>USB device usage</td><td>Any removable media connections?</td></tr>
+                        <tr><td>Email forwarding rules</td><td>Check inbox rules for external forwarding</td></tr>
+                        <tr><td>Cloud storage uploads</td><td>Check proxy/DLP for personal cloud</td></tr>
+                        <tr><td>Print activity</td><td>Check print server logs for sensitive docs</td></tr>
+                        <tr><td>Source code access</td><td>Git/repo access patterns</td></tr>
+                        <tr><td>CRM/database exports</td><td>Customer data exports</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 5: Evidence Preservation</h2>
+                <ul>
+                    <li><strong>Legal hold:</strong> Place email and files on legal hold immediately</li>
+                    <li><strong>Forensic image:</strong> If warranted, create forensic copy of devices</li>
+                    <li><strong>Log preservation:</strong> Ensure relevant logs are retained beyond normal retention</li>
+                    <li><strong>Chain of custody:</strong> Document all evidence handling</li>
+                    <li><strong>Screenshots:</strong> Capture evidence that may change (rules, settings)</li>
+                </ul>
+
+                <h2>Actions (Coordinate with HR/Legal)</h2>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Active data theft in progress</td><td>May need immediate account disable (coordinate first)</td></tr>
+                        <tr><td>Historical data theft</td><td>Preserve evidence, assess scope, then action</td></tr>
+                        <tr><td>Negligent behavior</td><td>HR to address, training/policy reminder</td></tr>
+                        <tr><td>Departing employee risk</td><td>Enhanced monitoring, offboarding controls</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Important</div>
+                    <p style="margin: 0.5rem 0 0 0;">Never confront the subject directly. This could compromise the investigation and legal proceedings. All communication should go through HR and Legal.</p>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../../js/main.js"></script>
+</body>
+</html>

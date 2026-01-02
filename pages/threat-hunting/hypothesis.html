@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypothesis Development | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Threat Hunting</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="th-nav"><i class="fas fa-crosshairs"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="th-nav">
+                    <li><a href="index.html">Hunting Overview</a></li>
+                    <li><a href="methodology.html">Methodology</a></li>
+                    <li><a href="hypothesis.html" class="active">Hypothesis Development</a></li>
+                    <li><a href="hunt-playbooks.html">Hunt Playbooks</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Threat Hunting</a><span class="separator">/</span><span>Hypothesis Development</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-lightbulb" style="color: var(--accent-warning);"></i> Hypothesis Development</h1>
+                <p class="lead">Learn to craft effective, testable hypotheses that drive successful threat hunts.</p>
+            </div>
+            <div class="content">
+                <h2>What Makes a Good Hypothesis?</h2>
+                <p>A hunting hypothesis is your educated guess about what malicious activity might be happening in your environment. Good hypotheses are the foundation of effective threat hunting.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: linear-gradient(135deg, rgba(92,224,196,0.15), transparent); border: 1px solid rgba(92,224,196,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #5ce0c4; margin-top: 0;"><i class="fas fa-bullseye"></i> Specific</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Clearly defines the threat behavior you're looking for</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(106,163,247,0.15), transparent); border: 1px solid rgba(106,163,247,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #6aa3f7; margin-top: 0;"><i class="fas fa-flask"></i> Testable</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Can be validated with data you have access to</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(167,139,246,0.15), transparent); border: 1px solid rgba(167,139,246,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #a78bf6; margin-top: 0;"><i class="fas fa-shield-alt"></i> Threat-Based</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Grounded in real attacker behaviors and TTPs</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(240,183,86,0.15), transparent); border: 1px solid rgba(240,183,86,0.3); border-radius: var(--radius-md); padding: 1.25rem;">
+                        <h3 style="color: #f0b756; margin-top: 0;"><i class="fas fa-clock"></i> Scoped</h3>
+                        <p style="margin: 0; font-size: 0.9rem;">Reasonable timeframe and data volume</p>
+                    </div>
+                </div>
+
+                <h2>Hypothesis Sources</h2>
+                <p>Where do hunting ideas come from?</p>
+
+                <table>
+                    <thead><tr><th>Source</th><th>Description</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Threat Intelligence</strong></td>
+                            <td>Reports about threat actors, campaigns</td>
+                            <td>"APT29 report mentions WMI persistence"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ATT&CK Coverage Gaps</strong></td>
+                            <td>Techniques you can't currently detect</td>
+                            <td>"We have no detection for T1055"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Industry Incidents</strong></td>
+                            <td>Breaches at similar organizations</td>
+                            <td>"Healthcare breach used RDP tunneling"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security News</strong></td>
+                            <td>New vulnerabilities, attack trends</td>
+                            <td>"New Exchange exploit in the wild"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Anomaly Signals</strong></td>
+                            <td>Unusual patterns in your data</td>
+                            <td>"Spike in PowerShell execution"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Red Team Findings</strong></td>
+                            <td>What your red team got away with</td>
+                            <td>"Red team used DCSync undetected"</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Past Incidents</strong></td>
+                            <td>Variations of previous attacks</td>
+                            <td>"Similar phishing campaign possible"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Hypothesis Templates</h2>
+
+                <h3>Template 1: Basic Structure</h3>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--accent-primary);">
+                    <p style="margin: 0; font-size: 1.1rem; line-height: 1.8;">
+                        "I believe <strong style="color: #6aa3f7;">[THREAT ACTOR/BEHAVIOR]</strong> may be occurring 
+                        in our environment, which would leave evidence in <strong style="color: #5ce0c4;">[DATA SOURCE]</strong>, 
+                        detectable by looking for <strong style="color: #f0b756;">[OBSERVABLE PATTERN]</strong>."
+                    </p>
+                </div>
+
+                <h3>Template 2: ATT&CK-Based</h3>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--accent-secondary);">
+                    <p style="margin: 0; font-size: 1.1rem; line-height: 1.8;">
+                        "Attackers may be using <strong style="color: #6aa3f7;">[TECHNIQUE ID: NAME]</strong> 
+                        via <strong style="color: #5ce0c4;">[SPECIFIC METHOD]</strong>, 
+                        which I can detect by querying <strong style="color: #f0b756;">[LOG SOURCE]</strong> 
+                        for <strong style="color: #a78bf6;">[SPECIFIC INDICATORS]</strong>."
+                    </p>
+                </div>
+
+                <h3>Template 3: Intel-Driven</h3>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--accent-warning);">
+                    <p style="margin: 0; font-size: 1.1rem; line-height: 1.8;">
+                        "Based on <strong style="color: #6aa3f7;">[INTEL SOURCE/REPORT]</strong>, 
+                        I suspect <strong style="color: #5ce0c4;">[THREAT ACTOR]</strong> may have targeted us using 
+                        <strong style="color: #f0b756;">[TTP]</strong>, evidenced by 
+                        <strong style="color: #a78bf6;">[INDICATORS]</strong> in <strong style="color: #f07070;">[DATA]</strong>."
+                    </p>
+                </div>
+
+                <h2>Hypothesis Examples by Tactic</h2>
+
+                <h3>Initial Access (TA0001)</h3>
+                <div class="info-box" style="background: rgba(106,163,247,0.1); border-color: rgba(106,163,247,0.3);">
+                    <div class="info-box-title" style="color: #6aa3f7;"><i class="fas fa-door-open"></i> Phishing Detection</div>
+                    <p><strong>Hypothesis:</strong> Attackers delivered malware via spearphishing attachments that bypassed email security, resulting in macro execution from Office documents.</p>
+                    <p><strong>Data Sources:</strong> Sysmon Event ID 1, Office audit logs</p>
+                    <p><strong>Observable:</strong> Word.exe or Excel.exe spawning cmd.exe, powershell.exe, or wscript.exe</p>
+                </div>
+
+                <h3>Execution (TA0002)</h3>
+                <div class="info-box" style="background: rgba(92,224,196,0.1); border-color: rgba(92,224,196,0.3);">
+                    <div class="info-box-title" style="color: #5ce0c4;"><i class="fas fa-terminal"></i> LOLBin Abuse</div>
+                    <p><strong>Hypothesis:</strong> Attackers are using living-off-the-land binaries (certutil, mshta, regsvr32) to download and execute malicious payloads.</p>
+                    <p><strong>Data Sources:</strong> Sysmon Event ID 1, Windows Security 4688</p>
+                    <p><strong>Observable:</strong> certutil.exe with "-urlcache", mshta.exe with http://, regsvr32.exe with /s /i:http</p>
+                </div>
+
+                <h3>Persistence (TA0003)</h3>
+                <div class="info-box" style="background: rgba(167,139,246,0.1); border-color: rgba(167,139,246,0.3);">
+                    <div class="info-box-title" style="color: #a78bf6;"><i class="fas fa-anchor"></i> Scheduled Task Persistence</div>
+                    <p><strong>Hypothesis:</strong> Attackers have established persistence by creating scheduled tasks that execute from suspicious locations or run encoded commands.</p>
+                    <p><strong>Data Sources:</strong> Windows Security 4698, Sysmon Event ID 1</p>
+                    <p><strong>Observable:</strong> Tasks with actions in Temp/AppData/ProgramData, tasks running PowerShell with -enc flag</p>
+                </div>
+
+                <h3>Credential Access (TA0006)</h3>
+                <div class="info-box" style="background: rgba(240,183,86,0.1); border-color: rgba(240,183,86,0.3);">
+                    <div class="info-box-title" style="color: #f0b756;"><i class="fas fa-key"></i> LSASS Credential Dumping</div>
+                    <p><strong>Hypothesis:</strong> Attackers are accessing LSASS memory to extract credentials using tools like Mimikatz or ProcDump.</p>
+                    <p><strong>Data Sources:</strong> Sysmon Event ID 10</p>
+                    <p><strong>Observable:</strong> Non-system processes accessing lsass.exe with GrantedAccess 0x1010, 0x1410, or 0x1fffff</p>
+                </div>
+
+                <h3>Lateral Movement (TA0008)</h3>
+                <div class="info-box" style="background: rgba(240,112,112,0.1); border-color: rgba(240,112,112,0.3);">
+                    <div class="info-box-title" style="color: #f07070;"><i class="fas fa-arrows-alt"></i> RDP Lateral Movement</div>
+                    <p><strong>Hypothesis:</strong> Attackers are using RDP to move laterally between systems using compromised credentials.</p>
+                    <p><strong>Data Sources:</strong> Windows Security 4624 (Type 10), RDP logs</p>
+                    <p><strong>Observable:</strong> RDP connections from workstations (not admin jump boxes), connections at unusual times, single user RDP to many systems</p>
+                </div>
+
+                <h2>Validating Your Hypothesis</h2>
+
+                <h3>Pre-Hunt Checklist</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Why It Matters</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Do I have the required data?</td>
+                            <td>Can't hunt without visibility</td>
+                        </tr>
+                        <tr>
+                            <td>How much data will this query return?</td>
+                            <td>Avoid overwhelming results</td>
+                        </tr>
+                        <tr>
+                            <td>What does "normal" look like?</td>
+                            <td>Need baseline to find anomalies</td>
+                        </tr>
+                        <tr>
+                            <td>What's my initial query?</td>
+                            <td>Start with a concrete approach</td>
+                        </tr>
+                        <tr>
+                            <td>How will I know if I found something?</td>
+                            <td>Define success criteria</td>
+                        </tr>
+                        <tr>
+                            <td>What will I do with findings?</td>
+                            <td>Plan for escalation or detection creation</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Hypothesis Refinement</h3>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Start Broad</div>
+                            <p>Begin with a general hypothesis about attacker behavior.</p>
+                            <p style="color: var(--text-secondary);"><em>"Attackers may be using PowerShell for malicious activity."</em></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Add Specificity</div>
+                            <p>Narrow down to specific techniques or tools.</p>
+                            <p style="color: var(--text-secondary);"><em>"Attackers may be using encoded PowerShell commands to evade detection."</em></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Define Observables</div>
+                            <p>Specify exactly what you'll look for in the data.</p>
+                            <p style="color: var(--text-secondary);"><em>"PowerShell.exe or pwsh.exe with '-enc' or '-encoded' in command line arguments."</em></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Scope It</div>
+                            <p>Limit to reasonable time range and systems.</p>
+                            <p style="color: var(--text-secondary);"><em>"Look at last 30 days across all workstations."</em></p>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>From Hypothesis to Hunt</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">HYPOTHESIS:</span>
+Attackers may have established persistence via WMI event subscriptions,
+which would appear in Sysmon WMI events (Event IDs 19-21).
+
+<span style="color: #a78bf6;">DATA SOURCE:</span>
+Microsoft-Windows-Sysmon/Operational
+
+<span style="color: #a78bf6;">INITIAL QUERY:</span>
+Sysmon
+| where EventID in (19, 20, 21)
+| where TimeGenerated > ago(30d)
+| project TimeGenerated, Computer, EventID, User, 
+    Consumer, Filter, Destination
+| sort by TimeGenerated desc
+
+<span style="color: #a78bf6;">SUCCESS CRITERIA:</span>
+- WMI subscriptions created by non-admin users
+- Subscriptions executing scripts from unusual paths
+- Consumer destinations containing encoded commands
+
+<span style="color: #a78bf6;">PIVOT PLAN:</span>
+If suspicious WMI found:
+1. Check what process created it (parent process)
+2. Look for other activity from same user/host
+3. Check if destination script exists and contents</pre>
+                </div>
+
+                <h2>Hypothesis Library</h2>
+                <p>Build your own hypothesis library organized by ATT&CK tactic. Here's a starter template:</p>
+
+                <table>
+                    <thead><tr><th>ID</th><th>Tactic</th><th>Technique</th><th>Hypothesis</th><th>Last Hunted</th></tr></thead>
+                    <tbody>
+                        <tr><td>H-001</td><td>Execution</td><td>T1059.001</td><td>Encoded PowerShell execution</td><td>2025-01-10</td></tr>
+                        <tr><td>H-002</td><td>Persistence</td><td>T1053.005</td><td>Suspicious scheduled tasks</td><td>2025-01-05</td></tr>
+                        <tr><td>H-003</td><td>Credential Access</td><td>T1003.001</td><td>LSASS memory access</td><td>2024-12-15</td></tr>
+                        <tr><td>H-004</td><td>Lateral Movement</td><td>T1021.001</td><td>Unusual RDP connections</td><td>2024-12-20</td></tr>
+                        <tr><td>H-005</td><td>C2</td><td>T1071.001</td><td>HTTP beaconing patterns</td><td>2025-01-08</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

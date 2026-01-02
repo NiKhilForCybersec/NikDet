@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Security | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Cloud Security</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="cs-nav"><i class="fas fa-cloud"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="cs-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="azure-security.html" class="active">Azure Security</a></li>
+                    <li><a href="aws-security.html">AWS Security</a></li>
+                    <li><a href="m365-security.html">Microsoft 365</a></li>
+                    <li><a href="cloud-detection.html">Cloud Detection</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Cloud Security</a><span class="separator">/</span><span>Azure Security</span></div>
+            <div class="page-header">
+                <h1><i class="fab fa-microsoft" style="color: #00a4ef;"></i> Azure Security Monitoring</h1>
+                <p class="lead">Comprehensive guide to detecting threats in Microsoft Azure and Entra ID.</p>
+            </div>
+            <div class="content">
+                <h2>Azure Log Sources</h2>
+
+                <h3>Entra ID (Azure AD) Logs</h3>
+                <table>
+                    <thead><tr><th>Log Type</th><th>Table in Sentinel</th><th>Contents</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Sign-in Logs</strong></td><td>SigninLogs</td><td>User authentication events</td></tr>
+                        <tr><td><strong>Non-Interactive Sign-ins</strong></td><td>AADNonInteractiveUserSignInLogs</td><td>Service/app sign-ins</td></tr>
+                        <tr><td><strong>Service Principal Sign-ins</strong></td><td>AADServicePrincipalSignInLogs</td><td>App/SP authentication</td></tr>
+                        <tr><td><strong>Managed Identity Sign-ins</strong></td><td>AADManagedIdentitySignInLogs</td><td>Managed identity auth</td></tr>
+                        <tr><td><strong>Audit Logs</strong></td><td>AuditLogs</td><td>Directory changes</td></tr>
+                        <tr><td><strong>Risky Users</strong></td><td>AADRiskyUsers</td><td>Identity Protection</td></tr>
+                        <tr><td><strong>Risk Detections</strong></td><td>AADRiskDetections</td><td>Risk signals</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Azure Resource Logs</h3>
+                <table>
+                    <thead><tr><th>Log Type</th><th>Table</th><th>Contents</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Activity Log</strong></td><td>AzureActivity</td><td>Control plane operations</td></tr>
+                        <tr><td><strong>Diagnostic Logs</strong></td><td>AzureDiagnostics</td><td>Resource-specific logs</td></tr>
+                        <tr><td><strong>Key Vault</strong></td><td>AzureDiagnostics</td><td>Secret/key access</td></tr>
+                        <tr><td><strong>Storage</strong></td><td>StorageBlobLogs</td><td>Blob access</td></tr>
+                        <tr><td><strong>NSG Flow Logs</strong></td><td>AzureNetworkAnalytics_CL</td><td>Network flows</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Critical Entra ID Detections</h2>
+
+                <h3>Risky Sign-in Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// High-risk sign-ins</span>
+SigninLogs
+| where RiskLevelDuringSignIn == "high" or RiskLevelAggregated == "high"
+| project TimeGenerated, UserPrincipalName, AppDisplayName,
+    IPAddress, Location, RiskLevelDuringSignIn,
+    RiskEventTypes_V2, ResultType, ResultDescription
+| sort by TimeGenerated desc</pre>
+                </div>
+
+                <h3>Impossible Travel</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Logins from geographically distant locations in short time</span>
+SigninLogs
+| where ResultType == 0  // Successful
+| project TimeGenerated, UserPrincipalName, Location, IPAddress
+| sort by UserPrincipalName, TimeGenerated asc
+| extend PrevLocation = prev(Location, 1, UserPrincipalName), 
+         PrevTime = prev(TimeGenerated, 1, UserPrincipalName)
+| where UserPrincipalName == prev(UserPrincipalName)
+| extend TimeDiffMinutes = datetime_diff('minute', TimeGenerated, PrevTime)
+| where Location != PrevLocation and TimeDiffMinutes < 60
+| project TimeGenerated, UserPrincipalName, Location, PrevLocation, TimeDiffMinutes</pre>
+                </div>
+
+                <h3>Privileged Role Assignment</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// New Global Admin or other privileged role</span>
+AuditLogs
+| where OperationName == "Add member to role"
+| extend RoleName = tostring(TargetResources[0].modifiedProperties[0].newValue)
+| where RoleName has_any ("Global Administrator", "Privileged Role Administrator",
+    "Application Administrator", "Exchange Administrator")
+| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+| extend Actor = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, Actor, TargetUser, RoleName</pre>
+                </div>
+
+                <h3>Consent Grant Attack</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Suspicious OAuth app consented</span>
+AuditLogs
+| where OperationName == "Consent to application"
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend Permissions = tostring(TargetResources[0].modifiedProperties)
+| extend User = tostring(InitiatedBy.user.userPrincipalName)
+| where Permissions has_any ("Mail.Read", "Mail.Send", "Files.ReadWrite.All",
+    "User.ReadWrite.All", "Directory.ReadWrite.All")
+| project TimeGenerated, User, AppName, Permissions</pre>
+                </div>
+
+                <h3>Service Principal Credential Added</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Persistence via service principal</span>
+AuditLogs
+| where OperationName has_any ("Add service principal credentials",
+    "Update application – Certificates and secrets management")
+| extend SPName = tostring(TargetResources[0].displayName)
+| extend Actor = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, Actor, SPName, OperationName</pre>
+                </div>
+
+                <h2>Azure Resource Detections</h2>
+
+                <h3>VM Created with Public IP</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Potentially exposed VM</span>
+AzureActivity
+| where OperationNameValue == "MICROSOFT.COMPUTE/VIRTUALMACHINES/WRITE"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, ResourceGroup, Resource, SubscriptionId</pre>
+                </div>
+
+                <h3>Key Vault Access</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Secret access from unusual source</span>
+AzureDiagnostics
+| where ResourceType == "VAULTS"
+| where OperationName == "SecretGet"
+| project TimeGenerated, Resource, CallerIPAddress, 
+    identity_claim_upn_s, ResultType
+| summarize Count = count() by CallerIPAddress, identity_claim_upn_s
+| where Count > 10</pre>
+                </div>
+
+                <h3>Diagnostic Settings Deleted</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Defense evasion - disable logging</span>
+AzureActivity
+| where OperationNameValue has "DIAGNOSTICSETTINGS/DELETE"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, ResourceGroup, Resource</pre>
+                </div>
+
+                <h2>Key Entra ID Events</h2>
+                <table>
+                    <thead><tr><th>Event</th><th>OperationName</th><th>Risk Level</th></tr></thead>
+                    <tbody>
+                        <tr><td>New Global Admin</td><td>Add member to role</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>App Consent</td><td>Consent to application</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>SP Credential Added</td><td>Add service principal credentials</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>Conditional Access Changed</td><td>Update conditional access policy</td><td style="color: #f0b756;">High</td></tr>
+                        <tr><td>MFA Disabled</td><td>Update user</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td>Guest Invited</td><td>Invite external user</td><td style="color: #5ce0c4;">Medium</td></tr>
+                        <tr><td>Password Reset</td><td>Reset user password</td><td style="color: #5ce0c4;">Medium</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>ResultType Reference</h2>
+                <table>
+                    <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>0</strong></td><td>Success</td></tr>
+                        <tr><td><strong>50126</strong></td><td>Invalid username or password</td></tr>
+                        <tr><td><strong>50076</strong></td><td>MFA required</td></tr>
+                        <tr><td><strong>50074</strong></td><td>MFA required, not satisfied</td></tr>
+                        <tr><td><strong>53003</strong></td><td>Blocked by Conditional Access</td></tr>
+                        <tr><td><strong>50053</strong></td><td>Account locked</td></tr>
+                        <tr><td><strong>50057</strong></td><td>Account disabled</td></tr>
+                        <tr><td><strong>500121</strong></td><td>Authentication failed during MFA</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Microsoft Defender for Cloud</h2>
+                <p>Enable these workload protections:</p>
+                <ul>
+                    <li><strong>Defender for Servers:</strong> VM security, vulnerability assessment</li>
+                    <li><strong>Defender for Storage:</strong> Malware scanning, anomaly detection</li>
+                    <li><strong>Defender for Key Vault:</strong> Secret access monitoring</li>
+                    <li><strong>Defender for Resource Manager:</strong> Control plane protection</li>
+                    <li><strong>Defender for DNS:</strong> DNS-based threats</li>
+                </ul>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

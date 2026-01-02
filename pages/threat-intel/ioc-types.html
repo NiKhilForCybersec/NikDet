@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IOC Types | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Threat Intelligence</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="ti-nav"><i class="fas fa-binoculars"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="ti-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="ioc-types.html" class="active">IOC Types</a></li>
+                    <li><a href="intel-sources.html">Intelligence Sources</a></li>
+                    <li><a href="threat-actors.html">Threat Actors</a></li>
+                    <li><a href="intel-lifecycle.html">Intel Lifecycle</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Threat Intelligence</a><span class="separator">/</span><span>IOC Types</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-fingerprint" style="color: var(--accent-secondary);"></i> Indicator Types</h1>
+                <p class="lead">Deep dive into different types of Indicators of Compromise and how to use them effectively.</p>
+            </div>
+            <div class="content">
+                <h2>File-Based Indicators</h2>
+
+                <h3>Cryptographic Hashes</h3>
+                <table>
+                    <thead><tr><th>Hash Type</th><th>Length</th><th>Example</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>MD5</strong></td>
+                            <td>32 chars</td>
+                            <td><code>d41d8cd98f00b204e9800998ecf8427e</code></td>
+                            <td>Fast but collision-prone; still widely used</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SHA1</strong></td>
+                            <td>40 chars</td>
+                            <td><code>da39a3ee5e6b4b0d3255bfef95601890afd80709</code></td>
+                            <td>Being phased out; collisions demonstrated</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SHA256</strong></td>
+                            <td>64 chars</td>
+                            <td><code>e3b0c44298fc1c149afbf4c8996fb924...</code></td>
+                            <td>Current standard; recommended</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SSDEEP</strong></td>
+                            <td>Variable</td>
+                            <td><code>3:AXGBicFlgVNhBGcL6wCrFQE...</code></td>
+                            <td>Fuzzy hash; finds similar files</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IMPHASH</strong></td>
+                            <td>32 chars</td>
+                            <td><code>f34d5f2d4577ed6d9ceec516c1f5a744</code></td>
+                            <td>Import hash; same across variants</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Hash Limitations</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Hash Limitations</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Single byte change = completely different hash</li>
+                        <li>Packers/crypters generate new hashes each compile</li>
+                        <li>Very short lifespan as indicators</li>
+                        <li>Best for: Known malware samples, forensic verification</li>
+                    </ul>
+                </div>
+
+                <h3>File Attributes</h3>
+                <table>
+                    <thead><tr><th>Attribute</th><th>Example</th><th>Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Filename</strong></td><td>invoice.docm, update.exe</td><td>Low (easily changed)</td></tr>
+                        <tr><td><strong>File path</strong></td><td>C:\Users\Public\update.exe</td><td>Medium (behavior-based)</td></tr>
+                        <tr><td><strong>File size</strong></td><td>245,760 bytes</td><td>Low (varies)</td></tr>
+                        <tr><td><strong>Compilation time</strong></td><td>2025-01-15 12:00:00</td><td>Medium (often faked)</td></tr>
+                        <tr><td><strong>Digital signature</strong></td><td>Signed by "Company X"</td><td>High (expensive to fake)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network-Based Indicators</h2>
+
+                <h3>IP Addresses</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Types:</span>
+- C2 Server IPs
+- Scanning IPs
+- Proxy/VPN exit nodes
+- Tor exit nodes
+- Bulletproof hosting
+
+<span style="color: #6aa3f7;">Considerations:</span>
+- CDNs and shared hosting cause false positives
+- IPs are easily rotated
+- Check ASN and geolocation for context
+- Look for patterns (same /24 subnet)</pre>
+                </div>
+
+                <h3>Domains</h3>
+                <table>
+                    <thead><tr><th>Domain Type</th><th>Example</th><th>Characteristics</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>DGA</strong></td>
+                            <td>asd7f8asdf.com</td>
+                            <td>Random, high entropy, short-lived</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Typosquatting</strong></td>
+                            <td>micosoft.com</td>
+                            <td>Looks like legitimate domain</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Compromised</strong></td>
+                            <td>legitimate-site.com/malware</td>
+                            <td>Legitimate domain hosting malware</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Free DNS</strong></td>
+                            <td>evil.duckdns.org</td>
+                            <td>Dynamic DNS, frequently abused</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>URLs</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Components:</span>
+https://malware.bad:8443/downloads/payload.exe?id=12345
+
+<span style="color: #a78bf6;">Protocol:</span>    https
+<span style="color: #a78bf6;">Domain:</span>     malware.bad
+<span style="color: #a78bf6;">Port:</span>       8443
+<span style="color: #a78bf6;">Path:</span>       /downloads/payload.exe
+<span style="color: #a78bf6;">Query:</span>      id=12345
+
+<span style="color: #6aa3f7;">Detection points:</span>
+- Full URL match (most specific)
+- Domain + path pattern
+- Parameter patterns (encoded commands)</pre>
+                </div>
+
+                <h2>Email Indicators</h2>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Example</th><th>Reliability</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Sender address</strong></td><td>attacker@phishing.com</td><td>Low (easily spoofed)</td></tr>
+                        <tr><td><strong>Subject line</strong></td><td>"URGENT: Invoice Attached"</td><td>Medium (patterns useful)</td></tr>
+                        <tr><td><strong>Attachment hash</strong></td><td>SHA256 of malicious doc</td><td>Medium (if unchanged)</td></tr>
+                        <tr><td><strong>Attachment name</strong></td><td>Invoice_12345.docm</td><td>Low (easily changed)</td></tr>
+                        <tr><td><strong>X-Originating-IP</strong></td><td>Header revealing true source</td><td>High (if present)</td></tr>
+                        <tr><td><strong>Reply-To</strong></td><td>Different from From address</td><td>Medium (phishing indicator)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Host-Based Indicators</h2>
+
+                <h3>Registry Keys</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Persistence Locations:</span>
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+HKLM\SYSTEM\CurrentControlSet\Services
+
+<span style="color: #6aa3f7;">Example IOC:</span>
+Key:   HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+Value: WindowsUpdate
+Data:  C:\Users\Public\update.exe</pre>
+                </div>
+
+                <h3>Scheduled Tasks</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">Indicators:</span>
+- Task Name: Suspicious or mimics legitimate
+- Action: Executes malware or script
+- Trigger: Boot, logon, or scheduled
+- User: Runs as SYSTEM or specific user
+
+<span style="color: #6aa3f7;">Example:</span>
+Name: MicrosoftEdgeUpdateCore
+Action: C:\Users\Public\edge-update.exe
+Trigger: Every 5 minutes</pre>
+                </div>
+
+                <h3>Services</h3>
+                <table>
+                    <thead><tr><th>Attribute</th><th>Example IOC</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Service Name</strong></td><td>WinDefendCore (mimics Windows Defender)</td></tr>
+                        <tr><td><strong>Display Name</strong></td><td>Windows Defender Core Service</td></tr>
+                        <tr><td><strong>Binary Path</strong></td><td>C:\Windows\Temp\svchost.exe</td></tr>
+                        <tr><td><strong>Account</strong></td><td>LocalSystem</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Behavioral Indicators</h2>
+                <p>More resilient than atomic IOCs - focus on what attackers DO, not just what they use.</p>
+
+                <h3>Process Behaviors</h3>
+                <ul>
+                    <li>Word.exe spawning cmd.exe or powershell.exe</li>
+                    <li>PowerShell with encoded commands (-enc)</li>
+                    <li>Certutil downloading files from internet</li>
+                    <li>Processes running from C:\Users\Public</li>
+                    <li>svchost.exe without -k parameter</li>
+                </ul>
+
+                <h3>Network Behaviors</h3>
+                <ul>
+                    <li>Beaconing to same IP at regular intervals</li>
+                    <li>DNS queries with high entropy subdomains</li>
+                    <li>HTTP POST to direct IP (not domain)</li>
+                    <li>Unusual user-agent strings</li>
+                    <li>Data transfer over uncommon ports</li>
+                </ul>
+
+                <h2>IOC Management</h2>
+                <h3>Confidence Scoring</h3>
+                <table>
+                    <thead><tr><th>Score</th><th>Meaning</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f07070;"><strong>90-100</strong></td><td>High confidence malicious</td><td>Block, alert, investigate</td></tr>
+                        <tr><td style="color: #f0b756;"><strong>70-89</strong></td><td>Likely malicious</td><td>Alert, investigate</td></tr>
+                        <tr><td style="color: #5ce0c4;"><strong>50-69</strong></td><td>Suspicious</td><td>Monitor, log</td></tr>
+                        <tr><td style="color: #6aa3f7;"><strong>30-49</strong></td><td>Low confidence</td><td>Log only</td></tr>
+                        <tr><td><strong>0-29</strong></td><td>Informational</td><td>Context only</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>IOC Expiration</h3>
+                <table>
+                    <thead><tr><th>IOC Type</th><th>Typical Lifespan</th><th>Review Frequency</th></tr></thead>
+                    <tbody>
+                        <tr><td>File hashes</td><td>Days to weeks</td><td>Weekly</td></tr>
+                        <tr><td>IP addresses</td><td>Days to weeks</td><td>Weekly</td></tr>
+                        <tr><td>Domains</td><td>Weeks to months</td><td>Monthly</td></tr>
+                        <tr><td>URLs</td><td>Hours to days</td><td>Daily</td></tr>
+                        <tr><td>Registry/behavior</td><td>Months to years</td><td>Quarterly</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

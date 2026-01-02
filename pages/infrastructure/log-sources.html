@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Sources | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Infrastructure</h3></div>
+        <div class="sidebar-content">
+            <div class="nav-section">
+                <div class="nav-section-header" data-toggle="infra-nav"><i class="fas fa-server"></i><span>Topics</span><i class="fas fa-chevron-down toggle-icon"></i></div>
+                <ul class="nav-links expanded" id="infra-nav">
+                    <li><a href="index.html">Overview</a></li>
+                    <li><a href="log-sources.html" class="active">Log Sources</a></li>
+                    <li><a href="collection.html">Collection</a></li>
+                    <li><a href="parsing.html">Parsing</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Infrastructure</a><span class="separator">/</span><span>Log Sources</span></div>
+            <div class="page-header">
+                <h1><i class="fas fa-database" style="color: var(--accent-primary);"></i> Log Sources</h1>
+                <p class="lead">Essential log sources for security monitoring and detection.</p>
+            </div>
+            <div class="content">
+
+                <h2>Log Source Categories</h2>
+                <table>
+                    <thead><tr><th>Category</th><th>Examples</th><th>Key Use Cases</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Endpoint</strong></td>
+                            <td>Windows Event Logs, Sysmon, Linux auditd</td>
+                            <td>Process execution, file access, authentication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Network</strong></td>
+                            <td>Firewall, IDS/IPS, DNS, Proxy, NetFlow</td>
+                            <td>Traffic analysis, C2 detection, lateral movement</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Identity</strong></td>
+                            <td>Active Directory, Azure AD, Okta</td>
+                            <td>Authentication, privilege escalation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud</strong></td>
+                            <td>AWS CloudTrail, Azure Activity, GCP Audit</td>
+                            <td>Cloud resource changes, API activity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security Tools</strong></td>
+                            <td>EDR, AV, DLP, Email Gateway</td>
+                            <td>Threat detection, policy violations</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Application</strong></td>
+                            <td>Web servers, databases, custom apps</td>
+                            <td>Application attacks, data access</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Windows Log Sources</h2>
+
+                <h3>Windows Security Event Log (Must-Have Events)</h3>
+                <table>
+                    <thead><tr><th>Event ID</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>4624</strong></td><td>Successful logon</td><td>User activity baseline, lateral movement</td></tr>
+                        <tr><td><strong>4625</strong></td><td>Failed logon</td><td>Brute force, password spray</td></tr>
+                        <tr><td><strong>4648</strong></td><td>Explicit credential logon</td><td>Credential abuse, pass-the-hash</td></tr>
+                        <tr><td><strong>4672</strong></td><td>Admin logon (special privileges)</td><td>Privilege use tracking</td></tr>
+                        <tr><td><strong>4688</strong></td><td>Process creation</td><td>Command execution (needs auditing enabled)</td></tr>
+                        <tr><td><strong>4720</strong></td><td>User account created</td><td>Persistence, unauthorized accounts</td></tr>
+                        <tr><td><strong>4728/4732</strong></td><td>User added to security group</td><td>Privilege escalation</td></tr>
+                        <tr><td><strong>4768</strong></td><td>Kerberos TGT requested</td><td>Kerberos attacks, overpass-the-hash</td></tr>
+                        <tr><td><strong>4769</strong></td><td>Kerberos service ticket</td><td>Kerberoasting</td></tr>
+                        <tr><td><strong>4776</strong></td><td>NTLM authentication</td><td>Pass-the-hash, NTLM relay</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Sysmon (Essential Events)</h3>
+                <table>
+                    <thead><tr><th>Event ID</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>1</strong></td><td>Process creation</td><td>Command line, parent-child relationships</td></tr>
+                        <tr><td><strong>3</strong></td><td>Network connection</td><td>C2 communication, lateral movement</td></tr>
+                        <tr><td><strong>7</strong></td><td>Image loaded (DLL)</td><td>DLL hijacking, injection</td></tr>
+                        <tr><td><strong>8</strong></td><td>CreateRemoteThread</td><td>Process injection</td></tr>
+                        <tr><td><strong>10</strong></td><td>Process access</td><td>Credential dumping (lsass.exe)</td></tr>
+                        <tr><td><strong>11</strong></td><td>File created</td><td>Malware drops, webshells</td></tr>
+                        <tr><td><strong>12/13/14</strong></td><td>Registry events</td><td>Persistence mechanisms</td></tr>
+                        <tr><td><strong>15</strong></td><td>FileCreateStreamHash</td><td>ADS abuse (alternate data streams)</td></tr>
+                        <tr><td><strong>22</strong></td><td>DNS query</td><td>C2 domains, DNS tunneling</td></tr>
+                        <tr><td><strong>23</strong></td><td>File delete</td><td>Anti-forensics, ransomware</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>PowerShell Logging</h3>
+                <table>
+                    <thead><tr><th>Log Type</th><th>Event ID</th><th>What It Captures</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Module Logging</strong></td><td>4103</td><td>Cmdlet and script execution details</td></tr>
+                        <tr><td><strong>Script Block Logging</strong></td><td>4104</td><td>Full script content (deobfuscated)</td></tr>
+                        <tr><td><strong>Transcription</strong></td><td>N/A (file)</td><td>Complete session transcript to file</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box success">
+                    <div class="info-box-title"><i class="fas fa-check-circle"></i> Enable Script Block Logging</div>
+                    <p style="margin: 0.5rem 0 0 0;">Script Block Logging (4104) is critical - it shows deobfuscated PowerShell content, revealing malicious commands that encoded/obfuscated scripts try to hide.</p>
+                </div>
+
+                <h2>Linux Log Sources</h2>
+                <table>
+                    <thead><tr><th>Log File</th><th>Content</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>/var/log/auth.log</strong></td><td>Authentication events</td><td>SSH brute force, sudo abuse</td></tr>
+                        <tr><td><strong>/var/log/secure</strong></td><td>Auth events (RHEL/CentOS)</td><td>Same as auth.log</td></tr>
+                        <tr><td><strong>/var/log/audit/audit.log</strong></td><td>auditd events</td><td>Syscalls, file access, process execution</td></tr>
+                        <tr><td><strong>/var/log/syslog</strong></td><td>General system events</td><td>Service status, errors</td></tr>
+                        <tr><td><strong>/var/log/cron</strong></td><td>Cron job execution</td><td>Persistence via cron</td></tr>
+                        <tr><td><strong>/var/log/apache2/access.log</strong></td><td>Web server requests</td><td>Web attacks, webshells</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network Log Sources</h2>
+                <table>
+                    <thead><tr><th>Source</th><th>What It Provides</th><th>Key Detection Value</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Firewall</strong></td>
+                            <td>Allow/deny decisions, NAT translations</td>
+                            <td>Blocked attacks, policy violations, C2 traffic</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Web Proxy</strong></td>
+                            <td>HTTP/HTTPS requests, URLs, user-agents</td>
+                            <td>Malicious URLs, data exfiltration, C2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DNS</strong></td>
+                            <td>Query and response logs</td>
+                            <td>DGA domains, DNS tunneling, C2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DHCP</strong></td>
+                            <td>IP assignments</td>
+                            <td>Device identification, rogue devices</td>
+                        </tr>
+                        <tr>
+                            <td><strong>VPN</strong></td>
+                            <td>Remote access sessions</td>
+                            <td>Unauthorized access, compromised credentials</td></tr>
+                        <tr>
+                            <td><strong>IDS/IPS</strong></td>
+                            <td>Signature-based alerts</td>
+                            <td>Known attack patterns, exploits</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NetFlow/IPFIX</strong></td>
+                            <td>Connection metadata</td>
+                            <td>Traffic patterns, anomalies, beaconing</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Cloud Log Sources</h2>
+
+                <h3>AWS</h3>
+                <table>
+                    <thead><tr><th>Service</th><th>Log Type</th><th>What It Captures</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>CloudTrail</strong></td><td>API activity</td><td>All AWS API calls (management plane)</td></tr>
+                        <tr><td><strong>VPC Flow Logs</strong></td><td>Network flows</td><td>Traffic metadata for VPCs</td></tr>
+                        <tr><td><strong>GuardDuty</strong></td><td>Threat findings</td><td>Pre-built threat detection</td></tr>
+                        <tr><td><strong>S3 Access Logs</strong></td><td>Bucket access</td><td>Data access patterns</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Azure</h3>
+                <table>
+                    <thead><tr><th>Log Type</th><th>Table Name</th><th>What It Captures</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Sign-in Logs</strong></td><td>SigninLogs</td><td>Entra ID authentication</td></tr>
+                        <tr><td><strong>Audit Logs</strong></td><td>AuditLogs</td><td>Directory changes</td></tr>
+                        <tr><td><strong>Activity Logs</strong></td><td>AzureActivity</td><td>Resource management operations</td></tr>
+                        <tr><td><strong>Diagnostic Logs</strong></td><td>AzureDiagnostics</td><td>Resource-specific operations</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Log Source Priority</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">PRIORITY 1 (Must Have)</span>
+━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Windows Security Events (4624, 4625, 4688, 4720, etc.)
+✓ EDR telemetry (process, file, network)
+✓ Firewall logs (allow/deny)
+✓ DNS query logs
+✓ Identity provider logs (AD, Azure AD)
+
+<span style="color: #f0b756;">PRIORITY 2 (Important)</span>
+━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Sysmon (if no EDR)
+✓ Web proxy logs
+✓ VPN logs
+✓ Cloud audit logs (CloudTrail, Azure Activity)
+✓ Email gateway logs
+
+<span style="color: #5ce0c4;">PRIORITY 3 (Valuable)</span>
+━━━━━━━━━━━━━━━━━━━━━━━━
+✓ PowerShell logging
+✓ IDS/IPS alerts
+✓ Application logs (web servers, databases)
+✓ NetFlow/IPFIX
+✓ DHCP logs</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

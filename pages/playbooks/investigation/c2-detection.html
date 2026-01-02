@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2 Detection Investigation | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="main-nav">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>C2 Detection</span></div>
+            <div class="content">
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-INV-007</div>
+                    <h1>Command & Control (C2) Investigation</h1>
+                    <p class="lead">Identify, investigate, and disrupt attacker command and control communications from compromised systems.</p>
+                    <div class="playbook-meta">
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">CRITICAL</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2/L3</span></div>
+                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">30-90 min</span></div>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                        <span class="mitre-tag">T1071 - Application Layer Protocol</span>
+                        <span class="mitre-tag">T1095 - Non-Application Layer Protocol</span>
+                        <span class="mitre-tag">T1573 - Encrypted Channel</span>
+                        <span class="mitre-tag">T1568 - Dynamic Resolution</span>
+                    </div>
+                </div>
+
+                <h2>What is C2?</h2>
+                <p>Command and Control (C2) is how attackers communicate with compromised systems. Detecting C2 means you've found an active compromise - the attacker can still issue commands and exfiltrate data.</p>
+
+                <h2>Part 1: C2 Communication Types</h2>
+                <table>
+                    <thead><tr><th>C2 Type</th><th>How It Works</th><th>Detection Approach</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>HTTP/HTTPS Beaconing</strong></td>
+                            <td>Regular callbacks to C2 server disguised as web traffic</td>
+                            <td>Periodic connections, JA3/JA3S fingerprints, unusual User-Agents</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DNS Tunneling</strong></td>
+                            <td>Commands/data encoded in DNS queries</td>
+                            <td>Long subdomains, high query volume, TXT records</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Domain Generation Algorithms (DGA)</strong></td>
+                            <td>Algorithmically generated domains for resilience</td>
+                            <td>High entropy domains, random-looking strings</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud Services</strong></td>
+                            <td>Using legitimate services (Slack, Teams, Dropbox)</td>
+                            <td>Unusual API calls, data patterns</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Custom Protocols</strong></td>
+                            <td>Non-standard ports or protocols</td>
+                            <td>Traffic on unusual ports, protocol anomalies</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Part 2: Beaconing Detection</h2>
+                <p>Beaconing is the most common C2 pattern - regular "check-ins" to the attacker's server.</p>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Find regular interval connections (beaconing)</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteIPType == "Public"
+| summarize 
+    ConnectionCount = count(),
+    Timestamps = make_list(TimeGenerated, 1000)
+  by DeviceName, RemoteIP, RemotePort
+| where ConnectionCount > 20  <span style="color: #6aa3f7;">// Minimum connections</span>
+| extend Intervals = series_diff(Timestamps, 1, false)
+| mv-expand Intervals
+| summarize 
+    AvgInterval = avg(toint(Intervals) / 10000000),  <span style="color: #6aa3f7;">// Convert to seconds</span>
+    StdDev = stdev(toint(Intervals) / 10000000)
+  by DeviceName, RemoteIP, RemotePort
+| where StdDev < 60 and AvgInterval between (30 .. 3600)  <span style="color: #6aa3f7;">// Low variance = beaconing</span>
+| order by StdDev asc
+
+<span style="color: #a78bf6;">// KQL: Simplified beaconing detection</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where ActionType == "ConnectionSuccess"
+| where RemoteIPType == "Public"
+| summarize 
+    TotalConnections = count(),
+    UniqueHours = dcount(bin(TimeGenerated, 1h)),
+    BytesSent = sum(SentBytes)
+  by DeviceName, RemoteIP, RemoteUrl
+| where TotalConnections > 50 and UniqueHours > 12  <span style="color: #6aa3f7;">// Active over many hours</span>
+| order by TotalConnections desc</pre>
+                </div>
+
+                <h2>Part 3: DNS Tunneling Detection</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Long DNS subdomain queries (potential tunneling)</span>
+DnsEvents
+| where TimeGenerated > ago(24h)
+| extend SubdomainLength = strlen(tostring(split(Name, ".")[0]))
+| where SubdomainLength > 30  <span style="color: #6aa3f7;">// Unusually long subdomain</span>
+| summarize QueryCount = count() by Name, ClientIP
+| order by QueryCount desc
+
+<span style="color: #a78bf6;">// KQL: High volume DNS to single domain</span>
+DnsEvents
+| where TimeGenerated > ago(24h)
+| extend Domain = strcat(tostring(split(Name, ".")[-2]), ".", tostring(split(Name, ".")[-1]))
+| summarize 
+    TotalQueries = count(),
+    UniqueSubdomains = dcount(Name)
+  by Domain, ClientIP
+| where TotalQueries > 500 and UniqueSubdomains > 100
+| order by TotalQueries desc
+
+<span style="color: #a78bf6;">// KQL: TXT record queries (often used for tunneling)</span>
+DnsEvents
+| where TimeGenerated > ago(24h)
+| where QueryType == "TXT"
+| summarize QueryCount = count() by Name, ClientIP
+| where QueryCount > 10
+| order by QueryCount desc</pre>
+                </div>
+
+                <h2>Part 4: DGA Domain Detection</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: High-entropy domain names (DGA indicator)</span>
+DnsEvents
+| where TimeGenerated > ago(24h)
+| extend Domain = tostring(split(Name, ".")[-2])
+| extend DomainLength = strlen(Domain)
+| where DomainLength > 10
+| extend ConsonantRatio = countof(Domain, "[bcdfghjklmnpqrstvwxyz]") / toreal(DomainLength)
+| where ConsonantRatio > 0.7  <span style="color: #6aa3f7;">// High consonant ratio = likely random</span>
+| summarize QueryCount = count() by Name, ClientIP
+| order by QueryCount desc
+
+<span style="color: #a78bf6;">// KQL: Many NXDomain responses (DGA trying to find active C2)</span>
+DnsEvents
+| where TimeGenerated > ago(24h)
+| where ResultCode == "NXDomain"
+| summarize NXDomainCount = count() by ClientIP
+| where NXDomainCount > 100  <span style="color: #6aa3f7;">// High failure rate</span>
+| order by NXDomainCount desc</pre>
+                </div>
+
+                <h2>Part 5: Known C2 Frameworks</h2>
+                <table>
+                    <thead><tr><th>Framework</th><th>Common Indicators</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Cobalt Strike</strong></td><td>Default malleable C2 profiles, named pipes, JA3 fingerprints</td></tr>
+                        <tr><td><strong>Meterpreter</strong></td><td>TCP 4444, reverse shells, staged payloads</td></tr>
+                        <tr><td><strong>Empire/Covenant</strong></td><td>PowerShell stagers, encoded commands</td></tr>
+                        <tr><td><strong>Sliver</strong></td><td>mTLS, HTTP/DNS C2, WireGuard tunnels</td></tr>
+                        <tr><td><strong>Brute Ratel</strong></td><td>Advanced evasion, DOH/DOT channels</td></tr>
+                    </tbody>
+                </table>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Cobalt Strike named pipe indicators</span>
+DeviceEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "NamedPipeEvent"
+| where PipeName matches regex @"\\\\\.\\pipe\\(msagent_|MSSE-|postex_|status_|mojo\.|)"
+| project TimeGenerated, DeviceName, PipeName, InitiatingProcessFileName
+
+<span style="color: #a78bf6;">// KQL: Processes connecting to known bad ports</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemotePort in (4444, 5555, 8080, 8443, 9001, 1234)  <span style="color: #6aa3f7;">// Common C2 ports</span>
+| where RemoteIPType == "Public"
+| project TimeGenerated, DeviceName, InitiatingProcessFileName, RemoteIP, RemotePort</pre>
+                </div>
+
+                <h2>Part 6: Containment</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Immediate Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Active C2 communication</td><td>Network isolate endpoint via EDR</td></tr>
+                        <tr><td>C2 IP/domain identified</td><td>Block at firewall and DNS</td></tr>
+                        <tr><td>Beaconing process found</td><td>Kill process, collect memory dump first</td></tr>
+                        <tr><td>Multiple systems beaconing</td><td>Coordinate simultaneous isolation</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>MITRE ATT&CK Mapping</h2>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td>Web Protocols</td><td>T1071.001</td><td>HTTP/S beaconing patterns</td></tr>
+                        <tr><td>DNS</td><td>T1071.004</td><td>DNS tunneling, TXT queries</td></tr>
+                        <tr><td>Dynamic Resolution</td><td>T1568</td><td>DGA domains, Fast Flux</td></tr>
+                        <tr><td>Encrypted Channel</td><td>T1573</td><td>TLS to unusual destinations</td></tr>
+                        <tr><td>Protocol Tunneling</td><td>T1572</td><td>DNS/ICMP/HTTP tunneling</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+    </main>
+    <script src="../../../js/main.js"></script>
+</body>
+</html>

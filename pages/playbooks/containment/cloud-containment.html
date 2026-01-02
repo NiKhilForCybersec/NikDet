@@ -4,173 +4,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Containment | SOC Compendium</title>
-    <link rel="stylesheet" href="../../../../../css/styles.css">
+    <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
-        <a href="../../../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
-        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
-        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
-        <div class="sidebar-content"></div>
-    </aside>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Cloud Containment</span></div>
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Cloud Containment</span></div>
             <div class="content">
-            <div class="playbook-header">
-                <div class="playbook-id">PB-CON-005</div>
-                <h1>Cloud Containment</h1>
-                <p class="lead">Procedures for containing cloud-based threats including resource isolation and access revocation.</p>
-                <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">All Tiers</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-CON-005</div>
+                    <h1>Cloud Containment Procedures</h1>
+                    <p class="lead">Procedures for containing threats in Azure, AWS, GCP, and SaaS environments.</p>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;"><span class="mitre-tag">N/A</span></div>
+
+                <h2>Azure Containment Actions</h2>
+                <table>
+                    <thead><tr><th>Threat</th><th>Containment Action</th><th>Command/Steps</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Compromised VM</strong></td><td>Network isolation</td><td>Apply deny-all NSG rule or stop VM</td></tr>
+                        <tr><td><strong>Exposed storage</strong></td><td>Block public access</td><td>Disable anonymous access, regenerate keys</td></tr>
+                        <tr><td><strong>Malicious app</strong></td><td>Disable app registration</td><td>Remove app consent, delete if necessary</td></tr>
+                        <tr><td><strong>Compromised SP</strong></td><td>Rotate credentials</td><td>Generate new secret/certificate</td></tr>
+                        <tr><td><strong>Rogue resource</strong></td><td>Delete/terminate</td><td>Remove unauthorized resources</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Azure CLI Commands</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Isolate VM with deny-all NSG</span>
+az network nsg rule create \
+  --resource-group MyRG \
+  --nsg-name MyNSG \
+  --name DenyAllInbound \
+  --priority 100 \
+  --direction Inbound \
+  --access Deny \
+  --source-address-prefixes '*'
+
+<span style="color: #6aa3f7;"># Remove public access from storage account</span>
+az storage account update \
+  --name mystorageaccount \
+  --resource-group MyRG \
+  --allow-blob-public-access false
+
+<span style="color: #6aa3f7;"># Regenerate storage account keys</span>
+az storage account keys renew \
+  --account-name mystorageaccount \
+  --resource-group MyRG \
+  --key primary
+
+<span style="color: #6aa3f7;"># Stop a VM (preserves for forensics)</span>
+az vm stop --name MyVM --resource-group MyRG</pre>
+                </div>
+
+                <h2>AWS Containment Actions</h2>
+                <table>
+                    <thead><tr><th>Threat</th><th>Containment Action</th><th>Command/Steps</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Compromised EC2</strong></td><td>Security Group isolation</td><td>Apply deny-all SG, snapshot for forensics</td></tr>
+                        <tr><td><strong>Exposed S3</strong></td><td>Block public access</td><td>Enable Block Public Access settings</td></tr>
+                        <tr><td><strong>Compromised IAM user</strong></td><td>Disable credentials</td><td>Deactivate access keys, delete user</td></tr>
+                        <tr><td><strong>Compromised role</strong></td><td>Revoke sessions</td><td>Update role trust policy, revoke sessions</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>AWS CLI Commands</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;"># Create isolation security group</span>
+aws ec2 create-security-group \
+  --group-name Quarantine \
+  --description "Isolation SG - no ingress/egress"
+
+<span style="color: #6aa3f7;"># Apply isolation SG to instance</span>
+aws ec2 modify-instance-attribute \
+  --instance-id i-1234567890abcdef0 \
+  --groups sg-quarantine
+
+<span style="color: #6aa3f7;"># Block S3 bucket public access</span>
+aws s3api put-public-access-block \
+  --bucket my-bucket \
+  --public-access-block-configuration \
+    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+<span style="color: #6aa3f7;"># Deactivate IAM access key</span>
+aws iam update-access-key \
+  --user-name compromised-user \
+  --access-key-id AKIAXXXXXXXX \
+  --status Inactive</pre>
+                </div>
+
+                <h2>M365/SaaS Containment</h2>
+                <table>
+                    <thead><tr><th>Threat</th><th>Containment Action</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>SharePoint oversharing</strong></td><td>Remove external sharing, review permissions</td></tr>
+                        <tr><td><strong>Malicious OAuth app</strong></td><td>Revoke consent, block app tenant-wide</td></tr>
+                        <tr><td><strong>Compromised mailbox</strong></td><td>Remove forwarding rules, block external access</td></tr>
+                        <tr><td><strong>Teams data leak</strong></td><td>Remove external members, restrict sharing</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Post-Containment Steps</h2>
+                <ul>
+                    <li>Document all containment actions taken</li>
+                    <li>Preserve evidence (snapshots, logs, configs)</li>
+                    <li>Notify stakeholders of affected resources</li>
+                    <li>Begin investigation to determine scope</li>
+                    <li>Plan remediation and recovery</li>
+                </ul>
+
             </div>
-
-            <h2>Overview</h2>
-            <p>Procedures for containing cloud-based threats including resource isolation and access revocation. This playbook provides systematic procedures applicable across any security environment.</p>
-
-            <h2>When to Use This Playbook</h2>
-            <p>Use this playbook when you encounter alerts or incidents matching the description above. It provides step-by-step guidance for efficient handling.</p>
-
-            <h2>Prerequisites</h2>
-            <h3>Required Access</h3>
-            <ul>
-                <li><strong>SIEM</strong> - Microsoft Sentinel or Splunk for log analysis</li>
-                <li><strong>EDR</strong> - Endpoint detection and response platform</li>
-                <li><strong>Identity</strong> - Azure AD / Active Directory access</li>
-                <li><strong>Network</strong> - Firewall, proxy, DNS logs</li>
-            </ul>
-
-            <h2>Procedure</h2>
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Initial Assessment</div>
-                        <div class="step-description">Gather context about the alert or incident:</div>
-                        <ul>
-                            <li>Review alert details and severity</li>
-                            <li>Identify affected users, hosts, or systems</li>
-                            <li>Determine timeline of events</li>
-                            <li>Check for related alerts</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Evidence Collection</div>
-                        <div class="step-description">Gather relevant data for analysis:</div>
-                        <ul>
-                            <li>Query SIEM for related events</li>
-                            <li>Pull endpoint telemetry from EDR</li>
-                            <li>Collect network flow data if applicable</li>
-                            <li>Preserve volatile evidence if needed</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Analysis</div>
-                        <div class="step-description">Analyze collected evidence to determine:</div>
-                        <ul>
-                            <li>Is this a true positive or false positive?</li>
-                            <li>What is the full scope of impact?</li>
-                            <li>What was the attack vector/technique?</li>
-                            <li>Are there additional indicators of compromise?</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Containment</div>
-                        <div class="step-description">If confirmed malicious, execute containment:</div>
-                        <ul>
-                            <li>Isolate affected systems if needed</li>
-                            <li>Block malicious indicators</li>
-                            <li>Disable compromised accounts</li>
-                            <li>Prevent further spread</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Documentation & Closure</div>
-                        <div class="step-description">Complete the investigation:</div>
-                        <ul>
-                            <li>Document all findings</li>
-                            <li>Record IOCs for threat intel</li>
-                            <li>Update ticket with timeline</li>
-                            <li>Determine final classification</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <h2>Decision Tree</h2>
-            <div class="decision-tree">
-                <div class="decision-node question"><strong>Is this a confirmed security incident?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Close as False Positive with documentation</div>
-                    <div class="decision-node action"><strong>YES →</strong> Execute containment, continue investigation</div>
-                </div>
-                <div class="decision-node question"><strong>Is escalation required?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Complete remediation, close incident</div>
-                    <div class="decision-node escalate"><strong>YES →</strong> Escalate to IR team with all findings</div>
-                </div>
-            </div>
-
-            <h2>Investigation Queries</h2>
-            <h3>KQL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>// Investigate related events
-let TimeRange = ago(24h);
-let Target = "entity-to-investigate";
-search in (SecurityEvent, SigninLogs, DeviceEvents)
-| where TimeGenerated > TimeRange
-| where * contains Target
-| project TimeGenerated, Type, Activity
-| order by TimeGenerated desc</code></pre>
-                </div>
-            </div>
-
-            <h3>SPL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>index=* earliest=-24h "entity-to-investigate"
-| stats count by index sourcetype _time
-| sort - _time</code></pre>
-                </div>
-            </div>
-
-            <h2>MITRE ATT&CK Mapping</h2>
-            <table>
-                <thead><tr><th>Technique</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><span class="mitre-tag">N/A</span></td><td>Relevant technique for this playbook</td></tr>
-                </tbody>
-            </table>
-</div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
-    <script src="../../../../../js/main.js"></script>
+    <script src="../../../js/main.js"></script>
 </body>
 </html>

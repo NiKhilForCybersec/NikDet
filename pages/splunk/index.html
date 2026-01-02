@@ -6,71 +6,96 @@
     <title>Splunk | SOC Compendium</title>
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
         <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
-        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
-        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
     </nav>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
-        <div class="sidebar-content">
-            <div class="nav-section">
-                <div class="nav-section-header" data-toggle="home-nav"><i class="fas fa-home"></i><span>Home</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                <ul class="nav-links expanded" id="home-nav"><li><a href="../../index.html">Introduction</a></li></ul>
-            </div>
-        </div>
-    </aside>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><span>Splunk</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-search-dollar" style="color: var(--color-splunk);"></i> Splunk</h1>
-            </div>
             <div class="content">
-<p class="lead">Complete guide to Splunk for security operations - SPL, Enterprise Security, and SOAR integration.</p>
+                <h1>Splunk for Security Operations</h1>
+                <p class="lead">Master Splunk and SPL for security monitoring, threat detection, and incident investigation.</p>
 
-<h2>What is Splunk?</h2>
-<p>Splunk is a powerful platform for searching, monitoring, and analyzing machine-generated data. For security teams, Splunk Enterprise Security provides advanced SIEM capabilities.</p>
+                <h2>Splunk Learning Path</h2>
+                <div class="card-grid">
+                    <a href="spl-fundamentals.html" class="card">
+                        <div class="card-icon"><i class="fas fa-graduation-cap"></i></div>
+                        <h3>SPL Fundamentals</h3>
+                        <p>Search basics, filtering, field extraction, and essential commands.</p>
+                    </a>
+                    <a href="spl-intermediate.html" class="card">
+                        <div class="card-icon"><i class="fas fa-code"></i></div>
+                        <h3>SPL Intermediate</h3>
+                        <p>Stats, eval, timechart, subsearches, lookups, and transaction.</p>
+                    </a>
+                    <a href="spl-advanced.html" class="card">
+                        <div class="card-icon"><i class="fas fa-brain"></i></div>
+                        <h3>SPL Advanced</h3>
+                        <p>Eventstats, streamstats, data models, tstats, and ML commands.</p>
+                    </a>
+                </div>
 
-<h2>Learning Path</h2>
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
-    <a href="spl-fundamentals.html" style="padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); border-left: 4px solid #65a637;">
-        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <span style="background: #65a637; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.7rem;">START HERE</span>
+                <h2>SPL Quick Reference</h2>
+                <table>
+                    <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>search</code></td><td>Filter events</td><td><code>index=security sourcetype=WinEventLog</code></td></tr>
+                        <tr><td><code>stats</code></td><td>Aggregate data</td><td><code>stats count by src_ip</code></td></tr>
+                        <tr><td><code>table</code></td><td>Display fields</td><td><code>table _time, user, action</code></td></tr>
+                        <tr><td><code>eval</code></td><td>Calculate/transform</td><td><code>eval mb = bytes/1024/1024</code></td></tr>
+                        <tr><td><code>where</code></td><td>Filter results</td><td><code>where count > 100</code></td></tr>
+                        <tr><td><code>sort</code></td><td>Order results</td><td><code>sort -count</code></td></tr>
+                        <tr><td><code>dedup</code></td><td>Remove duplicates</td><td><code>dedup src_ip, dest_ip</code></td></tr>
+                        <tr><td><code>rex</code></td><td>Extract with regex</td><td><code>rex field=_raw "user=(?&lt;user&gt;\w+)"</code></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Security-Focused Searches</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Failed logins by user</span>
+index=security EventCode=4625
+| stats count by Account_Name
+| sort -count
+
+<span style="color: #6aa3f7;">// Process creation with command line</span>
+index=sysmon EventCode=1
+| table _time, Computer, User, Image, CommandLine
+| sort -_time
+
+<span style="color: #6aa3f7;">// Network connections to external IPs</span>
+index=firewall action=allowed dest_ip!=10.0.0.0/8 dest_ip!=172.16.0.0/12 dest_ip!=192.168.0.0/16
+| stats sum(bytes) as total_bytes by src_ip, dest_ip
+| sort -total_bytes
+
+<span style="color: #6aa3f7;">// Alert volume over time</span>
+index=alerts
+| timechart span=1h count by severity</pre>
+                </div>
+
+                <h2>Splunk Enterprise Security (ES)</h2>
+                <p>Splunk ES provides premium security capabilities built on the Splunk platform:</p>
+                <ul>
+                    <li><strong>Notable Events:</strong> Correlated alerts from correlation searches</li>
+                    <li><strong>Risk-Based Alerting:</strong> Aggregate risk scores to reduce alert fatigue</li>
+                    <li><strong>Asset & Identity:</strong> Context enrichment for users and devices</li>
+                    <li><strong>Threat Intelligence:</strong> IOC matching and threat context</li>
+                    <li><strong>Investigation Workbench:</strong> Visual investigation tool</li>
+                </ul>
+
+                <h2>Best Practices</h2>
+                <ul>
+                    <li>Always specify index and time range for performance</li>
+                    <li>Use field extraction at search time sparingly</li>
+                    <li>Leverage data models for faster searches</li>
+                    <li>Use lookups for enrichment instead of subsearches</li>
+                    <li>Schedule expensive searches during off-peak hours</li>
+                </ul>
+
+            </div>
         </div>
-        <h3 style="font-size: 1rem; margin: 0 0 0.35rem 0;">SPL Fundamentals</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">Search syntax, commands, field extraction</p>
-    </a>
-    <a href="spl-intermediate.html" style="padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); border-left: 4px solid #a78bf6;">
-        <h3 style="font-size: 1rem; margin: 0 0 0.35rem 0;">SPL Intermediate</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">Stats, eval, subsearches, macros</p>
-    </a>
-    <a href="spl-advanced.html" style="padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); border-left: 4px solid #5ce0c4;">
-        <h3 style="font-size: 1rem; margin: 0 0 0.35rem 0;">SPL Advanced</h3>
-        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">Lookups, datamodels, optimization</p>
-    </a>
-</div>
-
-<h2>SPL vs KQL Quick Reference</h2>
-<table>
-    <thead><tr><th>Operation</th><th>SPL</th><th>KQL</th></tr></thead>
-    <tbody>
-        <tr><td>Filter rows</td><td><code>search field=value</code></td><td><code>where field == "value"</code></td></tr>
-        <tr><td>Select columns</td><td><code>table field1, field2</code></td><td><code>project field1, field2</code></td></tr>
-        <tr><td>Aggregate</td><td><code>stats count by field</code></td><td><code>summarize count() by field</code></td></tr>
-        <tr><td>Sort</td><td><code>sort - field</code></td><td><code>order by field desc</code></td></tr>
-        <tr><td>Limit</td><td><code>head 100</code></td><td><code>take 100</code></td></tr>
-        <tr><td>Time filter</td><td><code>earliest=-24h</code></td><td><code>where TimeGenerated > ago(24h)</code></td></tr>
-    </tbody>
-</table>
-</div>
-        </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../js/main.js"></script>
 </body>

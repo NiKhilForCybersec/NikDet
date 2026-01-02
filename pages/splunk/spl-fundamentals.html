@@ -6,106 +6,142 @@
     <title>SPL Fundamentals | SOC Compendium</title>
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
         <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
-        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
-        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
     </nav>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
-        <div class="sidebar-content">
-            <div class="nav-section">
-                <div class="nav-section-header" data-toggle="home-nav"><i class="fas fa-home"></i><span>Home</span><i class="fas fa-chevron-down toggle-icon"></i></div>
-                <ul class="nav-links expanded" id="home-nav"><li><a href="../../index.html">Introduction</a></li></ul>
-            </div>
-        </div>
-    </aside>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href='index.html'>Splunk</a><span class='separator'>/</span><span>SPL Fundamentals</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-search-dollar" style="color: var(--color-splunk);"></i> SPL Fundamentals</h1>
-            </div>
+            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Splunk</a><span class="separator">/</span><span>SPL Fundamentals</span></div>
             <div class="content">
-<p class="lead">Learn Search Processing Language (SPL) fundamentals for security analysis in Splunk.</p>
+                <h1>SPL Fundamentals</h1>
+                <p class="lead">Search Processing Language (SPL) basics for security analysts. Master the essential commands to investigate security events.</p>
 
-<h2>Basic Search Structure</h2>
-<div class="query-example">
-    <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> SPL</span></div>
-    <div class="query-body">
-<pre class="code-block"><code><span class="comment">| Basic structure</span>
-<span class="keyword">index</span>=<span class="string">security</span> <span class="keyword">sourcetype</span>=<span class="string">WinEventLog:Security</span> earliest=-24h
-| <span class="keyword">search</span> EventCode=4625
-| <span class="function">stats</span> <span class="function">count</span> <span class="keyword">by</span> Account_Name
-| <span class="function">sort</span> - count</code></pre>
-    </div>
-</div>
+                <h2>Basic Search Structure</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Basic structure</span>
+index=<index_name> sourcetype=<sourcetype> <search_terms>
+| <command1>
+| <command2>
 
-<h2>Searching Events</h2>
-<div class="query-example">
-    <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Search Examples</span></div>
-    <div class="query-body">
-<pre class="code-block"><code><span class="comment">| Search by index and sourcetype</span>
-<span class="keyword">index</span>=<span class="string">security</span> <span class="keyword">sourcetype</span>=<span class="string">WinEventLog:Security</span>
+<span style="color: #6aa3f7;">// Example: Find failed Windows logins</span>
+index=wineventlog sourcetype=WinEventLog:Security EventCode=4625
+| table _time, Account_Name, Workstation_Name, Source_Network_Address</pre>
+                </div>
 
-<span class="comment">| Search with field values</span>
-<span class="keyword">index</span>=<span class="string">security</span> EventCode=4624 Logon_Type=10
+                <h2>Essential Commands</h2>
+                <table>
+                    <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>search</code></td><td>Filter events</td><td><code>search EventCode=4625</code></td></tr>
+                        <tr><td><code>where</code></td><td>Filter with expressions</td><td><code>where count > 10</code></td></tr>
+                        <tr><td><code>table</code></td><td>Display specific fields</td><td><code>table _time, user, src_ip</code></td></tr>
+                        <tr><td><code>fields</code></td><td>Include/exclude fields</td><td><code>fields + user, - _raw</code></td></tr>
+                        <tr><td><code>rename</code></td><td>Rename fields</td><td><code>rename src_ip as SourceIP</code></td></tr>
+                        <tr><td><code>sort</code></td><td>Order results</td><td><code>sort -count</code> (descending)</td></tr>
+                        <tr><td><code>head</code></td><td>First N results</td><td><code>head 10</code></td></tr>
+                        <tr><td><code>tail</code></td><td>Last N results</td><td><code>tail 10</code></td></tr>
+                        <tr><td><code>dedup</code></td><td>Remove duplicates</td><td><code>dedup user, src_ip</code></td></tr>
+                    </tbody>
+                </table>
 
-<span class="comment">| Search with wildcards</span>
-<span class="keyword">index</span>=<span class="string">security</span> src_ip=192.168.1.*
+                <h2>Time Range Modifiers</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Relative time</span>
+earliest=-24h latest=now       <span style="color: #6aa3f7;">// Last 24 hours</span>
+earliest=-7d@d latest=@d       <span style="color: #6aa3f7;">// Last 7 days, rounded to day</span>
+earliest=-1h                    <span style="color: #6aa3f7;">// Last hour</span>
 
-<span class="comment">| Search with boolean operators</span>
-<span class="keyword">index</span>=<span class="string">security</span> (EventCode=4624 OR EventCode=4625) NOT Account_Name="SYSTEM"
+<span style="color: #6aa3f7;">// Absolute time</span>
+earliest="01/01/2025:00:00:00" latest="01/02/2025:00:00:00"
 
-<span class="comment">| Time ranges</span>
-<span class="keyword">index</span>=<span class="string">security</span> earliest=-7d latest=-1d
-<span class="keyword">index</span>=<span class="string">security</span> earliest="01/01/2025:00:00:00"</code></pre>
-    </div>
-</div>
+<span style="color: #6aa3f7;">// Snap to time</span>
+earliest=-1d@d latest=@d       <span style="color: #6aa3f7;">// Yesterday</span>
+earliest=@w0 latest=now        <span style="color: #6aa3f7;">// This week (Sunday start)</span></pre>
+                </div>
 
-<h2>Essential Commands</h2>
-<table>
-    <thead><tr><th>Command</th><th>Purpose</th><th>Example</th></tr></thead>
-    <tbody>
-        <tr><td><code>stats</code></td><td>Aggregate data</td><td><code>stats count by src_ip</code></td></tr>
-        <tr><td><code>table</code></td><td>Select fields</td><td><code>table _time, src_ip, dest_ip</code></td></tr>
-        <tr><td><code>sort</code></td><td>Order results</td><td><code>sort - count</code></td></tr>
-        <tr><td><code>head/tail</code></td><td>Limit results</td><td><code>head 100</code></td></tr>
-        <tr><td><code>dedup</code></td><td>Remove duplicates</td><td><code>dedup src_ip</code></td></tr>
-        <tr><td><code>eval</code></td><td>Calculate fields</td><td><code>eval MB=bytes/1024/1024</code></td></tr>
-        <tr><td><code>rex</code></td><td>Extract with regex</td><td><code>rex field=_raw "IP=(?<ip>\d+\.\d+)"</code></td></tr>
-        <tr><td><code>rename</code></td><td>Rename fields</td><td><code>rename src_ip as SourceIP</code></td></tr>
-    </tbody>
-</table>
+                <h2>Wildcards and Boolean Operators</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Wildcards</span>
+index=security user=admin*     <span style="color: #6aa3f7;">// Starts with admin</span>
+index=security user=*smith     <span style="color: #6aa3f7;">// Ends with smith</span>
+index=security user=*admin*    <span style="color: #6aa3f7;">// Contains admin</span>
 
-<h2>Stats Functions</h2>
-<div class="query-example">
-    <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Stats Examples</span></div>
-    <div class="query-body">
-<pre class="code-block"><code><span class="comment">| Count events</span>
-| <span class="function">stats</span> <span class="function">count</span>
+<span style="color: #6aa3f7;">// Boolean operators</span>
+index=security (EventCode=4624 OR EventCode=4625)
+index=security EventCode=4625 AND src_ip=10.0.0.*
+index=security NOT EventCode=4634
 
-<span class="comment">| Count by field</span>
-| <span class="function">stats</span> <span class="function">count</span> <span class="keyword">by</span> src_ip
+<span style="color: #6aa3f7;">// Field comparisons</span>
+index=security EventCode!=4634
+index=security count>=100</pre>
+                </div>
 
-<span class="comment">| Multiple aggregations</span>
-| <span class="function">stats</span> <span class="function">count</span> <span class="keyword">as</span> TotalEvents
-    <span class="function">dc</span>(src_ip) <span class="keyword">as</span> UniqueIPs
-    <span class="function">values</span>(dest_port) <span class="keyword">as</span> Ports
-    <span class="keyword">by</span> dest_ip
+                <h2>Basic Statistics</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Count events by field</span>
+index=security EventCode=4625
+| stats count by Account_Name
+| sort -count
 
-<span class="comment">| Time-based stats</span>
-| <span class="function">timechart</span> span=1h <span class="function">count</span> <span class="keyword">by</span> EventCode</code></pre>
-    </div>
-</div>
-</div>
+<span style="color: #6aa3f7;">// Multiple statistics</span>
+index=security EventCode=4625
+| stats count, dc(Source_Network_Address) as UniqueIPs by Account_Name
+
+<span style="color: #6aa3f7;">// Common stat functions</span>
+count           <span style="color: #6aa3f7;">// Number of events</span>
+dc(field)       <span style="color: #6aa3f7;">// Distinct count</span>
+sum(field)      <span style="color: #6aa3f7;">// Sum values</span>
+avg(field)      <span style="color: #6aa3f7;">// Average</span>
+min(field)      <span style="color: #6aa3f7;">// Minimum</span>
+max(field)      <span style="color: #6aa3f7;">// Maximum</span>
+values(field)   <span style="color: #6aa3f7;">// List all values</span>
+first(field)    <span style="color: #6aa3f7;">// First value</span>
+last(field)     <span style="color: #6aa3f7;">// Last value</span></pre>
+                </div>
+
+                <h2>Security-Focused Examples</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Failed logins by user (potential brute force)</span>
+index=wineventlog EventCode=4625
+| stats count by Account_Name
+| where count > 10
+| sort -count
+
+<span style="color: #6aa3f7;">// Successful logins from unusual hours</span>
+index=wineventlog EventCode=4624
+| eval hour=strftime(_time, "%H")
+| where hour < 6 OR hour > 22
+| table _time, Account_Name, Workstation_Name
+
+<span style="color: #6aa3f7;">// Process creation (requires cmd line logging)</span>
+index=wineventlog EventCode=4688
+| table _time, Account_Name, New_Process_Name, Process_Command_Line
+
+<span style="color: #6aa3f7;">// Network connections by process (Sysmon)</span>
+index=sysmon EventCode=3
+| stats count by Image, DestinationIp, DestinationPort
+| sort -count</pre>
+                </div>
+
+                <h2>Best Practices</h2>
+                <ul>
+                    <li><strong>Always specify index and time range</strong> for performance</li>
+                    <li><strong>Filter early</strong> - put restrictive terms first</li>
+                    <li><strong>Use fields command</strong> to reduce data before stats</li>
+                    <li><strong>Test searches</strong> in a small time window first</li>
+                    <li><strong>Use Job Inspector</strong> to understand search performance</li>
+                </ul>
+
+                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
+                    <a href="index.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Splunk</a>
+                    <a href="spl-intermediate.html" class="btn btn-primary">Next: Intermediate SPL <i class="fas fa-arrow-right"></i></a>
+                </div>
+
+            </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../js/main.js"></script>
 </body>

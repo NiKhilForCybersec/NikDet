@@ -3,174 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DLP Alert Triage | SOC Compendium</title>
-    <link rel="stylesheet" href="../../../../../css/styles.css">
+    <title>DLP Triage | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
-        <a href="../../../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
-        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
-        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
-        <div class="sidebar-content"></div>
-    </aside>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>DLP Alert Triage</span></div>
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>DLP Triage</span></div>
             <div class="content">
-            <div class="playbook-header">
-                <div class="playbook-id">PB-TRI-007</div>
-                <h1>DLP Alert Triage</h1>
-                <p class="lead">Triage for Data Loss Prevention policy violations including sensitive data exposure and exfiltration attempts.</p>
-                <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-TRI-006</div>
+                    <h1>DLP Alert Triage</h1>
+                    <p class="lead">Procedures for triaging Data Loss Prevention alerts to identify true data exfiltration attempts.</p>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;"><span class="mitre-tag">T1048</span> <span class="mitre-tag">T1567</span></div>
+
+                <h2>Common DLP Alert Types</h2>
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Data Category</th><th>Severity</th></tr></thead>
+                    <tbody>
+                        <tr><td>PII Detection</td><td>SSN, DOB, addresses</td><td><span style="color: #ffa502;">Medium-High</span></td></tr>
+                        <tr><td>Financial Data</td><td>Credit cards, bank accounts</td><td><span style="color: #ff6b6b;">High</span></td></tr>
+                        <tr><td>Source Code</td><td>Proprietary code, scripts</td><td><span style="color: #ffa502;">Medium</span></td></tr>
+                        <tr><td>Confidential Documents</td><td>Classified, internal-only</td><td><span style="color: #ffa502;">Medium-High</span></td></tr>
+                        <tr><td>Healthcare Data (PHI)</td><td>Medical records, diagnoses</td><td><span style="color: #ff6b6b;">High</span></td></tr>
+                        <tr><td>Bulk Data Transfer</td><td>Large volume any type</td><td><span style="color: #ffa502;">Medium</span></td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Step 1: Initial Assessment</h2>
+                <table>
+                    <thead><tr><th>Question</th><th>Where to Look</th></tr></thead>
+                    <tbody>
+                        <tr><td>What data type was detected?</td><td>DLP alert details, policy name</td></tr>
+                        <tr><td>What action occurred?</td><td>Email, upload, print, USB copy</td></tr>
+                        <tr><td>Was it blocked or allowed?</td><td>Alert action status</td></tr>
+                        <tr><td>Who was the user?</td><td>User ID, role, department</td></tr>
+                        <tr><td>Where was it going?</td><td>Destination email, URL, device</td></tr>
+                        <tr><td>Is this user a repeat offender?</td><td>Historical DLP alerts</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Step 2: Context Gathering</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// User's DLP history (Sentinel/M365)</span>
+DLPRuleMatch
+| where UserId == "user@company.com"
+| where TimeGenerated > ago(90d)
+| summarize TotalAlerts=count(), Blocked=countif(ActionType=="Block"), Allowed=countif(ActionType=="Allow") by PolicyName
+
+<span style="color: #a78bf6;">// What data types has this user triggered?</span>
+DLPRuleMatch
+| where UserId == "user@company.com"
+| summarize count() by SensitiveInfoType, DestinationType
+| sort by count_ desc</pre>
+                </div>
+
+                <h2>Step 3: Decision Tree</h2>
+                <table>
+                    <thead><tr><th>Question</th><th>If YES</th><th>If NO</th></tr></thead>
+                    <tbody>
+                        <tr><td>Was transfer blocked?</td><td>Data protected; review for pattern</td><td>Assess impact → Continue</td></tr>
+                        <tr><td>Is there business justification?</td><td>Document; may need policy exception</td><td>Continue investigation</td></tr>
+                        <tr><td>Is user a repeat offender?</td><td>Escalate to management/HR</td><td>First-time → Education</td></tr>
+                        <tr><td>Does pattern suggest intentional exfil?</td><td><strong>Escalate as insider threat</strong></td><td>Accidental → User education</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Red Flags for Intentional Exfiltration</h2>
+                <ul>
+                    <li>Large volume transfers over short period</li>
+                    <li>Transfers to personal email or cloud storage</li>
+                    <li>After-hours or weekend activity</li>
+                    <li>User recently gave notice or is on PIP</li>
+                    <li>Multiple data types being exfiltrated</li>
+                    <li>Attempts to bypass controls (renaming, archiving)</li>
+                    <li>Activity spike before announced departure</li>
+                </ul>
+
+                <h2>Common False Positives</h2>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Why It's FP</th><th>Resolution</th></tr></thead>
+                    <tbody>
+                        <tr><td>Test data with fake SSNs</td><td>Non-production environment</td><td>Tune policy, exclude test systems</td></tr>
+                        <tr><td>Approved vendor sharing</td><td>Legitimate business partner</td><td>Add exception, document approval</td></tr>
+                        <tr><td>Marketing materials</td><td>Public-facing content</td><td>Adjust classification</td></tr>
+                        <tr><td>HR/Legal legitimate transfers</td><td>Role-appropriate access</td><td>Document and close</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Escalation Criteria</h2>
+                <ul>
+                    <li>Large volume sensitive data transferred externally</li>
+                    <li>Transfer to personal email/cloud without approval</li>
+                    <li>Departing employee with unusual data access</li>
+                    <li>Highly sensitive data (trade secrets, M&A, executive)</li>
+                    <li>Repeated violations after warning</li>
+                    <li>Pattern consistent with data theft</li>
+                </ul>
+
+                <h2>Response Actions</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Accidental, first time</td><td>User education, document, close</td></tr>
+                        <tr><td>Policy exception needed</td><td>Create exception request, document business need</td></tr>
+                        <tr><td>Repeat offender</td><td>Escalate to user's management</td></tr>
+                        <tr><td>Suspected intentional</td><td>Escalate to IR team + HR/Legal</td></tr>
+                    </tbody>
+                </table>
+
             </div>
-
-            <h2>Overview</h2>
-            <p>Triage for Data Loss Prevention policy violations including sensitive data exposure and exfiltration attempts. This playbook provides systematic procedures applicable across any security environment.</p>
-
-            <h2>When to Use This Playbook</h2>
-            <p>Use this playbook when you encounter alerts or incidents matching the description above. It provides step-by-step guidance for efficient handling.</p>
-
-            <h2>Prerequisites</h2>
-            <h3>Required Access</h3>
-            <ul>
-                <li><strong>SIEM</strong> - Microsoft Sentinel or Splunk for log analysis</li>
-                <li><strong>EDR</strong> - Endpoint detection and response platform</li>
-                <li><strong>Identity</strong> - Azure AD / Active Directory access</li>
-                <li><strong>Network</strong> - Firewall, proxy, DNS logs</li>
-            </ul>
-
-            <h2>Procedure</h2>
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Initial Assessment</div>
-                        <div class="step-description">Gather context about the alert or incident:</div>
-                        <ul>
-                            <li>Review alert details and severity</li>
-                            <li>Identify affected users, hosts, or systems</li>
-                            <li>Determine timeline of events</li>
-                            <li>Check for related alerts</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Evidence Collection</div>
-                        <div class="step-description">Gather relevant data for analysis:</div>
-                        <ul>
-                            <li>Query SIEM for related events</li>
-                            <li>Pull endpoint telemetry from EDR</li>
-                            <li>Collect network flow data if applicable</li>
-                            <li>Preserve volatile evidence if needed</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Analysis</div>
-                        <div class="step-description">Analyze collected evidence to determine:</div>
-                        <ul>
-                            <li>Is this a true positive or false positive?</li>
-                            <li>What is the full scope of impact?</li>
-                            <li>What was the attack vector/technique?</li>
-                            <li>Are there additional indicators of compromise?</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Containment</div>
-                        <div class="step-description">If confirmed malicious, execute containment:</div>
-                        <ul>
-                            <li>Isolate affected systems if needed</li>
-                            <li>Block malicious indicators</li>
-                            <li>Disable compromised accounts</li>
-                            <li>Prevent further spread</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Documentation & Closure</div>
-                        <div class="step-description">Complete the investigation:</div>
-                        <ul>
-                            <li>Document all findings</li>
-                            <li>Record IOCs for threat intel</li>
-                            <li>Update ticket with timeline</li>
-                            <li>Determine final classification</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <h2>Decision Tree</h2>
-            <div class="decision-tree">
-                <div class="decision-node question"><strong>Is this a confirmed security incident?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Close as False Positive with documentation</div>
-                    <div class="decision-node action"><strong>YES →</strong> Execute containment, continue investigation</div>
-                </div>
-                <div class="decision-node question"><strong>Is escalation required?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Complete remediation, close incident</div>
-                    <div class="decision-node escalate"><strong>YES →</strong> Escalate to IR team with all findings</div>
-                </div>
-            </div>
-
-            <h2>Investigation Queries</h2>
-            <h3>KQL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>// Investigate related events
-let TimeRange = ago(24h);
-let Target = "entity-to-investigate";
-search in (SecurityEvent, SigninLogs, DeviceEvents)
-| where TimeGenerated > TimeRange
-| where * contains Target
-| project TimeGenerated, Type, Activity
-| order by TimeGenerated desc</code></pre>
-                </div>
-            </div>
-
-            <h3>SPL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>index=* earliest=-24h "entity-to-investigate"
-| stats count by index sourcetype _time
-| sort - _time</code></pre>
-                </div>
-            </div>
-
-            <h2>MITRE ATT&CK Mapping</h2>
-            <table>
-                <thead><tr><th>Technique</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><span class="mitre-tag">T1048</span></td><td>Relevant technique for this playbook</td></tr><tr><td><span class="mitre-tag">T1567</span></td><td>Relevant technique for this playbook</td></tr>
-                </tbody>
-            </table>
-</div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
-    <script src="../../../../../js/main.js"></script>
+    <script src="../../../js/main.js"></script>
 </body>
 </html>

@@ -3,174 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Identity Alert Triage | SOC Compendium</title>
-    <link rel="stylesheet" href="../../../../../css/styles.css">
+    <title>Identity Triage | SOC Compendium</title>
+    <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
-        <a href="../../../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
-        <div class="nav-search"><i class="fas fa-search"></i><input type="text" placeholder="Search..." id="globalSearch"><span class="search-shortcut">⌘K</span></div>
-        <div class="nav-actions"><button class="nav-btn" id="themeToggle"><i class="fas fa-moon"></i></button></div>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header"><h3>Documentation</h3><button class="sidebar-close" id="sidebarClose"><i class="fas fa-times"></i></button></div>
-        <div class="sidebar-content"></div>
-    </aside>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Identity Alert Triage</span></div>
+            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Identity Triage</span></div>
             <div class="content">
-            <div class="playbook-header">
-                <div class="playbook-id">PB-TRI-008</div>
-                <h1>Identity Alert Triage</h1>
-                <p class="lead">Triage for identity-related alerts including privilege changes, group modifications, and suspicious admin activity.</p>
-                <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-medium">Medium</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-10 min</span></div>
+                <div class="playbook-header">
+                    <div class="playbook-id">PB-TRI-007</div>
+                    <h1>Identity Alert Triage</h1>
+                    <p class="lead">Procedures for triaging identity-related alerts including risky users, privilege escalation, and account changes.</p>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;"><span class="mitre-tag">T1078</span> <span class="mitre-tag">T1556</span></div>
+
+                <h2>Common Identity Alert Types</h2>
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Severity</th><th>Typical Cause</th></tr></thead>
+                    <tbody>
+                        <tr><td>Risky User Detected</td><td><span style="color: #ffa502;">Medium-High</span></td><td>Azure AD Identity Protection risk signals</td></tr>
+                        <tr><td>Privilege Escalation</td><td><span style="color: #ff6b6b;">High</span></td><td>User added to privileged group</td></tr>
+                        <tr><td>Service Account Anomaly</td><td><span style="color: #ffa502;">Medium-High</span></td><td>Unusual service account behavior</td></tr>
+                        <tr><td>Account Created</td><td><span style="color: #f9ca24;">Medium</span></td><td>New user account creation</td></tr>
+                        <tr><td>Password Reset</td><td><span style="color: #f9ca24;">Medium</span></td><td>Admin or self-service reset</td></tr>
+                        <tr><td>MFA Method Changed</td><td><span style="color: #ff6b6b;">High</span></td><td>New authenticator registered</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Step 1: Initial Assessment</h2>
+                <table>
+                    <thead><tr><th>Question</th><th>Where to Look</th></tr></thead>
+                    <tbody>
+                        <tr><td>What changed?</td><td>Account created, modified, or privileged</td></tr>
+                        <tr><td>Who made the change?</td><td>Admin user, service account, or unknown</td></tr>
+                        <tr><td>Was it authorized?</td><td>Change request, expected process</td></tr>
+                        <tr><td>What's the impact?</td><td>What access was granted?</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Step 2: Context Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
+<pre style="margin: 0;"><span style="color: #a78bf6;">// Get user risk details (Azure AD)</span>
+AADRiskyUsers
+| where UserPrincipalName == "user@company.com"
+| project TimeGenerated, RiskLevel, RiskDetail, RiskState
+
+<span style="color: #a78bf6;">// Recent privilege changes</span>
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName has_any ("Add member", "role", "group")
+| project TimeGenerated, OperationName, InitiatedBy.user.userPrincipalName, TargetResources
+
+<span style="color: #a78bf6;">// MFA registration changes</span>
+AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName has_any ("User registered", "authentication method")
+| project TimeGenerated, OperationName, InitiatedBy.user.userPrincipalName, TargetResources</pre>
+                </div>
+
+                <h2>Step 3: Decision Tree</h2>
+                <table>
+                    <thead><tr><th>Question</th><th>If YES</th><th>If NO</th></tr></thead>
+                    <tbody>
+                        <tr><td>Was this an authorized change?</td><td>Verify with ticket → Close</td><td>Continue investigation</td></tr>
+                        <tr><td>Does user/admin have authority?</td><td>May be policy violation if no ticket</td><td>Unauthorized → Escalate</td></tr>
+                        <tr><td>Does it grant sensitive access?</td><td>Admin/sensitive groups → Verify immediately</td><td>Lower priority</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>High-Risk Identity Events</h2>
+                <table>
+                    <thead><tr><th>Event</th><th>Risk</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>User added to Domain Admins</td><td>Full domain control</td><td>Immediate verification</td></tr>
+                        <tr><td>MFA method added by unknown</td><td>Persistence mechanism</td><td>Verify with user</td></tr>
+                        <tr><td>Service account interactive login</td><td>Not normal behavior</td><td>Check if compromised</td></tr>
+                        <tr><td>Password reset + new MFA</td><td>Account takeover pattern</td><td>Verify with user</td></tr>
+                        <tr><td>Admin account from new location</td><td>Potential compromise</td><td>Verify legitimacy</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Sensitive Groups to Monitor</h2>
+                <ul>
+                    <li>Domain Admins / Enterprise Admins</li>
+                    <li>Schema Admins / Account Operators</li>
+                    <li>Global Administrators (Azure AD)</li>
+                    <li>Exchange Admins / SharePoint Admins</li>
+                    <li>Security Administrators</li>
+                    <li>Any custom admin groups</li>
+                </ul>
+
+                <h2>Escalation Criteria</h2>
+                <ul>
+                    <li>Unauthorized addition to privileged groups</li>
+                    <li>MFA manipulation on high-value account</li>
+                    <li>Service account abuse or interactive login</li>
+                    <li>Account creation outside HR process</li>
+                    <li>Multiple identity events for same user in short time</li>
+                    <li>Admin activity from unexpected location</li>
+                </ul>
+
             </div>
-
-            <h2>Overview</h2>
-            <p>Triage for identity-related alerts including privilege changes, group modifications, and suspicious admin activity. This playbook provides systematic procedures applicable across any security environment.</p>
-
-            <h2>When to Use This Playbook</h2>
-            <p>Use this playbook when you encounter alerts or incidents matching the description above. It provides step-by-step guidance for efficient handling.</p>
-
-            <h2>Prerequisites</h2>
-            <h3>Required Access</h3>
-            <ul>
-                <li><strong>SIEM</strong> - Microsoft Sentinel or Splunk for log analysis</li>
-                <li><strong>EDR</strong> - Endpoint detection and response platform</li>
-                <li><strong>Identity</strong> - Azure AD / Active Directory access</li>
-                <li><strong>Network</strong> - Firewall, proxy, DNS logs</li>
-            </ul>
-
-            <h2>Procedure</h2>
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Initial Assessment</div>
-                        <div class="step-description">Gather context about the alert or incident:</div>
-                        <ul>
-                            <li>Review alert details and severity</li>
-                            <li>Identify affected users, hosts, or systems</li>
-                            <li>Determine timeline of events</li>
-                            <li>Check for related alerts</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Evidence Collection</div>
-                        <div class="step-description">Gather relevant data for analysis:</div>
-                        <ul>
-                            <li>Query SIEM for related events</li>
-                            <li>Pull endpoint telemetry from EDR</li>
-                            <li>Collect network flow data if applicable</li>
-                            <li>Preserve volatile evidence if needed</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Analysis</div>
-                        <div class="step-description">Analyze collected evidence to determine:</div>
-                        <ul>
-                            <li>Is this a true positive or false positive?</li>
-                            <li>What is the full scope of impact?</li>
-                            <li>What was the attack vector/technique?</li>
-                            <li>Are there additional indicators of compromise?</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Containment</div>
-                        <div class="step-description">If confirmed malicious, execute containment:</div>
-                        <ul>
-                            <li>Isolate affected systems if needed</li>
-                            <li>Block malicious indicators</li>
-                            <li>Disable compromised accounts</li>
-                            <li>Prevent further spread</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Documentation & Closure</div>
-                        <div class="step-description">Complete the investigation:</div>
-                        <ul>
-                            <li>Document all findings</li>
-                            <li>Record IOCs for threat intel</li>
-                            <li>Update ticket with timeline</li>
-                            <li>Determine final classification</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <h2>Decision Tree</h2>
-            <div class="decision-tree">
-                <div class="decision-node question"><strong>Is this a confirmed security incident?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Close as False Positive with documentation</div>
-                    <div class="decision-node action"><strong>YES →</strong> Execute containment, continue investigation</div>
-                </div>
-                <div class="decision-node question"><strong>Is escalation required?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Complete remediation, close incident</div>
-                    <div class="decision-node escalate"><strong>YES →</strong> Escalate to IR team with all findings</div>
-                </div>
-            </div>
-
-            <h2>Investigation Queries</h2>
-            <h3>KQL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>// Investigate related events
-let TimeRange = ago(24h);
-let Target = "entity-to-investigate";
-search in (SecurityEvent, SigninLogs, DeviceEvents)
-| where TimeGenerated > TimeRange
-| where * contains Target
-| project TimeGenerated, Type, Activity
-| order by TimeGenerated desc</code></pre>
-                </div>
-            </div>
-
-            <h3>SPL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>index=* earliest=-24h "entity-to-investigate"
-| stats count by index sourcetype _time
-| sort - _time</code></pre>
-                </div>
-            </div>
-
-            <h2>MITRE ATT&CK Mapping</h2>
-            <table>
-                <thead><tr><th>Technique</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><span class="mitre-tag">T1078</span></td><td>Relevant technique for this playbook</td></tr><tr><td><span class="mitre-tag">T1556</span></td><td>Relevant technique for this playbook</td></tr>
-                </tbody>
-            </table>
-</div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
-    <script src="../../../../../js/main.js"></script>
+    <script src="../../../js/main.js"></script>
 </body>
 </html>

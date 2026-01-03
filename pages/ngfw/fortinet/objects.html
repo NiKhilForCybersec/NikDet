@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate Objects | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>Objects</span></div>
+            <div class="content">
+                <h1><i class="fas fa-cubes"></i> FortiGate Firewall Objects</h1>
+                <p class="lead">Create and manage address objects, service objects, and groups for use in firewall policies.</p>
+
+                <h2><i class="fas fa-map-marker-alt"></i> Address Objects</h2>
+                <div class="step-section">
+                    <h3>IP/Subnet Address</h3>
+                    <div class="code-block"><pre>config firewall address
+    edit "Server-Web01"
+        set type ipmask
+        set subnet 10.0.10.50 255.255.255.255
+        set comment "Production web server"
+    next
+    edit "Network-Servers"
+        set type ipmask
+        set subnet 10.0.10.0 255.255.255.0
+        set comment "Server VLAN"
+    next
+end</pre></div>
+
+                    <h3>FQDN Address</h3>
+                    <div class="code-block"><pre>config firewall address
+    edit "Office365-Endpoints"
+        set type fqdn
+        set fqdn "outlook.office365.com"
+    next
+end</pre></div>
+
+                    <h3>IP Range</h3>
+                    <div class="code-block"><pre>config firewall address
+    edit "DHCP-Range"
+        set type iprange
+        set start-ip 10.0.1.100
+        set end-ip 10.0.1.200
+    next
+end</pre></div>
+
+                    <h3>Geography-Based Address</h3>
+                    <div class="code-block"><pre>config firewall address
+    edit "Country-Russia"
+        set type geography
+        set country "RU"
+    next
+    edit "Country-China"
+        set type geography
+        set country "CN"
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-object-group"></i> Address Groups</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre>config firewall addrgrp
+    edit "Group-WebServers"
+        set member "Server-Web01" "Server-Web02" "Server-Web03"
+        set comment "All production web servers"
+    next
+    edit "Group-BlockedCountries"
+        set member "Country-Russia" "Country-China" "Country-NorthKorea"
+        set comment "Countries to block"
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-plug"></i> Service Objects</h2>
+                <div class="step-section">
+                    <h3>Custom TCP/UDP Service</h3>
+                    <div class="code-block"><pre>config firewall service custom
+    edit "Custom-App-8080"
+        set tcp-portrange 8080
+        set comment "Custom application port"
+    next
+    edit "Custom-App-Range"
+        set tcp-portrange 8000-8100
+        set comment "Application port range"
+    next
+    edit "Custom-UDP-Service"
+        set udp-portrange 5000-5010
+    next
+end</pre></div>
+
+                    <h3>Service Groups</h3>
+                    <div class="code-block"><pre>config firewall service group
+    edit "Web-Services"
+        set member "HTTP" "HTTPS" "Custom-App-8080"
+    next
+    edit "Email-Services"
+        set member "SMTP" "SMTPS" "POP3" "POP3S" "IMAP" "IMAPS"
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-clock"></i> Schedule Objects</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre>config firewall schedule recurring
+    edit "Business-Hours"
+        set day monday tuesday wednesday thursday friday
+        set start 08:00
+        set end 18:00
+    next
+end
+
+config firewall schedule onetime
+    edit "Maintenance-Window"
+        set start 23:00 2025/01/15
+        set end 05:00 2025/01/16
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Verification</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Show all address objects
+show firewall address
+
+# Show address groups
+show firewall addrgrp
+
+# Show services
+show firewall service custom
+
+# Diagnose FQDN resolution
+diagnose firewall fqdn list</pre></div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

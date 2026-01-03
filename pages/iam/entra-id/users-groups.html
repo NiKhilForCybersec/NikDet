@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra ID Users & Groups | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>Users & Groups</span></div>
+            <div class="content">
+                <h1><i class="fas fa-users"></i> Entra ID Users & Groups</h1>
+                <p class="lead">Manage cloud identities, group memberships, and administrative units.</p>
+
+                <h2><i class="fas fa-user"></i> User Types</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Type</th><th>Description</th><th>License</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Member</strong></td><td>Full organization user</td><td>Required</td></tr>
+                            <tr><td><strong>Guest (B2B)</strong></td><td>External user invited for collaboration</td><td>Optional</td></tr>
+                            <tr><td><strong>Synced</strong></td><td>User synced from on-prem AD via Entra Connect</td><td>Required</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-users-cog"></i> Group Types</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Type</th><th>Membership</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Security</strong></td><td>Assigned or Dynamic</td><td>Access control, Conditional Access</td></tr>
+                            <tr><td><strong>Microsoft 365</strong></td><td>Assigned or Dynamic</td><td>Collaboration (Teams, SharePoint)</td></tr>
+                            <tr><td><strong>Distribution</strong></td><td>Assigned</td><td>Email distribution only</td></tr>
+                            <tr><td><strong>Mail-enabled Security</strong></td><td>Assigned</td><td>Access control + email</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Dynamic Group Rules</h3>
+                    <div class="code-block"><pre># All users in Marketing department
+(user.department -eq "Marketing")
+
+# All users in US
+(user.country -eq "US")
+
+# All users with Manager attribute set
+(user.manager -ne null)
+
+# All devices running Windows
+(device.deviceOSType -eq "Windows")
+
+# Combination with AND/OR
+(user.department -eq "IT") and (user.jobTitle -contains "Engineer")</pre></div>
+                </div>
+
+                <h2><i class="fas fa-terminal"></i> PowerShell Management</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Connect to Microsoft Graph
+Connect-MgGraph -Scopes "User.Read.All","Group.ReadWrite.All"
+
+# Get all users
+Get-MgUser -All | Select DisplayName, UserPrincipalName, AccountEnabled
+
+# Get all groups
+Get-MgGroup -All | Select DisplayName, GroupTypes, SecurityEnabled
+
+# Get group members
+Get-MgGroupMember -GroupId "group-id" | Select Id
+
+# Create user
+New-MgUser -DisplayName "John Smith" -UserPrincipalName "jsmith@company.com" `
+  -PasswordProfile @{Password="TempP@ss123!"; ForceChangePasswordNextSignIn=$true} `
+  -AccountEnabled $true -MailNickname "jsmith"
+
+# Add user to group
+New-MgGroupMember -GroupId "group-id" -DirectoryObjectId "user-id"</pre></div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

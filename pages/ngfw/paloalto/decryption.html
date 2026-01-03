@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto SSL Decryption | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>SSL Decryption</span></div>
+            <div class="content">
+                <h1><i class="fas fa-lock-open"></i> Palo Alto SSL Decryption</h1>
+                <p class="lead">Decrypt HTTPS traffic for full visibility and threat inspection.</p>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Legal & Privacy Considerations</h4>
+                    <p>SSL decryption intercepts encrypted traffic. Ensure you have proper authorization, user notification, and exclude sensitive categories (banking, healthcare) as required by law and policy.</p>
+                </div>
+
+                <h2><i class="fas fa-key"></i> Decryption Types</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Type</th><th>Direction</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>SSL Forward Proxy</strong></td><td>Outbound (client → internet)</td><td>Inspect employee web traffic</td></tr>
+                            <tr><td><strong>SSL Inbound Inspection</strong></td><td>Inbound (internet → server)</td><td>Protect your web servers</td></tr>
+                            <tr><td><strong>SSH Proxy</strong></td><td>Outbound SSH</td><td>Inspect SSH tunnels</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-certificate"></i> Step 1: Generate/Import CA Certificate</h2>
+                <div class="step-section">
+                    <h3>Generate Self-Signed CA on Firewall</h3>
+                    <div class="code-block"><pre># Generate CA certificate
+request certificate generate ca yes certificate-name "SSL-Decrypt-CA" name "SSL Decryption CA" algorithm RSA rsa-nbits 2048
+
+# Or import existing CA (recommended for enterprise)
+# GUI: Device → Certificate Management → Certificates → Import
+
+# Set as Forward Trust CA
+set shared certificate "SSL-Decrypt-CA" forward-trust-certificate yes
+
+# Export for client deployment
+# GUI: Device → Certificate Management → Certificates → Export (Base64)
+
+commit</pre></div>
+
+                    <div class="danger-box">
+                        <h4><i class="fas fa-exclamation-circle"></i> Critical: Deploy CA to Clients</h4>
+                        <p>You MUST deploy the CA certificate to all client trust stores via GPO, MDM, or manual installation. Otherwise, users will see certificate warnings on every HTTPS site.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-file-alt"></i> Step 2: Create Decryption Policy</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Create decryption profile
+set profiles decryption "Strict-Decrypt" ssl-forward-proxy block-expired-certificate yes
+set profiles decryption "Strict-Decrypt" ssl-forward-proxy block-untrusted-issuer yes
+set profiles decryption "Strict-Decrypt" ssl-forward-proxy block-unknown-cert yes
+
+# Create no-decrypt rule for sensitive categories (FIRST - higher priority)
+set rulebase decryption rules "No-Decrypt-Financial" from trust to untrust
+set rulebase decryption rules "No-Decrypt-Financial" source any
+set rulebase decryption rules "No-Decrypt-Financial" destination any
+set rulebase decryption rules "No-Decrypt-Financial" category financial-services health-and-medicine
+set rulebase decryption rules "No-Decrypt-Financial" action no-decrypt
+
+# Create decrypt rule for all other traffic
+set rulebase decryption rules "Decrypt-All-Else" from trust to untrust
+set rulebase decryption rules "Decrypt-All-Else" source any
+set rulebase decryption rules "Decrypt-All-Else" destination any
+set rulebase decryption rules "Decrypt-All-Else" action decrypt
+set rulebase decryption rules "Decrypt-All-Else" type ssl-forward-proxy
+set rulebase decryption rules "Decrypt-All-Else" profile "Strict-Decrypt"
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-ban"></i> Categories to Exclude from Decryption</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Category</th><th>Reason</th></tr></thead>
+                        <tbody>
+                            <tr><td>financial-services</td><td>Banking regulations, user privacy</td></tr>
+                            <tr><td>health-and-medicine</td><td>HIPAA compliance</td></tr>
+                            <tr><td>government</td><td>Sensitive communications</td></tr>
+                            <tr><td>legal</td><td>Attorney-client privilege</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Verification</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Show decryption statistics
+show counter global filter aspect proxy
+
+# Show decryption session info
+show session all filter ssl-decrypted yes
+
+# Check decryption logs
+show log decryption
+
+# Test decryption on specific session
+show session id &lt;session-id&gt;</pre></div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

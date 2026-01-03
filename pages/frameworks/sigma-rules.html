@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sigma Rules | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="pages/frameworks/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="pages/frameworks/index.html">Home</a><span class="separator">/</span><a href="pages/frameworks/index.html">Frameworks</a><span class="separator">/</span><span>Sigma Rules</span></div>
+            <div class="content">
+                <h1><i class="fas fa-file-code"></i> Sigma Rules</h1>
+                <p class="lead">Generic signature format for SIEM systems - write once, convert to any platform.</p>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> What is Sigma?</h4>
+                    <p>Sigma is an open-source, generic signature format for log events. Write detection rules once in YAML format, then convert them to Splunk SPL, Microsoft Sentinel KQL, Elastic Query DSL, and 30+ other platforms.</p>
+                </div>
+
+                <h2><i class="fas fa-file-alt"></i> Sigma Rule Structure</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre>title: Suspicious PowerShell Download Cradle
+id: 3b6ab547-8ec2-4991-b9d2-2b06702a48d7
+status: experimental
+description: Detects PowerShell download cradle patterns commonly used by malware
+author: SOC Team
+date: 2025/01/03
+references:
+    - https://attack.mitre.org/techniques/T1059/001/
+tags:
+    - attack.execution
+    - attack.t1059.001
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_powershell:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+    selection_download:
+        CommandLine|contains:
+            - 'DownloadString'
+            - 'DownloadFile'
+            - 'DownloadData'
+            - 'WebRequest'
+            - 'Invoke-WebRequest'
+            - 'IWR'
+            - 'wget'
+            - 'curl'
+            - 'Net.WebClient'
+    condition: selection_powershell and selection_download
+falsepositives:
+    - Legitimate administrative scripts
+    - Software installers
+level: medium</pre></div>
+                </div>
+
+                <h2><i class="fas fa-cogs"></i> Key Components</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Field</th><th>Purpose</th><th>Required</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>title</strong></td><td>Human-readable rule name</td><td>Yes</td></tr>
+                            <tr><td><strong>id</strong></td><td>Unique UUID for the rule</td><td>Yes</td></tr>
+                            <tr><td><strong>status</strong></td><td>experimental, test, stable, deprecated</td><td>Yes</td></tr>
+                            <tr><td><strong>logsource</strong></td><td>What logs this applies to</td><td>Yes</td></tr>
+                            <tr><td><strong>detection</strong></td><td>The actual detection logic</td><td>Yes</td></tr>
+                            <tr><td><strong>level</strong></td><td>Severity: informational, low, medium, high, critical</td><td>Yes</td></tr>
+                            <tr><td><strong>tags</strong></td><td>MITRE ATT&CK mappings</td><td>Recommended</td></tr>
+                            <tr><td><strong>falsepositives</strong></td><td>Known FP scenarios</td><td>Recommended</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-filter"></i> Detection Modifiers</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Modifier</th><th>Description</th><th>Example</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>contains</strong></td><td>Substring match</td><td>CommandLine|contains: 'mimikatz'</td></tr>
+                            <tr><td><strong>startswith</strong></td><td>Starts with value</td><td>Image|startswith: 'C:\Windows\Temp'</td></tr>
+                            <tr><td><strong>endswith</strong></td><td>Ends with value</td><td>Image|endswith: '\powershell.exe'</td></tr>
+                            <tr><td><strong>re</strong></td><td>Regular expression</td><td>CommandLine|re: '.*-enc.*[A-Za-z0-9+/=]{50,}'</td></tr>
+                            <tr><td><strong>all</strong></td><td>All values must match</td><td>CommandLine|contains|all: ['net', 'user']</td></tr>
+                            <tr><td><strong>base64offset</strong></td><td>Search in decoded base64</td><td>CommandLine|base64offset: 'IEX'</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-exchange-alt"></i> Convert Sigma to SIEM Queries</h2>
+                <div class="step-section">
+                    <h3>Using sigma-cli</h3>
+                    <div class="code-block"><pre># Install sigma-cli
+pip install sigma-cli
+
+# Convert to Microsoft Sentinel (KQL)
+sigma convert -t microsoft365defender -p microsoft365defender rule.yml
+
+# Convert to Splunk
+sigma convert -t splunk -p splunk_windows rule.yml
+
+# Convert to Elastic
+sigma convert -t elasticsearch -p ecs_windows rule.yml
+
+# Convert to QRadar
+sigma convert -t qradar -p qradar rule.yml</pre></div>
+
+                    <h3>Example Output (KQL)</h3>
+                    <div class="code-block"><pre>DeviceProcessEvents
+| where (ProcessVersionInfoOriginalFileName =~ "PowerShell.EXE" or InitiatingProcessVersionInfoOriginalFileName =~ "PowerShell.EXE")
+| where ProcessCommandLine contains "DownloadString" or ProcessCommandLine contains "DownloadFile" 
+    or ProcessCommandLine contains "WebRequest" or ProcessCommandLine contains "Invoke-WebRequest"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-database"></i> Sigma Rule Repositories</h2>
+                <div class="step-section">
+                    <ul>
+                        <li><strong>Official Sigma Rules:</strong> <a href="https://github.com/SigmaHQ/sigma" target="_blank">github.com/SigmaHQ/sigma</a> - 3000+ community rules</li>
+                        <li><strong>SOC Prime:</strong> <a href="https://socprime.com" target="_blank">socprime.com</a> - Commercial and community rules</li>
+                        <li><strong>Elastic Detection Rules:</strong> <a href="https://github.com/elastic/detection-rules" target="_blank">Elastic GitHub</a></li>
+                    </ul>
+                </div>
+
+                <h2><i class="fas fa-check-circle"></i> Best Practices</h2>
+                <div class="step-section">
+                    <ul>
+                        <li>Always include MITRE ATT&CK tags for mapping</li>
+                        <li>Document known false positives</li>
+                        <li>Use specific log sources (not generic)</li>
+                        <li>Test rules before deploying to production</li>
+                        <li>Include references to threat intel or research</li>
+                        <li>Use UUIDs for rule tracking</li>
+                        <li>Version control your rules in Git</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

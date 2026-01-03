@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate VPN | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>VPN</span></div>
+            <div class="content">
+                <h1><i class="fas fa-lock"></i> FortiGate VPN Configuration</h1>
+                <p class="lead">Configure IPSec site-to-site VPN and SSL VPN for remote access.</p>
+
+                <h2><i class="fas fa-building"></i> IPSec Site-to-Site VPN</h2>
+                <div class="step-section">
+                    <h3>Phase 1 Configuration</h3>
+                    <div class="code-block"><pre>config vpn ipsec phase1-interface
+    edit "VPN-to-BranchOffice"
+        set interface "wan1"
+        set ike-version 2
+        set peertype any
+        set net-device disable
+        set proposal aes256-sha256
+        set dhgrp 14
+        set remote-gw 198.51.100.10
+        set psksecret "YourPreSharedKey123!"
+        set comments "VPN to branch office"
+    next
+end</pre></div>
+
+                    <h3>Phase 2 Configuration</h3>
+                    <div class="code-block"><pre>config vpn ipsec phase2-interface
+    edit "VPN-to-BranchOffice-P2"
+        set phase1name "VPN-to-BranchOffice"
+        set proposal aes256-sha256
+        set pfs enable
+        set dhgrp 14
+        set auto-negotiate enable
+        set src-subnet 10.0.0.0 255.255.0.0
+        set dst-subnet 10.1.0.0 255.255.0.0
+    next
+end</pre></div>
+
+                    <h3>Firewall Policies for VPN</h3>
+                    <div class="code-block"><pre>config firewall policy
+    edit 100
+        set name "HQ-to-Branch"
+        set srcintf "internal"
+        set dstintf "VPN-to-BranchOffice"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+    next
+    edit 101
+        set name "Branch-to-HQ"
+        set srcintf "VPN-to-BranchOffice"
+        set dstintf "internal"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-user-lock"></i> SSL VPN (Remote Access)</h2>
+                <div class="step-section">
+                    <h3>SSL VPN Settings</h3>
+                    <div class="code-block"><pre>config vpn ssl settings
+    set servercert "Fortinet_Factory"
+    set tunnel-ip-pools "SSLVPN-Pool"
+    set dns-server1 10.0.1.10
+    set port 443
+    set source-interface "wan1"
+    set source-address "all"
+    set default-portal "full-access"
+end
+
+# IP Pool for VPN clients
+config firewall address
+    edit "SSLVPN-Pool"
+        set type iprange
+        set start-ip 10.212.134.1
+        set end-ip 10.212.134.200
+    next
+end</pre></div>
+
+                    <h3>SSL VPN Portal</h3>
+                    <div class="code-block"><pre>config vpn ssl web portal
+    edit "full-access"
+        set tunnel-mode enable
+        set ip-pools "SSLVPN-Pool"
+        set split-tunneling disable
+        set web-mode enable
+    next
+end</pre></div>
+
+                    <h3>SSL VPN Firewall Policy</h3>
+                    <div class="code-block"><pre>config firewall policy
+    edit 200
+        set name "SSLVPN-to-Internal"
+        set srcintf "ssl.root"
+        set dstintf "internal"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set groups "VPN-Users"
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-search"></i> VPN Troubleshooting</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Show IPSec VPN status
+get vpn ipsec tunnel summary
+diagnose vpn ike gateway list
+diagnose vpn tunnel list
+
+# Show SSL VPN status
+get vpn ssl monitor
+diagnose vpn ssl list
+
+# Debug IPSec
+diagnose debug application ike -1
+diagnose debug enable</pre></div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Directory | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><span>Active Directory</span></div>
+            <div class="content">
+                <h1><i class="fas fa-server"></i> Active Directory</h1>
+                <p class="lead">Microsoft's directory service for Windows domain networks. The backbone of enterprise identity.</p>
+
+                <h2><i class="fas fa-sitemap"></i> AD Components</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Component</th><th>Purpose</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Domain Controller (DC)</strong></td><td>Server running AD DS, handles authentication</td></tr>
+                            <tr><td><strong>Forest</strong></td><td>Top-level container, security boundary</td></tr>
+                            <tr><td><strong>Domain</strong></td><td>Administrative boundary, e.g., corp.company.com</td></tr>
+                            <tr><td><strong>OU (Organizational Unit)</strong></td><td>Container for organizing objects, applying GPOs</td></tr>
+                            <tr><td><strong>GPO (Group Policy Object)</strong></td><td>Settings applied to users/computers</td></tr>
+                            <tr><td><strong>LDAP</strong></td><td>Protocol for querying directory</td></tr>
+                            <tr><td><strong>Kerberos</strong></td><td>Authentication protocol</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-users"></i> Important Security Groups</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Group</th><th>Risk Level</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Domain Admins</strong></td><td>🔴 Critical</td><td>Full control of domain</td></tr>
+                            <tr><td><strong>Enterprise Admins</strong></td><td>🔴 Critical</td><td>Full control of forest</td></tr>
+                            <tr><td><strong>Schema Admins</strong></td><td>🔴 Critical</td><td>Can modify AD schema</td></tr>
+                            <tr><td><strong>Administrators</strong></td><td>🟠 High</td><td>Local admin on DCs</td></tr>
+                            <tr><td><strong>Account Operators</strong></td><td>🟠 High</td><td>Can create/modify accounts</td></tr>
+                            <tr><td><strong>Backup Operators</strong></td><td>🟡 Medium</td><td>Can backup/restore DC</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-terminal"></i> Useful PowerShell Commands</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Get domain admins
+Get-ADGroupMember -Identity "Domain Admins" -Recursive
+
+# Get all users
+Get-ADUser -Filter * -Properties * | Select Name, LastLogonDate, Enabled
+
+# Get locked out accounts
+Search-ADAccount -LockedOut
+
+# Get users with password never expires
+Get-ADUser -Filter {PasswordNeverExpires -eq $true}
+
+# Get computers not logged in 90 days
+$90days = (Get-Date).AddDays(-90)
+Get-ADComputer -Filter {LastLogonTimestamp -lt $90days}</pre></div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> AD Security Best Practices</h2>
+                <div class="step-section">
+                    <ul>
+                        <li>Implement tiered admin model (Tier 0/1/2)</li>
+                        <li>Use Privileged Access Workstations (PAWs)</li>
+                        <li>Enable Protected Users group for admins</li>
+                        <li>Disable NTLM where possible</li>
+                        <li>Monitor sensitive group membership changes</li>
+                        <li>Regular access reviews</li>
+                        <li>Implement LAPS for local admin passwords</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Common Attack Vectors</h4>
+                    <p>Kerberoasting, AS-REP Roasting, DCSync, Golden Ticket, Pass-the-Hash, Pass-the-Ticket. Monitor Event IDs: 4624, 4625, 4768, 4769, 4771, 4776.</p>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

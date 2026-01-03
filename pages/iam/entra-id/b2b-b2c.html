@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra ID B2B & B2C | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>B2B & B2C</span></div>
+            <div class="content">
+                <h1><i class="fas fa-handshake" style="color: var(--accent-tertiary);"></i> Entra ID B2B & B2C External Identities</h1>
+                <p class="lead">Manage guest access for partners (B2B) and customer identity for applications (B2C).</p>
+
+                <h2>B2B vs B2C Comparison</h2>
+                <table>
+                    <thead><tr><th>Aspect</th><th>B2B (Business-to-Business)</th><th>B2C (Business-to-Consumer)</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Purpose</strong></td><td>Partner/vendor collaboration</td><td>Customer-facing app authentication</td></tr>
+                        <tr><td><strong>Users</strong></td><td>External business users (guests)</td><td>Consumers, customers</td></tr>
+                        <tr><td><strong>Directory</strong></td><td>Guests in your Entra ID tenant</td><td>Separate B2C tenant</td></tr>
+                        <tr><td><strong>Identity providers</strong></td><td>Other Entra ID, Google, SAML/OIDC</td><td>Social (Google, FB, Apple), local accounts</td></tr>
+                        <tr><td><strong>Use case</strong></td><td>SharePoint, Teams collaboration</td><td>Customer portal, e-commerce login</td></tr>
+                        <tr><td><strong>License</strong></td><td>Free (50K MAU), P1/P2 for CA</td><td>Separate B2C pricing (MAU-based)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>B2B Guest Access</h2>
+                <h3>Guest User Types</h3>
+                <table>
+                    <thead><tr><th>UserType</th><th>Source</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Guest - Invited</strong></td><td>Email invitation</td><td>External user invited via email, redeems invitation</td></tr>
+                        <tr><td><strong>Guest - Direct B2B</strong></td><td>Direct federation</td><td>User from federated org, no invitation needed</td></tr>
+                        <tr><td><strong>Guest - Self-service</strong></td><td>Self-service sign-up flow</td><td>User signs up themselves (if enabled)</td></tr>
+                        <tr><td><strong>Member</strong></td><td>Internal</td><td>Regular internal user (not a guest)</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>External Collaboration Settings</h3>
+                <p><strong>Path:</strong> Entra Admin Center → Identity → External Identities → External collaboration settings</p>
+                <table>
+                    <thead><tr><th>Setting</th><th>Recommended</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Guest user access</strong></td><td>Limited access</td><td>Guests can't enumerate users/groups</td></tr>
+                        <tr><td><strong>Guest invite settings</strong></td><td>Admins and Guest Inviters only</td><td>Control who can invite externals</td></tr>
+                        <tr><td><strong>Enable self-service sign-up</strong></td><td>No (unless required)</td><td>Prevents uncontrolled guest creation</td></tr>
+                        <tr><td><strong>Collaboration restrictions</strong></td><td>Allow specific domains only</td><td>Whitelist trusted partner domains</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Cross-Tenant Access Settings</h3>
+                <p>Control B2B access at organization level:</p>
+                <ul>
+                    <li><strong>Default settings:</strong> Apply to all external orgs</li>
+                    <li><strong>Organizational settings:</strong> Per-tenant overrides for specific partners</li>
+                    <li><strong>Inbound access:</strong> What external users can access in your tenant</li>
+                    <li><strong>Outbound access:</strong> What your users can access in external tenants</li>
+                    <li><strong>Trust settings:</strong> Trust MFA/device compliance from external tenant</li>
+                </ul>
+
+                <h2>PowerShell: Guest Management</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># List all guest users</span>
+Get-MgUser -Filter "userType eq 'Guest'" -All | 
+    Select-Object DisplayName, UserPrincipalName, Mail, CreatedDateTime
+
+<span style="color: #6aa3f7;"># Find stale guests (no sign-in in 90 days)</span>
+$90DaysAgo = (Get-Date).AddDays(-90)
+Get-MgUser -Filter "userType eq 'Guest'" -All -Property DisplayName,UserPrincipalName,SignInActivity | 
+    Where-Object { $_.SignInActivity.LastSignInDateTime -lt $90DaysAgo -or $_.SignInActivity.LastSignInDateTime -eq $null } |
+    Select-Object DisplayName, UserPrincipalName, @{N="LastSignIn";E={$_.SignInActivity.LastSignInDateTime}}
+
+<span style="color: #6aa3f7;"># Invite a new guest</span>
+$invitation = @{
+    invitedUserEmailAddress = "partner@external.com"
+    inviteRedirectUrl = "https://myapps.microsoft.com"
+    sendInvitationMessage = $true
+    invitedUserDisplayName = "External Partner"
+}
+New-MgInvitation -BodyParameter $invitation
+
+<span style="color: #6aa3f7;"># Remove a guest user</span>
+$guest = Get-MgUser -Filter "userPrincipalName eq 'partner_external.com#EXT#@tenant.onmicrosoft.com'"
+Remove-MgUser -UserId $guest.Id
+
+<span style="color: #6aa3f7;"># Bulk remove stale guests</span>
+Get-MgUser -Filter "userType eq 'Guest'" -All -Property SignInActivity |
+    Where-Object { $_.SignInActivity.LastSignInDateTime -lt (Get-Date).AddDays(-180) } |
+    ForEach-Object { Remove-MgUser -UserId $_.Id -WhatIf }  <span style="color: #6aa3f7;"># Remove -WhatIf to execute</span></pre>
+                </div>
+
+                <h2>B2B Security Considerations</h2>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Guest Access Risks</div>
+                    <ul style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                        <li>Guests may have weaker MFA in their home tenant</li>
+                        <li>You don't control their password policies</li>
+                        <li>Account compromise at partner = access to your resources</li>
+                        <li>Stale guests accumulate without lifecycle management</li>
+                    </ul>
+                </div>
+
+                <h3>Conditional Access for Guests</h3>
+                <p>Create CA policies specifically for guest users:</p>
+                <ul>
+                    <li><strong>Require MFA for all guest access</strong> - Don't trust their home tenant MFA</li>
+                    <li><strong>Block legacy authentication</strong> - Guests often use older clients</li>
+                    <li><strong>Require compliant device</strong> - Or block access from unmanaged devices</li>
+                    <li><strong>Limit to specific apps</strong> - Only allow access to apps they need</li>
+                    <li><strong>Session controls</strong> - Sign-in frequency, no persistent browser</li>
+                </ul>
+
+                <h2>Access Reviews for Guests</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Create quarterly guest access review</span>
+$reviewParams = @{
+    displayName = "Quarterly Guest Review"
+    descriptionForReviewers = "Review if this guest still needs access"
+    scope = @{
+        "@odata.type" = "#microsoft.graph.accessReviewQueryScope"
+        query = "./members/microsoft.graph.user/?`$filter=(userType eq 'Guest')"
+        queryType = "MicrosoftGraph"
+    }
+    reviewers = @(
+        @{ query = "./manager"; queryType = "MicrosoftGraph" }  <span style="color: #6aa3f7;"># Resource owner reviews</span>
+    )
+    settings = @{
+        defaultDecision = "Deny"  <span style="color: #6aa3f7;"># If not reviewed, remove access</span>
+        autoApplyDecisionsEnabled = $true
+        instanceDurationInDays = 14
+        recurrence = @{
+            pattern = @{ type = "absoluteMonthly"; interval = 3 }
+            range = @{ type = "noEnd"; startDate = "2025-01-01" }
+        }
+    }
+}
+New-MgIdentityGovernanceAccessReviewDefinition -BodyParameter $reviewParams</pre>
+                </div>
+
+                <h2>Monitoring Guest Activity (KQL)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;">// All guest sign-ins</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where UserType == "Guest"
+| project TimeGenerated, UserPrincipalName, AppDisplayName, IPAddress, Location, ResultType
+
+<span style="color: #6aa3f7;">// New guest invitations</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where OperationName == "Invite external user"
+| extend InvitedEmail = tostring(TargetResources[0].userPrincipalName)
+| extend InvitedBy = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, InvitedBy, InvitedEmail
+
+<span style="color: #6aa3f7;">// Guest access to sensitive apps</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where UserType == "Guest"
+| where AppDisplayName in ("SharePoint Online", "Microsoft Teams", "Azure Portal")
+| summarize AccessCount = count() by UserPrincipalName, AppDisplayName
+| order by AccessCount desc
+
+<span style="color: #6aa3f7;">// Guests from unexpected domains</span>
+let allowedDomains = dynamic(["partner1.com", "partner2.com"]);
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where UserType == "Guest"
+| extend Domain = tostring(split(UserPrincipalName, "@")[1])
+| where Domain !in (allowedDomains)
+| distinct UserPrincipalName, Domain</pre>
+                </div>
+
+                <h2>B2C Overview</h2>
+                <p>Azure AD B2C is a separate service for customer identity:</p>
+                <ul>
+                    <li><strong>Separate tenant</strong> - Not in your main Entra ID</li>
+                    <li><strong>User flows</strong> - Pre-built sign-up/sign-in experiences</li>
+                    <li><strong>Custom policies</strong> - XML-based for complex scenarios</li>
+                    <li><strong>Social identity providers</strong> - Google, Facebook, Apple, etc.</li>
+                    <li><strong>Local accounts</strong> - Email/password stored in B2C</li>
+                    <li><strong>Customizable UI</strong> - Brand the login experience</li>
+                </ul>
+
+                <h2>Best Practices</h2>
+                <table>
+                    <thead><tr><th>Area</th><th>Recommendation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Guest invitations</strong></td><td>Limit to specific admin roles, whitelist domains</td></tr>
+                        <tr><td><strong>MFA for guests</strong></td><td>Always require, don't trust external tenant MFA</td></tr>
+                        <tr><td><strong>Lifecycle management</strong></td><td>Quarterly access reviews, auto-remove inactive guests</td></tr>
+                        <tr><td><strong>Cross-tenant access</strong></td><td>Configure per-partner settings for trusted orgs</td></tr>
+                        <tr><td><strong>Monitor activity</strong></td><td>Alert on guest access to sensitive resources</td></tr>
+                        <tr><td><strong>Limit permissions</strong></td><td>Restrict guest access to enumeration</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

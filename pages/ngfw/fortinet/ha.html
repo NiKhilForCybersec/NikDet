@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate High Availability | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>High Availability</span></div>
+            <div class="content">
+                <h1><i class="fas fa-clone"></i> FortiGate High Availability</h1>
+                <p class="lead">Configure Active-Passive and Active-Active HA clusters for redundancy.</p>
+
+                <h2><i class="fas fa-balance-scale"></i> HA Modes</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Mode</th><th>Description</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Active-Passive</strong></td><td>One active, one standby</td><td>Simple failover, session sync</td></tr>
+                            <tr><td><strong>Active-Active</strong></td><td>Both process traffic</td><td>Load distribution (complex)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Active-Passive Configuration</h2>
+                <div class="step-section">
+                    <h3>Primary Unit</h3>
+                    <div class="code-block"><pre>config system ha
+    set mode a-p
+    set group-name "FGT-Cluster"
+    set group-id 10
+    set password "HAPassword123!"
+    set hbdev "port5" 50
+    set session-pickup enable
+    set override disable
+    set priority 200
+    set monitor "port1" "port2"
+end</pre></div>
+
+                    <h3>Secondary Unit</h3>
+                    <div class="code-block"><pre>config system ha
+    set mode a-p
+    set group-name "FGT-Cluster"
+    set group-id 10
+    set password "HAPassword123!"
+    set hbdev "port5" 50
+    set session-pickup enable
+    set override disable
+    set priority 100
+    set monitor "port1" "port2"
+end</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Important</h4>
+                        <p>Both units must have identical hardware models, firmware versions, and licenses. The heartbeat interface (hbdev) should be a dedicated crossover connection.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-search"></i> HA Verification</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Check HA status
+get system ha status
+
+# Check HA sync status
+diagnose sys ha status
+
+# Show HA checksums (config sync)
+diagnose sys ha checksum cluster
+
+# Force failover (testing)
+diagnose sys ha reset-uptime
+
+# Connect to secondary unit
+execute ha manage 1 admin</pre></div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

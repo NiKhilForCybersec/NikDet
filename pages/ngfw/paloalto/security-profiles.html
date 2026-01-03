@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Security Profiles | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>Security Profiles</span></div>
+            <div class="content">
+                <h1><i class="fas fa-shield-virus"></i> Palo Alto Security Profiles</h1>
+                <p class="lead">Configure threat prevention with Antivirus, Anti-Spyware, Vulnerability Protection, URL Filtering, File Blocking, and WildFire.</p>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Security Profiles vs Security Policies</h4>
+                    <p><strong>Security Policies</strong> = Who can talk to whom (allow/deny traffic between zones)<br>
+                    <strong>Security Profiles</strong> = What to inspect in allowed traffic (scan for threats, malware, bad URLs)</p>
+                    <p>Security profiles are attached to ALLOW rules to inspect the permitted traffic.</p>
+                </div>
+
+                <h2><i class="fas fa-list"></i> Security Profile Types</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead>
+                            <tr><th>Profile Type</th><th>Purpose</th><th>What It Catches</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Antivirus</strong></td><td>Malware detection</td><td>Viruses, trojans, worms in files</td></tr>
+                            <tr><td><strong>Anti-Spyware</strong></td><td>Spyware & C2 detection</td><td>Command-and-control, spyware, DNS tunneling</td></tr>
+                            <tr><td><strong>Vulnerability Protection</strong></td><td>Exploit prevention</td><td>Buffer overflows, code injection, CVE exploits</td></tr>
+                            <tr><td><strong>URL Filtering</strong></td><td>Web content control</td><td>Malicious URLs, categories (gambling, adult, etc.)</td></tr>
+                            <tr><td><strong>File Blocking</strong></td><td>File type control</td><td>Block PE files, scripts, specific extensions</td></tr>
+                            <tr><td><strong>WildFire Analysis</strong></td><td>Unknown malware</td><td>Zero-day threats via sandbox analysis</td></tr>
+                            <tr><td><strong>Data Filtering</strong></td><td>DLP</td><td>SSN, credit cards, custom patterns</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-virus"></i> Antivirus Profile</h2>
+                <div class="step-section">
+                    <h3>Create Antivirus Profile</h3>
+                    <div class="code-block"><pre># Create strict antivirus profile
+set profiles virus "Strict-AV" decoder ftp action reset-both
+set profiles virus "Strict-AV" decoder http action reset-both
+set profiles virus "Strict-AV" decoder http2 action reset-both
+set profiles virus "Strict-AV" decoder smb action reset-both
+set profiles virus "Strict-AV" decoder smtp action reset-both
+set profiles virus "Strict-AV" decoder imap action reset-both
+set profiles virus "Strict-AV" decoder pop3 action reset-both
+
+# Enable packet capture for forensics
+set profiles virus "Strict-AV" decoder http packet-capture enabled
+
+# Enable WildFire inline ML (if licensed)
+set profiles virus "Strict-AV" mlav-engine-filebased-enabled yes</pre></div>
+
+                    <h3>Recommended Actions by Protocol</h3>
+                    <table class="feature-table">
+                        <thead>
+                            <tr><th>Protocol</th><th>Action</th><th>Reason</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>HTTP/HTTP2</td><td>reset-both</td><td>Kill connection, prevent download</td></tr>
+                            <tr><td>FTP</td><td>reset-both</td><td>Block malicious file transfers</td></tr>
+                            <tr><td>SMB</td><td>reset-both</td><td>Stop lateral movement</td></tr>
+                            <tr><td>SMTP/IMAP/POP3</td><td>reset-both</td><td>Block email-borne malware</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Anti-Spyware Profile</h2>
+                <div class="step-section">
+                    <h3>Create Anti-Spyware Profile</h3>
+                    <div class="code-block"><pre># Create comprehensive anti-spyware profile
+set profiles spyware "Strict-AS" botnet-domains lists default-paloalto-dns action sinkhole
+set profiles spyware "Strict-AS" botnet-domains sinkhole ipv4-address pan-sinkhole-default-ip
+set profiles spyware "Strict-AS" botnet-domains sinkhole ipv6-address ::1
+
+# Rules for different severity levels
+set profiles spyware "Strict-AS" rules "Block-Critical" severity critical action reset-both packet-capture single-packet
+set profiles spyware "Strict-AS" rules "Block-High" severity high action reset-both packet-capture single-packet
+set profiles spyware "Strict-AS" rules "Block-Medium" severity medium action reset-both
+set profiles spyware "Strict-AS" rules "Alert-Low" severity low action alert
+set profiles spyware "Strict-AS" rules "Alert-Info" severity informational action default
+
+# Enable DNS Security (requires subscription)
+set profiles spyware "Strict-AS" threat-exception</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> DNS Sinkhole</h4>
+                        <p>Configure DNS sinkhole to redirect malicious DNS queries to a non-routable address. Monitor sinkhole hits to identify infected hosts.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> Vulnerability Protection</h2>
+                <div class="step-section">
+                    <h3>Create Vulnerability Protection Profile</h3>
+                    <div class="code-block"><pre># Create vulnerability protection profile
+set profiles vulnerability "Strict-VP" rules "Block-Critical" severity critical action reset-both
+set profiles vulnerability "Strict-VP" rules "Block-Critical" host any
+set profiles vulnerability "Strict-VP" rules "Block-Critical" packet-capture single-packet
+
+set profiles vulnerability "Strict-VP" rules "Block-High" severity high action reset-both
+set profiles vulnerability "Strict-VP" rules "Block-High" host any
+
+set profiles vulnerability "Strict-VP" rules "Block-Medium" severity medium action reset-both
+set profiles vulnerability "Strict-VP" rules "Block-Medium" host any
+
+set profiles vulnerability "Strict-VP" rules "Alert-Low" severity low action alert
+set profiles vulnerability "Strict-VP" rules "Alert-Low" host any</pre></div>
+                </div>
+
+                <h2><i class="fas fa-globe"></i> URL Filtering</h2>
+                <div class="step-section">
+                    <h3>Create URL Filtering Profile</h3>
+                    <div class="code-block"><pre># Create URL filtering profile
+# Block dangerous categories
+set profiles url-filtering "Corporate-URL" block command-and-control
+set profiles url-filtering "Corporate-URL" block malware
+set profiles url-filtering "Corporate-URL" block phishing
+set profiles url-filtering "Corporate-URL" block hacking
+set profiles url-filtering "Corporate-URL" block proxy-avoidance-and-anonymizers
+set profiles url-filtering "Corporate-URL" block grayware
+set profiles url-filtering "Corporate-URL" block newly-registered-domain
+
+# Alert on questionable categories
+set profiles url-filtering "Corporate-URL" alert unknown
+set profiles url-filtering "Corporate-URL" alert dynamic-dns
+
+# Block productivity-related (optional)
+set profiles url-filtering "Corporate-URL" block adult
+set profiles url-filtering "Corporate-URL" block gambling
+set profiles url-filtering "Corporate-URL" block peer-to-peer
+
+# Enable safe search
+set profiles url-filtering "Corporate-URL" safe-search-enforcement yes
+
+# Log all URL access
+set profiles url-filtering "Corporate-URL" log-container-page-only no</pre></div>
+
+                    <h3>URL Categories to Always Block</h3>
+                    <table class="feature-table">
+                        <thead>
+                            <tr><th>Category</th><th>Risk</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>command-and-control</td><td>Active C2 communication</td></tr>
+                            <tr><td>malware</td><td>Known malware distribution</td></tr>
+                            <tr><td>phishing</td><td>Credential theft</td></tr>
+                            <tr><td>grayware</td><td>PUPs, adware</td></tr>
+                            <tr><td>newly-registered-domain</td><td>Often used in attacks</td></tr>
+                            <tr><td>proxy-avoidance-and-anonymizers</td><td>Policy bypass</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-fire"></i> WildFire Analysis</h2>
+                <div class="step-section">
+                    <h3>Create WildFire Profile</h3>
+                    <div class="code-block"><pre># Create WildFire analysis profile
+set profiles wildfire-analysis "WildFire-All" rules "Forward-All" application any
+set profiles wildfire-analysis "WildFire-All" rules "Forward-All" file-type any
+set profiles wildfire-analysis "WildFire-All" rules "Forward-All" direction both
+set profiles wildfire-analysis "WildFire-All" rules "Forward-All" analysis public-cloud</pre></div>
+
+                    <div class="info-box">
+                        <h4><i class="fas fa-cloud"></i> WildFire Cloud vs On-Prem</h4>
+                        <p><strong>Public Cloud:</strong> Files sent to Palo Alto's cloud for analysis (default)<br>
+                        <strong>Private Cloud:</strong> WF-500 appliance for sensitive environments</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-file-shield"></i> File Blocking</h2>
+                <div class="step-section">
+                    <h3>Create File Blocking Profile</h3>
+                    <div class="code-block"><pre># Create file blocking profile
+# Block dangerous file types
+set profiles file-blocking "Block-Dangerous" rules "Block-PE" application any
+set profiles file-blocking "Block-Dangerous" rules "Block-PE" file-type pe
+set profiles file-blocking "Block-Dangerous" rules "Block-PE" direction both
+set profiles file-blocking "Block-Dangerous" rules "Block-PE" action block
+
+set profiles file-blocking "Block-Dangerous" rules "Block-DLL" file-type dll
+set profiles file-blocking "Block-Dangerous" rules "Block-DLL" direction both
+set profiles file-blocking "Block-Dangerous" rules "Block-DLL" action block
+
+set profiles file-blocking "Block-Dangerous" rules "Block-Scripts" file-type "bat, js, vbs, ps1, hta"
+set profiles file-blocking "Block-Dangerous" rules "Block-Scripts" direction both
+set profiles file-blocking "Block-Dangerous" rules "Block-Scripts" action block
+
+# Alert on encrypted/compressed files
+set profiles file-blocking "Block-Dangerous" rules "Alert-Encrypted" file-type "encrypted-zip, encrypted-rar"
+set profiles file-blocking "Block-Dangerous" rules "Alert-Encrypted" action alert</pre></div>
+                </div>
+
+                <h2><i class="fas fa-layer-group"></i> Security Profile Groups</h2>
+                <div class="step-section">
+                    <h3>Create Profile Group (Best Practice)</h3>
+                    <div class="code-block"><pre># Create a security profile group that bundles all profiles
+set profile-group "Strict-Security" virus "Strict-AV"
+set profile-group "Strict-Security" spyware "Strict-AS"
+set profile-group "Strict-Security" vulnerability "Strict-VP"
+set profile-group "Strict-Security" url-filtering "Corporate-URL"
+set profile-group "Strict-Security" file-blocking "Block-Dangerous"
+set profile-group "Strict-Security" wildfire-analysis "WildFire-All"</pre></div>
+
+                    <h3>Apply to Security Policy</h3>
+                    <div class="code-block"><pre># Apply profile group to allow rule
+set rulebase security rules "Allow-Internet" profile-setting group "Strict-Security"
+
+commit</pre></div>
+
+                    <div class="danger-box">
+                        <h4><i class="fas fa-exclamation-circle"></i> Critical Reminder</h4>
+                        <p>Security profiles are ONLY evaluated on ALLOW rules. They have no effect on deny rules. Make sure to attach profiles to every allow rule that passes user traffic.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-check-circle"></i> Verification</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Show security profiles
+show profiles virus all
+show profiles spyware all
+show profiles vulnerability all
+show profiles url-filtering all
+
+# Show profile groups
+show profile-group all
+
+# Show threat logs
+show log threat
+
+# Show URL logs
+show log url</pre></div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

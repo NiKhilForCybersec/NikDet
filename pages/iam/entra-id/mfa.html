@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra ID MFA | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>MFA</span></div>
+            <div class="content">
+                <h1><i class="fas fa-mobile-alt" style="color: var(--accent-primary);"></i> Entra ID Multi-Factor Authentication</h1>
+                <p class="lead">Configure and manage MFA methods, authentication strength policies, and phishing-resistant authentication.</p>
+
+                <h2>MFA Methods Comparison</h2>
+                <table>
+                    <thead><tr><th>Method</th><th>Security Level</th><th>Phishing Resistant</th><th>User Experience</th><th>Best For</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>FIDO2 Security Key</strong></td><td>Highest</td><td>Yes</td><td>Hardware key tap</td><td>Admins, high-security users</td></tr>
+                        <tr><td><strong>Windows Hello for Business</strong></td><td>Highest</td><td>Yes</td><td>Biometric/PIN</td><td>Corporate Windows devices</td></tr>
+                        <tr><td><strong>Passkeys (FIDO2)</strong></td><td>Highest</td><td>Yes</td><td>Device biometric</td><td>Modern passwordless</td></tr>
+                        <tr><td><strong>Certificate-based Auth</strong></td><td>High</td><td>Yes</td><td>Smart card</td><td>Enterprise PKI</td></tr>
+                        <tr><td><strong>Authenticator (Passwordless)</strong></td><td>High</td><td>Partial*</td><td>Number matching</td><td>General workforce</td></tr>
+                        <tr><td><strong>Authenticator (Push)</strong></td><td>Medium</td><td>No</td><td>Approve notification</td><td>Standard MFA</td></tr>
+                        <tr><td><strong>OATH Hardware Token</strong></td><td>Medium</td><td>No</td><td>6-digit code</td><td>Offline users</td></tr>
+                        <tr><td><strong>SMS</strong></td><td>Low</td><td>No</td><td>Text message</td><td>Legacy/fallback only</td></tr>
+                        <tr><td><strong>Voice Call</strong></td><td>Low</td><td>No</td><td>Phone call</td><td>Accessibility</td></tr>
+                    </tbody>
+                </table>
+                <p><em>*Number matching resists MFA fatigue but not advanced phishing.</em></p>
+
+                <h2>Authentication Strength Policies</h2>
+                <p>Authentication strengths define which MFA methods satisfy Conditional Access requirements.</p>
+                <table>
+                    <thead><tr><th>Built-in Strength</th><th>Allowed Methods</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>MFA</strong></td><td>Any MFA method including SMS</td><td>Basic MFA requirement</td></tr>
+                        <tr><td><strong>Passwordless MFA</strong></td><td>FIDO2, Windows Hello, Authenticator passwordless</td><td>Eliminate passwords</td></tr>
+                        <tr><td><strong>Phishing-resistant MFA</strong></td><td>FIDO2, Windows Hello, Certificate only</td><td>High-security scenarios</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Create Custom Authentication Strength</h3>
+                <div class="step-container">
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">1</div></div><div class="step-content"><div class="step-title">Navigate</div><p>Entra Admin Center → Protection → Authentication methods → Authentication strengths</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">2</div></div><div class="step-content"><div class="step-title">Create</div><p>Click "+ New authentication strength" → Name it (e.g., "Admin Phishing Resistant")</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">3</div></div><div class="step-content"><div class="step-title">Select Methods</div><p>Choose only FIDO2 and Windows Hello for Business</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">4</div></div><div class="step-content"><div class="step-title">Apply via CA</div><p>Create CA policy → Grant → Require authentication strength → Select custom strength</p></div></div>
+                </div>
+
+                <h2>PowerShell Configuration</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Connect to Microsoft Graph</span>
+Connect-MgGraph -Scopes "Policy.ReadWrite.AuthenticationMethod"
+
+<span style="color: #6aa3f7;"># Enable Authenticator with number matching (CRITICAL - prevents MFA fatigue)</span>
+$params = @{
+    "@odata.type" = "#microsoft.graph.microsoftAuthenticatorAuthenticationMethodConfiguration"
+    state = "enabled"
+    featureSettings = @{
+        numberMatchingRequiredState = @{ state = "enabled" }
+        displayAppInformationRequiredState = @{ state = "enabled" }
+        displayLocationInformationRequiredState = @{ state = "enabled" }
+    }
+}
+Update-MgPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration `
+    -AuthenticationMethodConfigurationId "MicrosoftAuthenticator" -BodyParameter $params
+
+<span style="color: #6aa3f7;"># Disable SMS (recommended)</span>
+$smsParams = @{
+    "@odata.type" = "#microsoft.graph.smsAuthenticationMethodConfiguration"
+    state = "disabled"
+}
+Update-MgPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration `
+    -AuthenticationMethodConfigurationId "Sms" -BodyParameter $smsParams
+
+<span style="color: #6aa3f7;"># Enable FIDO2 security keys</span>
+$fido2Params = @{
+    "@odata.type" = "#microsoft.graph.fido2AuthenticationMethodConfiguration"
+    state = "enabled"
+    isAttestationEnforced = $true
+    isSelfServiceRegistrationAllowed = $true
+}
+Update-MgPolicyAuthenticationMethodPolicyAuthenticationMethodConfiguration `
+    -AuthenticationMethodConfigurationId "Fido2" -BodyParameter $fido2Params
+
+<span style="color: #6aa3f7;"># Get user's registered methods</span>
+Get-MgUserAuthenticationMethod -UserId "user@contoso.com"
+
+<span style="color: #6aa3f7;"># Reset user's MFA (delete Authenticator registration)</span>
+$methods = Get-MgUserAuthenticationMicrosoftAuthenticatorMethod -UserId "user@contoso.com"
+$methods | ForEach-Object {
+    Remove-MgUserAuthenticationMicrosoftAuthenticatorMethod `
+        -UserId "user@contoso.com" -MicrosoftAuthenticatorAuthenticationMethodId $_.Id
+}</pre>
+                </div>
+
+                <h2>FIDO2 Security Key Setup</h2>
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-key"></i> Recommended FIDO2 Keys</div>
+                    <p><strong>Enterprise:</strong> YubiKey 5 series, Feitian ePass FIDO2<br><strong>Budget:</strong> Google Titan, Thetis FIDO2<br><strong>Biometric:</strong> YubiKey Bio</p>
+                </div>
+
+                <h4>User Self-Registration</h4>
+                <ol>
+                    <li>Navigate to <code>mysignins.microsoft.com/security-info</code></li>
+                    <li>Click "Add sign-in method" → "Security key"</li>
+                    <li>Choose USB or NFC device type</li>
+                    <li>Insert key, follow browser prompts</li>
+                    <li>Name the key (e.g., "YubiKey - Work Laptop")</li>
+                </ol>
+
+                <h2>Monitoring MFA Events (KQL)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;">// MFA failures by user and method</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where ResultType != 0 and AuthenticationRequirement == "multiFactorAuthentication"
+| mv-expand AuthenticationDetails
+| extend AuthMethod = tostring(AuthenticationDetails.authenticationMethod)
+| where tostring(AuthenticationDetails.succeeded) == "false"
+| summarize Failures = count() by UserPrincipalName, AuthMethod, ResultDescription
+| order by Failures desc
+
+<span style="color: #6aa3f7;">// Users still using SMS (identify for migration)</span>
+SigninLogs
+| where TimeGenerated > ago(30d) and ResultType == 0
+| mv-expand AuthenticationDetails
+| where tostring(AuthenticationDetails.authenticationMethod) == "Text message"
+| summarize SMSLogins = count() by UserPrincipalName
+| order by SMSLogins desc
+
+<span style="color: #6aa3f7;">// MFA fatigue attack detection</span>
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType == 50074  <span style="color: #6aa3f7;">// MFA required</span>
+| summarize MFAPrompts = count() by UserPrincipalName, IPAddress, bin(TimeGenerated, 5m)
+| where MFAPrompts > 5</pre>
+                </div>
+
+                <h2>Best Practices</h2>
+                <table>
+                    <thead><tr><th>Recommendation</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Enable Number Matching</strong></td><td>Prevents MFA fatigue attacks</td></tr>
+                        <tr><td><strong>Disable SMS/Voice</strong></td><td>Vulnerable to SIM swap, SS7 attacks</td></tr>
+                        <tr><td><strong>Phishing-Resistant for Admins</strong></td><td>Highest-value targets need strongest auth</td></tr>
+                        <tr><td><strong>Block Legacy Authentication</strong></td><td>Legacy protocols bypass MFA</td></tr>
+                        <tr><td><strong>Require 2+ Backup Methods</strong></td><td>Users need recovery options</td></tr>
+                        <tr><td><strong>FIDO2 for Break-Glass Accounts</strong></td><td>Emergency accounts need offline capability</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Troubleshooting</h2>
+                <table>
+                    <thead><tr><th>Issue</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>User not prompted for MFA</td><td>CA policy not applying</td><td>Check policy scope, client app type</td></tr>
+                        <tr><td>"More information required" loop</td><td>Registration corrupted</td><td>Reset user's MFA registration</td></tr>
+                        <tr><td>Authenticator not receiving push</td><td>Network/app issues</td><td>Check notifications, re-register device</td></tr>
+                        <tr><td>FIDO2 key not recognized</td><td>Browser compatibility</td><td>Use Edge/Chrome, verify enrollment</td></tr>
+                        <tr><td>Number matching not appearing</td><td>Feature not enabled</td><td>Enable in Authentication methods</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

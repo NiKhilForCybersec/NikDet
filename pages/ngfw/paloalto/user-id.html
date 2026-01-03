@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto User-ID | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>User-ID</span></div>
+            <div class="content">
+                <h1><i class="fas fa-user-tag"></i> Palo Alto User-ID</h1>
+                <p class="lead">Map IP addresses to usernames for user-based security policies and visibility.</p>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> What is User-ID?</h4>
+                    <p>User-ID maps IP addresses to Active Directory usernames. Instead of writing policies for IP addresses, you can write policies for users and groups: "Allow Marketing group to access social media" instead of "Allow 10.0.50.0/24 to access social media".</p>
+                </div>
+
+                <h2><i class="fas fa-cogs"></i> User-ID Sources</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead><tr><th>Method</th><th>How It Works</th><th>Best For</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>AD Security Log Monitoring</strong></td><td>Reads Windows logon events (4624)</td><td>Most common, works with existing AD</td></tr>
+                            <tr><td><strong>WMI Probing</strong></td><td>Queries workstations directly</td><td>Backup method, higher overhead</td></tr>
+                            <tr><td><strong>User-ID Agent</strong></td><td>Windows service on DC or member server</td><td>Large environments, distributed DCs</td></tr>
+                            <tr><td><strong>Captive Portal</strong></td><td>Web authentication prompt</td><td>Guest networks, BYOD</td></tr>
+                            <tr><td><strong>GlobalProtect</strong></td><td>VPN client provides identity</td><td>Remote users</td></tr>
+                            <tr><td><strong>Syslog</strong></td><td>Parse identity from other sources</td><td>NAC, wireless controllers</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Configure AD Integration</h2>
+                <div class="step-section">
+                    <h3>Step 1: Create Service Account in AD</h3>
+                    <div class="code-block"><pre># PowerShell - Create service account
+New-ADUser -Name "svc-paloalto-userid" `
+  -SamAccountName "svc-paloalto-userid" `
+  -UserPrincipalName "svc-paloalto-userid@domain.local" `
+  -AccountPassword (ConvertTo-SecureString "SecurePassword123!" -AsPlainText -Force) `
+  -Enabled $true `
+  -PasswordNeverExpires $true
+
+# Add to Event Log Readers group (for security log access)
+Add-ADGroupMember -Identity "Event Log Readers" -Members "svc-paloalto-userid"
+
+# For WMI probing, also needs:
+# - Distributed COM Users (local group on workstations)
+# - WMI permissions via wmimgmt.msc</pre></div>
+
+                    <h3>Step 2: Configure User-ID on Firewall</h3>
+                    <div class="code-block"><pre># Enable User-ID on zone
+set zone trust enable-user-identification yes
+
+# Configure LDAP server profile
+set server-profile ldap "AD-LDAP" server dc01.domain.local port 389
+set server-profile ldap "AD-LDAP" ldap-type active-directory
+set server-profile ldap "AD-LDAP" base-dn "DC=domain,DC=local"
+set server-profile ldap "AD-LDAP" bind-dn "CN=svc-paloalto-userid,OU=Service Accounts,DC=domain,DC=local"
+set server-profile ldap "AD-LDAP" bind-password "SecurePassword123!"
+
+# Configure group mapping
+set user-id-collector setting group-mapping "AD-Groups" server-profile "AD-LDAP"
+set user-id-collector setting group-mapping "AD-Groups" update-interval 3600
+
+# Configure User-ID agent (agentless)
+set user-id-collector setting wmi-account "domain\\svc-paloalto-userid"
+set user-id-collector setting wmi-password "SecurePassword123!"
+
+# Add domain controller to monitor
+set user-id-collector server-monitor "DC01" host dc01.domain.local
+set user-id-collector server-monitor "DC01" enabled yes
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-users"></i> Group Mapping</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Include specific groups only (recommended)
+set user-id-collector setting group-mapping "AD-Groups" group-include-list "Marketing"
+set user-id-collector setting group-mapping "AD-Groups" group-include-list "Engineering"
+set user-id-collector setting group-mapping "AD-Groups" group-include-list "Finance"
+set user-id-collector setting group-mapping "AD-Groups" group-include-list "IT-Admins"
+set user-id-collector setting group-mapping "AD-Groups" group-include-list "Executives"
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-clipboard-check"></i> Verification</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Show User-ID status
+show user user-id-agent state all
+
+# Show IP-user mappings
+show user ip-user-mapping all
+
+# Show specific user
+show user ip-user-mapping ip 10.0.1.50
+
+# Show group membership
+show user group-mapping state all
+
+# Show group members
+show user group name "domain\\marketing"
+
+# Test user mapping
+test user-id user "domain\\jsmith"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> User-Based Security Policy</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Allow Marketing to social media
+set rulebase security rules "Marketing-Social" from trust to untrust
+set rulebase security rules "Marketing-Social" source-user "domain\\marketing"
+set rulebase security rules "Marketing-Social" application facebook-base twitter-base linkedin-base
+set rulebase security rules "Marketing-Social" action allow
+set rulebase security rules "Marketing-Social" profile-setting group "Standard-Security"
+
+# Block all users from gaming
+set rulebase security rules "Block-Gaming" from trust to untrust
+set rulebase security rules "Block-Gaming" source-user any
+set rulebase security rules "Block-Gaming" application-filter "gaming"
+set rulebase security rules "Block-Gaming" action deny
+
+commit</pre></div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

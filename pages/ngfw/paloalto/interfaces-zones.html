@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Interfaces & Zones | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .flow-diagram { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; line-height: 1.4; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>Interfaces & Zones</span></div>
+            <div class="content">
+                <h1><i class="fas fa-network-wired"></i> Palo Alto Interfaces & Zones</h1>
+                <p class="lead">Configure network interfaces, create security zones, and build the foundation for your firewall policies.</p>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Why Zones Matter</h4>
+                    <p>Security zones are the foundation of Palo Alto firewall policies. Traffic flows between zones, and security policies control what's allowed. Think of zones as neighborhoods - you define rules for traffic moving between them.</p>
+                </div>
+
+                <h2><i class="fas fa-sitemap"></i> Zone Architecture</h2>
+                <div class="flow-diagram">
+                                    ┌─────────────────────────────────────────────────────────┐
+                                    │                    PALO ALTO FIREWALL                   │
+                                    │                                                         │
+  ┌──────────┐                      │   ┌─────────┐    ┌─────────┐    ┌─────────┐           │
+  │ INTERNET │◄────────────────────►│   │ UNTRUST │    │  TRUST  │    │   DMZ   │           │
+  └──────────┘        eth1/1        │   │  ZONE   │    │  ZONE   │    │  ZONE   │           │
+                                    │   └────┬────┘    └────┬────┘    └────┬────┘           │
+                                    │        │              │              │                 │
+  ┌──────────┐                      │        │         ┌────┴────┐        │                 │
+  │INTERNAL  │◄────────────────────►│        │         │SECURITY │        │                 │
+  │ NETWORK  │        eth1/2        │        └─────────┤ POLICY  ├────────┘                 │
+  └──────────┘                      │                  │ ENGINE  │                          │
+                                    │                  └─────────┘                          │
+  ┌──────────┐                      │                                                       │
+  │   DMZ    │◄────────────────────►│   Traffic between zones = Security Policy evaluation  │
+  │ SERVERS  │        eth1/3        │   Traffic within same zone = Allowed by default       │
+  └──────────┘                      └─────────────────────────────────────────────────────────┘</div>
+
+                <h2><i class="fas fa-ethernet"></i> Interface Types</h2>
+                <div class="step-section">
+                    <table class="feature-table">
+                        <thead>
+                            <tr><th>Type</th><th>Description</th><th>Use Case</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Layer 3</strong></td><td>Routed interface with IP address</td><td>Standard routing between networks</td></tr>
+                            <tr><td><strong>Layer 2</strong></td><td>Switched interface, no IP</td><td>Transparent/bridge mode</td></tr>
+                            <tr><td><strong>Virtual Wire</strong></td><td>Bump-in-the-wire, transparent</td><td>Inline IPS without routing changes</td></tr>
+                            <tr><td><strong>Tap</strong></td><td>Passive monitoring only</td><td>Traffic analysis, no blocking</td></tr>
+                            <tr><td><strong>Loopback</strong></td><td>Virtual interface for services</td><td>Management, GlobalProtect portal</td></tr>
+                            <tr><td><strong>Tunnel</strong></td><td>IPSec VPN termination</td><td>Site-to-site VPN</td></tr>
+                            <tr><td><strong>Aggregate</strong></td><td>LACP bonded interfaces</td><td>High bandwidth, redundancy</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-globe"></i> Configure Layer 3 Interface</h2>
+                <div class="step-section">
+                    <h3>GUI: Network → Interfaces</h3>
+                    <ol>
+                        <li>Click on interface (e.g., ethernet1/1)</li>
+                        <li>Set Interface Type: <strong>Layer3</strong></li>
+                        <li>Config tab: Assign to Virtual Router (default)</li>
+                        <li>Assign Security Zone (create if needed)</li>
+                        <li>IPv4 tab: Add IP address (e.g., 203.0.113.1/24)</li>
+                        <li>Click OK, then Commit</li>
+                    </ol>
+
+                    <h3>CLI Configuration</h3>
+                    <div class="code-block"><pre># Configure Layer 3 interface
+set network interface ethernet ethernet1/1 layer3 ip 203.0.113.1/24
+set network interface ethernet ethernet1/1 layer3 interface-management-profile allow-ping
+
+# Assign to zone
+set zone untrust network layer3 ethernet1/1
+
+# Assign to virtual router
+set network virtual-router default interface ethernet1/1
+
+# Commit
+commit</pre></div>
+
+                    <h3>Internal Interface Example</h3>
+                    <div class="code-block"><pre># Configure internal interface
+set network interface ethernet ethernet1/2 layer3 ip 10.0.1.1/24
+set network interface ethernet ethernet1/2 layer3 interface-management-profile allow-ping
+
+# Assign to trust zone
+set zone trust network layer3 ethernet1/2
+
+# Assign to virtual router
+set network virtual-router default interface ethernet1/2
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> Create Security Zones</h2>
+                <div class="step-section">
+                    <h3>Standard Zone Configuration</h3>
+                    <div class="code-block"><pre># Create zones
+set zone untrust network layer3 ethernet1/1
+set zone trust network layer3 ethernet1/2
+set zone dmz network layer3 ethernet1/3
+
+# Zone protection profile (recommended)
+set zone untrust zone-protection-profile "recommended-zone-protection"
+
+# Enable user identification on trust zone
+set zone trust enable-user-identification yes
+
+commit</pre></div>
+
+                    <h3>Zone Protection Profile</h3>
+                    <div class="code-block"><pre># Create zone protection profile
+set network profiles zone-protection-profile "edge-protection" flood tcp-syn enable yes
+set network profiles zone-protection-profile "edge-protection" flood tcp-syn alert-rate 10000
+set network profiles zone-protection-profile "edge-protection" flood tcp-syn activate-rate 10000
+set network profiles zone-protection-profile "edge-protection" flood tcp-syn maximal-rate 40000
+set network profiles zone-protection-profile "edge-protection" flood udp enable yes
+set network profiles zone-protection-profile "edge-protection" flood icmp enable yes
+set network profiles zone-protection-profile "edge-protection" reconnaissance tcp-port-scan action block-ip
+set network profiles zone-protection-profile "edge-protection" reconnaissance host-sweep action block-ip
+
+# Apply to untrust zone
+set zone untrust zone-protection-profile "edge-protection"
+
+commit</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Best Practice</h4>
+                        <p>Always apply zone protection profiles to external-facing zones (untrust, DMZ). This protects against floods, scans, and reconnaissance.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-project-diagram"></i> Sub-interfaces (VLANs)</h2>
+                <div class="step-section">
+                    <h3>Create VLAN Sub-interfaces</h3>
+                    <div class="code-block"><pre># Create sub-interface for VLAN 100 (Users)
+set network interface ethernet ethernet1/2 layer3 units ethernet1/2.100 tag 100
+set network interface ethernet ethernet1/2 layer3 units ethernet1/2.100 ip 10.100.1.1/24
+set zone users network layer3 ethernet1/2.100
+
+# Create sub-interface for VLAN 200 (Servers)
+set network interface ethernet ethernet1/2 layer3 units ethernet1/2.200 tag 200
+set network interface ethernet ethernet1/2 layer3 units ethernet1/2.200 ip 10.200.1.1/24
+set zone servers network layer3 ethernet1/2.200
+
+# Create sub-interface for VLAN 300 (Management)
+set network interface ethernet ethernet1/2 layer3 units ethernet1/2.300 tag 300
+set network interface ethernet ethernet1/2 layer3 units ethernet1/2.300 ip 10.0.30.1/24
+set zone management network layer3 ethernet1/2.300
+
+# Add all to virtual router
+set network virtual-router default interface ethernet1/2.100
+set network virtual-router default interface ethernet1/2.200
+set network virtual-router default interface ethernet1/2.300
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-link"></i> Virtual Wire Mode</h2>
+                <div class="step-section">
+                    <h3>When to Use Virtual Wire</h3>
+                    <ul>
+                        <li>Deploying firewall without changing network topology</li>
+                        <li>Inline IPS/IDS functionality</li>
+                        <li>Quick deployment for immediate protection</li>
+                    </ul>
+
+                    <div class="code-block"><pre># Create virtual wire
+set network virtual-wire vwire1 interface1 ethernet1/1
+set network virtual-wire vwire1 interface2 ethernet1/2
+
+# Create virtual wire zones
+set zone vwire-untrust network virtual-wire ethernet1/1
+set zone vwire-trust network virtual-wire ethernet1/2
+
+# Set interfaces to virtual wire mode
+set network interface ethernet ethernet1/1 virtual-wire
+set network interface ethernet ethernet1/2 virtual-wire
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-circle"></i> Verification Commands</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Show interface status
+show interface all
+
+# Show specific interface
+show interface ethernet1/1
+
+# Show zones
+show zone
+
+# Show routing table
+show routing route
+
+# Test connectivity
+ping source 10.0.1.1 host 8.8.8.8
+
+# Show interface counters
+show counter interface ethernet1/1
+
+# Show ARP table
+show arp all</pre></div>
+                </div>
+
+                <h2><i class="fas fa-list-check"></i> Interface Checklist</h2>
+                <div class="info-box">
+                    <h4>Before Moving to Policies</h4>
+                    <ul>
+                        <li>✅ All physical interfaces configured with correct IPs</li>
+                        <li>✅ Each interface assigned to appropriate zone</li>
+                        <li>✅ All interfaces added to virtual router</li>
+                        <li>✅ Zone protection profiles applied to external zones</li>
+                        <li>✅ Management profiles configured (SSH, HTTPS, ping)</li>
+                        <li>✅ Sub-interfaces created for VLANs if needed</li>
+                        <li>✅ Connectivity tested with ping</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

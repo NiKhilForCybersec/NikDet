@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Logs | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="pages/foundations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="pages/foundations/index.html">Home</a><span class="separator">/</span><a href="pages/foundations/index.html">Foundations</a><span class="separator">/</span><span>Reading Logs</span></div>
+            <div class="content">
+                <h1><i class="fas fa-file-alt"></i> Reading Logs</h1>
+                <p class="lead">How to read and interpret security logs - the core skill of SOC analysis.</p>
+
+                <h2><i class="fas fa-search"></i> Log Reading Approach</h2>
+                <div class="step-section">
+                    <ol>
+                        <li><strong>Identify the source:</strong> What system generated this log?</li>
+                        <li><strong>Find the timestamp:</strong> When did this happen?</li>
+                        <li><strong>Identify actors:</strong> Who/what initiated the action?</li>
+                        <li><strong>Identify targets:</strong> What was affected?</li>
+                        <li><strong>Understand the action:</strong> What happened?</li>
+                        <li><strong>Check the result:</strong> Success, failure, blocked?</li>
+                    </ol>
+                </div>
+
+                <h2><i class="fas fa-windows"></i> Windows Event Log Example</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre>Event ID: 4624
+Source: Microsoft-Windows-Security-Auditing
+Time: 2025-01-03T10:15:32.000Z
+Computer: WORKSTATION01
+Message: An account was successfully logged on.
+
+Subject:
+    Security ID: SYSTEM
+    Account Name: WORKSTATION01$
+    
+Logon Information:
+    Logon Type: 10                    ← Remote Desktop
+    Account Name: jsmith              ← Who logged in
+    Account Domain: CORP
+    Source Network Address: 10.0.1.50 ← Where from
+    Source Port: 49721</pre></div>
+                    <p><strong>Key fields:</strong> Event ID (what happened), Logon Type (how), Account Name (who), Source Network Address (where from)</p>
+                </div>
+
+                <h2><i class="fas fa-network-wired"></i> Firewall Log Example</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre>date=2025-01-03 time=10:20:15 action=deny
+srcip=203.0.113.50 srcport=45231
+dstip=10.0.10.25 dstport=3389
+proto=6 service=RDP</pre></div>
+                    <p><strong>Key fields:</strong> action (blocked), srcip (attacker), dstip (target), dstport (service targeted)</p>
+                    <p><strong>Analysis:</strong> External IP tried to RDP to internal server - blocked. Check for other attempts from same source.</p>
+                </div>
+
+                <h2><i class="fas fa-lightbulb"></i> Tips for Log Analysis</h2>
+                <div class="step-section">
+                    <ul>
+                        <li>Learn the normal patterns for your environment</li>
+                        <li>Keep a reference of important Event IDs</li>
+                        <li>Correlate multiple log sources</li>
+                        <li>Look for what's missing, not just what's present</li>
+                        <li>Timestamps are crucial - ensure time sync across sources</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

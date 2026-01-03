@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra ID Enterprise Applications | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>Enterprise Applications</span></div>
+            <div class="content">
+                <h1><i class="fas fa-th" style="color: var(--accent-secondary);"></i> Enterprise Applications & App Registrations</h1>
+                <p class="lead">Register applications, configure SSO, manage OAuth permissions, and govern third-party app access to your tenant.</p>
+
+                <h2>App Registration vs Enterprise Application</h2>
+                <table>
+                    <thead><tr><th>Concept</th><th>App Registration</th><th>Enterprise Application</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>What it is</strong></td><td>Application definition (blueprint)</td><td>Instance of app in your tenant (service principal)</td></tr>
+                        <tr><td><strong>Created when</strong></td><td>Developer registers custom app</td><td>User consents to app OR admin adds gallery app</td></tr>
+                        <tr><td><strong>Contains</strong></td><td>Client ID, redirect URIs, API permissions defined</td><td>User assignments, SSO config, provisioning</td></tr>
+                        <tr><td><strong>Security focus</strong></td><td>API permissions, secrets, certificates</td><td>Who can access, consent grants, sign-in logs</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>OAuth Consent & Permissions</h2>
+                <h3>Permission Types</h3>
+                <table>
+                    <thead><tr><th>Type</th><th>Description</th><th>Example</th><th>Risk Level</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Delegated - User</strong></td><td>App acts on behalf of signed-in user</td><td>Read user's mail</td><td>Low-Medium</td></tr>
+                        <tr><td><strong>Delegated - Admin</strong></td><td>Requires admin consent, acts as user</td><td>Read all users' mail</td><td>High</td></tr>
+                        <tr><td><strong>Application</strong></td><td>App acts as itself, no user context</td><td>Read all mailboxes</td><td>Highest</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>High-Risk Permissions to Monitor</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Dangerous Permissions</div>
+                    <ul style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                        <li><code>Mail.ReadWrite</code> - Read/send email as user (BEC risk)</li>
+                        <li><code>Directory.ReadWrite.All</code> - Modify any directory object</li>
+                        <li><code>RoleManagement.ReadWrite.Directory</code> - Assign admin roles</li>
+                        <li><code>Application.ReadWrite.All</code> - Create/modify any app</li>
+                        <li><code>AppRoleAssignment.ReadWrite.All</code> - Grant any permission</li>
+                    </ul>
+                </div>
+
+                <h2>Configuring User Consent Settings</h2>
+                <p><strong>Path:</strong> Entra Admin Center → Identity → Applications → Enterprise applications → Consent and permissions</p>
+                <table>
+                    <thead><tr><th>Setting</th><th>Recommended</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>User consent for apps</strong></td><td>Allow for verified publishers only</td><td>Blocks random OAuth phishing apps</td></tr>
+                        <tr><td><strong>Group owner consent</strong></td><td>No</td><td>Prevents shadow IT via group apps</td></tr>
+                        <tr><td><strong>Admin consent workflow</strong></td><td>Yes, enabled</td><td>Users can request, admins approve</td></tr>
+                        <tr><td><strong>Admin consent request expiration</strong></td><td>30 days</td><td>Forces timely review</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>PowerShell: App Management</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Connect to Graph</span>
+Connect-MgGraph -Scopes "Application.Read.All","Directory.Read.All"
+
+<span style="color: #6aa3f7;"># List all enterprise applications (service principals)</span>
+Get-MgServicePrincipal -All | Select-Object DisplayName, AppId, SignInAudience
+
+<span style="color: #6aa3f7;"># Find apps with high-risk permissions</span>
+$riskyPermissions = @("Directory.ReadWrite.All", "Mail.ReadWrite", "RoleManagement.ReadWrite.Directory")
+Get-MgServicePrincipal -All | ForEach-Object {
+    $sp = $_
+    $permissions = Get-MgServicePrincipalOauth2PermissionGrant -ServicePrincipalId $sp.Id
+    foreach ($p in $permissions) {
+        if ($riskyPermissions -contains $p.Scope) {
+            [PSCustomObject]@{
+                AppName = $sp.DisplayName
+                Permission = $p.Scope
+                ConsentType = $p.ConsentType
+            }
+        }
+    }
+}
+
+<span style="color: #6aa3f7;"># List apps with application permissions (no user context)</span>
+Get-MgServicePrincipal -All | ForEach-Object {
+    $appRoles = Get-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $_.Id
+    if ($appRoles) {
+        [PSCustomObject]@{
+            AppName = $_.DisplayName
+            AppRoleCount = $appRoles.Count
+        }
+    }
+} | Where-Object { $_.AppRoleCount -gt 0 }
+
+<span style="color: #6aa3f7;"># Revoke consent for a specific app</span>
+$appId = "app-id-here"
+$sp = Get-MgServicePrincipal -Filter "appId eq '$appId'"
+Get-MgServicePrincipalOauth2PermissionGrant -ServicePrincipalId $sp.Id | 
+    ForEach-Object { Remove-MgOauth2PermissionGrant -OAuth2PermissionGrantId $_.Id }
+
+<span style="color: #6aa3f7;"># Delete an enterprise application</span>
+Remove-MgServicePrincipal -ServicePrincipalId $sp.Id</pre>
+                </div>
+
+                <h2>SSO Configuration Types</h2>
+                <table>
+                    <thead><tr><th>SSO Type</th><th>Use Case</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>SAML</strong></td><td>Traditional enterprise apps</td><td>SAML metadata exchange, attribute mapping</td></tr>
+                        <tr><td><strong>OIDC/OAuth</strong></td><td>Modern apps, APIs</td><td>Client ID, redirect URI, scopes</td></tr>
+                        <tr><td><strong>Password-based</strong></td><td>Legacy apps without federation</td><td>Form-fill credentials (less secure)</td></tr>
+                        <tr><td><strong>Linked</strong></td><td>App with own identity system</td><td>Just a portal link, no SSO</td></tr>
+                        <tr><td><strong>Header-based</strong></td><td>Legacy apps via App Proxy</td><td>Pass identity in HTTP headers</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Monitoring App Activity (KQL)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;">// All OAuth consent grants</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where OperationName == "Consent to application"
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend User = tostring(InitiatedBy.user.userPrincipalName)
+| extend Permissions = tostring(AdditionalDetails)
+| project TimeGenerated, User, AppName, Permissions
+
+<span style="color: #6aa3f7;">// Admin consent grants (high privilege)</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where OperationName == "Consent to application"
+| extend ConsentType = tostring(TargetResources[0].modifiedProperties[0].newValue)
+| where ConsentType has "AllPrincipals"  <span style="color: #6aa3f7;">// Admin consent</span>
+| extend AppName = tostring(TargetResources[0].displayName)
+| project TimeGenerated, AppName, InitiatedBy
+
+<span style="color: #6aa3f7;">// New enterprise apps added</span>
+AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName == "Add service principal"
+| extend AppName = tostring(TargetResources[0].displayName)
+| project TimeGenerated, AppName, InitiatedBy
+
+<span style="color: #6aa3f7;">// App sign-in failures</span>
+AADNonInteractiveUserSignInLogs
+| where TimeGenerated > ago(7d)
+| where ResultType != 0
+| summarize FailureCount = count() by AppDisplayName, ResultDescription
+| order by FailureCount desc
+
+<span style="color: #6aa3f7;">// Suspicious: Apps with mail access</span>
+AuditLogs
+| where TimeGenerated > ago(90d)
+| where OperationName == "Consent to application"
+| extend Scope = tostring(TargetResources[0].modifiedProperties[0].newValue)
+| where Scope has "Mail"
+| extend AppName = tostring(TargetResources[0].displayName)
+| project TimeGenerated, AppName, Scope</pre>
+                </div>
+
+                <h2>Best Practices</h2>
+                <ul>
+                    <li><strong>Require verified publishers</strong> - Block consent to unverified apps</li>
+                    <li><strong>Enable admin consent workflow</strong> - Users request, admins review</li>
+                    <li><strong>Audit existing consents</strong> - Review all apps with high-risk permissions quarterly</li>
+                    <li><strong>Limit application permissions</strong> - Prefer delegated over application permissions</li>
+                    <li><strong>Use certificates over secrets</strong> - For app authentication</li>
+                    <li><strong>Short secret/certificate expiration</strong> - 6-12 months maximum</li>
+                    <li><strong>Monitor for illicit consent grant attacks</strong> - Alert on new admin consents</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

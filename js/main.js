@@ -186,7 +186,7 @@ function injectSidebar() {
         </nav>
         <div class="sidebar-footer">
             <span>SOC Compendium</span>
-            <span>190+ Pages</span>
+            <span>220+ Pages</span>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>

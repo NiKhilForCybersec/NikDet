@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra ID Hybrid Identity | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>Hybrid Identity</span></div>
+            <div class="content">
+                <h1><i class="fas fa-cloud" style="color: var(--accent-primary);"></i> Entra ID Hybrid Identity</h1>
+                <p class="lead">Synchronize on-premises Active Directory with Entra ID using Entra Connect, with authentication options including password hash sync, pass-through auth, and federation.</p>
+
+                <h2>Hybrid Identity Components</h2>
+                <table>
+                    <thead><tr><th>Component</th><th>Purpose</th><th>Location</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Entra Connect</strong></td><td>Syncs users/groups from AD to Entra ID</td><td>On-premises server</td></tr>
+                        <tr><td><strong>Entra Connect Cloud Sync</strong></td><td>Lightweight agent-based sync (newer)</td><td>On-premises (agent)</td></tr>
+                        <tr><td><strong>Password Hash Sync (PHS)</strong></td><td>Syncs password hashes to cloud</td><td>Part of Entra Connect</td></tr>
+                        <tr><td><strong>Pass-through Auth (PTA)</strong></td><td>Validates passwords on-prem in real-time</td><td>On-premises agents</td></tr>
+                        <tr><td><strong>AD FS</strong></td><td>Federation for SSO, claims-based auth</td><td>On-premises farm</td></tr>
+                        <tr><td><strong>Seamless SSO</strong></td><td>Auto sign-in for domain-joined devices</td><td>Kerberos-based</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Authentication Methods Comparison</h2>
+                <table>
+                    <thead><tr><th>Method</th><th>How It Works</th><th>Pros</th><th>Cons</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Password Hash Sync (PHS)</strong></td>
+                            <td>Hash of password hash synced to cloud</td>
+                            <td>Simple, cloud-resilient, enables leaked credential detection</td>
+                            <td>Passwords technically in cloud (hashed)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pass-through Auth (PTA)</strong></td>
+                            <td>Auth request sent to on-prem agents</td>
+                            <td>Passwords never leave on-prem, honors AD policies</td>
+                            <td>Requires on-prem availability, more complex</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Federation (AD FS)</strong></td>
+                            <td>Redirect to on-prem AD FS for auth</td>
+                            <td>Full control, complex claims, smart cards</td>
+                            <td>Complex infrastructure, single point of failure</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Microsoft Recommendation</div>
+                    <p style="margin: 0.3rem 0 0 0;"><strong>Password Hash Sync</strong> is recommended for most organizations. It enables Identity Protection (leaked credential detection), works when on-prem is down, and is simplest to maintain. Use PTA only if regulatory/compliance requires passwords never leave on-prem.</p>
+                </div>
+
+                <h2>Entra Connect Architecture</h2>
+                <h3>Sync Cycle</h3>
+                <ul>
+                    <li><strong>Initial sync:</strong> Full sync of all objects (can take hours for large directories)</li>
+                    <li><strong>Delta sync:</strong> Every 30 minutes, syncs only changes</li>
+                    <li><strong>Manual sync:</strong> <code>Start-ADSyncSyncCycle -PolicyType Delta</code></li>
+                </ul>
+
+                <h3>Filtered Sync (Recommended)</h3>
+                <p>Don't sync everything - filter by:</p>
+                <ul>
+                    <li><strong>OU-based:</strong> Only sync specific OUs (e.g., "Cloud Users")</li>
+                    <li><strong>Group-based:</strong> Sync only members of a group</li>
+                    <li><strong>Attribute-based:</strong> Custom rules based on attributes</li>
+                </ul>
+
+                <h2>PowerShell: Entra Connect Management</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Run on Entra Connect server</span>
+Import-Module ADSync
+
+<span style="color: #6aa3f7;"># Check sync status</span>
+Get-ADSyncScheduler
+
+<span style="color: #6aa3f7;"># Force delta sync</span>
+Start-ADSyncSyncCycle -PolicyType Delta
+
+<span style="color: #6aa3f7;"># Force full sync (caution - slow for large directories)</span>
+Start-ADSyncSyncCycle -PolicyType Initial
+
+<span style="color: #6aa3f7;"># Check last sync time</span>
+Get-ADSyncScheduler | Select-Object LastSyncCycleStartTimeTicks, NextSyncCycleStartTimeTicks
+
+<span style="color: #6aa3f7;"># View sync errors</span>
+Get-ADSyncConnectorRunStatus
+
+<span style="color: #6aa3f7;"># Export sync errors to CSV</span>
+Get-ADSyncCSObject -ConnectorName "contoso.com" | 
+    Where-Object { $_.Error } | 
+    Export-Csv -Path "SyncErrors.csv"
+
+<span style="color: #6aa3f7;"># Check connector status</span>
+Get-ADSyncConnector | Select-Object Name, Type, State
+
+<span style="color: #6aa3f7;"># View password hash sync status</span>
+Get-ADSyncAADPasswordResetConfiguration
+Get-ADSyncAADPasswordSyncConfiguration -SourceConnector "contoso.com"
+
+<span style="color: #6aa3f7;"># Enable PHS if not already</span>
+Set-ADSyncAADPasswordSyncConfiguration -SourceConnector "contoso.com" -TargetConnector "AAD" -Enable $true</pre>
+                </div>
+
+                <h2>Pass-through Authentication Setup</h2>
+                <div class="step-container">
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">1</div></div><div class="step-content"><div class="step-title">Enable PTA in Entra Connect</div><p>Run Entra Connect wizard → Change user sign-in → Select Pass-through authentication</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">2</div></div><div class="step-content"><div class="step-title">Install Additional Agents</div><p>Download PTA agent from Entra Admin Center → Install on 2+ servers for HA</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">3</div></div><div class="step-content"><div class="step-title">Verify Agents</div><p>Entra Admin Center → Entra Connect → Pass-through authentication → Check agent status</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">4</div></div><div class="step-content"><div class="step-title">Enable PHS as Backup</div><p>Also enable PHS so Identity Protection works and users can still sign in if PTA fails</p></div></div>
+                </div>
+
+                <h3>PTA Agent PowerShell</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Check PTA agent status (run on agent server)</span>
+Get-Service -Name "AzureADConnectAuthenticationAgent"
+
+<span style="color: #6aa3f7;"># View agent logs</span>
+Get-WinEvent -LogName "Microsoft-AzureADConnect-AuthenticationAgent/Admin" -MaxEvents 50
+
+<span style="color: #6aa3f7;"># Register new PTA agent</span>
+& "C:\Program Files\Microsoft Azure AD Connect Authentication Agent\RegisterConnector.ps1" -modulePath "C:\Program Files\Microsoft Azure AD Connect Authentication Agent\Modules\"</pre>
+                </div>
+
+                <h2>Seamless SSO Configuration</h2>
+                <p>Enables automatic sign-in for domain-joined devices on corporate network.</p>
+                <ol>
+                    <li>Enable in Entra Connect wizard or PowerShell</li>
+                    <li>Creates computer account AZUREADSSOACC in AD</li>
+                    <li>Configure browser settings via GPO for IE/Edge</li>
+                    <li>Add <code>https://autologon.microsoftazuread-sso.com</code> to Intranet zone</li>
+                </ol>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Enable Seamless SSO</span>
+Set-ADSyncTenantConfiguration -SeamlessSso $true
+
+<span style="color: #6aa3f7;"># Roll over Kerberos decryption key (do this every 30 days)</span>
+Update-AzureADSSOForest -OnPremCredentials $creds -PreserveCustomPermissionsOnDesktopSsoAccount</pre>
+                </div>
+
+                <h2>Security Considerations</h2>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Hybrid Identity Attack Vectors</div>
+                    <ul style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                        <li><strong>Entra Connect server compromise</strong> - Has sync credentials, can forge tokens</li>
+                        <li><strong>Silver ticket attacks</strong> - Seamless SSO computer account compromise</li>
+                        <li><strong>PTA agent compromise</strong> - Can intercept/manipulate auth requests</li>
+                        <li><strong>AD FS server compromise</strong> - Golden SAML attacks</li>
+                        <li><strong>Sync account compromise</strong> - Can reset any synced user's password</li>
+                    </ul>
+                </div>
+
+                <h3>Hardening Recommendations</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Hardening</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Entra Connect server</strong></td><td>Tier 0 asset, limit admin access, no internet browsing, enable audit logging</td></tr>
+                        <tr><td><strong>Sync service account</strong></td><td>Minimal permissions, long complex password, monitor for suspicious use</td></tr>
+                        <tr><td><strong>PTA agents</strong></td><td>Run on dedicated servers, multiple agents for HA, monitor health</td></tr>
+                        <tr><td><strong>Seamless SSO</strong></td><td>Roll over Kerberos key every 30 days, monitor AZUREADSSOACC account</td></tr>
+                        <tr><td><strong>AD FS (if used)</strong></td><td>Protect token signing certificate, monitor for abnormal SAML assertions</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Monitoring Hybrid Identity (KQL)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;">// Entra Connect sync errors</span>
+AADProvisioningLogs
+| where TimeGenerated > ago(7d)
+| where ResultType == "Failure"
+| project TimeGenerated, SourceIdentity, TargetIdentity, Action, ResultDescription
+
+<span style="color: #6aa3f7;">// Pass-through auth failures</span>
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where AuthenticationProtocol == "passthrough"
+| where ResultType != 0
+| project TimeGenerated, UserPrincipalName, IPAddress, ResultDescription
+
+<span style="color: #6aa3f7;">// Sign-ins using different auth methods</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| summarize count() by AuthenticationProtocol
+| render piechart
+
+<span style="color: #6aa3f7;">// Suspicious: Sign-in as sync account</span>
+SigninLogs
+| where TimeGenerated > ago(30d)
+| where UserPrincipalName has "sync" or UserPrincipalName has "MSOL_"
+| project TimeGenerated, UserPrincipalName, IPAddress, AppDisplayName, ResultType
+
+<span style="color: #6aa3f7;">// AD FS sign-in anomalies (if using federation)</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where AuthenticationProtocol == "wsFed" or AuthenticationProtocol == "samlp"
+| where ResultType != 0
+| project TimeGenerated, UserPrincipalName, IPAddress, ResultDescription</pre>
+                </div>
+
+                <h2>Migration Path: AD FS to Cloud Auth</h2>
+                <p>Microsoft recommends migrating from AD FS to PHS + Seamless SSO:</p>
+                <ol>
+                    <li>Enable PHS in Entra Connect (runs alongside federation)</li>
+                    <li>Enable Seamless SSO for internal users</li>
+                    <li>Staged rollout: Move users in batches to managed auth</li>
+                    <li>Update DNS to remove AD FS dependency</li>
+                    <li>Decommission AD FS infrastructure</li>
+                </ol>
+
+                <h2>Best Practices Summary</h2>
+                <ul>
+                    <li><strong>Use PHS as primary</strong> - Simplest, enables Identity Protection</li>
+                    <li><strong>Enable PHS even with PTA/Federation</strong> - Backup and leaked credential detection</li>
+                    <li><strong>Filter sync scope</strong> - Don't sync service accounts, admin accounts to cloud</li>
+                    <li><strong>Protect Entra Connect</strong> - Tier 0, limited access, monitored</li>
+                    <li><strong>Multiple PTA agents</strong> - At least 3 for high availability</li>
+                    <li><strong>Roll Seamless SSO key</strong> - Every 30 days minimum</li>
+                    <li><strong>Plan for AD outage</strong> - Cloud-only break-glass accounts</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

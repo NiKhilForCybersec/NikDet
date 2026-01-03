@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra ID Identity Protection | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>Identity Protection</span></div>
+            <div class="content">
+                <h1><i class="fas fa-shield-virus" style="color: var(--accent-danger);"></i> Entra ID Identity Protection</h1>
+                <p class="lead">Risk-based Conditional Access using machine learning to detect compromised identities and suspicious sign-in behavior.</p>
+
+                <h2>Risk Types</h2>
+                <table>
+                    <thead><tr><th>Risk Type</th><th>Description</th><th>Detection Method</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>User Risk</strong></td><td>Probability that identity is compromised</td><td>Leaked credentials, threat intel, anomalous behavior over time</td></tr>
+                        <tr><td><strong>Sign-in Risk</strong></td><td>Probability that sign-in is not by legitimate user</td><td>Real-time analysis of each authentication attempt</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Risk Detections</h2>
+                <h3>Sign-in Risk Detections (Real-time)</h3>
+                <table>
+                    <thead><tr><th>Detection</th><th>Risk Level</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Anonymous IP address</strong></td><td>Medium</td><td>Sign-in from Tor, VPN, or anonymizing proxy</td></tr>
+                        <tr><td><strong>Atypical travel</strong></td><td>Medium</td><td>Sign-in from location unusual for user</td></tr>
+                        <tr><td><strong>Impossible travel</strong></td><td>Medium</td><td>Two sign-ins from distant locations in impossible time</td></tr>
+                        <tr><td><strong>Malware-linked IP</strong></td><td>High</td><td>Sign-in from IP known to communicate with bots</td></tr>
+                        <tr><td><strong>Unfamiliar sign-in properties</strong></td><td>Medium</td><td>Sign-in from new device, browser, or location</td></tr>
+                        <tr><td><strong>Password spray</strong></td><td>High</td><td>Multiple accounts targeted with common passwords</td></tr>
+                        <tr><td><strong>Token issuer anomaly</strong></td><td>High</td><td>Abnormal SAML token characteristics</td></tr>
+                        <tr><td><strong>Anomalous token</strong></td><td>High</td><td>Token with unusual characteristics</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>User Risk Detections (Offline)</h3>
+                <table>
+                    <thead><tr><th>Detection</th><th>Risk Level</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Leaked credentials</strong></td><td>High</td><td>Credentials found in dark web dumps</td></tr>
+                        <tr><td><strong>Azure AD threat intelligence</strong></td><td>High</td><td>Microsoft threat intel indicates compromise</td></tr>
+                        <tr><td><strong>Suspicious sending patterns</strong></td><td>Medium</td><td>User sending unusual volume/type of emails</td></tr>
+                        <tr><td><strong>Suspicious inbox rules</strong></td><td>Medium</td><td>Rules forwarding/hiding emails (BEC indicator)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Configuring Risk Policies</h2>
+                <p><strong>Path:</strong> Entra Admin Center → Protection → Identity Protection → Policies</p>
+
+                <h3>User Risk Policy</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <p><strong>Recommended Configuration:</strong></p>
+                    <ul style="margin: 0;">
+                        <li><strong>Users:</strong> All users (exclude break-glass accounts)</li>
+                        <li><strong>User risk:</strong> High</li>
+                        <li><strong>Access:</strong> Allow access + Require password change</li>
+                        <li><strong>Enforce policy:</strong> On</li>
+                    </ul>
+                </div>
+
+                <h3>Sign-in Risk Policy</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+                    <p><strong>Recommended Configuration:</strong></p>
+                    <ul style="margin: 0;">
+                        <li><strong>Users:</strong> All users (exclude break-glass accounts)</li>
+                        <li><strong>Sign-in risk:</strong> Medium and above</li>
+                        <li><strong>Access:</strong> Allow access + Require MFA</li>
+                        <li><strong>Enforce policy:</strong> On</li>
+                    </ul>
+                </div>
+
+                <h3>Using Conditional Access (Recommended)</h3>
+                <p>For more control, create CA policies instead of the built-in risk policies:</p>
+                <div class="step-container">
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">1</div></div><div class="step-content"><div class="step-title">Create CA Policy</div><p>Conditional Access → New policy → Name: "Block High Risk Sign-ins"</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">2</div></div><div class="step-content"><div class="step-title">Assignments</div><p>Users: All users (exclude break-glass) | Apps: All cloud apps</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">3</div></div><div class="step-content"><div class="step-title">Conditions</div><p>Sign-in risk: High | User risk: High</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">4</div></div><div class="step-content"><div class="step-title">Grant</div><p>Block access (for High) OR Require MFA + password change</p></div></div>
+                </div>
+
+                <h2>PowerShell & Graph API</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Connect to Graph</span>
+Connect-MgGraph -Scopes "IdentityRiskyUser.Read.All","IdentityRiskEvent.Read.All"
+
+<span style="color: #6aa3f7;"># Get all risky users</span>
+Get-MgRiskyUser -Filter "riskLevel eq 'high'" | 
+    Select-Object UserDisplayName, UserPrincipalName, RiskLevel, RiskState, RiskLastUpdatedDateTime
+
+<span style="color: #6aa3f7;"># Get risky users with details</span>
+Get-MgRiskyUser -All | Where-Object { $_.RiskState -eq "atRisk" } |
+    Select-Object UserDisplayName, UserPrincipalName, RiskLevel, RiskDetail
+
+<span style="color: #6aa3f7;"># Get risk detections (events)</span>
+Get-MgRiskDetection -Filter "riskLevel eq 'high'" -Top 50 |
+    Select-Object UserDisplayName, RiskEventType, RiskLevel, DetectedDateTime, IpAddress, Location
+
+<span style="color: #6aa3f7;"># Dismiss user risk (after investigation)</span>
+Invoke-MgDismissRiskyUser -UserIds @("user-id-1", "user-id-2")
+
+<span style="color: #6aa3f7;"># Confirm user compromised (force password reset)</span>
+Invoke-MgConfirmRiskyUserCompromised -UserIds @("user-id-here")</pre>
+                </div>
+
+                <h2>Monitoring & KQL Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;">// All risky sign-ins</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where RiskLevelDuringSignIn != "none" and RiskLevelDuringSignIn != ""
+| project TimeGenerated, UserPrincipalName, RiskLevelDuringSignIn, RiskEventTypes, 
+          IPAddress, Location, AppDisplayName, ResultType
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// High-risk sign-ins requiring investigation</span>
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where RiskLevelDuringSignIn == "high"
+| project TimeGenerated, UserPrincipalName, IPAddress, 
+          Location=strcat(LocationDetails.city, ", ", LocationDetails.countryOrRegion),
+          RiskEventTypes, DeviceDetail, AppDisplayName
+
+<span style="color: #6aa3f7;">// Leaked credentials detections</span>
+AADUserRiskEvents
+| where TimeGenerated > ago(30d)
+| where RiskEventType == "leakedCredentials"
+| project TimeGenerated, UserPrincipalName, RiskLevel, RiskDetail, DetectedDateTime
+
+<span style="color: #6aa3f7;">// Users with elevated risk over time</span>
+AADUserRiskEvents
+| where TimeGenerated > ago(30d)
+| summarize RiskEvents = count(), HighRiskCount = countif(RiskLevel == "high") 
+    by UserPrincipalName
+| where HighRiskCount > 0
+| order by HighRiskCount desc
+
+<span style="color: #6aa3f7;">// Impossible travel detections</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where RiskEventTypes has "impossibleTravel"
+| project TimeGenerated, UserPrincipalName, IPAddress, 
+          Location=strcat(LocationDetails.city, ", ", LocationDetails.countryOrRegion)</pre>
+                </div>
+
+                <h2>Response Workflow</h2>
+                <table>
+                    <thead><tr><th>Risk Level</th><th>Automated Response</th><th>Manual Investigation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>High User Risk</strong></td><td>Force password reset, block until remediated</td><td>Review sign-in logs, check for data exfiltration, revoke sessions</td></tr>
+                        <tr><td><strong>High Sign-in Risk</strong></td><td>Block sign-in or require strong MFA</td><td>Verify with user, check source IP reputation</td></tr>
+                        <tr><td><strong>Medium Risk</strong></td><td>Require MFA, allow access</td><td>Review if pattern continues</td></tr>
+                        <tr><td><strong>Low Risk</strong></td><td>Log only</td><td>Aggregate for trend analysis</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Best Practices</h2>
+                <ul>
+                    <li><strong>Use CA policies instead of built-in risk policies</strong> for more granular control</li>
+                    <li><strong>Block high sign-in risk</strong> - don't just require MFA</li>
+                    <li><strong>Integrate with SIEM</strong> - stream risk events to Sentinel for correlation</li>
+                    <li><strong>Enable self-service password reset (SSPR)</strong> - users can remediate user risk themselves</li>
+                    <li><strong>Review risky users weekly</strong> - investigate and dismiss/confirm</li>
+                    <li><strong>Alert on leaked credentials</strong> - immediate investigation required</li>
+                    <li><strong>Exclude break-glass accounts</strong> - prevent lockout scenarios</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

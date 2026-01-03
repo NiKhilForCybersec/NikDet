@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra ID PIM | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>PIM</span></div>
+            <div class="content">
+                <h1><i class="fas fa-user-shield" style="color: var(--accent-primary);"></i> Privileged Identity Management (PIM)</h1>
+                <p class="lead">Just-in-time privileged access, role activation workflows, and access reviews for Entra ID and Azure resources.</p>
+
+                <h2>Why PIM?</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: var(--bg-card); border-left: 4px solid #f07070; padding: 1rem; border-radius: var(--radius-md);">
+                        <h4 style="color: #f07070; margin-top: 0;">Without PIM</h4>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem;">
+                            <li>Permanent admin access 24/7</li>
+                            <li>No audit trail for privilege use</li>
+                            <li>Compromised admin = full access</li>
+                            <li>No approval workflows</li>
+                        </ul>
+                    </div>
+                    <div style="background: var(--bg-card); border-left: 4px solid #5ce0c4; padding: 1rem; border-radius: var(--radius-md);">
+                        <h4 style="color: #5ce0c4; margin-top: 0;">With PIM</h4>
+                        <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem;">
+                            <li>Just-in-time activation (1-8 hours)</li>
+                            <li>Full audit of activations</li>
+                            <li>Time-limited exposure window</li>
+                            <li>Approval and MFA required</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2>PIM Concepts</h2>
+                <table>
+                    <thead><tr><th>Term</th><th>Definition</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Eligible Assignment</strong></td><td>User CAN activate the role when needed</td><td>User is eligible for Global Admin</td></tr>
+                        <tr><td><strong>Active Assignment</strong></td><td>User HAS the role right now (permanent or time-bound)</td><td>User activated Global Admin for 4 hours</td></tr>
+                        <tr><td><strong>Activation</strong></td><td>Process of converting eligible → active</td><td>User requests Global Admin, provides justification</td></tr>
+                        <tr><td><strong>Activation Duration</strong></td><td>How long the role stays active</td><td>Maximum 8 hours per activation</td></tr>
+                        <tr><td><strong>Approval</strong></td><td>Another admin must approve activation</td><td>Security team approves Global Admin request</td></tr>
+                        <tr><td><strong>Access Review</strong></td><td>Periodic review of who has role assignments</td><td>Quarterly review of all Global Admins</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Role Settings Configuration</h2>
+                <p><strong>Path:</strong> Entra Admin Center → Identity governance → Privileged Identity Management → Entra roles → Settings</p>
+
+                <h3>Recommended Settings by Role Criticality</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Critical Roles (Global Admin)</th><th>High (Exchange Admin)</th><th>Medium (Helpdesk)</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Max activation duration</strong></td><td>4 hours</td><td>8 hours</td><td>8 hours</td></tr>
+                        <tr><td><strong>Require MFA on activation</strong></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+                        <tr><td><strong>Require justification</strong></td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+                        <tr><td><strong>Require ticket info</strong></td><td>Yes</td><td>Optional</td><td>No</td></tr>
+                        <tr><td><strong>Require approval</strong></td><td>Yes</td><td>Optional</td><td>No</td></tr>
+                        <tr><td><strong>Approvers</strong></td><td>Security team</td><td>IT managers</td><td>N/A</td></tr>
+                        <tr><td><strong>Allow permanent eligible</strong></td><td>No</td><td>No</td><td>Yes</td></tr>
+                        <tr><td><strong>Allow permanent active</strong></td><td>No (except break-glass)</td><td>No</td><td>No</td></tr>
+                        <tr><td><strong>Expiration (eligible)</strong></td><td>1 year</td><td>1 year</td><td>1 year</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>PowerShell Configuration</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Connect to Microsoft Graph</span>
+Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory","RoleAssignmentSchedule.ReadWrite.Directory"
+
+<span style="color: #6aa3f7;"># Get all Entra ID role definitions</span>
+$roles = Get-MgRoleManagementDirectoryRoleDefinition
+$roles | Select-Object DisplayName, Id | Sort-Object DisplayName
+
+<span style="color: #6aa3f7;"># Get Global Administrator role ID</span>
+$globalAdminRole = $roles | Where-Object { $_.DisplayName -eq "Global Administrator" }
+
+<span style="color: #6aa3f7;"># List all PIM eligible assignments for a role</span>
+Get-MgRoleManagementDirectoryRoleEligibilityScheduleInstance -Filter "roleDefinitionId eq '$($globalAdminRole.Id)'"
+
+<span style="color: #6aa3f7;"># Create eligible assignment (user can activate Global Admin)</span>
+$params = @{
+    action = "adminAssign"
+    justification = "IT Admin role assignment"
+    roleDefinitionId = $globalAdminRole.Id
+    directoryScopeId = "/"
+    principalId = "user-object-id-here"
+    scheduleInfo = @{
+        startDateTime = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        expiration = @{
+            type = "afterDuration"
+            duration = "P365D"  <span style="color: #6aa3f7;"># 1 year</span>
+        }
+    }
+}
+New-MgRoleManagementDirectoryRoleEligibilityScheduleRequest -BodyParameter $params
+
+<span style="color: #6aa3f7;"># Activate a role (as the user)</span>
+$activationParams = @{
+    action = "selfActivate"
+    justification = "Need to reset user password - Ticket INC001234"
+    roleDefinitionId = $globalAdminRole.Id
+    directoryScopeId = "/"
+    principalId = "your-user-object-id"
+    scheduleInfo = @{
+        startDateTime = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        expiration = @{
+            type = "afterDuration"
+            duration = "PT4H"  <span style="color: #6aa3f7;"># 4 hours</span>
+        }
+    }
+}
+New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $activationParams
+
+<span style="color: #6aa3f7;"># Deactivate a role early</span>
+$deactivateParams = @{
+    action = "selfDeactivate"
+    roleDefinitionId = $globalAdminRole.Id
+    directoryScopeId = "/"
+    principalId = "your-user-object-id"
+}
+New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $deactivateParams
+
+<span style="color: #6aa3f7;"># Get all active role assignments</span>
+Get-MgRoleManagementDirectoryRoleAssignmentScheduleInstance | 
+    Select-Object @{N="Principal";E={(Get-MgUser -UserId $_.PrincipalId).DisplayName}}, 
+                  @{N="Role";E={(Get-MgRoleManagementDirectoryRoleDefinition -UnifiedRoleDefinitionId $_.RoleDefinitionId).DisplayName}},
+                  StartDateTime, EndDateTime</pre>
+                </div>
+
+                <h2>Activation Workflow</h2>
+                <div class="step-container">
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">1</div></div><div class="step-content"><div class="step-title">User Initiates</div><p>User goes to PIM portal or uses PowerShell to request activation</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">2</div></div><div class="step-content"><div class="step-title">Provide Justification</div><p>User enters reason and optional ticket number</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">3</div></div><div class="step-content"><div class="step-title">MFA Challenge</div><p>User completes MFA (if required)</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">4</div></div><div class="step-content"><div class="step-title">Approval (if required)</div><p>Designated approvers receive notification and approve/deny</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">5</div></div><div class="step-content"><div class="step-title">Role Active</div><p>User has privileged access for the specified duration</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">6</div></div><div class="step-content"><div class="step-title">Auto-Deactivation</div><p>Role automatically removed when duration expires</p></div></div>
+                </div>
+
+                <h2>Access Reviews</h2>
+                <p>Periodic reviews ensure only authorized users retain privileged access.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Create access review for Global Admins</span>
+$reviewParams = @{
+    displayName = "Quarterly Global Admin Review"
+    descriptionForAdmins = "Review all users with Global Administrator eligible assignments"
+    descriptionForReviewers = "Verify this user still needs Global Administrator access"
+    scope = @{
+        "@odata.type" = "#microsoft.graph.principalResourceMembershipsScope"
+        principalScopes = @(
+            @{ "@odata.type" = "#microsoft.graph.accessReviewQueryScope"; query = "/users" }
+        )
+        resourceScopes = @(
+            @{ "@odata.type" = "#microsoft.graph.accessReviewQueryScope"; 
+               query = "/roleManagement/directory/roleDefinitions/62e90394-69f5-4237-9190-012177145e10" }  <span style="color: #6aa3f7;"># Global Admin role ID</span>
+        )
+    }
+    reviewers = @(
+        @{ query = "/users/security-team-id"; queryType = "MicrosoftGraph" }
+    )
+    settings = @{
+        mailNotificationsEnabled = $true
+        reminderNotificationsEnabled = $true
+        justificationRequiredOnApproval = $true
+        defaultDecisionEnabled = $true
+        defaultDecision = "Deny"  <span style="color: #6aa3f7;"># If not reviewed, deny access</span>
+        instanceDurationInDays = 14
+        recurrence = @{
+            pattern = @{ type = "absoluteMonthly"; interval = 3 }  <span style="color: #6aa3f7;"># Every 3 months</span>
+            range = @{ type = "noEnd"; startDate = "2025-01-01" }
+        }
+    }
+}
+New-MgIdentityGovernanceAccessReviewDefinition -BodyParameter $reviewParams</pre>
+                </div>
+
+                <h2>Monitoring PIM Events (KQL)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;">// All PIM role activations</span>
+AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName has "Add member to role"
+| extend RoleName = tostring(TargetResources[0].displayName)
+| extend User = tostring(InitiatedBy.user.userPrincipalName)
+| extend Justification = tostring(AdditionalDetails[?(@.key == "justification")].value)
+| project TimeGenerated, User, RoleName, Justification, Result
+
+<span style="color: #6aa3f7;">// Failed PIM activations (blocked or denied)</span>
+AuditLogs
+| where TimeGenerated > ago(7d)
+| where OperationName has "Add eligible member to role" or OperationName has "Add member to role"
+| where Result == "failure"
+| extend User = tostring(InitiatedBy.user.userPrincipalName)
+| extend FailureReason = tostring(ResultReason)
+| project TimeGenerated, User, OperationName, FailureReason
+
+<span style="color: #6aa3f7;">// Permanent role assignments (should be rare)</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where OperationName == "Add permanent member to role in PIM completed (permanent)"
+| extend RoleName = tostring(TargetResources[0].displayName)
+| extend User = tostring(TargetResources[1].userPrincipalName)
+| extend Admin = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, Admin, User, RoleName
+
+<span style="color: #6aa3f7;">// High-risk: Global Admin activations</span>
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where OperationName has "Add member to role"
+| where TargetResources[0].displayName == "Global Administrator"
+| extend User = tostring(InitiatedBy.user.userPrincipalName)
+| extend IP = tostring(InitiatedBy.user.ipAddress)
+| project TimeGenerated, User, IP, Result</pre>
+                </div>
+
+                <h2>PIM Best Practices</h2>
+                <table>
+                    <thead><tr><th>Practice</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>No permanent Global Admins</strong></td><td>All should be eligible only, except 2 break-glass accounts</td></tr>
+                        <tr><td><strong>Require MFA for all activations</strong></td><td>Ensures compromised passwords aren't enough</td></tr>
+                        <tr><td><strong>Require approval for critical roles</strong></td><td>Global Admin, Privileged Auth Admin need oversight</td></tr>
+                        <tr><td><strong>Short activation durations</strong></td><td>4-8 hours limits exposure window</td></tr>
+                        <tr><td><strong>Require justification always</strong></td><td>Audit trail for compliance and investigation</td></tr>
+                        <tr><td><strong>Quarterly access reviews</strong></td><td>Remove stale assignments, verify business need</td></tr>
+                        <tr><td><strong>Alert on Global Admin activation</strong></td><td>Real-time notification to security team</td></tr>
+                        <tr><td><strong>Use groups for eligible assignments</strong></td><td>Easier management than individual assignments</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Break-Glass Account Strategy</h2>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Emergency Access Accounts</div>
+                    <p>Maintain 2 cloud-only accounts with permanent Global Admin that are excluded from Conditional Access and PIM. Store credentials in physical safe, monitor for any sign-in.</p>
+                </div>
+                <ul>
+                    <li>Cloud-only accounts (no on-prem sync)</li>
+                    <li>Long, complex passwords stored offline</li>
+                    <li>FIDO2 security keys as MFA (stored separately)</li>
+                    <li>Excluded from all Conditional Access policies</li>
+                    <li>Alert on ANY sign-in activity</li>
+                    <li>Test quarterly, document in runbook</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

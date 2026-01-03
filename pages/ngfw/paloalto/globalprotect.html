@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto GlobalProtect VPN | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav"><a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>GlobalProtect</span></div>
+            <div class="content">
+                <h1><i class="fas fa-globe"></i> Palo Alto GlobalProtect VPN</h1>
+                <p class="lead">Configure GlobalProtect for secure remote access with full next-gen firewall protection.</p>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> GlobalProtect Components</h4>
+                    <p><strong>Portal:</strong> HTTPS web interface for authentication and client download<br>
+                    <strong>Gateway:</strong> IPSec/SSL tunnel endpoint where clients connect<br>
+                    <strong>Client:</strong> Software on user devices (Windows, macOS, Linux, iOS, Android)</p>
+                </div>
+
+                <h2><i class="fas fa-certificate"></i> Step 1: SSL Certificate</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Generate CSR for public certificate (recommended)
+request certificate generate certificate-name "gp-portal-cert" name "vpn.company.com" algorithm RSA rsa-nbits 2048
+
+# Or import certificate from CA
+# Device → Certificate Management → Certificates → Import
+
+# Create SSL/TLS Service Profile
+set shared ssl-tls-service-profile "GP-SSL-Profile" certificate "gp-portal-cert"
+set shared ssl-tls-service-profile "GP-SSL-Profile" protocol-settings min-version tls1-2</pre></div>
+                </div>
+
+                <h2><i class="fas fa-door-open"></i> Step 2: Configure Portal</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Create tunnel interface
+set network interface tunnel units tunnel.1 ip 10.100.0.1/24
+set zone vpn-users network layer3 tunnel.1
+set network virtual-router default interface tunnel.1
+
+# Configure GlobalProtect Portal
+set global-protect global-protect-portal portal-config "GP-Portal" local-address interface ethernet1/1 ip-address 203.0.113.10
+set global-protect global-protect-portal portal-config "GP-Portal" local-address interface ethernet1/1 ssl-tls-service-profile "GP-SSL-Profile"
+
+# Authentication profile (LDAP to AD)
+set global-protect global-protect-portal portal-config "GP-Portal" client-auth "AD-Auth" authentication-profile "LDAP-Auth"
+set global-protect global-protect-portal portal-config "GP-Portal" client-auth "AD-Auth" os Any
+
+# Agent configuration
+set global-protect global-protect-portal portal-config "GP-Portal" agent-config configs "Default" gateways external-gateway "GP-Gateway" address vpn.company.com
+set global-protect global-protect-portal portal-config "GP-Portal" agent-config configs "Default" connect-method pre-logon</pre></div>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Step 3: Configure Gateway</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Configure GlobalProtect Gateway
+set global-protect global-protect-gateway gateway-config "GP-Gateway" local-address interface ethernet1/1 ip-address-family ipv4 ip-address 203.0.113.10
+set global-protect global-protect-gateway gateway-config "GP-Gateway" local-address interface ethernet1/1 ssl-tls-service-profile "GP-SSL-Profile"
+
+# Authentication
+set global-protect global-protect-gateway gateway-config "GP-Gateway" client-auth "AD-Auth" authentication-profile "LDAP-Auth"
+
+# Client settings - IP pool
+set global-protect global-protect-gateway gateway-config "GP-Gateway" client-settings configs "Default" ip-pool 10.100.0.10-10.100.0.250
+set global-protect global-protect-gateway gateway-config "GP-Gateway" client-settings configs "Default" tunnel-mode yes
+
+# DNS for VPN clients
+set global-protect global-protect-gateway gateway-config "GP-Gateway" client-settings configs "Default" dns-server primary 10.0.1.10
+set global-protect global-protect-gateway gateway-config "GP-Gateway" client-settings configs "Default" dns-suffix company.local
+
+# Split tunnel or full tunnel
+set global-protect global-protect-gateway gateway-config "GP-Gateway" client-settings configs "Default" split-tunneling access-route 10.0.0.0/8
+# For full tunnel, omit split-tunneling and set no-direct-access-to-local-network yes
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> Step 4: Security Policy for VPN Users</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Allow VPN users to internal resources
+set rulebase security rules "VPN-to-Internal" from vpn-users to trust
+set rulebase security rules "VPN-to-Internal" source any
+set rulebase security rules "VPN-to-Internal" destination any
+set rulebase security rules "VPN-to-Internal" application any
+set rulebase security rules "VPN-to-Internal" action allow
+set rulebase security rules "VPN-to-Internal" profile-setting group "Standard-Security"
+
+# Allow VPN users to internet (if full tunnel)
+set rulebase security rules "VPN-to-Internet" from vpn-users to untrust
+set rulebase security rules "VPN-to-Internet" source any
+set rulebase security rules "VPN-to-Internet" destination any
+set rulebase security rules "VPN-to-Internet" application any
+set rulebase security rules "VPN-to-Internet" action allow
+set rulebase security rules "VPN-to-Internet" profile-setting group "Strict-Security"
+
+commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Verification & Troubleshooting</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Show GlobalProtect gateway status
+show global-protect-gateway current-user
+
+# Show connected users
+show global-protect-gateway statistics
+
+# Show tunnel info
+show global-protect-gateway flow
+
+# Debug authentication issues
+debug global-protect gateway auth-events
+tail follow yes mp-log gpd.log</pre></div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

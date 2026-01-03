@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate Interfaces & Zones | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .architecture-diagram { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto; white-space: pre; line-height: 1.3; }
+        .analogy-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>Interfaces & Zones</span></div>
+            <div class="content">
+                <h1><i class="fas fa-network-wired"></i> FortiGate Interfaces & Zones</h1>
+                <p class="lead">Complete guide to interface configuration including physical ports, VLANs, zones, VDOMs, and link aggregation.</p>
+
+                <div class="analogy-box">
+                    <h4><i class="fas fa-lightbulb"></i> Understanding Interfaces vs Zones</h4>
+                    <p><strong>Interface</strong> = A physical or logical port (like a door in your building)<br>
+                    <strong>Zone</strong> = A grouping of interfaces with the same trust level (like "employee entrance" vs "visitor entrance")</p>
+                    <p>You configure physical connectivity on interfaces, but write security policies based on zones.</p>
+                </div>
+
+                <h2><i class="fas fa-ethernet"></i> Physical Interface Configuration</h2>
+                <div class="step-section">
+                    <h3>View Current Interfaces</h3>
+                    <div class="code-block"><pre># List all interfaces
+get system interface
+
+# Detailed view of specific interface
+get system interface port1
+
+# Show interface status (up/down, speed, duplex)
+get hardware nic port1
+diagnose hardware deviceinfo nic port1</pre></div>
+
+                    <h3>Configure WAN Interface (Internet)</h3>
+                    <div class="code-block"><pre># Static IP configuration
+config system interface
+    edit "wan1"
+        set vdom "root"
+        set mode static
+        set ip 203.0.113.10 255.255.255.248
+        set allowaccess ping
+        set type physical
+        set alias "Internet-Primary"
+        set role wan
+        set snmp-index 1
+    next
+end
+
+# DHCP configuration (for cable/DSL)
+config system interface
+    edit "wan1"
+        set mode dhcp
+        set allowaccess ping
+        set role wan
+        set defaultgw enable
+        set dns-server-override disable  # Use manually configured DNS
+    next
+end
+
+# PPPoE configuration (DSL with auth)
+config system interface
+    edit "wan1"
+        set mode pppoe
+        set username "user@isp.com"
+        set password your-password
+        set allowaccess ping
+        set role wan
+    next
+end</pre></div>
+
+                    <h3>Configure LAN Interface (Internal Network)</h3>
+                    <div class="code-block"><pre>config system interface
+    edit "port2"
+        set vdom "root"
+        set mode static
+        set ip 10.1.1.1 255.255.255.0
+        set allowaccess ping https ssh
+        set type physical
+        set alias "LAN-Users"
+        set role lan
+        set device-identification enable  # Identify connected devices
+    next
+end
+
+# Enable DHCP server on LAN interface
+config system dhcp server
+    edit 1
+        set dns-service default
+        set default-gateway 10.1.1.1
+        set netmask 255.255.255.0
+        set interface "port2"
+        config ip-range
+            edit 1
+                set start-ip 10.1.1.100
+                set end-ip 10.1.1.200
+            next
+        end
+        set lease-time 86400
+        set dns-server1 10.1.1.10  # Internal DNS
+        set dns-server2 8.8.8.8
+        set domain "company.local"
+        set ntp-server1 10.1.1.1
+    next
+end</pre></div>
+
+                    <h3>Configure DMZ Interface</h3>
+                    <div class="code-block"><pre>config system interface
+    edit "port3"
+        set vdom "root"
+        set mode static
+        set ip 172.16.1.1 255.255.255.0
+        set allowaccess ping
+        set type physical
+        set alias "DMZ-Servers"
+        set role dmz
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-layer-group"></i> VLAN Configuration</h2>
+                <div class="step-section">
+                    <h3>Why VLANs?</h3>
+                    <p>VLANs let you create multiple logical networks on a single physical interface. This is essential for:</p>
+                    <ul>
+                        <li>Segmenting user departments (HR, Finance, Engineering)</li>
+                        <li>Separating voice and data traffic</li>
+                        <li>Creating guest networks</li>
+                        <li>When you have more networks than physical ports</li>
+                    </ul>
+
+                    <h3>Create VLAN Interfaces</h3>
+                    <div class="code-block"><pre># Create VLAN 100 for Users on port2
+config system interface
+    edit "VLAN100-Users"
+        set vdom "root"
+        set type vlan
+        set vlanid 100
+        set interface "port2"
+        set ip 10.100.1.1 255.255.255.0
+        set allowaccess ping https ssh
+        set alias "Users-VLAN"
+        set role lan
+        set device-identification enable
+    next
+end
+
+# Create VLAN 200 for Servers
+config system interface
+    edit "VLAN200-Servers"
+        set vdom "root"
+        set type vlan
+        set vlanid 200
+        set interface "port2"
+        set ip 10.200.1.1 255.255.255.0
+        set allowaccess ping
+        set alias "Servers-VLAN"
+        set role lan
+    next
+end
+
+# Create VLAN 300 for Voice
+config system interface
+    edit "VLAN300-Voice"
+        set vdom "root"
+        set type vlan
+        set vlanid 300
+        set interface "port2"
+        set ip 10.300.1.1 255.255.255.0
+        set allowaccess ping
+        set alias "Voice-VLAN"
+        set role lan
+    next
+end
+
+# Create VLAN 999 for Guest WiFi
+config system interface
+    edit "VLAN999-Guest"
+        set vdom "root"
+        set type vlan
+        set vlanid 999
+        set interface "port2"
+        set ip 192.168.99.1 255.255.255.0
+        set allowaccess ping
+        set alias "Guest-WiFi"
+        set role lan
+    next
+end</pre></div>
+
+                    <div class="info-box">
+                        <h4><i class="fas fa-info-circle"></i> Switch Configuration Required</h4>
+                        <p>The switch port connected to the FortiGate must be configured as a trunk port carrying all necessary VLANs:</p>
+                        <div class="code-block"><pre># Cisco switch example
+interface GigabitEthernet0/1
+  description "To FortiGate port2"
+  switchport mode trunk
+  switchport trunk allowed vlan 100,200,300,999
+  switchport trunk native vlan 1</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-object-group"></i> Zones</h2>
+                <div class="step-section">
+                    <h3>Understanding Zones</h3>
+                    <p>Zones group interfaces that should be treated the same way in firewall policies.</p>
+                    
+                    <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                         ZONE ARCHITECTURE                            │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────┐                              ┌──────────────┐     │
+│  │  UNTRUST     │                              │    TRUST     │     │
+│  │    ZONE      │                              │     ZONE     │     │
+│  │              │                              │              │     │
+│  │  ┌────────┐  │     ┌────────────────┐       │ ┌──────────┐ │     │
+│  │  │  wan1  │  │     │                │       │ │VLAN100   │ │     │
+│  │  └────────┘  │────▶│   FORTIGATE    │◀──────│ │Users     │ │     │
+│  │  ┌────────┐  │     │                │       │ └──────────┘ │     │
+│  │  │  wan2  │  │     │                │       │ ┌──────────┐ │     │
+│  │  └────────┘  │     └────────────────┘       │ │VLAN200   │ │     │
+│  └──────────────┘              │               │ │Servers   │ │     │
+│                                │               │ └──────────┘ │     │
+│  ┌──────────────┐              │               └──────────────┘     │
+│  │     DMZ      │              │                                    │
+│  │    ZONE      │◀─────────────┤               ┌──────────────┐     │
+│  │              │              │               │    GUEST     │     │
+│  │ ┌──────────┐ │              │               │     ZONE     │     │
+│  │ │  port3   │ │              └───────────────│              │     │
+│  │ └──────────┘ │                              │ ┌──────────┐ │     │
+│  └──────────────┘                              │ │VLAN999   │ │     │
+│                                                │ │Guest     │ │     │
+│                                                │ └──────────┘ │     │
+│                                                └──────────────┘     │
+│                                                                      │
+│  POLICY: Trust → Untrust = Allow (with UTM)                         │
+│  POLICY: DMZ → Untrust = Allow (limited)                            │
+│  POLICY: Guest → Untrust = Allow (no internal access)               │
+│  POLICY: Untrust → DMZ = Allow (specific services only)             │
+│  POLICY: Untrust → Trust = Deny (by default)                        │
+└─────────────────────────────────────────────────────────────────────┘</div>
+
+                    <h3>Create Zones</h3>
+                    <div class="code-block"><pre># Create Trust zone (internal networks)
+config system zone
+    edit "Trust"
+        set description "Internal trusted networks"
+        set interface "VLAN100-Users" "VLAN200-Servers" "VLAN300-Voice"
+    next
+end
+
+# Create Untrust zone (internet-facing)
+config system zone
+    edit "Untrust"
+        set description "Internet connections"
+        set interface "wan1" "wan2"
+    next
+end
+
+# Create DMZ zone
+config system zone
+    edit "DMZ"
+        set description "Public-facing servers"
+        set interface "port3"
+    next
+end
+
+# Create Guest zone
+config system zone
+    edit "Guest"
+        set description "Guest and BYOD networks"
+        set interface "VLAN999-Guest"
+    next
+end</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Zone Behavior</h4>
+                        <p><strong>Intra-zone traffic:</strong> By default, traffic between interfaces in the same zone is allowed without a policy.<br>
+                        <strong>Inter-zone traffic:</strong> Requires explicit firewall policy.</p>
+                        <p>To control intra-zone traffic, use interface-based policies instead of zone-based.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-link"></i> Link Aggregation (LAG/802.3ad)</h2>
+                <div class="step-section">
+                    <h3>Why Link Aggregation?</h3>
+                    <ul>
+                        <li><strong>Bandwidth:</strong> Combine multiple links for higher throughput</li>
+                        <li><strong>Redundancy:</strong> If one link fails, traffic continues on others</li>
+                        <li><strong>Common uses:</strong> Core switch connections, server farm connections</li>
+                    </ul>
+
+                    <h3>Configure LAG (Aggregate Interface)</h3>
+                    <div class="code-block"><pre># Create aggregate interface with port5 and port6
+config system interface
+    edit "agg1"
+        set vdom "root"
+        set type aggregate
+        set member "port5" "port6"
+        set ip 10.10.10.1 255.255.255.0
+        set allowaccess ping https ssh
+        set alias "LAG-to-CoreSwitch"
+        
+        # LACP mode (recommended)
+        set lacp-mode active
+        set lacp-speed slow  # or fast
+        
+        # Minimum number of links for LAG to be "up"
+        set min-links 1
+    next
+end
+
+# Static LAG (no LACP - not recommended)
+config system interface
+    edit "agg2"
+        set type aggregate
+        set member "port7" "port8"
+        set lacp-mode static
+        set ip 10.20.20.1 255.255.255.0
+    next
+end</pre></div>
+
+                    <div class="info-box">
+                        <h4><i class="fas fa-info-circle"></i> Switch Must Match</h4>
+                        <p>The switch must also be configured for LACP on corresponding ports:</p>
+                        <div class="code-block"><pre># Cisco switch example
+interface Port-channel1
+  description "To FortiGate LAG"
+  switchport mode trunk
+
+interface range GigabitEthernet0/5-6
+  description "To FortiGate agg1"
+  channel-group 1 mode active</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-sitemap"></i> Virtual Domains (VDOMs)</h2>
+                <div class="step-section">
+                    <h3>What are VDOMs?</h3>
+                    <p>VDOMs are virtual FortiGates within a single physical device. Each VDOM has its own:</p>
+                    <ul>
+                        <li>Interfaces and routing tables</li>
+                        <li>Firewall policies</li>
+                        <li>Security profiles</li>
+                        <li>Administrator accounts</li>
+                    </ul>
+
+                    <h3>Use Cases</h3>
+                    <ul>
+                        <li><strong>Multi-tenant:</strong> MSPs hosting multiple customers</li>
+                        <li><strong>Separation:</strong> Isolate business units or compliance zones</li>
+                        <li><strong>Lab/Production:</strong> Separate environments on same hardware</li>
+                    </ul>
+
+                    <h3>Enable VDOMs</h3>
+                    <div class="code-block"><pre># Enable VDOM mode (requires reboot)
+config system global
+    set vdom-mode multi-vdom
+end
+
+# Reboot to apply
+execute reboot</pre></div>
+
+                    <h3>Create VDOMs</h3>
+                    <div class="code-block"><pre># Create a new VDOM
+config vdom
+    edit "CustomerA"
+    next
+    edit "CustomerB"
+    next
+end
+
+# Assign interfaces to VDOMs
+config global
+config system interface
+    edit "port5"
+        set vdom "CustomerA"
+    next
+    edit "port6"
+        set vdom "CustomerB"
+    next
+end
+end
+
+# Switch to VDOM to configure it
+config vdom
+edit "CustomerA"
+    # Now configure as if it's a standalone FortiGate
+    config system interface
+        edit "port5"
+            set mode static
+            set ip 10.50.1.1 255.255.255.0
+        next
+    end
+    # ... firewall policies, etc.
+end</pre></div>
+
+                    <h3>Inter-VDOM Links</h3>
+                    <p>To allow traffic between VDOMs, create virtual links:</p>
+                    <div class="code-block"><pre>config global
+config system vdom-link
+    edit "CustomerA-to-root"
+        set type ethernet
+    next
+end
+
+# This creates two virtual interfaces:
+# CustomerA-to-root0 in VDOM CustomerA
+# CustomerA-to-root1 in VDOM root
+
+# Configure IPs and routing in each VDOM
+config vdom
+edit "CustomerA"
+    config system interface
+        edit "CustomerA-to-root0"
+            set ip 10.255.1.1 255.255.255.252
+            set allowaccess ping
+        next
+    end
+end
+end
+
+config vdom
+edit "root"
+    config system interface
+        edit "CustomerA-to-root1"
+            set ip 10.255.1.2 255.255.255.252
+            set allowaccess ping
+        next
+    end
+end
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-wifi"></i> Software Switch / Hardware Switch</h2>
+                <div class="step-section">
+                    <h3>What is a Software Switch?</h3>
+                    <p>Groups multiple physical interfaces into a single logical switch. All ports share the same IP and act as a layer 2 switch.</p>
+
+                    <h3>Create Software Switch</h3>
+                    <div class="code-block"><pre>config system switch-interface
+    edit "LAN-Switch"
+        set vdom "root"
+        set member "port2" "port3" "port4"
+        set type switch
+        set intra-switch-policy implicit
+    next
+end
+
+# Now configure IP on the switch interface
+config system interface
+    edit "LAN-Switch"
+        set ip 10.1.1.1 255.255.255.0
+        set allowaccess ping https ssh
+        set role lan
+    next
+end</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Software vs Hardware Switch</h4>
+                        <p><strong>Hardware Switch:</strong> Uses dedicated switch chip - better performance, limited features<br>
+                        <strong>Software Switch:</strong> Uses CPU - more flexible, may impact performance</p>
+                        <p>Desktop models often have built-in hardware switches. Check your model's documentation.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Verification Commands</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># List all interfaces with status
+get system interface
+
+# Physical interface details
+get hardware nic port1
+diagnose hardware deviceinfo nic port1
+
+# Check interface statistics
+diagnose netlink interface list port1
+
+# Check VLAN interfaces
+get system interface | grep vlan
+
+# Check zones
+get system zone
+
+# Check aggregate interface status
+diagnose netlink aggregate name agg1
+
+# Check DHCP server leases
+execute dhcp lease-list
+
+# Ping from specific interface
+execute ping-options source 10.1.1.1
+execute ping 8.8.8.8</pre></div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

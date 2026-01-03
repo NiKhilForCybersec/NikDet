@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CWPP - Defender for Cloud | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .feature-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .feature-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .step-box { background: rgba(99, 102, 241, 0.1); padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .step-box h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .plan-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+        .plan-card { background: var(--card-bg); padding: 1.25rem; border-radius: 8px; }
+        .plan-card h4 { color: var(--accent-color); margin-top: 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/defender-cloud/index.html">Defender for Cloud</a><span class="separator">/</span><span>CWPP</span></div>
+            <div class="content">
+                <h1><i class="fas fa-server"></i> Cloud Workload Protection (CWPP)</h1>
+                <p class="lead">Complete guide to CWPP features in Microsoft Defender for Cloud. Protection for servers, containers, databases, storage, and more.</p>
+
+                <h2><i class="fas fa-desktop"></i> Defender for Servers</h2>
+                <div class="feature-section">
+                    <h3>Plan 1 vs Plan 2</h3>
+                    <div class="plan-compare">
+                        <div class="plan-card">
+                            <h4>Plan 1 (Basic)</h4>
+                            <ul>
+                                <li>✅ Microsoft Defender for Endpoint integration</li>
+                                <li>✅ Security alerts</li>
+                                <li>✅ File Integrity Monitoring</li>
+                                <li>✅ Regulatory compliance</li>
+                                <li>❌ No vulnerability assessment</li>
+                                <li>❌ No JIT VM access</li>
+                                <li>❌ No adaptive application controls</li>
+                            </ul>
+                        </div>
+                        <div class="plan-card">
+                            <h4>Plan 2 (Full)</h4>
+                            <ul>
+                                <li>✅ Everything in Plan 1</li>
+                                <li>✅ Vulnerability assessment (Qualys)</li>
+                                <li>✅ Just-In-Time (JIT) VM access</li>
+                                <li>✅ Adaptive application controls</li>
+                                <li>✅ Adaptive network hardening</li>
+                                <li>✅ Docker host hardening</li>
+                                <li>✅ Agentless scanning</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>Enable Defender for Servers</h3>
+                    <div class="code-block"><pre># Azure CLI
+az security pricing create --name VirtualMachines --tier Standard --subplan P2
+
+# PowerShell
+Set-AzSecurityPricing -Name "VirtualMachines" -PricingTier "Standard" -SubPlan "P2"
+
+# Check current plan
+az security pricing show --name VirtualMachines</pre></div>
+
+                    <h3>Just-In-Time (JIT) VM Access</h3>
+                    <p>JIT closes management ports (RDP/SSH) by default and opens them on-demand.</p>
+                    
+                    <div class="step-box">
+                        <h4>Enable JIT on a VM</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Workload protections</strong></li>
+                            <li>Click <strong>Just-in-time VM access</strong></li>
+                            <li>Select <strong>Not configured</strong> tab</li>
+                            <li>Select VM(s) and click <strong>Enable JIT on VM</strong></li>
+                            <li>Configure ports (default: 22, 3389, 5985, 5986)</li>
+                            <li>Set max request time (e.g., 3 hours)</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Request JIT Access</h4>
+                        <ol>
+                            <li>Go to <strong>Virtual Machine → Connect</strong></li>
+                            <li>Click <strong>Request access</strong></li>
+                            <li>Select ports and duration</li>
+                            <li>Add justification</li>
+                            <li>Click <strong>Open port</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="code-block"><pre># Request JIT via PowerShell
+$JitPolicy = @{
+    id = "/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Compute/virtualMachines/{vm}"
+    ports = @{
+        number = 3389
+        endTimeUtc = (Get-Date).AddHours(3).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        allowedSourceAddressPrefix = @("*")
+    }
+}
+Start-AzJitNetworkAccessPolicy -ResourceGroupName "Security" -Name "default" -VirtualMachine $JitPolicy
+
+# Azure CLI
+az security jit-policy initiate --resource-group "rg" --name "default" \
+    --virtual-machines '[{"id":"/subscriptions/.../vm","ports":[{"number":3389,"duration":"PT3H"}]}]'</pre></div>
+
+                    <h3>File Integrity Monitoring (FIM)</h3>
+                    <p>Tracks changes to critical system files, registry keys, and configurations.</p>
+                    <div class="step-box">
+                        <h4>Enable FIM</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Workload protections</strong></li>
+                            <li>Click <strong>File Integrity Monitoring</strong></li>
+                            <li>Select workspace</li>
+                            <li>Click <strong>Enable</strong></li>
+                            <li>Configure monitored paths (Windows registry, Linux files)</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-cubes"></i> Defender for Containers</h2>
+                <div class="feature-section">
+                    <h3>Capabilities</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Runtime protection</strong></td><td>Threat detection for running containers</td></tr>
+                            <tr><td><strong>Image scanning</strong></td><td>Vulnerability scanning in ACR, ECR, GCR</td></tr>
+                            <tr><td><strong>Policy enforcement</strong></td><td>Block vulnerable images from deploying</td></tr>
+                            <tr><td><strong>Kubernetes hardening</strong></td><td>Security recommendations for K8s config</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Supported Platforms</h3>
+                    <ul>
+                        <li><strong>Azure:</strong> AKS, ACR</li>
+                        <li><strong>AWS:</strong> EKS, ECR</li>
+                        <li><strong>GCP:</strong> GKE, GCR</li>
+                        <li><strong>On-premises:</strong> Azure Arc-enabled Kubernetes</li>
+                    </ul>
+
+                    <div class="code-block"><pre># Enable Defender for Containers
+az security pricing create --name Containers --tier Standard
+
+# View container recommendations
+az security assessment list --query "[?contains(name,'container')]"
+
+# Scan image in ACR
+az acr task create --registry myregistry --name scanOnPush \
+    --image-names myimage:latest --file Dockerfile \
+    --context https://github.com/... --platform linux</pre></div>
+
+                    <h3>Container Alerts Examples</h3>
+                    <ul>
+                        <li>Container running with high privileges</li>
+                        <li>Crypto mining activity detected</li>
+                        <li>SSH server running in container</li>
+                        <li>New container in kube-system namespace</li>
+                        <li>Container with sensitive mount</li>
+                    </ul>
+                </div>
+
+                <h2><i class="fas fa-database"></i> Defender for Databases</h2>
+                <div class="feature-section">
+                    <h3>Supported Databases</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Database</th><th>Protection</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Azure SQL Database</strong></td><td>Threat detection, vulnerability assessment</td></tr>
+                            <tr><td><strong>SQL Server on VMs</strong></td><td>Threat detection, vulnerability assessment</td></tr>
+                            <tr><td><strong>Azure Cosmos DB</strong></td><td>Threat detection</td></tr>
+                            <tr><td><strong>Azure Database for PostgreSQL</strong></td><td>Threat detection</td></tr>
+                            <tr><td><strong>Azure Database for MySQL</strong></td><td>Threat detection</td></tr>
+                            <tr><td><strong>Azure Database for MariaDB</strong></td><td>Threat detection</td></tr>
+                            <tr><td><strong>Open-source relational DBs</strong></td><td>Threat detection</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>SQL Threat Detection Alerts</h3>
+                    <ul>
+                        <li>SQL injection attempt</li>
+                        <li>Unusual export of data</li>
+                        <li>Login from unusual location</li>
+                        <li>Brute force attack</li>
+                        <li>Potential data exfiltration</li>
+                    </ul>
+
+                    <div class="code-block"><pre># Enable Defender for SQL
+az security pricing create --name SqlServers --tier Standard
+az security pricing create --name SqlServerVirtualMachines --tier Standard
+
+# Enable vulnerability assessment on SQL server
+az sql server va enable --server-name myserver --resource-group rg \
+    --storage-account-path https://storage.blob.core.windows.net/vulnerability-assessment</pre></div>
+                </div>
+
+                <h2><i class="fas fa-hdd"></i> Defender for Storage</h2>
+                <div class="feature-section">
+                    <h3>Capabilities</h3>
+                    <ul>
+                        <li><strong>Malware scanning</strong> - Scan uploaded blobs for malware</li>
+                        <li><strong>Sensitive data discovery</strong> - Find PII, credentials, secrets</li>
+                        <li><strong>Activity monitoring</strong> - Detect unusual access patterns</li>
+                    </ul>
+
+                    <h3>Alerts Examples</h3>
+                    <ul>
+                        <li>Access from Tor exit node</li>
+                        <li>Access from unusual location</li>
+                        <li>Unusual amount of data extracted</li>
+                        <li>Malware uploaded to storage</li>
+                        <li>Unusual access pattern</li>
+                    </ul>
+
+                    <div class="code-block"><pre># Enable Defender for Storage (with malware scanning)
+az security pricing create --name StorageAccounts --tier Standard \
+    --extension name=OnUploadMalwareScanning isEnabled=true
+
+# Check scanned blobs
+az storage blob list --account-name mystorageaccount --container-name mycontainer \
+    --query "[?tags.malwareScanResult!=null]"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-key"></i> Defender for Key Vault</h2>
+                <div class="feature-section">
+                    <h3>What it Detects</h3>
+                    <ul>
+                        <li>Access from unusual IP or location</li>
+                        <li>High volume of operations</li>
+                        <li>Suspicious application accessing vault</li>
+                        <li>Secret enumeration attempts</li>
+                        <li>Policy changes</li>
+                    </ul>
+
+                    <div class="code-block"><pre># Enable Defender for Key Vault
+az security pricing create --name KeyVaults --tier Standard
+
+# View Key Vault alerts
+az security alert list --query "[?contains(alertType,'KeyVault')]"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-globe"></i> Defender for App Service</h2>
+                <div class="feature-section">
+                    <h3>Protection Capabilities</h3>
+                    <ul>
+                        <li>Web attack detection (SQLi, XSS, path traversal)</li>
+                        <li>Dangling DNS detection</li>
+                        <li>Bot detection</li>
+                        <li>Suspicious IP access</li>
+                    </ul>
+
+                    <div class="code-block"><pre># Enable Defender for App Service
+az security pricing create --name AppServices --tier Standard</pre></div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> Security Alerts</h2>
+                <div class="feature-section">
+                    <h3>Alert Severity</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Severity</th><th>Meaning</th><th>Response</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong style="color:#ef4444">High</strong></td><td>Active compromise likely</td><td>Immediate investigation</td></tr>
+                            <tr><td><strong style="color:#f59e0b">Medium</strong></td><td>Suspicious activity</td><td>Investigate within 24 hours</td></tr>
+                            <tr><td><strong style="color:#3b82f6">Low</strong></td><td>Potential risk</td><td>Review during normal cycle</td></tr>
+                            <tr><td><strong>Informational</strong></td><td>Awareness only</td><td>No action required</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Alert Investigation</h3>
+                    <div class="step-box">
+                        <h4>Investigate an Alert</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Security alerts</strong></li>
+                            <li>Click on alert to see details</li>
+                            <li>Review: Description, affected resource, attack chain</li>
+                            <li>Check <strong>Related entities</strong> for context</li>
+                            <li>Click <strong>Take action</strong> for remediation steps</li>
+                            <li>Update status: Active → In Progress → Resolved</li>
+                        </ol>
+                    </div>
+
+                    <h3>Send Alerts to SIEM</h3>
+                    <div class="code-block"><pre># Stream to Sentinel
+az security automation create --name "ExportToSentinel" \
+    --resource-group "Security" \
+    --scopes "/subscriptions/{subscription-id}" \
+    --sources AlertsEventTypes \
+    --actions actionType=LogicApp logicAppResourceId="/subscriptions/.../logicapp"
+
+# Stream to Event Hub (for Splunk, etc.)
+az security automation create --name "ExportToEventHub" \
+    --resource-group "Security" \
+    --scopes "/subscriptions/{subscription-id}" \
+    --sources AlertsEventTypes \
+    --actions actionType=EventHub eventHubResourceId="/subscriptions/.../eventhub"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-cog"></i> Best Practices</h2>
+                <ul>
+                    <li><strong>Enable Defender for Servers P2</strong> for full protection including JIT and vulnerability assessment</li>
+                    <li><strong>Use JIT for all management access</strong> - Never leave RDP/SSH open</li>
+                    <li><strong>Enable malware scanning for Storage</strong> - Especially user-facing uploads</li>
+                    <li><strong>Integrate alerts with Sentinel</strong> - For correlation and automation</li>
+                    <li><strong>Review alerts daily</strong> - High severity alerts need immediate attention</li>
+                    <li><strong>Tune noisy alerts</strong> - Create suppression rules for false positives</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

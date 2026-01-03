@@ -43,7 +43,7 @@ function injectSidebar() {
                     <li><a href="pages/soc-operations/l1-operations.html">L1 Operations</a></li>
                     <li><a href="pages/soc-operations/l2-operations.html">L2 Operations</a></li>
                     <li><a href="pages/soc-operations/incident-response.html">Incident Response</a></li>
-                    <li><a href="pages/soc-operations/metrics-kpis.html">Metrics & KPIs</a></li>
+                    <li><a href="pages/soc-operations/metrics.html">Metrics & KPIs</a></li>
                 </ul>
             </div>
             <div class="sidebar-section">
@@ -61,15 +61,15 @@ function injectSidebar() {
                 <ul class="sidebar-links">
                     <li><a href="pages/threat-hunting/index.html">Hunting Overview</a></li>
                     <li><a href="pages/threat-hunting/methodology.html">Methodology</a></li>
-                    <li><a href="pages/threat-hunting/hypothesis-development.html">Hypothesis Development</a></li>
-                    <li><a href="pages/threat-hunting/mitre-attack.html">MITRE ATT&CK</a></li>
+                    <li><a href="pages/threat-hunting/hypothesis.html">Hypothesis Development</a></li>
+                    <li><a href="pages/frameworks/mitre-attack.html">MITRE ATT&CK</a></li>
                 </ul>
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-section-header"><i class="fas fa-shield-halved section-icon"></i><span>Detection Engineering</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
                     <li><a href="pages/detection-engineering/index.html">Detection Overview</a></li>
-                    <li><a href="pages/detection-engineering/detection-lifecycle.html">Detection Lifecycle</a></li>
+                    <li><a href="pages/detection-engineering/lifecycle.html">Detection Lifecycle</a></li>
                     <li><a href="pages/detection-engineering/sigma-rules.html">Sigma Rules</a></li>
                     <li><a href="pages/detection-engineering/detection-as-code.html">Detection as Code</a></li>
                 </ul>
@@ -79,9 +79,9 @@ function injectSidebar() {
                 <ul class="sidebar-links">
                     <li><a href="pages/sentinel/index.html">Microsoft Sentinel</a></li>
                     <li><a href="pages/sentinel/kql-fundamentals.html">KQL Fundamentals</a></li>
-                    <li><a href="pages/sentinel/kql-library.html">KQL Library</a></li>
+                    <li><a href="pages/references/kql-library.html">KQL Library</a></li>
                     <li><a href="pages/splunk/index.html">Splunk</a></li>
-                    <li><a href="pages/splunk/spl-library.html">SPL Library</a></li>
+                    <li><a href="pages/references/spl-library.html">SPL Library</a></li>
                 </ul>
             </div>
             <div class="sidebar-section">
@@ -101,6 +101,58 @@ function injectSidebar() {
                     <li><a href="pages/cloud-security/azure-security.html">Azure Security</a></li>
                     <li><a href="pages/cloud-security/aws-security.html">AWS Security</a></li>
                     <li><a href="pages/cloud-security/m365-security.html">M365 Security</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-shield-virus section-icon"></i><span>Defender for Endpoint</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/mde/index.html">MDE Overview</a></li>
+                    <li><a href="pages/mde/onboarding-windows.html">Windows Onboarding</a></li>
+                    <li><a href="pages/mde/onboarding-linux.html">Linux Onboarding</a></li>
+                    <li><a href="pages/mde/onboarding-macos.html">macOS Onboarding</a></li>
+                    <li><a href="pages/mde/troubleshooting.html">Troubleshooting</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-cloud-bolt section-icon"></i><span>Defender for Cloud</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/defender-cloud/index.html">Overview</a></li>
+                    <li><a href="pages/defender-cloud/cspm.html">CSPM Guide</a></li>
+                    <li><a href="pages/defender-cloud/cwpp.html">CWPP Guide</a></li>
+                    <li><a href="pages/defender-cloud/aws-integration.html">AWS Integration</a></li>
+                    <li><a href="pages/defender-cloud/gcp-integration.html">GCP Integration</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-fire-flame-curved section-icon"></i><span>NGFW - FortiGate</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/ngfw/index.html">NGFW Overview</a></li>
+                    <li><a href="pages/ngfw/fortinet/index.html">FortiGate Guide</a></li>
+                    <li><a href="pages/ngfw/fortinet/initial-setup.html">Initial Setup</a></li>
+                    <li><a href="pages/ngfw/fortinet/interfaces-zones.html">Interfaces & Zones</a></li>
+                    <li><a href="pages/ngfw/fortinet/policies.html">Firewall Policies</a></li>
+                    <li><a href="pages/ngfw/fortinet/security-profiles.html">Security Profiles</a></li>
+                    <li><a href="pages/ngfw/fortinet/logging-siem.html">Logging & SIEM</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-fire section-icon"></i><span>NGFW - Palo Alto</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/ngfw/paloalto/index.html">Palo Alto Guide</a></li>
+                    <li><a href="pages/ngfw/paloalto/initial-setup.html">Initial Setup</a></li>
+                    <li><a href="pages/ngfw/paloalto/policies.html">Security Policies</a></li>
+                    <li><a href="pages/ngfw/paloalto/logging-siem.html">Logging & SIEM</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-id-card section-icon"></i><span>Identity & IAM</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/iam/index.html">IAM Overview</a></li>
+                    <li><a href="pages/iam/protocols.html">Auth Protocols</a></li>
+                    <li><a href="pages/iam/entra-id/index.html">Microsoft Entra ID</a></li>
+                    <li><a href="pages/iam/entra-id/conditional-access.html">Conditional Access</a></li>
+                    <li><a href="pages/encryption/index.html">Encryption & Certs</a></li>
+                    <li><a href="pages/encryption/certificates-guide.html">Certificate Guide</a></li>
                 </ul>
             </div>
             <div class="sidebar-section">
@@ -134,7 +186,7 @@ function injectSidebar() {
         </nav>
         <div class="sidebar-footer">
             <span>SOC Compendium</span>
-            <span>161+ Pages</span>
+            <span>190+ Pages</span>
         </div>
     </aside>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Integration - Defender for Cloud | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .step-box { background: rgba(99, 102, 241, 0.1); padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .step-box h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+        .numbered-step { display: flex; align-items: flex-start; gap: 1rem; margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; }
+        .step-number { background: var(--accent-color); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .step-content { flex: 1; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/defender-cloud/index.html">Defender for Cloud</a><span class="separator">/</span><span>AWS Integration</span></div>
+            <div class="content">
+                <h1><i class="fab fa-aws"></i> AWS Integration Guide</h1>
+                <p class="lead">Complete step-by-step guide to connect your AWS accounts to Microsoft Defender for Cloud. No steps skipped.</p>
+
+                <h2><i class="fas fa-clipboard-check"></i> Prerequisites</h2>
+                <table class="prereq-table">
+                    <thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Azure Subscription</strong></td><td>With Defender for Cloud enabled</td></tr>
+                        <tr><td><strong>Azure Permissions</strong></td><td>Security Admin + Contributor on subscription</td></tr>
+                        <tr><td><strong>AWS Account</strong></td><td>With administrator access</td></tr>
+                        <tr><td><strong>AWS Permissions</strong></td><td>IAM:CreateRole, CloudFormation:CreateStack, etc.</td></tr>
+                        <tr><td><strong>Defender Plan</strong></td><td>Foundational CSPM (free) or Defender CSPM (paid)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-project-diagram"></i> What Gets Deployed</h2>
+                <p>When you connect AWS to Defender for Cloud, the following is created in AWS:</p>
+                <ul>
+                    <li><strong>IAM Role:</strong> Cross-account role trusted by Microsoft</li>
+                    <li><strong>IAM Policies:</strong> Read permissions for security assessment</li>
+                    <li><strong>CloudFormation Stack:</strong> Deploys the above resources</li>
+                    <li><strong>For CWPP:</strong> Additional roles for Arc agent deployment</li>
+                </ul>
+
+                <h2><i class="fas fa-tasks"></i> Step-by-Step: Connect Single AWS Account</h2>
+
+                <div class="numbered-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Access Defender for Cloud</h4>
+                        <ol>
+                            <li>Go to <a href="https://portal.azure.com" target="_blank">Azure Portal</a></li>
+                            <li>Search for <strong>"Microsoft Defender for Cloud"</strong></li>
+                            <li>Click to open Defender for Cloud</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Navigate to Environment Settings</h4>
+                        <ol>
+                            <li>In the left menu, click <strong>Environment settings</strong></li>
+                            <li>Click <strong>+ Add environment</strong></li>
+                            <li>Select <strong>Amazon Web Services</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Configure Account Details</h4>
+                        <ol>
+                            <li>Select <strong>Single account</strong> (or Management account for Organizations)</li>
+                            <li>Enter a <strong>Connector name</strong>: e.g., "AWS-Production"</li>
+                            <li>Select <strong>Subscription</strong> where connector will be created</li>
+                            <li>Select <strong>Resource group</strong> or create new</li>
+                            <li>Select <strong>Location</strong>: Choose region closest to your AWS region</li>
+                            <li>Click <strong>Next: Select plans</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Select Defender Plans</h4>
+                        <p>Choose which plans to enable for AWS:</p>
+                        <table class="prereq-table">
+                            <thead><tr><th>Plan</th><th>What It Does</th><th>Cost</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Foundational CSPM</strong></td><td>Basic recommendations</td><td>Free</td></tr>
+                                <tr><td><strong>Defender CSPM</strong></td><td>Attack paths, agentless scan</td><td>Paid</td></tr>
+                                <tr><td><strong>Servers (Plan 1/2)</strong></td><td>EC2 protection via Arc</td><td>Paid</td></tr>
+                                <tr><td><strong>Containers</strong></td><td>EKS protection</td><td>Paid</td></tr>
+                                <tr><td><strong>Databases</strong></td><td>RDS protection</td><td>Paid</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Toggle desired plans <strong>On</strong></p>
+                        <p>Click <strong>Next: Configure access</strong></li>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Configure Access Method</h4>
+                        <p>Select deployment type:</p>
+                        <ul>
+                            <li><strong>Azure (Recommended)</strong> - Uses CloudFormation</li>
+                            <li><strong>AWS CloudFormation</strong> - Manual deployment</li>
+                        </ul>
+                        <p>For automated setup, select <strong>Azure</strong></p>
+                        <p>Click <strong>Next: Review and generate</strong></p>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h4>Deploy CloudFormation Stack (Automated)</h4>
+                        <ol>
+                            <li>Review your configuration</li>
+                            <li>Click <strong>Download CloudFormation template</strong></li>
+                            <li>Note the <strong>Stack name</strong> shown</li>
+                            <li>Click <strong>Go to AWS</strong> - This opens AWS Console</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">7</div>
+                    <div class="step-content">
+                        <h4>In AWS Console - Create Stack</h4>
+                        <ol>
+                            <li>You should be in <strong>CloudFormation → Create stack</strong></li>
+                            <li>If not automatically populated:
+                                <ul>
+                                    <li>Select <strong>"Template is ready"</strong></li>
+                                    <li>Select <strong>"Upload a template file"</strong></li>
+                                    <li>Upload the downloaded template</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Next</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">8</div>
+                    <div class="step-content">
+                        <h4>Specify Stack Details</h4>
+                        <ol>
+                            <li><strong>Stack name:</strong> Use the name from Azure (e.g., "DefenderForCloud-xxxxxxxx")</li>
+                            <li>Leave parameters as default (pre-filled by template)</li>
+                            <li>Click <strong>Next</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">9</div>
+                    <div class="step-content">
+                        <h4>Configure Stack Options</h4>
+                        <ol>
+                            <li>Tags: Optional - add tags for tracking</li>
+                            <li>Permissions: Leave default</li>
+                            <li>Stack failure options: Leave default (Rollback)</li>
+                            <li>Click <strong>Next</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">10</div>
+                    <div class="step-content">
+                        <h4>Review and Create</h4>
+                        <ol>
+                            <li>Review all settings</li>
+                            <li><strong>IMPORTANT:</strong> Check the box: "I acknowledge that AWS CloudFormation might create IAM resources with custom names"</li>
+                            <li>Click <strong>Submit</strong></li>
+                            <li>Wait for stack status: <strong>CREATE_COMPLETE</strong> (2-5 minutes)</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">11</div>
+                    <div class="step-content">
+                        <h4>Complete Azure Configuration</h4>
+                        <ol>
+                            <li>Return to the Azure portal tab</li>
+                            <li>Click <strong>Create</strong></li>
+                            <li>Wait for connector creation (1-2 minutes)</li>
+                            <li>Connector status should show <strong>Connected</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-clock"></i> Data Sync Time</h4>
+                    <p>After connection, it takes <strong>up to 24 hours</strong> for full security assessment. Initial recommendations appear within 2-4 hours.</p>
+                </div>
+
+                <h2><i class="fas fa-building"></i> Connect AWS Organization (Multiple Accounts)</h2>
+                <div class="step-section">
+                    <h3>For AWS Organizations</h3>
+                    <p>If you have multiple AWS accounts managed by AWS Organizations:</p>
+
+                    <div class="step-box">
+                        <h4>Prerequisites for Organization Connection</h4>
+                        <ul>
+                            <li>Access to AWS Management Account</li>
+                            <li>AWS Organizations enabled</li>
+                            <li>CloudFormation StackSets permissions</li>
+                        </ul>
+                    </div>
+
+                    <ol>
+                        <li>In Azure, select <strong>Management account</strong> instead of Single account</li>
+                        <li>Enter your <strong>AWS Organization ID</strong> (found in AWS Organizations console)</li>
+                        <li>The CloudFormation template creates a <strong>StackSet</strong> that deploys to all member accounts</li>
+                        <li>Optionally exclude specific accounts or OUs</li>
+                    </ol>
+
+                    <div class="code-block"><pre># Find AWS Organization ID via CLI
+aws organizations describe-organization --query 'Organization.Id' --output text
+
+# List all accounts in organization
+aws organizations list-accounts --output table</pre></div>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Enable Defender for Servers on EC2</h2>
+                <div class="step-section">
+                    <h3>Auto-provisioning with Azure Arc</h3>
+                    <p>To protect EC2 instances with Defender for Servers, they need the Azure Arc agent.</p>
+
+                    <div class="step-box">
+                        <h4>Enable Auto-provisioning</h4>
+                        <ol>
+                            <li>In Defender for Cloud, go to <strong>Environment settings</strong></li>
+                            <li>Select your AWS connector</li>
+                            <li>Click <strong>Settings & monitoring</strong></li>
+                            <li>Under <strong>Servers</strong>, click <strong>Configuration</strong></li>
+                            <li>Enable <strong>Auto-provision Arc agent</strong></li>
+                            <li>Select tags to scope which EC2 instances to onboard</li>
+                        </ol>
+                    </div>
+
+                    <h3>Manual Arc Agent Installation</h3>
+                    <p>For instances not auto-provisioned:</p>
+                    <div class="code-block"><pre># On EC2 Linux instance
+wget https://aka.ms/azcmagent -O install_linux_azcmagent.sh
+sudo bash install_linux_azcmagent.sh
+
+# Connect to Azure
+sudo azcmagent connect \
+    --tenant-id "YOUR-TENANT-ID" \
+    --subscription-id "YOUR-SUBSCRIPTION-ID" \
+    --resource-group "YOUR-RG" \
+    --location "eastus" \
+    --service-principal-id "YOUR-SP-ID" \
+    --service-principal-secret "YOUR-SP-SECRET"
+
+# On EC2 Windows instance (PowerShell)
+Invoke-WebRequest -Uri https://aka.ms/AzureConnectedMachineAgent -OutFile AzureConnectedMachineAgent.msi
+msiexec /i AzureConnectedMachineAgent.msi /l*v installationlog.txt /qn
+
+# Connect
+& "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe" connect `
+    --tenant-id "YOUR-TENANT-ID" `
+    --subscription-id "YOUR-SUBSCRIPTION-ID" `
+    --resource-group "YOUR-RG" `
+    --location "eastus"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-cubes"></i> Enable Defender for Containers (EKS)</h2>
+                <div class="step-section">
+                    <h3>EKS Protection</h3>
+                    <div class="step-box">
+                        <h4>Enable EKS Protection</h4>
+                        <ol>
+                            <li>Go to AWS connector settings</li>
+                            <li>Enable <strong>Containers</strong> plan</li>
+                            <li>The Defender extension deploys automatically to EKS clusters</li>
+                            <li>Alternatively, deploy manually via Helm:</li>
+                        </ol>
+                    </div>
+
+                    <div class="code-block"><pre># Manual Defender extension for EKS
+# Add Microsoft Helm repo
+helm repo add microsoft https://raw.githubusercontent.com/microsoft/Defender-for-Cloud-Helm-Charts/main/repo/
+helm repo update
+
+# Install Defender extension
+helm install defender-for-containers microsoft/defender-for-containers \
+    --namespace mdc \
+    --create-namespace \
+    --set defender.subscriptionId="YOUR-SUBSCRIPTION-ID" \
+    --set defender.resourceGroup="YOUR-RG" \
+    --set defender.clusterName="YOUR-EKS-CLUSTER"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Verify Connection</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Check connector status in Azure
+az security connector show --name "your-connector-name" --resource-group "your-rg"
+
+# List all AWS connectors
+az security connector list --query "[?environmentName=='AWS']" --output table
+
+# Check AWS resources discovered
+# Go to: Defender for Cloud → Inventory → Filter by Environment: AWS</pre></div>
+
+                    <h3>Expected Resources</h3>
+                    <p>After successful connection, you should see:</p>
+                    <ul>
+                        <li>EC2 instances in Inventory</li>
+                        <li>S3 buckets with security recommendations</li>
+                        <li>IAM users and roles</li>
+                        <li>RDS instances (if Defender for Databases enabled)</li>
+                        <li>EKS clusters (if Defender for Containers enabled)</li>
+                        <li>Security recommendations specific to AWS</li>
+                    </ul>
+                </div>
+
+                <h2><i class="fas fa-trash-alt"></i> Remove AWS Connection</h2>
+                <div class="step-section">
+                    <h3>Clean Removal Steps</h3>
+                    <div class="step-box">
+                        <h4>Step 1: Remove from Azure</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Environment settings</strong></li>
+                            <li>Find your AWS connector</li>
+                            <li>Click <strong>...</strong> → <strong>Delete</strong></li>
+                            <li>Confirm deletion</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Delete CloudFormation Stack in AWS</h4>
+                        <ol>
+                            <li>Go to <strong>AWS Console → CloudFormation</strong></li>
+                            <li>Find the Defender for Cloud stack</li>
+                            <li>Select it and click <strong>Delete</strong></li>
+                            <li>Confirm deletion</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Troubleshooting</h2>
+                <div class="step-section">
+                    <h3>Common Issues</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Issue</th><th>Solution</th></tr></thead>
+                        <tbody>
+                            <tr><td>Stack creation failed</td><td>Check IAM permissions, ensure no existing stack with same name</td></tr>
+                            <tr><td>Connector shows "Unhealthy"</td><td>Verify IAM role exists and has correct trust policy</td></tr>
+                            <tr><td>No resources discovered</td><td>Wait 24 hours; check AWS role permissions</td></tr>
+                            <tr><td>EC2 not protected</td><td>Verify Arc agent installed and connected</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next-Generation Firewalls | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .vendor-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin: 1.5rem 0; }
+        .vendor-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; border: 1px solid var(--border-color); }
+        .vendor-card h3 { color: var(--accent-color); margin-top: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .vendor-card ul { margin: 0.5rem 0; padding-left: 1.25rem; }
+        .concept-box { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-color); }
+        .concept-box h3 { color: var(--accent-color); margin-top: 0; }
+        .comparison-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .comparison-table th, .comparison-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .comparison-table th { background: var(--card-bg); color: var(--accent-color); }
+        .nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .nav-card { background: var(--card-bg); border-radius: 8px; padding: 1.25rem; text-decoration: none; color: var(--text-color); transition: all 0.2s; border: 1px solid var(--border-color); }
+        .nav-card:hover { transform: translateY(-2px); border-color: var(--accent-color); }
+        .nav-card h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .nav-card p { margin: 0; font-size: 0.9rem; color: var(--text-muted); }
+        .architecture-diagram { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; line-height: 1.4; }
+        .analogy-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .analogy-box h4 { color: #f59e0b; margin: 0 0 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><span>Next-Generation Firewalls</span></div>
+            <div class="content">
+                <h1><i class="fas fa-fire-flame-curved"></i> Next-Generation Firewalls (NGFW)</h1>
+                <p class="lead">Complete guide to enterprise firewall deployment, configuration, and management. From initial setup to advanced features, SIEM integration, and troubleshooting.</p>
+
+                <div class="analogy-box">
+                    <h4><i class="fas fa-lightbulb"></i> Simple Analogy: What is an NGFW?</h4>
+                    <p><strong>Traditional Firewall</strong> = Security guard who checks IDs at the door (IP addresses, ports)<br>
+                    <strong>NGFW</strong> = Security guard who checks IDs + reads the contents of packages + recognizes faces + detects suspicious behavior + calls police automatically</p>
+                    <p>An NGFW doesn't just control who enters/exits - it inspects what they're carrying, identifies the actual application (not just the port), blocks malware in real-time, and integrates with your security ecosystem.</p>
+                </div>
+
+                <h2><i class="fas fa-book-open"></i> Choose Your Platform</h2>
+                <div class="nav-cards">
+                    <a href="pages/ngfw/fortinet/index.html" class="nav-card">
+                        <h4><i class="fas fa-shield-alt"></i> Fortinet FortiGate</h4>
+                        <p>Complete FortiGate configuration from initial setup to advanced features, HA, and FortiManager integration</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/index.html" class="nav-card">
+                        <h4><i class="fas fa-fire"></i> Palo Alto Networks</h4>
+                        <p>Complete PAN-OS configuration from Day 1 to advanced features, Panorama, and Cortex integration</p>
+                    </a>
+                </div>
+
+                <h2><i class="fas fa-sitemap"></i> NGFW Architecture Overview</h2>
+                <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                           NEXT-GENERATION FIREWALL ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│   INTERNET                                                                               │
+│      │                                                                                   │
+│      ▼                                                                                   │
+│   ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│   │                              NGFW PROCESSING PIPELINE                             │  │
+│   │                                                                                   │  │
+│   │  ┌─────────┐   ┌─────────┐   ┌─────────────┐   ┌──────────┐   ┌──────────────┐  │  │
+│   │  │ LAYER 3 │ → │ LAYER 4 │ → │   APP-ID    │ → │ CONTENT  │ → │   THREAT     │  │  │
+│   │  │ ROUTING │   │STATEFUL │   │   ENGINE    │   │INSPECTION│   │ PREVENTION   │  │  │
+│   │  │         │   │FIREWALL │   │             │   │          │   │              │  │  │
+│   │  │• Routes │   │• TCP/UDP│   │• App detect │   │• URL     │   │• IPS/IDS     │  │  │
+│   │  │• NAT    │   │• States │   │• User-ID    │   │• Files   │   │• Anti-malware│  │  │
+│   │  │• VRF    │   │• Zones  │   │• Decrypt    │   │• DLP     │   │• Sandboxing  │  │  │
+│   │  └─────────┘   └─────────┘   └─────────────┘   └──────────┘   └──────────────┘  │  │
+│   │                                      │                                          │  │
+│   │                                      ▼                                          │  │
+│   │                              ┌───────────────┐                                  │  │
+│   │                              │ SECURITY      │                                  │  │
+│   │                              │ POLICY ENGINE │                                  │  │
+│   │                              │ (ALLOW/DENY)  │                                  │  │
+│   │                              └───────────────┘                                  │  │
+│   └──────────────────────────────────────────────────────────────────────────────────┘  │
+│      │                                                                                   │
+│      ├─────────────────────────────────┬──────────────────────────────────────┐         │
+│      ▼                                 ▼                                      ▼         │
+│   ┌────────┐                    ┌────────────┐                         ┌──────────┐    │
+│   │  DMZ   │                    │  INTERNAL  │                         │   GUEST  │    │
+│   │        │                    │  NETWORK   │                         │  NETWORK │    │
+│   │Servers │                    │  Users/    │                         │  WiFi/   │    │
+│   │Web/Mail│                    │  Endpoints │                         │  BYOD    │    │
+│   └────────┘                    └────────────┘                         └──────────┘    │
+│                                                                                          │
+│   ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│   │                              MANAGEMENT & LOGGING                                 │  │
+│   │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │  │
+│   │  │ Central  │  │   SIEM   │  │  SOAR    │  │   NMS    │  │  Threat Intel    │   │  │
+│   │  │ Manager  │  │ Sentinel │  │  XSOAR   │  │  SNMP    │  │  Feeds           │   │  │
+│   │  │(Panorama │  │ Splunk   │  │          │  │  Netflow │  │                  │   │  │
+│   │  │FortiMgr) │  │          │  │          │  │          │  │                  │   │  │
+│   │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────────────┘   │  │
+│   └──────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘</div>
+
+                <h2><i class="fas fa-layer-group"></i> Traditional vs NGFW Features</h2>
+                <table class="comparison-table">
+                    <thead>
+                        <tr><th>Feature</th><th>Traditional Firewall</th><th>Next-Gen Firewall</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Traffic Inspection</strong></td>
+                            <td>IP address, Port number only</td>
+                            <td>Full application layer (L7) inspection</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Application Control</strong></td>
+                            <td>Port-based (80=HTTP, 443=HTTPS)</td>
+                            <td>Identifies actual app (Facebook, YouTube, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>User Identity</strong></td>
+                            <td>IP address = User</td>
+                            <td>Integrates with AD/LDAP for real user identity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SSL/TLS Inspection</strong></td>
+                            <td>Cannot see encrypted traffic</td>
+                            <td>Decrypts, inspects, re-encrypts</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Threat Prevention</strong></td>
+                            <td>Basic ACLs</td>
+                            <td>IPS, Anti-malware, Sandboxing, URL filtering</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Policy Model</strong></td>
+                            <td>5-tuple (src/dst IP, src/dst port, protocol)</td>
+                            <td>User + App + Content + Context</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-list-ol"></i> Configuration Order of Operations</h2>
+                <div class="concept-box">
+                    <h3>Why Order Matters</h3>
+                    <p>Configuring a firewall in the wrong order can lock you out, break connectivity, or create security gaps. Follow this sequence:</p>
+                </div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr><th>Phase</th><th>What to Configure</th><th>Why This Order</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1. Initial Access</strong></td>
+                            <td>Management IP, admin credentials, console access</td>
+                            <td>You need a way to access the device first</td>
+                        </tr>
+                        <tr>
+                            <td><strong>2. Licensing</strong></td>
+                            <td>Activate licenses for features you'll use</td>
+                            <td>Many features won't work without valid licenses</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3. System Settings</strong></td>
+                            <td>Hostname, DNS, NTP, timezone, logging destination</td>
+                            <td>Foundation for everything else (logs need correct time!)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>4. Interfaces & Zones</strong></td>
+                            <td>Physical/virtual interfaces, security zones</td>
+                            <td>Traffic can't flow without interfaces configured</td>
+                        </tr>
+                        <tr>
+                            <td><strong>5. Routing</strong></td>
+                            <td>Static routes, default gateway, dynamic routing</td>
+                            <td>Firewall needs to know where to send traffic</td>
+                        </tr>
+                        <tr>
+                            <td><strong>6. Objects & Groups</strong></td>
+                            <td>Address objects, service objects, groups</td>
+                            <td>Policies reference these objects</td>
+                        </tr>
+                        <tr>
+                            <td><strong>7. Security Profiles</strong></td>
+                            <td>AV, IPS, URL filtering, file blocking profiles</td>
+                            <td>Create protection profiles before policies</td>
+                        </tr>
+                        <tr>
+                            <td><strong>8. NAT Policies</strong></td>
+                            <td>Source NAT, destination NAT, PAT</td>
+                            <td>NAT often needs to be configured before security policies</td>
+                        </tr>
+                        <tr>
+                            <td><strong>9. Security Policies</strong></td>
+                            <td>Allow/deny rules with security profiles attached</td>
+                            <td>The core of what the firewall does</td>
+                        </tr>
+                        <tr>
+                            <td><strong>10. User-ID / Auth</strong></td>
+                            <td>AD integration, user-to-IP mapping</td>
+                            <td>Enables user-based policies</td>
+                        </tr>
+                        <tr>
+                            <td><strong>11. SSL Decryption</strong></td>
+                            <td>Certificates, decryption policies</td>
+                            <td>Required for deep inspection of HTTPS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>12. VPN</strong></td>
+                            <td>IPsec tunnels, SSL VPN, GlobalProtect/FortiClient</td>
+                            <td>Builds on top of working base config</td>
+                        </tr>
+                        <tr>
+                            <td><strong>13. High Availability</strong></td>
+                            <td>HA pairs, clustering, failover settings</td>
+                            <td>Configure after single unit is fully working</td>
+                        </tr>
+                        <tr>
+                            <td><strong>14. Logging & SIEM</strong></td>
+                            <td>Syslog, SIEM connectors, log forwarding</td>
+                            <td>Need working firewall before meaningful logs</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-shield-virus"></i> Core NGFW Features Explained</h2>
+
+                <div class="concept-box">
+                    <h3><i class="fas fa-fingerprint"></i> Application Identification (App-ID)</h3>
+                    <p><strong>What:</strong> Identifies the actual application regardless of port, protocol, or encryption.</p>
+                    <p><strong>How:</strong> Uses signatures, heuristics, and decryption to identify apps like "facebook-chat" vs "facebook-video" vs "facebook-posting".</p>
+                    <p><strong>Why:</strong> Traditional port-based rules (allow port 443) let EVERYTHING through. App-ID lets you say "allow Salesforce, block TikTok, allow YouTube but block uploads."</p>
+                </div>
+
+                <div class="concept-box">
+                    <h3><i class="fas fa-user-check"></i> User Identification (User-ID)</h3>
+                    <p><strong>What:</strong> Maps IP addresses to actual usernames from Active Directory.</p>
+                    <p><strong>How:</strong> Reads AD login events, uses agents, LDAP queries, or captive portal.</p>
+                    <p><strong>Why:</strong> Instead of "allow 10.1.1.50 to internet", you write "allow Sales-Group to Salesforce". Users move IPs, but policy follows them.</p>
+                </div>
+
+                <div class="concept-box">
+                    <h3><i class="fas fa-search"></i> Content Inspection</h3>
+                    <p><strong>What:</strong> Examines the actual data inside packets for threats, sensitive data, malware.</p>
+                    <p><strong>Components:</strong></p>
+                    <ul>
+                        <li><strong>IPS/IDS:</strong> Blocks known attack patterns (exploits, SQLi, XSS)</li>
+                        <li><strong>Antivirus:</strong> Scans files in transit for malware signatures</li>
+                        <li><strong>Anti-spyware:</strong> Detects C2 communications, phone-home traffic</li>
+                        <li><strong>URL Filtering:</strong> Categorizes and blocks dangerous/inappropriate websites</li>
+                        <li><strong>File Blocking:</strong> Blocks risky file types (.exe, .bat, .ps1)</li>
+                        <li><strong>DLP:</strong> Detects sensitive data (SSN, credit cards) leaving network</li>
+                    </ul>
+                </div>
+
+                <div class="concept-box">
+                    <h3><i class="fas fa-lock-open"></i> SSL/TLS Decryption</h3>
+                    <p><strong>What:</strong> Decrypts HTTPS traffic, inspects it, then re-encrypts before forwarding.</p>
+                    <p><strong>Why it's critical:</strong> ~90% of web traffic is encrypted. Without decryption, your IPS, AV, and URL filtering are blind to most threats.</p>
+                    <p><strong>Challenges:</strong> Certificate deployment, privacy concerns, performance impact, certificate pinning.</p>
+                </div>
+
+                <div class="concept-box">
+                    <h3><i class="fas fa-cloud-upload-alt"></i> Sandboxing (WildFire / FortiSandbox)</h3>
+                    <p><strong>What:</strong> Detonates unknown files in an isolated environment to detect zero-day malware.</p>
+                    <p><strong>How:</strong> File is sent to cloud/on-prem sandbox → executed in VM → behavior analyzed → verdict returned (benign/malware/grayware).</p>
+                    <p><strong>Why:</strong> Signature-based AV only catches known malware. Sandboxing catches new, unknown threats.</p>
+                </div>
+
+                <h2><i class="fas fa-network-wired"></i> Zone-Based Architecture</h2>
+                <div class="analogy-box">
+                    <h4><i class="fas fa-lightbulb"></i> Zones Analogy</h4>
+                    <p>Think of zones like security clearance levels in a building:</p>
+                    <ul>
+                        <li><strong>Untrust (Outside):</strong> Public sidewalk - anyone can be there</li>
+                        <li><strong>DMZ:</strong> Lobby - visitors allowed, but limited access</li>
+                        <li><strong>Trust (Inside):</strong> Office floors - employees only</li>
+                        <li><strong>Restricted:</strong> Server room - special badge required</li>
+                    </ul>
+                    <p>Security policies control movement BETWEEN zones, not within them.</p>
+                </div>
+
+                <table class="comparison-table">
+                    <thead>
+                        <tr><th>Zone</th><th>Trust Level</th><th>Contains</th><th>Typical Policy</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Untrust/Outside</strong></td>
+                            <td>0 (lowest)</td>
+                            <td>Internet connection</td>
+                            <td>Deny all inbound by default</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DMZ</strong></td>
+                            <td>50 (medium)</td>
+                            <td>Public-facing servers</td>
+                            <td>Allow specific services from Untrust</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trust/Inside</strong></td>
+                            <td>100 (high)</td>
+                            <td>User workstations</td>
+                            <td>Allow outbound, deny inbound</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Servers</strong></td>
+                            <td>100 (high)</td>
+                            <td>Internal servers, DCs</td>
+                            <td>Allow only required traffic</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Guest</strong></td>
+                            <td>10 (very low)</td>
+                            <td>Guest WiFi, BYOD</td>
+                            <td>Internet only, no internal access</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-book"></i> Detailed Guides</h2>
+                <div class="nav-cards">
+                    <a href="pages/ngfw/fortinet/index.html" class="nav-card">
+                        <h4><i class="fas fa-shield-alt"></i> Fortinet FortiGate Complete Guide</h4>
+                        <p>From unboxing to advanced config - interfaces, policies, UTM, VPN, HA, FortiManager, SIEM integration</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/index.html" class="nav-card">
+                        <h4><i class="fas fa-fire"></i> Palo Alto Complete Guide</h4>
+                        <p>From Day 1 setup to advanced features - App-ID, User-ID, GlobalProtect, Panorama, Cortex integration</p>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

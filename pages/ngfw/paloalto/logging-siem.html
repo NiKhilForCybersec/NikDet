@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Logging & SIEM Integration | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>Logging & SIEM</span></div>
+            <div class="content">
+                <h1><i class="fas fa-database"></i> Palo Alto Logging & SIEM Integration</h1>
+                <p class="lead">Complete guide to configuring logging, Cortex Data Lake, syslog, and integrating with Microsoft Sentinel and Splunk.</p>
+
+                <h2><i class="fas fa-list"></i> Log Types Overview</h2>
+                <table class="feature-table">
+                    <thead>
+                        <tr><th>Log Type</th><th>Content</th><th>Key Use Cases</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Traffic</strong></td><td>Session start/end, bytes, packets</td><td>Network forensics, bandwidth</td></tr>
+                        <tr><td><strong>Threat</strong></td><td>AV, spyware, vulnerability detections</td><td>Security monitoring</td></tr>
+                        <tr><td><strong>URL</strong></td><td>Web requests, categories, actions</td><td>Web filtering audit</td></tr>
+                        <tr><td><strong>WildFire</strong></td><td>File submissions, verdicts</td><td>Malware analysis</td></tr>
+                        <tr><td><strong>Data Filtering</strong></td><td>DLP matches</td><td>Data loss prevention</td></tr>
+                        <tr><td><strong>Authentication</strong></td><td>User auth events</td><td>Identity monitoring</td></tr>
+                        <tr><td><strong>System</strong></td><td>System events, errors</td><td>Health monitoring</td></tr>
+                        <tr><td><strong>Config</strong></td><td>Configuration changes</td><td>Change management, audit</td></tr>
+                        <tr><td><strong>HIP Match</strong></td><td>Host Information Profile matches</td><td>Endpoint compliance</td></tr>
+                        <tr><td><strong>GlobalProtect</strong></td><td>VPN connections</td><td>Remote access audit</td></tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-cog"></i> Configure Log Settings</h2>
+                <div class="step-section">
+                    <h3>Enable Logging on Security Rules</h3>
+                    <div class="code-block"><pre>> configure
+
+# Enable logging for a security rule
+# set rulebase security rules <rule-name> log-start yes
+# set rulebase security rules <rule-name> log-end yes
+# set rulebase security rules <rule-name> log-setting default
+
+# Example
+# set rulebase security rules Allow-Users-Internet log-start yes
+# set rulebase security rules Allow-Users-Internet log-end yes
+
+# commit</pre></div>
+
+                    <h3>Create Log Forwarding Profile</h3>
+                    <div class="code-block"><pre># Create log forwarding profile
+# set shared log-settings profiles My-Log-Profile match-list Traffic-Logs log-type traffic
+# set shared log-settings profiles My-Log-Profile match-list Traffic-Logs filter "All Logs"
+# set shared log-settings profiles My-Log-Profile match-list Traffic-Logs send-to-panorama yes
+# set shared log-settings profiles My-Log-Profile match-list Traffic-Logs send-syslog Syslog-Server
+
+# For threat logs
+# set shared log-settings profiles My-Log-Profile match-list Threat-Logs log-type threat
+# set shared log-settings profiles My-Log-Profile match-list Threat-Logs filter "All Logs"
+# set shared log-settings profiles My-Log-Profile match-list Threat-Logs send-to-panorama yes
+# set shared log-settings profiles My-Log-Profile match-list Threat-Logs send-syslog Syslog-Server
+
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Syslog Configuration</h2>
+                <div class="step-section">
+                    <h3>Create Syslog Server Profile</h3>
+                    <div class="code-block"><pre>> configure
+
+# Create syslog server profile
+# set shared log-settings syslog Syslog-Server server SIEM-Server server 10.1.1.100
+# set shared log-settings syslog Syslog-Server server SIEM-Server transport UDP
+# set shared log-settings syslog Syslog-Server server SIEM-Server port 514
+# set shared log-settings syslog Syslog-Server server SIEM-Server format BSD
+# set shared log-settings syslog Syslog-Server server SIEM-Server facility LOG_USER
+
+# For TCP with TLS (recommended)
+# set shared log-settings syslog Secure-Syslog server SIEM-TLS server 10.1.1.100
+# set shared log-settings syslog Secure-Syslog server SIEM-TLS transport SSL
+# set shared log-settings syslog Secure-Syslog server SIEM-TLS port 6514
+# set shared log-settings syslog Secure-Syslog server SIEM-TLS format BSD
+# set shared log-settings syslog Secure-Syslog server SIEM-TLS ssl-certificate SIEM-Cert
+
+# commit</pre></div>
+
+                    <h3>Syslog Formats</h3>
+                    <table class="feature-table">
+                        <tr><th>Format</th><th>Description</th><th>Use Case</th></tr>
+                        <tr><td><strong>BSD</strong></td><td>Traditional syslog format</td><td>Generic syslog servers</td></tr>
+                        <tr><td><strong>IETF</strong></td><td>RFC 5424 format</td><td>Modern syslog servers</td></tr>
+                        <tr><td><strong>CEF</strong></td><td>Common Event Format</td><td>ArcSight, Sentinel</td></tr>
+                        <tr><td><strong>LEEF</strong></td><td>Log Event Extended Format</td><td>QRadar</td></tr>
+                    </table>
+
+                    <div class="code-block"><pre># Configure CEF format for Sentinel
+# set shared log-settings syslog Sentinel-Syslog server Sentinel server 10.1.1.150
+# set shared log-settings syslog Sentinel-Syslog server Sentinel transport UDP
+# set shared log-settings syslog Sentinel-Syslog server Sentinel port 514
+# set shared log-settings syslog Sentinel-Syslog server Sentinel format CEF
+# set shared log-settings syslog Sentinel-Syslog server Sentinel facility LOG_USER
+
+# commit</pre></div>
+
+                    <h3>Configure System Logging</h3>
+                    <div class="code-block"><pre># System logs
+# set deviceconfig system log-settings system match-list System-Logs filter "All Logs"
+# set deviceconfig system log-settings system match-list System-Logs send-syslog Syslog-Server
+
+# Config change logs
+# set deviceconfig system log-settings config match-list Config-Logs filter "All Logs"
+# set deviceconfig system log-settings config match-list Config-Logs send-syslog Syslog-Server
+
+# Authentication logs  
+# set deviceconfig system log-settings userid match-list Auth-Logs filter "All Logs"
+# set deviceconfig system log-settings userid match-list Auth-Logs send-syslog Syslog-Server
+
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fab fa-microsoft"></i> Microsoft Sentinel Integration</h2>
+                <div class="step-section">
+                    <h3>Option 1: CEF over Syslog (Recommended)</h3>
+                    <div class="info-box">
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            <li>Azure Log Analytics workspace</li>
+                            <li>Linux VM as syslog forwarder with Log Analytics agent</li>
+                            <li>Palo Alto configured for CEF syslog</li>
+                        </ul>
+                    </div>
+
+                    <h3>Step 1: Deploy Syslog Forwarder</h3>
+                    <div class="code-block"><pre># On Linux VM (Ubuntu)
+# Install Azure Monitor Agent or Log Analytics agent
+wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh
+sudo sh onboard_agent.sh -w &lt;workspace-id&gt; -s &lt;shared-key&gt; -d opinsights.azure.com
+
+# Configure rsyslog for CEF
+sudo nano /etc/rsyslog.d/security-config-omsagent.conf
+
+# Add:
+if $rawmsg contains "CEF:" then @@127.0.0.1:25226
+
+# Restart rsyslog
+sudo systemctl restart rsyslog
+
+# Open firewall
+sudo ufw allow 514/udp
+sudo ufw allow 514/tcp</pre></div>
+
+                    <h3>Step 2: Configure Palo Alto for CEF</h3>
+                    <div class="code-block"><pre>> configure
+
+# Create syslog profile for Sentinel
+# set shared log-settings syslog Sentinel server Linux-Forwarder server 10.1.1.150
+# set shared log-settings syslog Sentinel server Linux-Forwarder transport UDP
+# set shared log-settings syslog Sentinel server Linux-Forwarder port 514
+# set shared log-settings syslog Sentinel server Linux-Forwarder format CEF
+# set shared log-settings syslog Sentinel server Linux-Forwarder facility LOG_USER
+
+# Create log forwarding profile
+# set shared log-settings profiles Sentinel-Forward match-list All-Traffic log-type traffic
+# set shared log-settings profiles Sentinel-Forward match-list All-Traffic filter "All Logs"
+# set shared log-settings profiles Sentinel-Forward match-list All-Traffic send-syslog Sentinel
+
+# set shared log-settings profiles Sentinel-Forward match-list All-Threats log-type threat  
+# set shared log-settings profiles Sentinel-Forward match-list All-Threats filter "All Logs"
+# set shared log-settings profiles Sentinel-Forward match-list All-Threats send-syslog Sentinel
+
+# Apply to security rules
+# set rulebase security rules <rule-name> log-setting Sentinel-Forward
+
+# commit</pre></div>
+
+                    <h3>Step 3: Enable Sentinel Connector</h3>
+                    <ol>
+                        <li>Azure Portal → Microsoft Sentinel → Data connectors</li>
+                        <li>Search "Palo Alto" → Select connector</li>
+                        <li>Follow configuration steps</li>
+                        <li>Verify data in: CommonSecurityLog table</li>
+                    </ol>
+
+                    <h3>Sentinel KQL Queries</h3>
+                    <div class="code-block"><pre>// All Palo Alto logs
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| take 100
+
+// Blocked traffic
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| where DeviceAction == "deny" or DeviceAction == "drop"
+| summarize count() by SourceIP, DestinationIP, DestinationPort
+| top 10 by count_
+
+// Threat detections
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| where Activity == "THREAT"
+| project TimeGenerated, SourceIP, DestinationIP, 
+          ThreatName=DeviceCustomString1, 
+          Severity=LogSeverity,
+          Action=DeviceAction
+
+// Application usage
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| where Activity == "TRAFFIC"
+| summarize TotalBytes = sum(SentBytes + ReceivedBytes) by ApplicationProtocol
+| top 10 by TotalBytes
+
+// Failed GlobalProtect logins
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| where Activity == "GLOBALPROTECT"
+| where DeviceAction contains "fail"
+| project TimeGenerated, SourceIP, SourceUserName, Message
+
+// WildFire malware detections
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| where DeviceEventClassID == "wildfire"
+| where DeviceCustomString2 == "malware"
+| project TimeGenerated, SourceIP, DestinationIP, FileName, FileHash</pre></div>
+                </div>
+
+                <h2><i class="fas fa-chart-simple"></i> Splunk Integration</h2>
+                <div class="step-section">
+                    <h3>Option 1: Syslog to Splunk</h3>
+                    <div class="code-block"><pre># On Splunk:
+# 1. Settings → Data Inputs → UDP → New Local UDP
+# 2. Port: 514
+# 3. Source type: pan:log (use Palo Alto Add-on)
+# 4. Index: pan_logs
+
+# On Palo Alto - configure syslog server pointing to Splunk
+> configure
+# set shared log-settings syslog Splunk server Splunk-Server server splunk.company.com
+# set shared log-settings syslog Splunk server Splunk-Server transport UDP
+# set shared log-settings syslog Splunk server Splunk-Server port 514
+# set shared log-settings syslog Splunk server Splunk-Server format BSD
+
+# commit</pre></div>
+
+                    <h3>Option 2: Palo Alto Add-on for Splunk</h3>
+                    <p>Install from Splunkbase for pre-built dashboards and field extractions.</p>
+
+                    <h3>Splunk Searches</h3>
+                    <div class="code-block"><pre># All Palo Alto traffic
+index=pan_logs sourcetype=pan:traffic
+
+# Blocked sessions
+index=pan_logs sourcetype=pan:traffic action=deny OR action=drop
+| stats count by src_ip, dest_ip, dest_port
+| sort -count
+
+# Threat events
+index=pan_logs sourcetype=pan:threat
+| table _time, src_ip, dest_ip, threat_name, severity, action
+
+# Top applications by bandwidth
+index=pan_logs sourcetype=pan:traffic
+| stats sum(bytes) as total_bytes by app
+| sort -total_bytes
+| head 20
+
+# User activity
+index=pan_logs sourcetype=pan:traffic src_user=*
+| stats count, sum(bytes_sent) as sent, sum(bytes_received) as received by src_user
+| sort -count
+
+# GlobalProtect connections
+index=pan_logs sourcetype=pan:globalprotect
+| stats count by portal_user, public_ip, login_duration</pre></div>
+                </div>
+
+                <h2><i class="fas fa-cloud"></i> Cortex Data Lake</h2>
+                <div class="step-section">
+                    <h3>What is Cortex Data Lake?</h3>
+                    <p>Palo Alto's cloud-based log storage and analytics platform. Benefits:</p>
+                    <ul>
+                        <li>No on-premises log storage infrastructure</li>
+                        <li>Integrated with Cortex XSOAR for automation</li>
+                        <li>Machine learning analytics</li>
+                        <li>Long-term retention</li>
+                    </ul>
+
+                    <h3>Enable Cortex Data Lake</h3>
+                    <div class="code-block"><pre>> configure
+
+# Configure Cortex Data Lake connection
+# set deviceconfig system log-settings cortex-data-lake region americas
+# set deviceconfig system log-settings cortex-data-lake enable-log-compression yes
+
+# Enable log types to forward
+# set deviceconfig system log-settings cortex-data-lake log-type-traffic yes
+# set deviceconfig system log-settings cortex-data-lake log-type-threat yes
+# set deviceconfig system log-settings cortex-data-lake log-type-url yes
+# set deviceconfig system log-settings cortex-data-lake log-type-data yes
+# set deviceconfig system log-settings cortex-data-lake log-type-wildfire yes
+# set deviceconfig system log-settings cortex-data-lake log-type-auth yes
+# set deviceconfig system log-settings cortex-data-lake log-type-globalprotect yes
+
+# commit</pre></div>
+
+                    <h3>Query in Cortex XDR</h3>
+                    <div class="code-block"><pre>// XQL query for threat events
+dataset = panw_ngfw_threat_raw
+| filter action != "allow"
+| fields timestamp, src_ip, dst_ip, threat_name, severity, action
+
+// Traffic analysis
+dataset = panw_ngfw_traffic_raw
+| filter bytes > 1000000
+| stats sum(bytes) as total_bytes by app
+| sort desc total_bytes
+| limit 20</pre></div>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Troubleshooting Logging</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Verify syslog configuration
+> show log-settings syslog
+
+# Check if logs are being generated
+> show log traffic
+
+# Test syslog connectivity
+> debug log-receiver syslog start
+> debug log-receiver syslog stats
+
+# Check log forwarding statistics
+> show logging-status
+
+# View real-time logs
+> tail follow yes traffic
+> tail follow yes threat
+
+# Check disk space for local logs
+> show system disk-space</pre></div>
+
+                    <h3>Common Issues</h3>
+                    <table class="feature-table">
+                        <tr><th>Issue</th><th>Cause</th><th>Solution</th></tr>
+                        <tr><td>No logs in SIEM</td><td>Firewall blocking syslog</td><td>Check firewall rules allow 514/udp</td></tr>
+                        <tr><td>Missing fields</td><td>Wrong syslog format</td><td>Use CEF for Sentinel, BSD for Splunk</td></tr>
+                        <tr><td>Logs delayed</td><td>Network latency or queuing</td><td>Use TCP syslog for reliability</td></tr>
+                        <tr><td>Rule not logging</td><td>log-end not enabled</td><td>Enable log-end on security rule</td></tr>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

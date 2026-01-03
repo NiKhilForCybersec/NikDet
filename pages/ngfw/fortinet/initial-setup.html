@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate Initial Setup | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .success-box { background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .gui-step { display: flex; align-items: flex-start; gap: 1rem; margin: 1rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.05); border-radius: 8px; }
+        .gui-step .step-num { background: var(--accent-color); color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 0.85rem; }
+        .gui-step .step-content { flex: 1; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>Initial Setup</span></div>
+            <div class="content">
+                <h1><i class="fas fa-play-circle"></i> FortiGate Initial Setup</h1>
+                <p class="lead">Complete Day 1 configuration guide. From unboxing to a fully functional firewall with management access.</p>
+
+                <h2><i class="fas fa-box-open"></i> Step 1: Physical Setup & Console Access</h2>
+                <div class="step-section">
+                    <h3>What You Need</h3>
+                    <ul>
+                        <li>Console cable (RJ45-to-DB9 or USB-to-Console)</li>
+                        <li>Terminal emulator (PuTTY, SecureCRT, or screen)</li>
+                        <li>Laptop with serial port or USB-to-serial adapter</li>
+                    </ul>
+
+                    <h3>Console Connection Settings</h3>
+                    <table class="feature-table">
+                        <tr><th>Setting</th><th>Value</th></tr>
+                        <tr><td>Baud Rate</td><td><strong>9600</strong></td></tr>
+                        <tr><td>Data Bits</td><td>8</td></tr>
+                        <tr><td>Parity</td><td>None</td></tr>
+                        <tr><td>Stop Bits</td><td>1</td></tr>
+                        <tr><td>Flow Control</td><td>None</td></tr>
+                    </table>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Default Credentials</h4>
+                        <p><strong>Username:</strong> admin<br>
+                        <strong>Password:</strong> (blank - just press Enter)</p>
+                        <p>You will be forced to set a new password on first login.</p>
+                    </div>
+
+                    <h3>First Login</h3>
+                    <div class="code-block"><pre>FortiGate-100F login: admin
+Password: [press Enter]
+
+You are forced to change your password. Please input a new password.
+New Password: ********
+Confirm Password: ********
+Welcome!
+
+FortiGate-100F #</pre></div>
+                </div>
+
+                <h2><i class="fas fa-network-wired"></i> Step 2: Configure Management Interface</h2>
+                <div class="step-section">
+                    <h3>Option A: CLI Configuration</h3>
+                    <div class="code-block"><pre># View current interface configuration
+get system interface
+
+# Configure management interface (usually port1 or mgmt)
+config system interface
+    edit "port1"
+        set mode static
+        set ip 192.168.1.99/24
+        set allowaccess ping https ssh http
+        set alias "Management"
+    next
+end
+
+# Set default gateway
+config router static
+    edit 1
+        set gateway 192.168.1.1
+        set device "port1"
+    next
+end
+
+# Verify configuration
+get system interface port1
+execute ping 192.168.1.1</pre></div>
+
+                    <h3>Option B: Default Web Access</h3>
+                    <div class="info-box">
+                        <h4>Factory Default IP</h4>
+                        <p>Most FortiGate models have a default IP on port1 or internal interface:</p>
+                        <ul>
+                            <li><strong>Default IP:</strong> 192.168.1.99</li>
+                            <li><strong>Subnet:</strong> 255.255.255.0</li>
+                            <li><strong>GUI Access:</strong> https://192.168.1.99</li>
+                        </ul>
+                        <p>Connect your laptop to port1/internal with IP 192.168.1.x</p>
+                    </div>
+
+                    <h3>Configure Management Access Protocols</h3>
+                    <div class="code-block"><pre># Allow management protocols on interface
+config system interface
+    edit "port1"
+        # Allowaccess options:
+        # ping      - ICMP ping
+        # https     - Web GUI (recommended)
+        # http      - Web GUI (not recommended - unencrypted)
+        # ssh       - CLI access (recommended)
+        # telnet    - CLI access (not recommended)
+        # snmp      - SNMP monitoring
+        # fgfm      - FortiManager communication
+        # radius-acct - RADIUS accounting
+        # probe-response - Link monitoring
+        # ftm       - FortiToken Mobile push
+        
+        set allowaccess ping https ssh snmp fgfm
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-user-shield"></i> Step 3: Admin Account Security</h2>
+                <div class="step-section">
+                    <h3>Change Admin Password (if not done at first login)</h3>
+                    <div class="code-block"><pre>config system admin
+    edit "admin"
+        set password YourStrongPassword123!
+    next
+end</pre></div>
+
+                    <h3>Create Additional Admin Accounts</h3>
+                    <div class="code-block"><pre># Create read-only admin
+config system admin
+    edit "readonly_admin"
+        set accprofile "read_only"
+        set password ReadOnlyPass123!
+        set trusthost1 10.0.0.0/8
+        set trusthost2 192.168.0.0/16
+    next
+end
+
+# Create super admin for emergencies
+config system admin
+    edit "emergency_admin"
+        set accprofile "super_admin"
+        set password EmergencyPass123!
+        set trusthost1 10.1.1.100/32
+    next
+end</pre></div>
+
+                    <h3>Restrict Admin Access by Source IP</h3>
+                    <div class="code-block"><pre># Limit admin access to specific networks
+config system admin
+    edit "admin"
+        set trusthost1 10.0.0.0/8
+        set trusthost2 192.168.1.0/24
+        # trusthost3-10 available for additional networks
+    next
+end</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-lock"></i> Security Best Practice</h4>
+                        <p>Always configure trusthosts to limit admin access to known management networks. This prevents unauthorized access even if credentials are compromised.</p>
+                    </div>
+
+                    <h3>Enable Two-Factor Authentication</h3>
+                    <div class="code-block"><pre># Enable FortiToken for admin
+config system admin
+    edit "admin"
+        set two-factor fortitoken
+        set fortitoken "FTKMOB1234567890"  # Token serial number
+    next
+end
+
+# Or use email-based 2FA
+config system admin
+    edit "admin"
+        set two-factor email
+        set email-to "admin@company.com"
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-key"></i> Step 4: License Registration</h2>
+                <div class="step-section">
+                    <h3>Check Current License Status</h3>
+                    <div class="code-block"><pre>get system status
+
+# Look for:
+# License Status: Valid
+# VM License: (for VM only)
+# FortiGuard: Connected
+
+diagnose autoupdate versions</pre></div>
+
+                    <h3>Register License via CLI</h3>
+                    <div class="code-block"><pre># Register with contract registration code
+execute fortitoken registration-code <registration-code>
+
+# Or upload license file
+execute restore license tftp <filename> <tftp-server-ip></pre></div>
+
+                    <h3>Register License via GUI</h3>
+                    <div class="gui-step">
+                        <div class="step-num">1</div>
+                        <div class="step-content">
+                            <strong>Login to FortiGate GUI</strong><br>
+                            Navigate to https://[fortigate-ip] and login
+                        </div>
+                    </div>
+                    <div class="gui-step">
+                        <div class="step-num">2</div>
+                        <div class="step-content">
+                            <strong>Go to System → FortiGuard</strong><br>
+                            Or Dashboard → Status → License Information
+                        </div>
+                    </div>
+                    <div class="gui-step">
+                        <div class="step-num">3</div>
+                        <div class="step-content">
+                            <strong>Click "Upload License" or enter registration code</strong><br>
+                            Upload the .lic file or enter the contract code
+                        </div>
+                    </div>
+                    <div class="gui-step">
+                        <div class="step-num">4</div>
+                        <div class="step-content">
+                            <strong>Verify license activation</strong><br>
+                            Check that all subscriptions show "Valid" status
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <h4><i class="fas fa-info-circle"></i> FortiCloud Registration</h4>
+                        <p>For cloud management and FortiCloud features:</p>
+                        <ol>
+                            <li>Create account at support.fortinet.com</li>
+                            <li>Register device serial number</li>
+                            <li>Associate licenses with device</li>
+                            <li>Enable FortiCloud on the device</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-cog"></i> Step 5: System Settings</h2>
+                <div class="step-section">
+                    <h3>Hostname and Basic Settings</h3>
+                    <div class="code-block"><pre># Set hostname
+config system global
+    set hostname "FW-DC-PRIMARY"
+    set timezone "America/Toronto"
+    # Or use timezone code: set timezone 12 (for EST)
+end
+
+# Verify
+get system global | grep hostname
+get system global | grep timezone</pre></div>
+
+                    <h3>DNS Configuration</h3>
+                    <div class="code-block"><pre>config system dns
+    set primary 8.8.8.8
+    set secondary 8.8.4.4
+    # Or use internal DNS
+    set primary 10.1.1.10
+    set secondary 10.1.1.11
+    set domain "company.local"
+end
+
+# Test DNS
+execute ping google.com</pre></div>
+
+                    <h3>NTP Configuration (Critical for Logs!)</h3>
+                    <div class="code-block"><pre>config system ntp
+    set ntpsync enable
+    set type custom
+    config ntpserver
+        edit 1
+            set server "time.windows.com"
+        next
+        edit 2
+            set server "pool.ntp.org"
+        next
+    end
+    set syncinterval 60
+end
+
+# Verify time sync
+execute time
+diagnose sys ntp status</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-clock"></i> Why NTP is Critical</h4>
+                        <ul>
+                            <li>Log timestamps must be accurate for SIEM correlation</li>
+                            <li>Certificate validation requires correct time</li>
+                            <li>HA synchronization depends on time sync</li>
+                            <li>Forensic investigations need accurate timestamps</li>
+                        </ul>
+                    </div>
+
+                    <h3>Session and Performance Settings</h3>
+                    <div class="code-block"><pre>config system session-ttl
+    set default 300
+end
+
+config system global
+    # Idle timeout for admin sessions
+    set admintimeout 30
+    
+    # Disable USB auto-install (security)
+    set usb-auto-install disable
+    
+    # Enable daily config backup
+    set revision-backup-on-logout enable
+    
+    # Stronger admin password policy
+    set admin-maintainer disable
+    set strong-crypto enable
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-download"></i> Step 6: Firmware Update</h2>
+                <div class="step-section">
+                    <h3>Check Current Firmware</h3>
+                    <div class="code-block"><pre>get system status
+
+# Output includes:
+# Version: FortiGate-100F v7.4.3,build2573,240514 (GA)
+# Virus-DB: 1.00000(2024-05-14)
+# IPS-DB: 6.00741(2024-05-14)</pre></div>
+
+                    <h3>Upgrade via GUI</h3>
+                    <div class="gui-step">
+                        <div class="step-num">1</div>
+                        <div class="step-content">
+                            <strong>Download firmware from support.fortinet.com</strong><br>
+                            Login → Download → Firmware Images → Select model
+                        </div>
+                    </div>
+                    <div class="gui-step">
+                        <div class="step-num">2</div>
+                        <div class="step-content">
+                            <strong>Backup current config!</strong><br>
+                            System → Backup → Download configuration
+                        </div>
+                    </div>
+                    <div class="gui-step">
+                        <div class="step-num">3</div>
+                        <div class="step-content">
+                            <strong>System → Firmware → Upload firmware file</strong><br>
+                            Upload the .out file and confirm upgrade
+                        </div>
+                    </div>
+
+                    <h3>Upgrade via CLI</h3>
+                    <div class="code-block"><pre># ALWAYS BACKUP FIRST!
+execute backup config tftp backup_pre_upgrade.conf 10.1.1.50
+
+# Upgrade from TFTP
+execute restore image tftp FGT_100F-v7.4.3-build2573-FORTINET.out 10.1.1.50
+
+# Or from USB (if enabled)
+execute restore image usb FGT_100F-v7.4.3-build2573-FORTINET.out</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Upgrade Path</h4>
+                        <p>You cannot skip major versions! Check the upgrade path document:</p>
+                        <ul>
+                            <li>6.4 → 7.0 → 7.2 → 7.4 (correct)</li>
+                            <li>6.4 → 7.4 (may cause issues!)</li>
+                        </ul>
+                        <p>Always check release notes for your specific upgrade path.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-cloud"></i> Step 7: FortiGuard Connection</h2>
+                <div class="step-section">
+                    <h3>Configure FortiGuard Settings</h3>
+                    <div class="code-block"><pre>config system fortiguard
+    set update-server-location automatic
+    set auto-firmware-upgrade disable
+    set antispam-force-off disable
+    set webfilter-force-off disable
+    set webfilter-cache enable
+    set webfilter-cache-ttl 3600
+    set update-ffdb enable
+end
+
+# Test FortiGuard connectivity
+diagnose debug rating
+execute update-now</pre></div>
+
+                    <h3>Verify FortiGuard Status</h3>
+                    <div class="code-block"><pre># Check all FortiGuard service status
+diagnose autoupdate status
+
+# Check license/entitlement
+diagnose autoupdate versions
+
+# Test FortiGuard connectivity
+diagnose debug rating</pre></div>
+
+                    <h3>If FortiGuard Connection Fails</h3>
+                    <div class="code-block"><pre># Check DNS resolution
+execute ping update.fortiguard.net
+
+# Check if firewall is blocking
+# FortiGuard uses ports 443, 8888, 53
+execute traceroute update.fortiguard.net
+
+# Force update
+execute update-now
+
+# Check proxy if behind one
+config system fortiguard
+    set proxy-server-ip 10.1.1.50
+    set proxy-server-port 8080
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-save"></i> Step 8: Backup Configuration</h2>
+                <div class="step-section">
+                    <h3>Manual Backup via CLI</h3>
+                    <div class="code-block"><pre># Backup to TFTP server
+execute backup config tftp <filename> <tftp-server-ip>
+execute backup config tftp fw_backup_20240515.conf 10.1.1.50
+
+# Backup to USB (if enabled)
+execute backup config usb
+
+# Backup to FTP
+execute backup config ftp <filename> <ftp-server-ip> <username> <password></pre></div>
+
+                    <h3>Automatic Backup Schedule</h3>
+                    <div class="code-block"><pre># Enable scheduled backup to FortiManager
+config system central-management
+    set type fortimanager
+    set fmg "10.1.1.100"
+end
+
+# Or use automation to backup regularly
+config system automation-trigger
+    edit "daily-backup"
+        set trigger-type scheduled
+        set trigger-frequency daily
+        set trigger-hour 2
+        set trigger-minute 0
+    next
+end
+
+config system automation-action
+    edit "backup-to-tftp"
+        set action-type cli-script
+        set script "execute backup config tftp daily_backup.conf 10.1.1.50"
+    next
+end
+
+config system automation-stitch
+    edit "scheduled-backup"
+        set trigger "daily-backup"
+        config actions
+            edit 1
+                set action "backup-to-tftp"
+            next
+        end
+    next
+end</pre></div>
+
+                    <div class="success-box">
+                        <h4><i class="fas fa-check-circle"></i> Initial Setup Complete!</h4>
+                        <p>Your FortiGate now has:</p>
+                        <ul>
+                            <li>✅ Secure admin access with strong password</li>
+                            <li>✅ Management IP configured</li>
+                            <li>✅ Licenses activated</li>
+                            <li>✅ DNS and NTP configured</li>
+                            <li>✅ FortiGuard services connected</li>
+                            <li>✅ Configuration backed up</li>
+                        </ul>
+                        <p>Next: <a href="pages/ngfw/fortinet/interfaces-zones.html">Configure Interfaces & Zones →</a></p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

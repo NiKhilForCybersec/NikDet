@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Integration - Defender for Cloud | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .step-box { background: rgba(99, 102, 241, 0.1); padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .step-box h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+        .numbered-step { display: flex; align-items: flex-start; gap: 1rem; margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; }
+        .step-number { background: var(--accent-color); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .step-content { flex: 1; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/defender-cloud/index.html">Defender for Cloud</a><span class="separator">/</span><span>GCP Integration</span></div>
+            <div class="content">
+                <h1><i class="fab fa-google"></i> GCP Integration Guide</h1>
+                <p class="lead">Complete step-by-step guide to connect your Google Cloud Platform projects to Microsoft Defender for Cloud. No steps skipped.</p>
+
+                <h2><i class="fas fa-clipboard-check"></i> Prerequisites</h2>
+                <table class="prereq-table">
+                    <thead><tr><th>Requirement</th><th>Details</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Azure Subscription</strong></td><td>With Defender for Cloud enabled</td></tr>
+                        <tr><td><strong>Azure Permissions</strong></td><td>Security Admin + Contributor on subscription</td></tr>
+                        <tr><td><strong>GCP Project</strong></td><td>With Owner or Editor access</td></tr>
+                        <tr><td><strong>GCP APIs Enabled</strong></td><td>Cloud Resource Manager, IAM, Compute Engine</td></tr>
+                        <tr><td><strong>Defender Plan</strong></td><td>Foundational CSPM (free) or Defender CSPM (paid)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-cogs"></i> What Gets Created in GCP</h2>
+                <p>The integration creates these resources in your GCP project:</p>
+                <ul>
+                    <li><strong>Service Account:</strong> microsoft-defender-for-cloud@[project].iam.gserviceaccount.com</li>
+                    <li><strong>Workload Identity Federation:</strong> Pool and provider for Azure authentication</li>
+                    <li><strong>IAM Bindings:</strong> Security Reviewer, Viewer roles</li>
+                    <li><strong>For CWPP:</strong> Additional service account for Arc agent deployment</li>
+                </ul>
+
+                <h2><i class="fas fa-tasks"></i> Step-by-Step: Connect Single GCP Project</h2>
+
+                <div class="numbered-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Enable Required GCP APIs</h4>
+                        <p>Before connecting, enable these APIs in your GCP project:</p>
+                        <div class="code-block"><pre># Using gcloud CLI
+gcloud services enable cloudresourcemanager.googleapis.com
+gcloud services enable iam.googleapis.com
+gcloud services enable compute.googleapis.com
+gcloud services enable container.googleapis.com  # For GKE
+gcloud services enable sqladmin.googleapis.com   # For Cloud SQL
+
+# Verify enabled APIs
+gcloud services list --enabled</pre></div>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Access Defender for Cloud in Azure</h4>
+                        <ol>
+                            <li>Go to <a href="https://portal.azure.com" target="_blank">Azure Portal</a></li>
+                            <li>Search for <strong>"Microsoft Defender for Cloud"</strong></li>
+                            <li>Click <strong>Environment settings</strong> in left menu</li>
+                            <li>Click <strong>+ Add environment</strong></li>
+                            <li>Select <strong>Google Cloud Platform</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Configure Project Details</h4>
+                        <ol>
+                            <li>Select <strong>Single project</strong> (or Organization for multiple projects)</li>
+                            <li>Enter <strong>Connector name</strong>: e.g., "GCP-Production"</li>
+                            <li>Select Azure <strong>Subscription</strong></li>
+                            <li>Select or create <strong>Resource group</strong></li>
+                            <li>Select <strong>Location</strong>: Choose region</li>
+                            <li>Enter your <strong>GCP Project ID</strong> (not project name)</li>
+                            <li>Click <strong>Next: Select plans</strong></li>
+                        </ol>
+                        <div class="code-block"><pre># Find your GCP Project ID
+gcloud projects list --format="table(projectId,name)"
+
+# Or in GCP Console: Dashboard → Project info → Project ID</pre></div>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Select Defender Plans</h4>
+                        <p>Choose which plans to enable for GCP:</p>
+                        <table class="prereq-table">
+                            <thead><tr><th>Plan</th><th>What It Protects</th><th>Cost</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Foundational CSPM</strong></td><td>Basic security recommendations</td><td>Free</td></tr>
+                                <tr><td><strong>Defender CSPM</strong></td><td>Attack paths, agentless scanning</td><td>Paid</td></tr>
+                                <tr><td><strong>Servers</strong></td><td>Compute Engine VMs via Arc</td><td>Paid</td></tr>
+                                <tr><td><strong>Containers</strong></td><td>GKE clusters</td><td>Paid</td></tr>
+                                <tr><td><strong>Databases</strong></td><td>Cloud SQL instances</td><td>Paid</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Toggle desired plans <strong>On</strong></p>
+                        <p>Click <strong>Next: Configure access</strong></p>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h4>Configure Access - Download Script</h4>
+                        <ol>
+                            <li>Select deployment type: <strong>GCP Cloud Shell</strong> (recommended)</li>
+                            <li>Click <strong>Copy</strong> to copy the script, OR</li>
+                            <li>Click <strong>Download</strong> to get the shell script</li>
+                            <li>Note the script content - it creates:
+                                <ul>
+                                    <li>Service account</li>
+                                    <li>Workload identity pool</li>
+                                    <li>Workload identity provider</li>
+                                    <li>IAM policy bindings</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h4>Run Script in GCP Cloud Shell</h4>
+                        <ol>
+                            <li>Open <a href="https://console.cloud.google.com" target="_blank">GCP Console</a></li>
+                            <li>Click the <strong>Cloud Shell</strong> icon (top right)</li>
+                            <li>Wait for Cloud Shell to initialize</li>
+                            <li>Paste the copied script and press Enter</li>
+                            <li>Script will prompt for confirmation - type <strong>y</strong></li>
+                            <li>Wait for completion (2-5 minutes)</li>
+                        </ol>
+                        <div class="code-block"><pre># Example of what the script does (simplified):
+
+# Set variables
+PROJECT_ID="your-project-id"
+POOL_ID="azure-defender-pool"
+PROVIDER_ID="azure-defender-provider"
+SERVICE_ACCOUNT="microsoft-defender-for-cloud"
+
+# Create service account
+gcloud iam service-accounts create $SERVICE_ACCOUNT \
+    --display-name="Microsoft Defender for Cloud"
+
+# Create workload identity pool
+gcloud iam workload-identity-pools create $POOL_ID \
+    --location="global" \
+    --display-name="Azure Defender Pool"
+
+# Create workload identity provider
+gcloud iam workload-identity-pools providers create-oidc $PROVIDER_ID \
+    --location="global" \
+    --workload-identity-pool=$POOL_ID \
+    --issuer-uri="https://sts.windows.net/YOUR-TENANT-ID/" \
+    --allowed-audiences="api://YOUR-APP-ID" \
+    --attribute-mapping="google.subject=assertion.sub"
+
+# Grant service account permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/iam.securityReviewer"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$SERVICE_ACCOUNT@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/viewer"</pre></div>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">7</div>
+                    <div class="step-content">
+                        <h4>Verify Script Output</h4>
+                        <p>After script completion, you should see:</p>
+                        <ul>
+                            <li>Service account created successfully</li>
+                            <li>Workload identity pool created</li>
+                            <li>Workload identity provider created</li>
+                            <li>IAM bindings updated</li>
+                        </ul>
+                        <div class="code-block"><pre># Verify service account exists
+gcloud iam service-accounts list --filter="email:microsoft-defender"
+
+# Verify workload identity pool
+gcloud iam workload-identity-pools list --location=global
+
+# Verify IAM bindings
+gcloud projects get-iam-policy $PROJECT_ID \
+    --filter="bindings.members:microsoft-defender" \
+    --format="table(bindings.role)"</pre></div>
+                    </div>
+                </div>
+
+                <div class="numbered-step">
+                    <div class="step-number">8</div>
+                    <div class="step-content">
+                        <h4>Complete Azure Configuration</h4>
+                        <ol>
+                            <li>Return to Azure portal tab</li>
+                            <li>Click <strong>Next: Review and generate</strong></li>
+                            <li>Review your configuration</li>
+                            <li>Click <strong>Create</strong></li>
+                            <li>Wait for connector creation (1-2 minutes)</li>
+                            <li>Status should show <strong>Connected</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-clock"></i> Data Sync Time</h4>
+                    <p>After connection, it takes <strong>up to 24 hours</strong> for full security assessment. Initial recommendations appear within 2-4 hours.</p>
+                </div>
+
+                <h2><i class="fas fa-building"></i> Connect GCP Organization (Multiple Projects)</h2>
+                <div class="step-section">
+                    <h3>For GCP Organizations</h3>
+                    <p>To connect all projects in a GCP organization:</p>
+
+                    <div class="step-box">
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            <li>GCP Organization Administrator role</li>
+                            <li>Organization ID (numeric)</li>
+                            <li>All projects must have required APIs enabled</li>
+                        </ul>
+                    </div>
+
+                    <ol>
+                        <li>In Azure, select <strong>Organization</strong> instead of Single project</li>
+                        <li>Enter your <strong>GCP Organization ID</strong></li>
+                        <li>The script will apply at organization level</li>
+                        <li>All current and future projects are covered</li>
+                    </ol>
+
+                    <div class="code-block"><pre># Find GCP Organization ID
+gcloud organizations list
+
+# Output example:
+# DISPLAY_NAME     ID              DIRECTORY_CUSTOMER_ID
+# My Organization  123456789012    C01234567
+
+# List all projects in organization
+gcloud projects list --filter="parent.id=123456789012"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Enable Defender for Servers (Compute Engine)</h2>
+                <div class="step-section">
+                    <h3>Protect GCE VMs with Azure Arc</h3>
+                    <p>To get full server protection, install Azure Arc agent on Compute Engine VMs.</p>
+
+                    <div class="step-box">
+                        <h4>Enable Auto-provisioning</h4>
+                        <ol>
+                            <li>In Defender for Cloud, go to <strong>Environment settings</strong></li>
+                            <li>Select your GCP connector</li>
+                            <li>Click <strong>Settings & monitoring</strong></li>
+                            <li>Under <strong>Servers</strong>, enable <strong>Auto-provision Arc agent</strong></li>
+                        </ol>
+                    </div>
+
+                    <h3>Manual Arc Agent Installation on GCE</h3>
+                    <div class="code-block"><pre># SSH to your GCE VM first
+gcloud compute ssh your-vm-name --zone=us-central1-a
+
+# On Linux GCE instance
+wget https://aka.ms/azcmagent -O install_linux_azcmagent.sh
+sudo bash install_linux_azcmagent.sh
+
+# Connect to Azure
+sudo azcmagent connect \
+    --tenant-id "YOUR-AZURE-TENANT-ID" \
+    --subscription-id "YOUR-AZURE-SUBSCRIPTION-ID" \
+    --resource-group "YOUR-RESOURCE-GROUP" \
+    --location "eastus" \
+    --cloud "AzureCloud"
+
+# On Windows GCE instance (PowerShell as Admin)
+Invoke-WebRequest -Uri https://aka.ms/AzureConnectedMachineAgent -OutFile AzureConnectedMachineAgent.msi
+msiexec /i AzureConnectedMachineAgent.msi /l*v installationlog.txt /qn
+
+& "$env:ProgramFiles\AzureConnectedMachineAgent\azcmagent.exe" connect `
+    --tenant-id "YOUR-AZURE-TENANT-ID" `
+    --subscription-id "YOUR-AZURE-SUBSCRIPTION-ID" `
+    --resource-group "YOUR-RESOURCE-GROUP" `
+    --location "eastus"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-cubes"></i> Enable Defender for Containers (GKE)</h2>
+                <div class="step-section">
+                    <h3>GKE Cluster Protection</h3>
+                    <div class="step-box">
+                        <h4>Enable GKE Protection</h4>
+                        <ol>
+                            <li>In connector settings, enable <strong>Containers</strong> plan</li>
+                            <li>Defender extension auto-deploys to GKE clusters</li>
+                            <li>Or manually install via Helm:</li>
+                        </ol>
+                    </div>
+
+                    <div class="code-block"><pre># Get GKE credentials
+gcloud container clusters get-credentials your-cluster --zone us-central1-a
+
+# Add Microsoft Helm repo
+helm repo add microsoft https://raw.githubusercontent.com/microsoft/Defender-for-Cloud-Helm-Charts/main/repo/
+helm repo update
+
+# Install Defender extension
+helm install defender-for-containers microsoft/defender-for-containers \
+    --namespace mdc \
+    --create-namespace \
+    --set defender.subscriptionId="YOUR-AZURE-SUBSCRIPTION-ID" \
+    --set defender.resourceGroup="YOUR-RESOURCE-GROUP" \
+    --set defender.clusterName="your-gke-cluster"
+
+# Verify deployment
+kubectl get pods -n mdc</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Verify Connection</h2>
+                <div class="step-section">
+                    <h3>Check Connector Status</h3>
+                    <div class="code-block"><pre># Azure CLI - Check connector
+az security connector show --name "your-gcp-connector" --resource-group "your-rg"
+
+# List all GCP connectors
+az security connector list --query "[?environmentName=='GCP']" --output table</pre></div>
+
+                    <h3>Verify in Portal</h3>
+                    <ol>
+                        <li>Go to <strong>Defender for Cloud → Inventory</strong></li>
+                        <li>Filter by <strong>Environment: GCP</strong></li>
+                        <li>You should see:
+                            <ul>
+                                <li>Compute Engine instances</li>
+                                <li>Cloud Storage buckets</li>
+                                <li>GKE clusters (if Containers enabled)</li>
+                                <li>Cloud SQL instances (if Databases enabled)</li>
+                                <li>IAM service accounts</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <h3>Check Recommendations</h3>
+                    <ol>
+                        <li>Go to <strong>Defender for Cloud → Recommendations</strong></li>
+                        <li>Filter by <strong>Environment: GCP</strong></li>
+                        <li>Review GCP-specific recommendations like:
+                            <ul>
+                                <li>"GCP VM instances should not use default service account"</li>
+                                <li>"GCP Cloud Storage buckets should not be publicly accessible"</li>
+                                <li>"GCP Firewall rules should not allow unrestricted access"</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <h2><i class="fas fa-trash-alt"></i> Remove GCP Connection</h2>
+                <div class="step-section">
+                    <h3>Clean Removal Steps</h3>
+                    
+                    <div class="step-box">
+                        <h4>Step 1: Remove from Azure</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Environment settings</strong></li>
+                            <li>Find your GCP connector</li>
+                            <li>Click <strong>...</strong> → <strong>Delete</strong></li>
+                            <li>Confirm deletion</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Clean up GCP Resources</h4>
+                        <div class="code-block"><pre># Delete service account
+gcloud iam service-accounts delete microsoft-defender-for-cloud@$PROJECT_ID.iam.gserviceaccount.com
+
+# Delete workload identity pool (this deletes provider too)
+gcloud iam workload-identity-pools delete azure-defender-pool --location=global
+
+# Remove IAM bindings (if needed)
+gcloud projects remove-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:microsoft-defender-for-cloud@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/iam.securityReviewer"</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Troubleshooting</h2>
+                <div class="step-section">
+                    <h3>Common Issues</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Issue</th><th>Solution</th></tr></thead>
+                        <tbody>
+                            <tr><td>Script fails with permission error</td><td>Ensure you have Owner role on GCP project</td></tr>
+                            <tr><td>APIs not enabled</td><td>Run: gcloud services enable [api-name]</td></tr>
+                            <tr><td>Connector shows "Unhealthy"</td><td>Verify service account and workload identity exist</td></tr>
+                            <tr><td>No resources discovered</td><td>Wait 24 hours; check service account permissions</td></tr>
+                            <tr><td>VMs not protected</td><td>Install Azure Arc agent on GCE instances</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Debug Commands</h3>
+                    <div class="code-block"><pre># Check if APIs are enabled
+gcloud services list --enabled | grep -E "cloudresourcemanager|iam|compute"
+
+# Check service account permissions
+gcloud projects get-iam-policy $PROJECT_ID \
+    --flatten="bindings[].members" \
+    --filter="bindings.members:microsoft-defender" \
+    --format="table(bindings.role)"
+
+# Test workload identity
+gcloud iam workload-identity-pools describe azure-defender-pool --location=global
+
+# Check for errors in GCP logging
+gcloud logging read "resource.type=service_account AND severity>=ERROR" --limit=10</pre></div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

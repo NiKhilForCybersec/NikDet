@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate Firewall Policies | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .policy-flow { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto; white-space: pre; line-height: 1.3; }
+        .analogy-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>Firewall Policies</span></div>
+            <div class="content">
+                <h1><i class="fas fa-shield"></i> FortiGate Firewall Policies</h1>
+                <p class="lead">Complete guide to firewall policy configuration, NAT, policy ordering, and best practices.</p>
+
+                <div class="analogy-box">
+                    <h4><i class="fas fa-lightbulb"></i> Policy Flow Analogy</h4>
+                    <p>Think of policies like a bouncer with a rulebook:</p>
+                    <ol>
+                        <li>Packet arrives → "Where are you coming from? Where going?"</li>
+                        <li>Bouncer checks rulebook from TOP to BOTTOM</li>
+                        <li>First matching rule applies (STOP checking)</li>
+                        <li>If no rules match → DENY by default</li>
+                    </ol>
+                    <p><strong>Rule order matters!</strong> A broad "allow all" rule at the top will match everything before specific rules are checked.</p>
+                </div>
+
+                <h2><i class="fas fa-list-ol"></i> Policy Processing Order</h2>
+                <div class="policy-flow">
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                        FORTIGATE POLICY PROCESSING FLOW                              │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│   Incoming Packet                                                                    │
+│        │                                                                             │
+│        ▼                                                                             │
+│   ┌─────────────┐                                                                    │
+│   │  Ingress    │  ← Which interface did packet arrive on?                          │
+│   │  Interface  │                                                                    │
+│   └──────┬──────┘                                                                    │
+│          │                                                                           │
+│          ▼                                                                           │
+│   ┌─────────────┐                                                                    │
+│   │   Routing   │  ← Which egress interface? (Destination IP lookup)                │
+│   │   Decision  │                                                                    │
+│   └──────┬──────┘                                                                    │
+│          │                                                                           │
+│          ▼                                                                           │
+│   ┌─────────────────────────────────────────────────────────────────┐               │
+│   │                      POLICY LOOKUP                               │               │
+│   │                                                                  │               │
+│   │  For each policy (in order, top to bottom):                     │               │
+│   │                                                                  │               │
+│   │    ┌─ Incoming Interface/Zone match?                            │               │
+│   │    │  ├─ No  → Check next policy                                │               │
+│   │    │  └─ Yes ↓                                                  │               │
+│   │    │                                                             │               │
+│   │    ├─ Outgoing Interface/Zone match?                            │               │
+│   │    │  ├─ No  → Check next policy                                │               │
+│   │    │  └─ Yes ↓                                                  │               │
+│   │    │                                                             │               │
+│   │    ├─ Source Address match?                                     │               │
+│   │    │  ├─ No  → Check next policy                                │               │
+│   │    │  └─ Yes ↓                                                  │               │
+│   │    │                                                             │               │
+│   │    ├─ Destination Address match?                                │               │
+│   │    │  ├─ No  → Check next policy                                │               │
+│   │    │  └─ Yes ↓                                                  │               │
+│   │    │                                                             │               │
+│   │    ├─ Service/Port match?                                       │               │
+│   │    │  ├─ No  → Check next policy                                │               │
+│   │    │  └─ Yes ↓                                                  │               │
+│   │    │                                                             │               │
+│   │    ├─ Schedule match? (if configured)                           │               │
+│   │    │  ├─ No  → Check next policy                                │               │
+│   │    │  └─ Yes ↓                                                  │               │
+│   │    │                                                             │               │
+│   │    └─ USER/GROUP match? (if configured)                         │               │
+│   │       ├─ No  → Check next policy                                │               │
+│   │       └─ Yes → POLICY MATCHED!                                  │               │
+│   │                                                                  │               │
+│   │  If no policy matches → IMPLICIT DENY                           │               │
+│   └─────────────────────────────────────────────────────────────────┘               │
+│          │                                                                           │
+│          ▼                                                                           │
+│   ┌─────────────┐                                                                    │
+│   │   Action    │  ← ACCEPT, DENY, or IPsec                                         │
+│   │             │                                                                    │
+│   └──────┬──────┘                                                                    │
+│          │ If ACCEPT:                                                                │
+│          ▼                                                                           │
+│   ┌─────────────┐                                                                    │
+│   │   Security  │  ← AV, IPS, Web Filter, App Control, SSL Inspection              │
+│   │   Profiles  │                                                                    │
+│   └──────┬──────┘                                                                    │
+│          │                                                                           │
+│          ▼                                                                           │
+│   ┌─────────────┐                                                                    │
+│   │     NAT     │  ← Source NAT / Destination NAT                                   │
+│   └──────┬──────┘                                                                    │
+│          │                                                                           │
+│          ▼                                                                           │
+│      Forward Packet                                                                  │
+│                                                                                      │
+└─────────────────────────────────────────────────────────────────────────────────────┘</div>
+
+                <h2><i class="fas fa-cubes"></i> Before Policies: Create Objects</h2>
+                <div class="step-section">
+                    <h3>Address Objects</h3>
+                    <p>Define reusable network objects before creating policies:</p>
+                    <div class="code-block"><pre># Single host
+config firewall address
+    edit "Server-Web01"
+        set type ipmask
+        set subnet 10.1.1.100 255.255.255.255
+        set comment "Production web server"
+    next
+end
+
+# Network/subnet
+config firewall address
+    edit "Net-Users"
+        set type ipmask
+        set subnet 10.100.0.0 255.255.0.0
+        set comment "User network"
+    next
+end
+
+# IP range
+config firewall address
+    edit "DHCP-Pool"
+        set type iprange
+        set start-ip 10.1.1.100
+        set end-ip 10.1.1.200
+    next
+end
+
+# FQDN (domain name - auto-resolves)
+config firewall address
+    edit "Office365"
+        set type fqdn
+        set fqdn "*.office365.com"
+    next
+end
+
+# Geography-based
+config firewall address
+    edit "Geo-Russia"
+        set type geography
+        set country "RU"
+    next
+end</pre></div>
+
+                    <h3>Address Groups</h3>
+                    <div class="code-block"><pre>config firewall addrgrp
+    edit "Grp-WebServers"
+        set member "Server-Web01" "Server-Web02" "Server-Web03"
+        set comment "All web servers"
+    next
+end
+
+config firewall addrgrp
+    edit "Grp-BlockedCountries"
+        set member "Geo-Russia" "Geo-China" "Geo-NorthKorea"
+        set comment "Blocked source countries"
+    next
+end</pre></div>
+
+                    <h3>Service Objects</h3>
+                    <div class="code-block"><pre># Custom TCP service
+config firewall service custom
+    edit "TCP-8080"
+        set tcp-portrange 8080
+        set comment "Custom web port"
+    next
+end
+
+# Custom UDP service
+config firewall service custom
+    edit "UDP-5060"
+        set udp-portrange 5060
+        set comment "SIP signaling"
+    next
+end
+
+# Service range
+config firewall service custom
+    edit "HighPorts"
+        set tcp-portrange 1024-65535
+    next
+end
+
+# Multiple ports in one service
+config firewall service custom
+    edit "WebPorts"
+        set tcp-portrange 80 443 8080 8443
+    next
+end</pre></div>
+
+                    <h3>Service Groups</h3>
+                    <div class="code-block"><pre>config firewall service group
+    edit "Grp-WebServices"
+        set member "HTTP" "HTTPS" "TCP-8080"
+    next
+end
+
+config firewall service group
+    edit "Grp-Microsoft"
+        set member "DNS" "HTTP" "HTTPS" "MS-SQL" "SMB"
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> Creating Firewall Policies</h2>
+                <div class="step-section">
+                    <h3>Basic Allow Policy</h3>
+                    <div class="code-block"><pre># Allow internal users to access internet
+config firewall policy
+    edit 0  # 0 = auto-assign ID
+        set name "Users-to-Internet"
+        set srcintf "VLAN100-Users"
+        set dstintf "wan1"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+        set nat enable
+        
+        # Add UTM profiles (optional but recommended)
+        set utm-status enable
+        set av-profile "default"
+        set webfilter-profile "default"
+        set ips-sensor "default"
+        set application-list "default"
+        set ssl-ssh-profile "certificate-inspection"
+    next
+end</pre></div>
+
+                    <h3>Restrictive Policy (Best Practice)</h3>
+                    <div class="code-block"><pre># Allow only specific services
+config firewall policy
+    edit 0
+        set name "Users-Web-Only"
+        set srcintf "Trust"
+        set dstintf "Untrust"
+        set srcaddr "Net-Users"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "HTTP" "HTTPS" "DNS"  # Only web traffic
+        set logtraffic all
+        set nat enable
+        
+        # Security profiles
+        set utm-status enable
+        set av-profile "strict-av"
+        set webfilter-profile "corporate-filter"
+        set ips-sensor "protect-client"
+        set application-list "allow-business-apps"
+        set ssl-ssh-profile "deep-inspection"
+    next
+end</pre></div>
+
+                    <h3>Deny Policy with Logging</h3>
+                    <div class="code-block"><pre># Block traffic from untrusted countries
+config firewall policy
+    edit 0
+        set name "Block-BadCountries"
+        set srcintf "wan1"
+        set dstintf "any"
+        set srcaddr "Grp-BlockedCountries"
+        set dstaddr "all"
+        set action deny
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all  # Log all blocked traffic
+        set comments "Block known malicious source countries"
+    next
+end</pre></div>
+
+                    <h3>DMZ Inbound Policy (For Public Servers)</h3>
+                    <div class="code-block"><pre># Allow internet to DMZ web server
+config firewall policy
+    edit 0
+        set name "Internet-to-WebServer"
+        set srcintf "wan1"
+        set dstintf "DMZ"
+        set srcaddr "all"
+        set dstaddr "Server-Web01"  # VIP or actual server
+        set action accept
+        set schedule "always"
+        set service "HTTP" "HTTPS"
+        set logtraffic all
+        
+        # CRITICAL: Enable security on inbound!
+        set utm-status enable
+        set av-profile "default"
+        set ips-sensor "protect-server"
+        set waf-profile "web-server"  # Web Application Firewall
+    next
+end</pre></div>
+
+                    <h3>User-Based Policy</h3>
+                    <div class="code-block"><pre># Allow only IT group to use SSH
+config firewall policy
+    edit 0
+        set name "IT-SSH-Access"
+        set srcintf "Trust"
+        set dstintf "Trust"
+        set srcaddr "all"
+        set dstaddr "Grp-Servers"
+        set action accept
+        set schedule "always"
+        set service "SSH"
+        set groups "IT-Admins"  # AD group
+        set logtraffic all
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-exchange-alt"></i> NAT Configuration</h2>
+                <div class="step-section">
+                    <h3>Source NAT (Outbound)</h3>
+                    <p>Source NAT is typically enabled in the policy itself:</p>
+                    <div class="code-block"><pre>config firewall policy
+    edit 10
+        set name "Outbound-NAT"
+        set srcintf "Trust"
+        set dstintf "wan1"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set nat enable  # Enables Source NAT using WAN interface IP
+    next
+end</pre></div>
+
+                    <h3>NAT to Specific IP (IP Pool)</h3>
+                    <div class="code-block"><pre># Create IP Pool
+config firewall ippool
+    edit "Pool-PublicIPs"
+        set startip 203.0.113.10
+        set endip 203.0.113.20
+        set type overload  # PAT (many-to-one)
+        # set type one-to-one  # Static NAT
+    next
+end
+
+# Use in policy
+config firewall policy
+    edit 10
+        set nat enable
+        set ippool enable
+        set poolname "Pool-PublicIPs"
+    next
+end</pre></div>
+
+                    <h3>Destination NAT (VIP - Port Forwarding)</h3>
+                    <div class="code-block"><pre># Create Virtual IP for web server
+config firewall vip
+    edit "VIP-WebServer"
+        set extip 203.0.113.50  # Public IP
+        set mappedip "10.100.1.50"  # Internal server IP
+        set extintf "wan1"
+        set portforward enable
+        set extport 443
+        set mappedport 443
+        set comment "HTTPS to internal web server"
+    next
+end
+
+# Create policy using VIP
+config firewall policy
+    edit 0
+        set name "Inbound-HTTPS"
+        set srcintf "wan1"
+        set dstintf "DMZ"
+        set srcaddr "all"
+        set dstaddr "VIP-WebServer"  # Reference the VIP
+        set action accept
+        set service "HTTPS"
+        set utm-status enable
+        set ips-sensor "protect-server"
+    next
+end</pre></div>
+
+                    <h3>Full NAT Hairpin (Internal to VIP)</h3>
+                    <p>When internal users need to access the public IP of an internal server:</p>
+                    <div class="code-block"><pre># Enable hairpin NAT on VIP
+config firewall vip
+    edit "VIP-WebServer"
+        set extip 203.0.113.50
+        set mappedip "10.100.1.50"
+        set extintf "any"  # Important: "any" not specific interface
+        set nat-source-vip enable  # Enable hairpin
+    next
+end
+
+# Create internal-to-VIP policy
+config firewall policy
+    edit 0
+        set name "Internal-to-VIP"
+        set srcintf "Trust"
+        set dstintf "DMZ"
+        set srcaddr "Net-Users"
+        set dstaddr "VIP-WebServer"
+        set action accept
+        set service "HTTPS"
+        set nat enable  # Source NAT needed for hairpin
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-sort-amount-down"></i> Policy Ordering</h2>
+                <div class="step-section">
+                    <h3>Move Policies</h3>
+                    <div class="code-block"><pre># Move policy 15 before policy 10
+config firewall policy
+    move 15 before 10
+end
+
+# Move policy 20 after policy 5
+config firewall policy
+    move 20 after 5
+end</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Policy Ordering Best Practices</h4>
+                        <ol>
+                            <li><strong>Most specific first:</strong> Narrow rules before broad rules</li>
+                            <li><strong>Deny rules before allow:</strong> Block known bad before allowing good</li>
+                            <li><strong>User-based before IP-based:</strong> More specific identification</li>
+                            <li><strong>Application rules before service rules:</strong> App-ID is more specific</li>
+                        </ol>
+                    </div>
+
+                    <h3>Recommended Policy Order</h3>
+                    <table class="feature-table">
+                        <thead><tr><th>Order</th><th>Policy Type</th><th>Example</th></tr></thead>
+                        <tbody>
+                            <tr><td>1-10</td><td>Explicit blocks</td><td>Block geo, block IPs</td></tr>
+                            <tr><td>11-50</td><td>Critical allows</td><td>DC traffic, management</td></tr>
+                            <tr><td>51-100</td><td>User-specific</td><td>IT-SSH, Finance-DB</td></tr>
+                            <tr><td>101-500</td><td>Department allows</td><td>Sales-CRM, HR-HRIS</td></tr>
+                            <tr><td>501-900</td><td>General allows</td><td>All-to-Internet</td></tr>
+                            <tr><td>901-999</td><td>Catch-all logging</td><td>Log-and-deny unknown</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Policy Troubleshooting</h2>
+                <div class="step-section">
+                    <h3>Find Which Policy Matches</h3>
+                    <div class="code-block"><pre># Check which policy would match specific traffic
+diagnose firewall iprope lookup <src-ip> <src-port> <dst-ip> <dst-port> <protocol> <src-interface>
+
+# Example: Check HTTP from 10.1.1.50 to 8.8.8.8
+diagnose firewall iprope lookup 10.1.1.50 12345 8.8.8.8 80 6 port2
+
+# Protocol numbers: TCP=6, UDP=17, ICMP=1</pre></div>
+
+                    <h3>View Active Sessions</h3>
+                    <div class="code-block"><pre># List all sessions
+diagnose sys session list
+
+# Filter sessions by IP
+diagnose sys session filter dst 8.8.8.8
+diagnose sys session list
+
+# Clear session filter
+diagnose sys session filter clear
+
+# Kill specific sessions
+diagnose sys session filter dst 10.1.1.100
+diagnose sys session clear</pre></div>
+
+                    <h3>Debug Policy Matching</h3>
+                    <div class="code-block"><pre># Enable debug for specific traffic
+diagnose debug enable
+diagnose debug flow filter addr 10.1.1.50
+diagnose debug flow show function-name enable
+diagnose debug flow trace start 100
+
+# Generate traffic, then disable debug
+diagnose debug flow trace stop
+diagnose debug disable</pre></div>
+
+                    <h3>View Policy Hit Counts</h3>
+                    <div class="code-block"><pre># GUI: Policy & Objects → Firewall Policy → Columns → Hit Count
+
+# CLI:
+get firewall policy
+
+# Show specific policy details
+show firewall policy 10</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Policy Best Practices</h2>
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Security Best Practices</h4>
+                    <ul>
+                        <li><strong>Default deny:</strong> Never create a policy with srcaddr=all, dstaddr=all, service=ALL, action=accept</li>
+                        <li><strong>Name policies clearly:</strong> "HR-to-HRIS" not "Policy_47"</li>
+                        <li><strong>Log everything:</strong> At minimum log denied traffic, ideally log all traffic</li>
+                        <li><strong>Use groups:</strong> Policies referencing groups are easier to maintain</li>
+                        <li><strong>Enable UTM:</strong> Every allow policy should have security profiles attached</li>
+                        <li><strong>Review regularly:</strong> Remove unused policies, check hit counts monthly</li>
+                        <li><strong>Comment everything:</strong> Document why each policy exists</li>
+                    </ul>
+                </div>
+
+                <div class="danger-box">
+                    <h4><i class="fas fa-ban"></i> Common Mistakes to Avoid</h4>
+                    <ul>
+                        <li>❌ Allowing "ALL" services outbound</li>
+                        <li>❌ No UTM profiles on allow policies</li>
+                        <li>❌ Broad rules at top of policy list</li>
+                        <li>❌ Not logging denied traffic</li>
+                        <li>❌ Using IP addresses instead of objects</li>
+                        <li>❌ Forgetting to enable NAT on outbound policies</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

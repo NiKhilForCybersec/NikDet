@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSPM - Defender for Cloud | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .feature-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .feature-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .step-box { background: rgba(99, 102, 241, 0.1); padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .step-box h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+        .score-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .score-card { background: var(--card-bg); padding: 1rem; border-radius: 8px; text-align: center; }
+        .score-card .score { font-size: 2rem; color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/defender-cloud/index.html">Defender for Cloud</a><span class="separator">/</span><span>CSPM</span></div>
+            <div class="content">
+                <h1><i class="fas fa-clipboard-check"></i> Cloud Security Posture Management (CSPM)</h1>
+                <p class="lead">Complete guide to CSPM features in Microsoft Defender for Cloud. Master secure score, recommendations, compliance standards, attack paths, and governance.</p>
+
+                <h2><i class="fas fa-info-circle"></i> What is CSPM?</h2>
+                <p>Cloud Security Posture Management continuously assesses your cloud resources for security misconfigurations and compliance gaps. It provides:</p>
+                <ul>
+                    <li><strong>Secure Score</strong> - Single metric showing overall security health</li>
+                    <li><strong>Recommendations</strong> - Actionable steps to improve security</li>
+                    <li><strong>Compliance</strong> - Assessment against regulatory standards</li>
+                    <li><strong>Attack Paths</strong> - Visual representation of exploitable paths</li>
+                    <li><strong>Security Graph</strong> - Query-based cloud resource analysis</li>
+                </ul>
+
+                <h2><i class="fas fa-chart-line"></i> Secure Score</h2>
+                <div class="feature-section">
+                    <h3>Understanding Secure Score</h3>
+                    <p>Secure Score is a percentage (0-100%) representing your security posture. Higher is better.</p>
+                    
+                    <div class="score-breakdown">
+                        <div class="score-card">
+                            <div class="score">0-40%</div>
+                            <p>Critical - Immediate action needed</p>
+                        </div>
+                        <div class="score-card">
+                            <div class="score">41-70%</div>
+                            <p>Needs improvement</p>
+                        </div>
+                        <div class="score-card">
+                            <div class="score">71-90%</div>
+                            <p>Good posture</p>
+                        </div>
+                        <div class="score-card">
+                            <div class="score">91-100%</div>
+                            <p>Excellent</p>
+                        </div>
+                    </div>
+
+                    <h4>Score Calculation</h4>
+                    <p>Score = (Points achieved / Total possible points) × 100</p>
+                    <ul>
+                        <li>Each recommendation has a maximum point value</li>
+                        <li>Points are awarded based on % of resources compliant</li>
+                        <li>Higher severity recommendations = more points</li>
+                    </ul>
+
+                    <div class="code-block"><pre># Azure CLI - Get Secure Score
+az security secure-score list --output table
+
+# Get detailed secure score controls
+az security secure-score-controls list --output table
+
+# PowerShell - Export secure scores
+$scores = Get-AzSecuritySecureScore
+$scores | Export-Csv -Path "SecureScores.csv" -NoTypeInformation</pre></div>
+                </div>
+
+                <h2><i class="fas fa-tasks"></i> Security Recommendations</h2>
+                <div class="feature-section">
+                    <h3>Recommendation Severity</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Severity</th><th>Impact</th><th>Response Time</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong style="color:#ef4444">High</strong></td><td>Direct vulnerability exploitation possible</td><td>Immediate (24-48 hours)</td></tr>
+                            <tr><td><strong style="color:#f59e0b">Medium</strong></td><td>Increases attack surface or blast radius</td><td>Short-term (1-2 weeks)</td></tr>
+                            <tr><td><strong style="color:#3b82f6">Low</strong></td><td>Best practice or defense-in-depth</td><td>Normal cycle (30 days)</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Common High-Severity Recommendations</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Recommendation</th><th>Risk</th><th>Remediation</th></tr></thead>
+                        <tbody>
+                            <tr><td>MFA should be enabled</td><td>Account compromise</td><td>Enable Azure AD MFA</td></tr>
+                            <tr><td>Storage accounts should restrict network access</td><td>Data exposure</td><td>Configure firewall, use private endpoints</td></tr>
+                            <tr><td>Management ports should be closed</td><td>RDP/SSH brute force</td><td>Use JIT access or Bastion</td></tr>
+                            <tr><td>Vulnerabilities in VMs should be remediated</td><td>Exploitation</td><td>Apply patches, update software</td></tr>
+                            <tr><td>SQL servers should have vulnerability assessment</td><td>SQL injection</td><td>Enable SQL vulnerability assessment</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Working with Recommendations</h3>
+                    <div class="step-box">
+                        <h4>Remediate a Recommendation</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Recommendations</strong></li>
+                            <li>Click on a recommendation to see affected resources</li>
+                            <li>Select resources to remediate</li>
+                            <li>Click <strong>Fix</strong> (if quick fix available) or follow manual steps</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Exempt a Resource</h4>
+                        <p>For false positives or accepted risks:</p>
+                        <ol>
+                            <li>Click on the recommendation</li>
+                            <li>Select the resource</li>
+                            <li>Click <strong>Exempt</strong></li>
+                            <li>Choose reason: Waiver or Mitigated</li>
+                            <li>Set expiration date (recommended)</li>
+                            <li>Add justification</li>
+                        </ol>
+                    </div>
+
+                    <div class="code-block"><pre># PowerShell - List all recommendations
+$recommendations = Get-AzSecurityTask
+$recommendations | Where-Object {$_.Properties.Severity -eq "High"} | 
+    Select-Object Name, @{N='Severity';E={$_.Properties.Severity}} | 
+    Format-Table
+
+# Export recommendations to CSV
+Get-AzSecurityTask | Export-Csv -Path "Recommendations.csv" -NoTypeInformation
+
+# Create exemption via CLI
+az security assessment-metadata create --name "exemption-name" \
+    --assessment-type "CustomerManaged" \
+    --description "Accepted risk per security review"</pre></div>
+                </div>
+
+                <h2><i class="fas fa-balance-scale"></i> Regulatory Compliance</h2>
+                <div class="feature-section">
+                    <h3>Available Standards</h3>
+                    <table class="prereq-table">
+                        <thead><tr><th>Standard</th><th>Scope</th><th>Included</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Azure Security Benchmark</strong></td><td>Microsoft best practices</td><td>Free</td></tr>
+                            <tr><td><strong>NIST SP 800-53</strong></td><td>US federal agencies</td><td>Defender CSPM</td></tr>
+                            <tr><td><strong>PCI DSS</strong></td><td>Payment card industry</td><td>Defender CSPM</td></tr>
+                            <tr><td><strong>SOC 2</strong></td><td>Service organizations</td><td>Defender CSPM</td></tr>
+                            <tr><td><strong>ISO 27001</strong></td><td>Information security</td><td>Defender CSPM</td></tr>
+                            <tr><td><strong>CIS Benchmarks</strong></td><td>Hardening standards</td><td>Defender CSPM</td></tr>
+                            <tr><td><strong>HIPAA</strong></td><td>Healthcare (US)</td><td>Defender CSPM</td></tr>
+                            <tr><td><strong>FedRAMP</strong></td><td>US government cloud</td><td>Defender CSPM</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Add Compliance Standard</h3>
+                    <div class="step-box">
+                        <h4>Steps to Add Standard</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Regulatory compliance</strong></li>
+                            <li>Click <strong>Manage compliance policies</strong></li>
+                            <li>Select your subscription</li>
+                            <li>Click <strong>Add more standards</strong></li>
+                            <li>Select desired standard(s)</li>
+                            <li>Click <strong>Add</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="code-block"><pre># Azure Policy - Add compliance initiative
+# PCI DSS
+az policy assignment create --name "PCI-DSS-Assignment" \
+    --display-name "PCI DSS Compliance" \
+    --policy-set-definition "/providers/Microsoft.Authorization/policySetDefinitions/496eeda9-8f2f-4d5e-8dfd-204f0a92ed43" \
+    --scope "/subscriptions/{subscription-id}"
+
+# NIST SP 800-53
+az policy assignment create --name "NIST-800-53" \
+    --display-name "NIST SP 800-53 Rev5" \
+    --policy-set-definition "/providers/Microsoft.Authorization/policySetDefinitions/179d1daa-458f-4e47-8086-2a68d0d6c38f" \
+    --scope "/subscriptions/{subscription-id}"</pre></div>
+
+                    <h3>Export Compliance Report</h3>
+                    <div class="code-block"><pre># Export compliance data for auditors
+# Portal: Regulatory compliance → Download report (PDF or CSV)
+
+# PowerShell - Export compliance state
+$compliance = Get-AzPolicyState -SubscriptionId (Get-AzContext).Subscription.Id
+$compliance | Where-Object {$_.ComplianceState -eq "NonCompliant"} | 
+    Export-Csv -Path "NonCompliantResources.csv" -NoTypeInformation</pre></div>
+                </div>
+
+                <h2><i class="fas fa-route"></i> Attack Path Analysis</h2>
+                <div class="feature-section">
+                    <h3>What is Attack Path Analysis?</h3>
+                    <p>Attack paths show how an attacker could potentially move through your environment to reach critical assets. Requires <strong>Defender CSPM</strong> plan.</p>
+
+                    <h4>Example Attack Paths</h4>
+                    <ul>
+                        <li><strong>Internet → VM (public IP) → Storage account (private endpoint)</strong><br>
+                            Risk: Exposed VM could pivot to access storage</li>
+                        <li><strong>Internet → App Service → Managed Identity → Key Vault</strong><br>
+                            Risk: Web app vulnerability exposes secrets</li>
+                        <li><strong>User (guest) → Subscription (Owner) → All resources</strong><br>
+                            Risk: Over-privileged guest account</li>
+                    </ul>
+
+                    <h3>Using Attack Path Analysis</h3>
+                    <div class="step-box">
+                        <h4>Navigate to Attack Paths</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Attack path analysis</strong></li>
+                            <li>View paths sorted by risk level</li>
+                            <li>Click a path to see details</li>
+                            <li>Review each node in the path</li>
+                            <li>Click <strong>Remediation steps</strong></li>
+                        </ol>
+                    </div>
+
+                    <h3>Cloud Security Graph Queries</h3>
+                    <p>Use the security graph explorer to query relationships:</p>
+                    <div class="code-block"><pre>// Find VMs with public IPs and critical vulnerabilities
+SecurityResources
+| where type == "microsoft.security/assessments"
+| where properties.status.code == "Unhealthy"
+| join kind=inner (
+    Resources
+    | where type == "microsoft.compute/virtualmachines"
+    | where properties.networkProfile.networkInterfaces[0].properties.publicIPAddress != ""
+) on $left.properties.resourceDetails.Id == $right.id
+| project VMName=name1, Vulnerability=properties.displayName
+
+// Find storage accounts accessible from internet
+Resources
+| where type == "microsoft.storage/storageaccounts"
+| where properties.networkAcls.defaultAction == "Allow"
+| project name, resourceGroup, location</pre></div>
+                </div>
+
+                <h2><i class="fas fa-gavel"></i> Governance Rules</h2>
+                <div class="feature-section">
+                    <h3>Automate Remediation Ownership</h3>
+                    <p>Governance rules automatically assign owners and set due dates for recommendations.</p>
+
+                    <div class="step-box">
+                        <h4>Create Governance Rule</h4>
+                        <ol>
+                            <li>Go to <strong>Defender for Cloud → Environment settings</strong></li>
+                            <li>Select subscription → <strong>Governance rules</strong></li>
+                            <li>Click <strong>+ Create rule</strong></li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Name:</strong> High Severity - Security Team</li>
+                                    <li><strong>Scope:</strong> All subscriptions or specific</li>
+                                    <li><strong>Conditions:</strong> Severity = High</li>
+                                    <li><strong>Owner:</strong> security-team@company.com</li>
+                                    <li><strong>Remediation timeframe:</strong> 7 days</li>
+                                    <li><strong>Grace period:</strong> 3 days</li>
+                                    <li><strong>Email notifications:</strong> Enabled</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Create</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Agentless Scanning</h2>
+                <div class="feature-section">
+                    <h3>What is Agentless Scanning?</h3>
+                    <p>Scans VMs for vulnerabilities without installing agents. Uses disk snapshots.</p>
+
+                    <h4>What it discovers:</h4>
+                    <ul>
+                        <li>Software inventory</li>
+                        <li>Vulnerabilities (CVEs)</li>
+                        <li>Secrets in files</li>
+                        <li>Malware indicators</li>
+                    </ul>
+
+                    <div class="step-box">
+                        <h4>Enable Agentless Scanning</h4>
+                        <ol>
+                            <li>Go to <strong>Environment settings → [Subscription]</strong></li>
+                            <li>Under <strong>Defender CSPM</strong>, click <strong>Settings</strong></li>
+                            <li>Enable <strong>Agentless scanning for machines</strong></li>
+                            <li>Configure exclusion tags if needed</li>
+                            <li>Click <strong>Save</strong></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-cog"></i> Best Practices</h2>
+                <ul>
+                    <li><strong>Start with High severity</strong> - Focus on high-impact recommendations first</li>
+                    <li><strong>Use governance rules</strong> - Automate ownership assignment</li>
+                    <li><strong>Review attack paths weekly</strong> - Prioritize paths to crown jewels</li>
+                    <li><strong>Export for audits</strong> - Generate compliance reports before audits</li>
+                    <li><strong>Don't chase 100%</strong> - Some exemptions are valid; aim for risk reduction</li>
+                    <li><strong>Integrate with ITSM</strong> - Auto-create tickets for recommendations</li>
+                </ul>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

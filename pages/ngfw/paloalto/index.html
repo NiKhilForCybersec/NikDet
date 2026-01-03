@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Networks Complete Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .nav-card { background: var(--card-bg); border-radius: 8px; padding: 1.25rem; text-decoration: none; color: var(--text-color); transition: all 0.2s; border: 1px solid var(--border-color); }
+        .nav-card:hover { transform: translateY(-2px); border-color: var(--accent-color); }
+        .nav-card h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .nav-card p { margin: 0; font-size: 0.9rem; color: var(--text-muted); }
+        .concept-box { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-color); }
+        .concept-box h3 { color: var(--accent-color); margin-top: 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .architecture-diagram { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto; white-space: pre; line-height: 1.3; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><span>Palo Alto Networks</span></div>
+            <div class="content">
+                <h1><i class="fas fa-fire"></i> Palo Alto Networks Complete Guide</h1>
+                <p class="lead">Comprehensive PAN-OS configuration guide. From initial setup to advanced features, every step documented with CLI and GUI instructions.</p>
+
+                <div class="nav-cards">
+                    <a href="pages/ngfw/paloalto/initial-setup.html" class="nav-card">
+                        <h4><i class="fas fa-play-circle"></i> Initial Setup</h4>
+                        <p>Day 1 configuration: console access, management IP, admin accounts, licensing</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/interfaces-zones.html" class="nav-card">
+                        <h4><i class="fas fa-network-wired"></i> Interfaces & Zones</h4>
+                        <p>Layer 3, Layer 2, virtual wire, zones, VLAN interfaces</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/policies.html" class="nav-card">
+                        <h4><i class="fas fa-shield"></i> Security Policies</h4>
+                        <p>Policy creation, App-ID, ordering, NAT policies</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/security-profiles.html" class="nav-card">
+                        <h4><i class="fas fa-virus-slash"></i> Security Profiles</h4>
+                        <p>Antivirus, Anti-Spyware, Vulnerability, URL Filtering, WildFire</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/user-id.html" class="nav-card">
+                        <h4><i class="fas fa-user-check"></i> User-ID</h4>
+                        <p>AD integration, User-ID agent, group mapping, user-based policies</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/decryption.html" class="nav-card">
+                        <h4><i class="fas fa-lock-open"></i> SSL Decryption</h4>
+                        <p>Forward proxy, inbound inspection, certificates, decryption policies</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/globalprotect.html" class="nav-card">
+                        <h4><i class="fas fa-globe"></i> GlobalProtect VPN</h4>
+                        <p>Remote access VPN, always-on, split tunnel, HIP checks</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/logging-siem.html" class="nav-card">
+                        <h4><i class="fas fa-database"></i> Logging & SIEM</h4>
+                        <p>Syslog, Cortex Data Lake, Sentinel, Splunk integration</p>
+                    </a>
+                </div>
+
+                <h2><i class="fas fa-info-circle"></i> PAN-OS Overview</h2>
+                <div class="concept-box">
+                    <h3>What Makes Palo Alto Different?</h3>
+                    <p>Palo Alto pioneered the App-ID technology that defines modern NGFWs:</p>
+                    <ul>
+                        <li><strong>App-ID:</strong> Identifies applications regardless of port, protocol, or encryption</li>
+                        <li><strong>User-ID:</strong> Maps users to IP addresses for identity-based policies</li>
+                        <li><strong>Content-ID:</strong> Scans content for threats, data patterns, URLs</li>
+                        <li><strong>Single-Pass Architecture:</strong> All security functions in one pass (performance)</li>
+                        <li><strong>Zero Trust:</strong> Built for microsegmentation and least privilege</li>
+                    </ul>
+                </div>
+
+                <h2><i class="fas fa-sitemap"></i> PAN-OS Architecture</h2>
+                <div class="architecture-diagram">
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    PALO ALTO NETWORKS ARCHITECTURE                                    │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                                    SINGLE-PASS PARALLEL PROCESSING                               │ │
+│  │                                                                                                  │ │
+│  │   ┌──────────────────────────────────────────────────────────────────────────────────────────┐  │ │
+│  │   │                              IDENTIFICATION TECHNOLOGIES                                  │  │ │
+│  │   │                                                                                           │  │ │
+│  │   │  ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐                         │  │ │
+│  │   │  │     APP-ID      │   │    USER-ID      │   │   CONTENT-ID    │                         │  │ │
+│  │   │  │                 │   │                 │   │                 │                         │  │ │
+│  │   │  │ • App signatures│   │ • AD integration│   │ • Threat sigs   │                         │  │ │
+│  │   │  │ • Heuristics    │   │ • LDAP/RADIUS   │   │ • URL database  │                         │  │ │
+│  │   │  │ • Decryption    │   │ • Captive portal│   │ • File blocking │                         │  │ │
+│  │   │  │ • Protocol decode│  │ • GlobalProtect │   │ • Data patterns │                         │  │ │
+│  │   │  │ • 3000+ apps    │   │ • XML API       │   │ • WildFire      │                         │  │ │
+│  │   │  └─────────────────┘   └─────────────────┘   └─────────────────┘                         │  │ │
+│  │   └──────────────────────────────────────────────────────────────────────────────────────────┘  │ │
+│  │                                              │                                                   │ │
+│  │                                              ▼                                                   │ │
+│  │   ┌──────────────────────────────────────────────────────────────────────────────────────────┐  │ │
+│  │   │                              SECURITY PROCESSING                                          │  │ │
+│  │   │                                                                                           │  │ │
+│  │   │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐ │  │ │
+│  │   │  │ANTIVIRUS │  │ANTI-     │  │VULN      │  │URL       │  │FILE      │  │DATA          │ │  │ │
+│  │   │  │          │  │SPYWARE   │  │PROTECTION│  │FILTERING │  │BLOCKING  │  │FILTERING(DLP)│ │  │ │
+│  │   │  │• Malware │  │• C2      │  │• Exploits│  │• 80+ cats│  │• By type │  │• SSN/CC      │ │  │ │
+│  │   │  │• Viruses │  │• Spyware │  │• CVE sigs│  │• Custom  │  │• By name │  │• Patterns    │ │  │ │
+│  │   │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────────┘ │  │ │
+│  │   └──────────────────────────────────────────────────────────────────────────────────────────┘  │ │
+│  │                                              │                                                   │ │
+│  │                                              ▼                                                   │ │
+│  │   ┌──────────────────────────────────────────────────────────────────────────────────────────┐  │ │
+│  │   │                              POLICY ENGINE                                                │  │ │
+│  │   │                                                                                           │  │ │
+│  │   │  Security Policy = Source Zone + Dest Zone + Source User + Application + Action          │  │ │
+│  │   │                    + Security Profiles (AV, AS, VP, URL, FB, DF)                         │  │ │
+│  │   │                                                                                           │  │ │
+│  │   └──────────────────────────────────────────────────────────────────────────────────────────┘  │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+│                                                                                                       │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                                    MANAGEMENT & INTEGRATION                                      │ │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                    │ │
+│  │  │   Web GUI     │  │     CLI       │  │   Panorama    │  │ Cortex XSOAR  │                    │ │
+│  │  │   (HTTPS)     │  │  (SSH/Console)│  │ Central Mgmt  │  │  Automation   │                    │ │
+│  │  └───────────────┘  └───────────────┘  └───────────────┘  └───────────────┘                    │ │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                    │ │
+│  │  │   REST API    │  │   Syslog      │  │  Cortex Data  │  │   WildFire    │                    │ │
+│  │  │   XML API     │  │   SIEM Export │  │     Lake      │  │   Cloud       │                    │ │
+│  │  └───────────────┘  └───────────────┘  └───────────────┘  └───────────────┘                    │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────┘</div>
+
+                <h2><i class="fas fa-layer-group"></i> Model Comparison</h2>
+                <table class="feature-table">
+                    <thead>
+                        <tr><th>Model Series</th><th>Use Case</th><th>Throughput</th><th>Key Features</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>PA-400 Series</strong></td>
+                            <td>Small office, branch</td>
+                            <td>1-5 Gbps</td>
+                            <td>Desktop, PoE options, SD-WAN ready</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PA-800 Series</strong></td>
+                            <td>Mid-size branch</td>
+                            <td>5-10 Gbps</td>
+                            <td>1U rackmount, redundant power option</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PA-3200 Series</strong></td>
+                            <td>Enterprise edge</td>
+                            <td>10-30 Gbps</td>
+                            <td>Full HA, high session count</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PA-5200 Series</strong></td>
+                            <td>Large enterprise/DC</td>
+                            <td>30-70 Gbps</td>
+                            <td>High port density, NPC cards</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PA-7000 Series</strong></td>
+                            <td>Service provider, hyperscale</td>
+                            <td>200+ Gbps</td>
+                            <td>Chassis, LPC/NPC blades</td>
+                        </tr>
+                        <tr>
+                            <td><strong>VM-Series</strong></td>
+                            <td>Cloud/virtualization</td>
+                            <td>License-based</td>
+                            <td>VMware, Hyper-V, KVM, AWS, Azure, GCP</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CN-Series</strong></td>
+                            <td>Kubernetes/containers</td>
+                            <td>Container-native</td>
+                            <td>K8s CNI, service mesh integration</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-key"></i> Licensing</h2>
+                <div class="concept-box">
+                    <h3>Subscription Bundles</h3>
+                    <table class="feature-table">
+                        <thead>
+                            <tr><th>License</th><th>Includes</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Threat Prevention</strong></td>
+                                <td>Antivirus, Anti-Spyware, Vulnerability Protection</td>
+                            </tr>
+                            <tr>
+                                <td><strong>URL Filtering</strong></td>
+                                <td>PAN-DB URL categories, custom URL lists</td>
+                            </tr>
+                            <tr>
+                                <td><strong>WildFire</strong></td>
+                                <td>Cloud sandboxing, zero-day protection</td>
+                            </tr>
+                            <tr>
+                                <td><strong>DNS Security</strong></td>
+                                <td>DNS-based threat prevention</td>
+                            </tr>
+                            <tr>
+                                <td><strong>GlobalProtect</strong></td>
+                                <td>Remote access VPN gateway license</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SD-WAN</strong></td>
+                                <td>Software-defined WAN features</td>
+                            </tr>
+                            <tr>
+                                <td><strong>IoT Security</strong></td>
+                                <td>Device identification and security</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Enterprise DLP</strong></td>
+                                <td>Advanced data loss prevention</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SaaS Security</strong></td>
+                                <td>Inline SaaS protection (CASB)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-terminal"></i> CLI Fundamentals</h2>
+                <div class="code-block"><pre># PAN-OS CLI has two modes: Operational and Configuration
+
+# OPERATIONAL MODE (default when you login)
+> show system info              # System information
+> show interface all            # Interface status
+> show session all              # Active sessions
+> show running security-policy  # Active policies
+> debug                         # Troubleshooting commands
+> request                       # System actions
+
+# CONFIGURATION MODE (enter with 'configure')
+> configure
+# set                           # Create/modify config
+# delete                        # Remove config
+# edit                          # Enter config context
+# show                          # Show config
+# commit                        # Apply changes (CRITICAL!)
+# exit                          # Exit to operational mode
+
+# Key difference from FortiGate:
+# PAN-OS requires COMMIT to apply any config changes!
+
+# Example workflow:
+> configure
+# set network interface ethernet ethernet1/1 layer3 ip 10.1.1.1/24
+# set zone trust network layer3 ethernet1/1
+# commit
+# exit
+
+# Commit with description
+# commit description "Added DMZ interface"
+
+# View pending changes (before commit)
+# show | compare
+# diff
+
+# Rollback to previous config
+> debug system maintenance-mode
+> request config revert config </pre></div>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Critical: Always Commit!</h4>
+                    <p>Unlike FortiGate, Palo Alto changes are NOT active until you run <code>commit</code>. This is both a safety feature and a common source of "why isn't this working?"</p>
+                </div>
+
+                <h2><i class="fas fa-list-check"></i> Quick Start Checklist</h2>
+                <div class="info-box">
+                    <h4>Day 1 Configuration Order</h4>
+                    <ol>
+                        <li>✅ Console access → Set management IP</li>
+                        <li>✅ Change default admin password</li>
+                        <li>✅ Register device and activate licenses</li>
+                        <li>✅ Configure system settings (hostname, DNS, NTP)</li>
+                        <li>✅ Configure interfaces</li>
+                        <li>✅ Create zones</li>
+                        <li>✅ Configure routing</li>
+                        <li>✅ Create address objects</li>
+                        <li>✅ Create security profiles (or use built-in)</li>
+                        <li>✅ Create security policies</li>
+                        <li>✅ Create NAT policies</li>
+                        <li>✅ <strong>COMMIT</strong></li>
+                        <li>✅ Test connectivity</li>
+                        <li>✅ Configure logging</li>
+                        <li>✅ Export configuration backup</li>
+                    </ol>
+                </div>
+
+                <h2><i class="fas fa-book"></i> Detailed Configuration Guides</h2>
+                <div class="nav-cards">
+                    <a href="pages/ngfw/paloalto/initial-setup.html" class="nav-card">
+                        <h4><i class="fas fa-play-circle"></i> Initial Setup Guide</h4>
+                        <p>Complete Day 1 walkthrough: console access, IP config, licensing, system settings</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/interfaces-zones.html" class="nav-card">
+                        <h4><i class="fas fa-network-wired"></i> Interfaces & Zones</h4>
+                        <p>L3, L2, virtual wire, tap, tunnel interfaces and zone configuration</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/policies.html" class="nav-card">
+                        <h4><i class="fas fa-shield"></i> Security Policies</h4>
+                        <p>Policy rulebase, App-ID, service, NAT policies, policy ordering</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/security-profiles.html" class="nav-card">
+                        <h4><i class="fas fa-virus-slash"></i> Security Profiles</h4>
+                        <p>AV, Anti-Spyware, Vulnerability, URL, File Blocking, WildFire</p>
+                    </a>
+                    <a href="pages/ngfw/paloalto/logging-siem.html" class="nav-card">
+                        <h4><i class="fas fa-database"></i> Logging & SIEM Integration</h4>
+                        <p>Syslog, Cortex Data Lake, Sentinel, Splunk integration</p>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

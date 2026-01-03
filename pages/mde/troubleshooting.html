@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDE Troubleshooting | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .issue-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #ef4444; }
+        .issue-card h3 { color: #ef4444; margin-top: 0; }
+        .solution-box { background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0; }
+        .solution-box h4 { color: #10b981; margin: 0 0 0.5rem 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .diagnostic-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .diagnostic-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/mde/index.html">MDE</a><span class="separator">/</span><span>Troubleshooting</span></div>
+            <div class="content">
+                <h1><i class="fas fa-wrench"></i> MDE Troubleshooting Guide</h1>
+                <p class="lead">Comprehensive troubleshooting guide for Microsoft Defender for Endpoint covering common issues across Windows, Linux, and macOS.</p>
+
+                <h2><i class="fas fa-stethoscope"></i> Diagnostic Tools</h2>
+                
+                <div class="diagnostic-section">
+                    <h3>Windows Diagnostic Script</h3>
+                    <div class="code-block"><pre># MDE Diagnostic Script - Run as Administrator
+Write-Host "=== MDE Diagnostic Report ===" -ForegroundColor Cyan
+
+# 1. Check Services
+Write-Host "`n[1] SERVICE STATUS:" -ForegroundColor Yellow
+@("Sense", "WinDefend", "WdNisSvc") | ForEach-Object {
+    $svc = Get-Service $_ -EA SilentlyContinue
+    $color = if($svc.Status -eq "Running"){"Green"}else{"Red"}
+    Write-Host "    $_ : $($svc.Status)" -ForegroundColor $color
+}
+
+# 2. Onboarding Status
+Write-Host "`n[2] ONBOARDING:" -ForegroundColor Yellow
+$reg = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status" -EA SilentlyContinue
+if($reg) {
+    Write-Host "    State: $($reg.OnboardingState)" -ForegroundColor $(if($reg.OnboardingState -eq 1){"Green"}else{"Red"})
+    Write-Host "    OrgID: $($reg.OrgId)"
+}
+
+# 3. Defender Status
+Write-Host "`n[3] DEFENDER STATUS:" -ForegroundColor Yellow
+$mp = Get-MpComputerStatus -EA SilentlyContinue
+if($mp) {
+    Write-Host "    RTP Enabled: $($mp.RealTimeProtectionEnabled)"
+    Write-Host "    Sig Version: $($mp.AntivirusSignatureVersion)"
+    Write-Host "    Sig Age: $($mp.AntivirusSignatureAge) days"
+}
+
+# 4. Connectivity
+Write-Host "`n[4] CONNECTIVITY:" -ForegroundColor Yellow
+@("winatp-gw-cus.microsoft.com","winatp-gw-eus.microsoft.com") | ForEach-Object {
+    $test = Test-NetConnection $_ -Port 443 -WA SilentlyContinue
+    $color = if($test.TcpTestSucceeded){"Green"}else{"Red"}
+    Write-Host "    $_ : $(if($test.TcpTestSucceeded){'OK'}else{'FAIL'})" -ForegroundColor $color
+}</pre></div>
+
+                    <h3>Linux/macOS Diagnostic</h3>
+                    <div class="code-block"><pre># Quick health check
+mdatp health
+
+# Connectivity test
+mdatp connectivity test
+
+# Service status (Linux)
+systemctl status mdatp
+
+# Create diagnostic bundle
+sudo mdatp diagnostic create --path /tmp/mde_diag.zip</pre></div>
+                </div>
+
+                <h2><i class="fas fa-user-plus"></i> Onboarding Issues</h2>
+
+                <div class="issue-card">
+                    <h3>Device Not Appearing in Portal</h3>
+                    <p><strong>Symptoms:</strong> Onboarding completed but device not in portal after 30+ minutes.</p>
+                    <div class="solution-box">
+                        <h4>Solution:</h4>
+                        <div class="code-block"><pre># 1. Verify Sense service running
+Get-Service Sense  # Should be Running
+
+# 2. Check onboarding state
+(Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status").OnboardingState
+# Should be 1
+
+# 3. Test connectivity
+Test-NetConnection winatp-gw-cus.microsoft.com -Port 443
+
+# 4. Force communication - run detection test
+powershell -ep bypass -c "(New-Object Net.WebClient).DownloadFile('http://127.0.0.1/1.exe','C:\test.exe')"
+
+# 5. Restart Sense service
+Restart-Service Sense -Force</pre></div>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h3>Onboarding Script Fails</h3>
+                    <p><strong>Symptoms:</strong> Script returns error or doesn't complete.</p>
+                    <div class="solution-box">
+                        <h4>Common Fixes:</h4>
+                        <div class="code-block"><pre># 1. Run as Administrator (required)
+
+# 2. Bypass execution policy
+Set-ExecutionPolicy Bypass -Scope Process -Force
+.\WindowsDefenderATPLocalOnboardingScript.cmd
+
+# 3. Check if already onboarded to different tenant
+(Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status" -EA SilentlyContinue).OrgId
+# If has value, must offboard first
+
+# 4. Download fresh package (expires after 30 days)</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-network-wired"></i> Connectivity Issues</h2>
+
+                <div class="issue-card">
+                    <h3>Firewall/Proxy Blocking MDE</h3>
+                    <p><strong>Required URLs to whitelist (port 443):</strong></p>
+                    <table class="prereq-table">
+                        <tr><th>URL</th><th>Purpose</th></tr>
+                        <tr><td><code>*.wdcp.microsoft.com</code></td><td>Cyber data channel</td></tr>
+                        <tr><td><code>*.wd.microsoft.com</code></td><td>Defender services</td></tr>
+                        <tr><td><code>winatp-gw-*.microsoft.com</code></td><td>Gateway endpoints</td></tr>
+                        <tr><td><code>*.blob.core.windows.net</code></td><td>Sample uploads</td></tr>
+                        <tr><td><code>definitionupdates.microsoft.com</code></td><td>Definitions</td></tr>
+                    </table>
+                    <div class="solution-box">
+                        <h4>Configure Proxy:</h4>
+                        <div class="code-block"><pre># Windows - Set WinHTTP proxy
+netsh winhttp set proxy proxy-server="http://proxy:8080" bypass-list="*.local"
+
+# Linux
+sudo mdatp config proxy set --value http://proxy:8080
+
+# Verify
+netsh winhttp show proxy  # Windows
+mdatp health --field proxy  # Linux</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-tachometer-alt"></i> Performance Issues</h2>
+
+                <div class="issue-card">
+                    <h3>High CPU Usage (MsMpEng.exe)</h3>
+                    <div class="solution-box">
+                        <h4>Add Exclusions:</h4>
+                        <div class="code-block"><pre># Add path exclusions
+Add-MpPreference -ExclusionPath "C:\Windows\SoftwareDistribution"
+Add-MpPreference -ExclusionPath "C:\source"  # Dev machines
+
+# Add process exclusions
+Add-MpPreference -ExclusionProcess "devenv.exe"
+Add-MpPreference -ExclusionProcess "sqlservr.exe"
+
+# Limit scan CPU
+Set-MpPreference -ScanAvgCPULoadFactor 30
+
+# Schedule scans off-hours
+Set-MpPreference -ScanScheduleTime 03:00:00</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fab fa-linux"></i> Linux-Specific Issues</h2>
+
+                <div class="issue-card">
+                    <h3>Real-Time Protection Not Working</h3>
+                    <div class="solution-box">
+                        <div class="code-block"><pre># Check fanotify support (required for RTP)
+cat /proc/sys/fs/fanotify/max_user_marks
+grep CONFIG_FANOTIFY /boot/config-$(uname -r)
+
+# Enable RTP
+sudo mdatp config real-time-protection --value enabled
+
+# Check for SELinux denials
+ausearch -m avc -ts recent | grep wdav
+
+# Check for conflicting AV
+systemctl list-units | grep -E "clamd|sophos"</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fab fa-apple"></i> macOS-Specific Issues</h2>
+
+                <div class="issue-card">
+                    <h3>Full Disk Access Not Granted</h3>
+                    <div class="solution-box">
+                        <div class="code-block"><pre># Check FDA status
+mdatp health --field full_disk_access_enabled
+
+# Manual grant (without MDM):
+# System Preferences → Security & Privacy → Privacy → Full Disk Access
+# Add: Microsoft Defender.app
+# Add: /Library/Application Support/Microsoft/Defender/wdavdaemon</pre></div>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h3>System Extension Blocked</h3>
+                    <div class="solution-box">
+                        <div class="code-block"><pre># Check status
+mdatp health --field system_extensions_status
+
+# Manual approval:
+# System Preferences → Security & Privacy → General
+# Click "Allow" for Microsoft
+
+# Verify
+systemextensionsctl list | grep microsoft</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-file-alt"></i> Log Locations</h2>
+
+                <div class="diagnostic-section">
+                    <h3>Where to Find Logs</h3>
+                    <table class="prereq-table">
+                        <tr><th>Platform</th><th>Location</th></tr>
+                        <tr><td><strong>Windows Event Logs</strong></td><td>Microsoft-Windows-Windows Defender/Operational<br>Microsoft-Windows-SENSE/Operational</td></tr>
+                        <tr><td><strong>Windows Files</strong></td><td>C:\ProgramData\Microsoft\Windows Defender\Support\MPLog-*.log</td></tr>
+                        <tr><td><strong>Linux</strong></td><td>journalctl -u mdatp<br>/var/log/microsoft/mdatp/</td></tr>
+                        <tr><td><strong>macOS</strong></td><td>log show --predicate 'subsystem == "com.microsoft.wdav"'<br>/Library/Logs/Microsoft/Defender/</td></tr>
+                    </table>
+                </div>
+
+                <div class="info-box" style="background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0;">
+                    <h4><i class="fas fa-phone"></i> Contact Microsoft Support</h4>
+                    <ol>
+                        <li>Run MDE Client Analyzer: <code>https://aka.ms/MDEClientAnalyzer</code></li>
+                        <li>Create diagnostic bundle: <code>mdatp diagnostic create</code></li>
+                        <li>Note device ID: <code>mdatp health --field device_id</code></li>
+                        <li>Open case at <a href="https://admin.microsoft.com">admin.microsoft.com</a></li>
+                    </ol>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

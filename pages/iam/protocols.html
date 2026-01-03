@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Protocols Deep Dive | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .analogy-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .analogy-box h4 { color: #f59e0b; margin: 0 0 0.5rem 0; }
+        .flow-diagram { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; line-height: 1.4; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><span>Authentication Protocols</span></div>
+            <div class="content">
+                <h1><i class="fas fa-exchange-alt"></i> Authentication Protocols Deep Dive</h1>
+                <p class="lead">Comprehensive guide to SAML, OAuth 2.0, OpenID Connect, Kerberos, LDAP, and RADIUS. How they work, when to use them, and how they compare.</p>
+
+                <h2><i class="fas fa-compass"></i> Protocol Quick Reference</h2>
+                <table class="feature-table">
+                    <thead>
+                        <tr><th>Protocol</th><th>What It Does</th><th>Use When</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SAML 2.0</strong></td>
+                            <td>Web SSO, exchanges XML assertions</td>
+                            <td>Enterprise apps, legacy SSO</td>
+                        </tr>
+                        <tr>
+                            <td><strong>OAuth 2.0</strong></td>
+                            <td>Authorization (API access)</td>
+                            <td>APIs, "Login with X" buttons</td>
+                        </tr>
+                        <tr>
+                            <td><strong>OpenID Connect</strong></td>
+                            <td>Authentication + OAuth</td>
+                            <td>Modern apps, mobile, SPAs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Kerberos</strong></td>
+                            <td>Network authentication</td>
+                            <td>Windows domain, on-prem</td>
+                        </tr>
+                        <tr>
+                            <td><strong>LDAP</strong></td>
+                            <td>Directory access/auth</td>
+                            <td>Directory queries, legacy apps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>RADIUS</strong></td>
+                            <td>Network access auth</td>
+                            <td>VPN, WiFi, network devices</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-file-code"></i> SAML 2.0</h2>
+                <div class="step-section">
+                    <div class="analogy-box">
+                        <h4><i class="fas fa-lightbulb"></i> SAML Analogy</h4>
+                        <p>SAML is like a <strong>notarized letter of introduction</strong>:</p>
+                        <ol>
+                            <li>You go to a government office (IdP) and prove who you are</li>
+                            <li>They give you a signed, sealed letter saying "This is John Doe, he's authorized for X"</li>
+                            <li>You take this letter to a business (SP)</li>
+                            <li>The business checks the seal is valid and lets you in</li>
+                        </ol>
+                    </div>
+
+                    <h3>Key Concepts</h3>
+                    <table class="feature-table">
+                        <tr><th>Term</th><th>Meaning</th></tr>
+                        <tr><td><strong>Identity Provider (IdP)</strong></td><td>System that authenticates users (Entra ID, Okta)</td></tr>
+                        <tr><td><strong>Service Provider (SP)</strong></td><td>Application user wants to access (Salesforce, ServiceNow)</td></tr>
+                        <tr><td><strong>Assertion</strong></td><td>XML document with identity claims, signed by IdP</td></tr>
+                        <tr><td><strong>Metadata</strong></td><td>XML file describing IdP/SP endpoints and certificates</td></tr>
+                        <tr><td><strong>ACS URL</strong></td><td>Assertion Consumer Service - where IdP sends the assertion</td></tr>
+                        <tr><td><strong>Entity ID</strong></td><td>Unique identifier for IdP or SP</td></tr>
+                    </table>
+
+                    <h3>SAML Flow (SP-Initiated)</h3>
+                    <div class="flow-diagram">
+   USER                    SERVICE PROVIDER (SP)              IDENTITY PROVIDER (IdP)
+    │                              │                                    │
+    │ 1. Access salesforce.com     │                                    │
+    │─────────────────────────────▶│                                    │
+    │                              │                                    │
+    │                              │ 2. User not authenticated         │
+    │                              │    Generate SAML AuthnRequest     │
+    │                              │                                    │
+    │ 3. Redirect to IdP with AuthnRequest                             │
+    │◀─────────────────────────────│                                    │
+    │                              │                                    │
+    │ 4. Browser sends AuthnRequest to IdP                              │
+    │──────────────────────────────────────────────────────────────────▶│
+    │                                                                   │
+    │                                         5. IdP checks: user logged in?
+    │                                            If no: show login page │
+    │                                                                   │
+    │ 6. User enters credentials (if needed)                            │
+    │──────────────────────────────────────────────────────────────────▶│
+    │                                                                   │
+    │                                         7. IdP validates credentials
+    │                                            Creates SAML Response   │
+    │                                            Signs with private key │
+    │                                                                   │
+    │ 8. Redirect to SP ACS URL with SAML Response                      │
+    │◀──────────────────────────────────────────────────────────────────│
+    │                              │                                    │
+    │ 9. Browser POSTs SAML Response to SP                              │
+    │─────────────────────────────▶│                                    │
+    │                              │                                    │
+    │                              │ 10. SP validates signature        │
+    │                              │     Extracts user identity        │
+    │                              │     Creates local session         │
+    │                              │                                    │
+    │ 11. Access granted!          │                                    │
+    │◀─────────────────────────────│                                    │
+    │                              │                                    │</div>
+
+                    <h3>SAML Assertion Example</h3>
+                    <div class="code-block"><pre>&lt;saml:Assertion xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
+    ID="_abc123" IssueInstant="2024-01-15T10:00:00Z" Version="2.0"&gt;
+    
+    &lt;saml:Issuer&gt;https://login.microsoftonline.com/tenant-id/&lt;/saml:Issuer&gt;
+    
+    &lt;ds:Signature&gt;...digital signature...&lt;/ds:Signature&gt;
+    
+    &lt;saml:Subject&gt;
+        &lt;saml:NameID Format="emailAddress"&gt;john.doe@company.com&lt;/saml:NameID&gt;
+    &lt;/saml:Subject&gt;
+    
+    &lt;saml:Conditions NotBefore="2024-01-15T10:00:00Z" NotOnOrAfter="2024-01-15T10:05:00Z"&gt;
+        &lt;saml:AudienceRestriction&gt;
+            &lt;saml:Audience&gt;https://salesforce.com&lt;/saml:Audience&gt;
+        &lt;/saml:AudienceRestriction&gt;
+    &lt;/saml:Conditions&gt;
+    
+    &lt;saml:AuthnStatement AuthnInstant="2024-01-15T10:00:00Z"&gt;
+        &lt;saml:AuthnContext&gt;
+            &lt;saml:AuthnContextClassRef&gt;urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport&lt;/saml:AuthnContextClassRef&gt;
+        &lt;/saml:AuthnContext&gt;
+    &lt;/saml:AuthnStatement&gt;
+    
+    &lt;saml:AttributeStatement&gt;
+        &lt;saml:Attribute Name="email"&gt;
+            &lt;saml:AttributeValue&gt;john.doe@company.com&lt;/saml:AttributeValue&gt;
+        &lt;/saml:Attribute&gt;
+        &lt;saml:Attribute Name="groups"&gt;
+            &lt;saml:AttributeValue&gt;Sales&lt;/saml:AttributeValue&gt;
+            &lt;saml:AttributeValue&gt;Marketing&lt;/saml:AttributeValue&gt;
+        &lt;/saml:Attribute&gt;
+    &lt;/saml:AttributeStatement&gt;
+&lt;/saml:Assertion&gt;</pre></div>
+                </div>
+
+                <h2><i class="fas fa-key"></i> OAuth 2.0</h2>
+                <div class="step-section">
+                    <div class="analogy-box">
+                        <h4><i class="fas fa-lightbulb"></i> OAuth Analogy</h4>
+                        <p>OAuth is like giving a <strong>valet parking key</strong>:</p>
+                        <ul>
+                            <li>You don't give the valet your house keys, just the car key</li>
+                            <li>The valet can move your car (limited access) but can't open your house</li>
+                            <li>You can revoke access anytime</li>
+                        </ul>
+                        <p><strong>OAuth is for authorization (what you can do), NOT authentication (who you are)!</strong></p>
+                    </div>
+
+                    <h3>OAuth 2.0 Roles</h3>
+                    <table class="feature-table">
+                        <tr><th>Role</th><th>Who</th><th>Example</th></tr>
+                        <tr><td><strong>Resource Owner</strong></td><td>The user</td><td>You</td></tr>
+                        <tr><td><strong>Client</strong></td><td>App requesting access</td><td>A calendar app</td></tr>
+                        <tr><td><strong>Authorization Server</strong></td><td>Issues tokens</td><td>Entra ID, Google</td></tr>
+                        <tr><td><strong>Resource Server</strong></td><td>Hosts protected resources</td><td>Google Calendar API</td></tr>
+                    </table>
+
+                    <h3>OAuth 2.0 Grant Types</h3>
+                    <table class="feature-table">
+                        <tr><th>Grant Type</th><th>Use Case</th><th>Flow</th></tr>
+                        <tr><td><strong>Authorization Code</strong></td><td>Web apps with backend</td><td>Most secure, uses server-side code exchange</td></tr>
+                        <tr><td><strong>Authorization Code + PKCE</strong></td><td>Mobile/SPAs</td><td>Like auth code but for public clients</td></tr>
+                        <tr><td><strong>Client Credentials</strong></td><td>Service-to-service</td><td>No user involved, app authenticates itself</td></tr>
+                        <tr><td><strong>Implicit (deprecated)</strong></td><td>Legacy SPAs</td><td>Don't use! Replaced by Auth Code + PKCE</td></tr>
+                        <tr><td><strong>Resource Owner Password</strong></td><td>Highly trusted apps only</td><td>User gives password to app - avoid!</td></tr>
+                    </table>
+
+                    <h3>Authorization Code Flow</h3>
+                    <div class="flow-diagram">
+   USER              CLIENT APP             AUTHORIZATION SERVER       RESOURCE SERVER
+    │                     │                         │                        │
+    │ 1. Click "Login"    │                         │                        │
+    │────────────────────▶│                         │                        │
+    │                     │                         │                        │
+    │ 2. Redirect to authorization endpoint         │                        │
+    │◀────────────────────│                         │                        │
+    │                     │                         │                        │
+    │ 3. User authenticates                         │                        │
+    │──────────────────────────────────────────────▶│                        │
+    │                                               │                        │
+    │ 4. User consents to permissions               │                        │
+    │   "App wants to access your calendar"         │                        │
+    │──────────────────────────────────────────────▶│                        │
+    │                                               │                        │
+    │ 5. Redirect back with authorization CODE      │                        │
+    │◀──────────────────────────────────────────────│                        │
+    │                     │                         │                        │
+    │ 6. Browser sends code to app                  │                        │
+    │────────────────────▶│                         │                        │
+    │                     │                         │                        │
+    │                     │ 7. Exchange code for tokens                      │
+    │                     │   (with client_secret)  │                        │
+    │                     │────────────────────────▶│                        │
+    │                     │                         │                        │
+    │                     │ 8. Return tokens        │                        │
+    │                     │   - access_token        │                        │
+    │                     │   - refresh_token       │                        │
+    │                     │◀────────────────────────│                        │
+    │                     │                         │                        │
+    │                     │ 9. Call API with access_token                    │
+    │                     │ Authorization: Bearer eyJ...                      │
+    │                     │─────────────────────────────────────────────────▶│
+    │                     │                                                  │
+    │                     │ 10. Return data                                  │
+    │                     │◀─────────────────────────────────────────────────│
+    │                     │                         │                        │
+    │ 11. Show data       │                         │                        │
+    │◀────────────────────│                         │                        │</div>
+
+                    <h3>Token Types</h3>
+                    <table class="feature-table">
+                        <tr><th>Token</th><th>Purpose</th><th>Lifetime</th></tr>
+                        <tr><td><strong>Access Token</strong></td><td>Access resources</td><td>Short (minutes to 1 hour)</td></tr>
+                        <tr><td><strong>Refresh Token</strong></td><td>Get new access tokens</td><td>Long (days to weeks)</td></tr>
+                        <tr><td><strong>ID Token (OIDC)</strong></td><td>User identity info</td><td>Short (minutes)</td></tr>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-id-badge"></i> OpenID Connect (OIDC)</h2>
+                <div class="step-section">
+                    <div class="analogy-box">
+                        <h4><i class="fas fa-lightbulb"></i> OIDC Analogy</h4>
+                        <p>OIDC = OAuth 2.0 + Identity Layer</p>
+                        <p>If OAuth is the valet key, OIDC adds a <strong>photo ID badge</strong> that tells you who the car owner is.</p>
+                    </div>
+
+                    <h3>What OIDC Adds to OAuth</h3>
+                    <table class="feature-table">
+                        <tr><th>OAuth 2.0</th><th>OIDC Adds</th></tr>
+                        <tr><td>Access Token</td><td><strong>ID Token</strong> (JWT with user info)</td></tr>
+                        <tr><td>Token endpoint</td><td><strong>UserInfo endpoint</strong></td></tr>
+                        <tr><td>No standard claims</td><td><strong>Standard claims</strong> (sub, name, email)</td></tr>
+                        <tr><td>Custom discovery</td><td><strong>.well-known/openid-configuration</strong></td></tr>
+                    </table>
+
+                    <h3>ID Token Example (JWT)</h3>
+                    <div class="code-block"><pre>eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.
+eyJpc3MiOiJodHRwczovL2xvZ2luLm1pY3Jvc29mdG9ubGluZS5jb20vdGVuYW50LWlkL3YyLjAiLCJzdWIiOiJBQUFBQUFBQUFBQUFBQUEiLCJhdWQiOiJjbGllbnQtaWQiLCJleHAiOjE3MDU0MDAwMDAsImlhdCI6MTcwNTMxMzYwMCwibmJmIjoxNzA1MzEzNjAwLCJuYW1lIjoiSm9obiBEb2UiLCJlbWFpbCI6ImpvaG4uZG9lQGNvbXBhbnkuY29tIiwicHJlZmVycmVkX3VzZXJuYW1lIjoiam9obi5kb2VAY29tcGFueS5jb20iLCJvaWQiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDAiLCJ0aWQiOiJ0ZW5hbnQtaWQiLCJub25jZSI6ImFiYzEyMyJ9.
+signature
+
+// Decoded payload:
+{
+  "iss": "https://login.microsoftonline.com/tenant-id/v2.0",  // Issuer
+  "sub": "AAAAAAAAAAAA",                                       // Subject (user ID)
+  "aud": "client-id",                                          // Audience (your app)
+  "exp": 1705400000,                                           // Expiration
+  "iat": 1705313600,                                           // Issued at
+  "name": "John Doe",                                          // Display name
+  "email": "john.doe@company.com",                             // Email
+  "preferred_username": "john.doe@company.com",                // UPN
+  "oid": "00000000-0000-0000-0000-000000000000",              // Object ID
+  "tid": "tenant-id",                                          // Tenant ID
+  "nonce": "abc123"                                            // Replay protection
+}</pre></div>
+
+                    <h3>Discovery Document</h3>
+                    <div class="code-block"><pre>// GET https://login.microsoftonline.com/{tenant}/.well-known/openid-configuration
+
+{
+  "authorization_endpoint": "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize",
+  "token_endpoint": "https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+  "userinfo_endpoint": "https://graph.microsoft.com/oidc/userinfo",
+  "jwks_uri": "https://login.microsoftonline.com/{tenant}/discovery/v2.0/keys",
+  "issuer": "https://login.microsoftonline.com/{tenant}/v2.0",
+  "scopes_supported": ["openid", "profile", "email", "offline_access"],
+  "response_types_supported": ["code", "id_token", "token", "id_token token"],
+  "subject_types_supported": ["pairwise"],
+  "id_token_signing_alg_values_supported": ["RS256"]
+}</pre></div>
+                </div>
+
+                <h2><i class="fas fa-ticket-alt"></i> Kerberos</h2>
+                <div class="step-section">
+                    <div class="analogy-box">
+                        <h4><i class="fas fa-lightbulb"></i> Kerberos Analogy</h4>
+                        <p>Kerberos is like an <strong>amusement park ticket system</strong>:</p>
+                        <ol>
+                            <li>You buy a day pass at the entrance (TGT from KDC)</li>
+                            <li>For each ride, you exchange the day pass for a ride ticket (Service Ticket)</li>
+                            <li>Show ride ticket to ride operator (service)</li>
+                            <li>You never show your ID again after getting the day pass</li>
+                        </ol>
+                    </div>
+
+                    <h3>Kerberos Components</h3>
+                    <table class="feature-table">
+                        <tr><th>Component</th><th>What It Is</th></tr>
+                        <tr><td><strong>KDC (Key Distribution Center)</strong></td><td>Central auth server (Domain Controller in AD)</td></tr>
+                        <tr><td><strong>AS (Authentication Service)</strong></td><td>Issues initial TGT</td></tr>
+                        <tr><td><strong>TGS (Ticket Granting Service)</strong></td><td>Issues service tickets</td></tr>
+                        <tr><td><strong>TGT (Ticket Granting Ticket)</strong></td><td>"Day pass" - proves you're authenticated</td></tr>
+                        <tr><td><strong>Service Ticket</strong></td><td>"Ride ticket" - access specific service</td></tr>
+                        <tr><td><strong>Principal</strong></td><td>User or service identity</td></tr>
+                    </table>
+
+                    <h3>Kerberos Flow</h3>
+                    <div class="flow-diagram">
+   USER/CLIENT                              KDC (Domain Controller)                    SERVICE
+        │                          ┌────────────────┬────────────────┐                    │
+        │                          │       AS       │      TGS       │                    │
+        │                          │ Authentication │ Ticket Granting│                    │
+        │                          │    Service     │    Service     │                    │
+        │                          └────────────────┴────────────────┘                    │
+        │                                           │                                     │
+        │ 1. AS-REQ: "I am john, want TGT"          │                                     │
+        │   (encrypted with user's password hash)  │                                     │
+        │─────────────────────────────────────────▶│                                     │
+        │                                           │                                     │
+        │ 2. AS-REP: Here's your TGT                │                                     │
+        │   (encrypted with KDC key + session key) │                                     │
+        │◀─────────────────────────────────────────│                                     │
+        │                                           │                                     │
+        │ [User now has TGT - valid ~10 hours]     │                                     │
+        │                                           │                                     │
+        │ 3. TGS-REQ: "I want ticket for FileServer"│                                    │
+        │   (includes TGT)                          │                                     │
+        │─────────────────────────────────────────▶│                                     │
+        │                                           │                                     │
+        │ 4. TGS-REP: Here's service ticket         │                                     │
+        │   (encrypted with service's key)         │                                     │
+        │◀─────────────────────────────────────────│                                     │
+        │                                           │                                     │
+        │ 5. AP-REQ: Access FileServer                                                    │
+        │   (presents service ticket)                                                     │
+        │────────────────────────────────────────────────────────────────────────────────▶│
+        │                                                                                 │
+        │ 6. AP-REP: Access granted + optional mutual auth                                │
+        │◀────────────────────────────────────────────────────────────────────────────────│</div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Kerberos Security Risks</h4>
+                        <ul>
+                            <li><strong>Kerberoasting:</strong> Requesting service tickets and offline-cracking them</li>
+                            <li><strong>AS-REP Roasting:</strong> Attacking accounts without pre-authentication</li>
+                            <li><strong>Golden Ticket:</strong> Forged TGT using KRBTGT hash</li>
+                            <li><strong>Silver Ticket:</strong> Forged service ticket using service account hash</li>
+                            <li><strong>Pass-the-Ticket:</strong> Stealing and reusing tickets</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-address-book"></i> LDAP</h2>
+                <div class="step-section">
+                    <h3>What is LDAP?</h3>
+                    <p><strong>LDAP (Lightweight Directory Access Protocol)</strong> is a protocol for accessing and maintaining directory services. It's NOT an authentication protocol per se, but is often used for it.</p>
+
+                    <div class="analogy-box">
+                        <h4><i class="fas fa-lightbulb"></i> LDAP Analogy</h4>
+                        <p>LDAP is like a <strong>phone book database</strong>:</p>
+                        <ul>
+                            <li>Hierarchical structure (country → company → department → person)</li>
+                            <li>You can search for entries</li>
+                            <li>You can authenticate by "binding" (proving you're who you claim)</li>
+                        </ul>
+                    </div>
+
+                    <h3>LDAP Structure (DN - Distinguished Name)</h3>
+                    <div class="code-block"><pre># User's Distinguished Name (DN)
+CN=John Doe,OU=Sales,OU=Users,DC=company,DC=com
+
+# Breakdown:
+# CN = Common Name (the user)
+# OU = Organizational Unit (container)
+# DC = Domain Component (domain name)
+
+# Reading right to left: company.com → Users → Sales → John Doe</pre></div>
+
+                    <h3>LDAP Bind (Authentication)</h3>
+                    <div class="code-block"><pre># Simple Bind (sends password in clear - use LDAPS!)
+ldapsearch -x -H ldap://dc.company.com -D "CN=John Doe,OU=Users,DC=company,DC=com" -w "password"
+
+# Secure LDAPS (port 636)
+ldapsearch -x -H ldaps://dc.company.com:636 -D "john@company.com" -w "password"
+
+# Search for user
+ldapsearch -x -H ldaps://dc.company.com -b "DC=company,DC=com" "(sAMAccountName=john)"</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-lock"></i> Always Use LDAPS!</h4>
+                        <p>LDAP simple bind sends passwords in <strong>cleartext</strong>. Always use:</p>
+                        <ul>
+                            <li><strong>LDAPS (port 636):</strong> LDAP over TLS</li>
+                            <li><strong>StartTLS:</strong> Upgrade connection to TLS</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-wifi"></i> RADIUS</h2>
+                <div class="step-section">
+                    <h3>What is RADIUS?</h3>
+                    <p><strong>RADIUS (Remote Authentication Dial-In User Service)</strong> is used for network access authentication - VPNs, WiFi, network device login.</p>
+
+                    <h3>RADIUS Flow</h3>
+                    <div class="flow-diagram">
+   USER              NETWORK DEVICE              RADIUS SERVER           IDENTITY STORE
+    │              (NAS - VPN/WiFi)                   │                  (AD/LDAP)
+    │                     │                          │                       │
+    │ 1. Connect to VPN   │                          │                       │
+    │   username/password │                          │                       │
+    │────────────────────▶│                          │                       │
+    │                     │                          │                       │
+    │                     │ 2. Access-Request        │                       │
+    │                     │   (user credentials)     │                       │
+    │                     │─────────────────────────▶│                       │
+    │                     │                          │                       │
+    │                     │                          │ 3. Validate creds     │
+    │                     │                          │───────────────────────▶│
+    │                     │                          │                       │
+    │                     │                          │ 4. Valid/Invalid      │
+    │                     │                          │◀───────────────────────│
+    │                     │                          │                       │
+    │                     │ 5. Access-Accept/Reject  │                       │
+    │                     │   + attributes (VLAN,    │                       │
+    │                     │     timeout, etc.)       │                       │
+    │                     │◀─────────────────────────│                       │
+    │                     │                          │                       │
+    │ 6. Connected/Denied │                          │                       │
+    │◀────────────────────│                          │                       │</div>
+
+                    <h3>Common RADIUS Servers</h3>
+                    <ul>
+                        <li><strong>Microsoft NPS (Network Policy Server):</strong> Windows Server built-in</li>
+                        <li><strong>FreeRADIUS:</strong> Open source, very flexible</li>
+                        <li><strong>Cisco ISE:</strong> Enterprise NAC solution</li>
+                        <li><strong>Aruba ClearPass:</strong> Network access control</li>
+                    </ul>
+                </div>
+
+                <h2><i class="fas fa-balance-scale"></i> When to Use What</h2>
+                <table class="feature-table">
+                    <thead>
+                        <tr><th>Scenario</th><th>Recommended Protocol</th><th>Why</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Enterprise SaaS SSO</td><td><strong>SAML</strong> or <strong>OIDC</strong></td><td>Both work well, OIDC more modern</td></tr>
+                        <tr><td>Mobile app</td><td><strong>OIDC + PKCE</strong></td><td>Designed for public clients</td></tr>
+                        <tr><td>Single Page App (SPA)</td><td><strong>OIDC + PKCE</strong></td><td>Auth code flow with PKCE</td></tr>
+                        <tr><td>API access (user context)</td><td><strong>OAuth 2.0</strong></td><td>Delegated permissions</td></tr>
+                        <tr><td>Service-to-service</td><td><strong>OAuth 2.0 Client Credentials</strong></td><td>No user involved</td></tr>
+                        <tr><td>Windows domain login</td><td><strong>Kerberos</strong></td><td>Native Windows auth</td></tr>
+                        <tr><td>Legacy app auth</td><td><strong>LDAP(S)</strong></td><td>Simple to implement</td></tr>
+                        <tr><td>VPN authentication</td><td><strong>RADIUS</strong></td><td>Industry standard for network access</td></tr>
+                        <tr><td>WiFi authentication</td><td><strong>RADIUS (802.1X)</strong></td><td>WPA2/3 Enterprise</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

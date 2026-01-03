@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Security Policies | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .policy-flow { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto; white-space: pre; line-height: 1.3; }
+        .analogy-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>Security Policies</span></div>
+            <div class="content">
+                <h1><i class="fas fa-shield"></i> Palo Alto Security Policies</h1>
+                <p class="lead">Complete guide to security policy configuration, App-ID, User-ID integration, NAT policies, and policy optimization.</p>
+
+                <div class="analogy-box">
+                    <h4><i class="fas fa-lightbulb"></i> Palo Alto Policy Philosophy</h4>
+                    <p>Palo Alto takes a <strong>positive security model</strong>:</p>
+                    <ul>
+                        <li><strong>Traditional:</strong> "Block bad things" (blacklist)</li>
+                        <li><strong>Palo Alto:</strong> "Allow only good things" (whitelist)</li>
+                    </ul>
+                    <p>Instead of "allow port 443", you say "allow Salesforce, Office365, and Zoom" - the ACTUAL applications you need.</p>
+                </div>
+
+                <h2><i class="fas fa-list-ol"></i> Policy Processing Order</h2>
+                <div class="policy-flow">
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           PALO ALTO POLICY PROCESSING                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                              │
+│   Packet Arrives                                                                             │
+│        │                                                                                     │
+│        ▼                                                                                     │
+│   ┌─────────────┐                                                                            │
+│   │  Ingress    │                                                                            │
+│   │  Interface  │                                                                            │
+│   └──────┬──────┘                                                                            │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              ZONE LOOKUP                                             │   │
+│   │   Source Zone = zone of ingress interface                                           │   │
+│   │   Dest Zone = zone of egress interface (routing decision)                           │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              NAT POLICY LOOKUP (Pre-NAT)                             │   │
+│   │   - Destination NAT happens BEFORE security policy lookup                           │   │
+│   │   - Security policy sees POST-NAT destination                                       │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              APP-ID IDENTIFICATION                                   │   │
+│   │                                                                                      │   │
+│   │   Initial: Application = "incomplete" or "insufficient-data"                        │   │
+│   │                                                                                      │   │
+│   │   As more packets arrive:                                                           │   │
+│   │   1. Check known ports/protocols                                                    │   │
+│   │   2. Apply protocol decoders                                                        │   │
+│   │   3. Apply application signatures                                                   │   │
+│   │   4. Decrypt if SSL (and decryption policy matches)                                │   │
+│   │   5. Continue identifying until confident                                           │   │
+│   │                                                                                      │   │
+│   │   Example progression: unknown → ssl → web-browsing → facebook-base → facebook-chat│   │
+│   └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              USER-ID LOOKUP                                          │   │
+│   │   Map source IP → username (from AD, captive portal, etc.)                          │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              SECURITY POLICY LOOKUP                                  │   │
+│   │                                                                                      │   │
+│   │   For each rule (top to bottom):                                                    │   │
+│   │     - Source Zone match?                                                            │   │
+│   │     - Destination Zone match?                                                       │   │
+│   │     - Source Address match?                                                         │   │
+│   │     - Source User match?                                                            │   │
+│   │     - Destination Address match?                                                    │   │
+│   │     - Application match? (App-ID)                                                   │   │
+│   │     - Service/Port match?                                                           │   │
+│   │     - URL Category match? (if configured)                                           │   │
+│   │                                                                                      │   │
+│   │   First match wins → Apply action (allow/deny/drop)                                 │   │
+│   │   No match → Implicit deny (interzone) or allow (intrazone)                        │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              SECURITY PROFILES (if action=allow)                     │   │
+│   │   - Antivirus                                                                       │   │
+│   │   - Anti-Spyware                                                                    │   │
+│   │   - Vulnerability Protection                                                        │   │
+│   │   - URL Filtering                                                                   │   │
+│   │   - File Blocking                                                                   │   │
+│   │   - WildFire Analysis                                                               │   │
+│   │   - Data Filtering                                                                  │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                              SOURCE NAT (Post-routing)                               │   │
+│   └─────────────────────────────────────────────────────────────────────────────────────┘   │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│      Forward Packet                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘</div>
+
+                <h2><i class="fas fa-cubes"></i> Address Objects</h2>
+                <div class="step-section">
+                    <h3>Create Address Objects</h3>
+                    <div class="code-block"><pre>> configure
+
+# IP address
+# set address Server-Web01 ip-netmask 10.1.1.100/32
+# set address Server-Web01 description "Production web server"
+
+# Network/subnet
+# set address Net-Users ip-netmask 10.100.0.0/16
+# set address Net-Servers ip-netmask 10.200.0.0/24
+
+# IP range
+# set address DHCP-Pool ip-range 10.1.1.100-10.1.1.200
+
+# FQDN (auto-resolves)
+# set address Office365 fqdn *.office365.com
+
+# commit</pre></div>
+
+                    <h3>Address Groups</h3>
+                    <div class="code-block"><pre># Static group
+# set address-group Grp-WebServers static [ Server-Web01 Server-Web02 Server-Web03 ]
+# set address-group Grp-WebServers description "All web servers"
+
+# Dynamic group (based on tags)
+# set address-group Grp-PCI-Servers dynamic filter "'PCI-Scope'"
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> Security Policies</h2>
+                <div class="step-section">
+                    <h3>Basic Allow Policy</h3>
+                    <div class="code-block"><pre>> configure
+
+# Create security policy rule
+# set rulebase security rules Allow-Users-Internet from Trust
+# set rulebase security rules Allow-Users-Internet to Untrust
+# set rulebase security rules Allow-Users-Internet source any
+# set rulebase security rules Allow-Users-Internet destination any
+# set rulebase security rules Allow-Users-Internet application any
+# set rulebase security rules Allow-Users-Internet service application-default
+# set rulebase security rules Allow-Users-Internet action allow
+# set rulebase security rules Allow-Users-Internet log-start yes
+# set rulebase security rules Allow-Users-Internet log-end yes
+
+# COMMIT!
+# commit</pre></div>
+
+                    <h3>App-ID Based Policy (Best Practice)</h3>
+                    <div class="code-block"><pre># Allow specific applications
+# set rulebase security rules Allow-Business-Apps from Trust
+# set rulebase security rules Allow-Business-Apps to Untrust
+# set rulebase security rules Allow-Business-Apps source Net-Users
+# set rulebase security rules Allow-Business-Apps destination any
+# set rulebase security rules Allow-Business-Apps application [ 
+    office365-enterprise-access 
+    salesforce 
+    zoom 
+    slack 
+    webex 
+    ms-teams 
+]
+# set rulebase security rules Allow-Business-Apps service application-default
+# set rulebase security rules Allow-Business-Apps action allow
+# set rulebase security rules Allow-Business-Apps log-end yes
+
+# Attach security profiles
+# set rulebase security rules Allow-Business-Apps profile-setting profiles virus default
+# set rulebase security rules Allow-Business-Apps profile-setting profiles spyware default
+# set rulebase security rules Allow-Business-Apps profile-setting profiles vulnerability default
+# set rulebase security rules Allow-Business-Apps profile-setting profiles url-filtering default
+# set rulebase security rules Allow-Business-Apps profile-setting profiles file-blocking "basic file blocking"
+# set rulebase security rules Allow-Business-Apps profile-setting profiles wildfire-analysis default
+
+# commit</pre></div>
+
+                    <h3>User-Based Policy</h3>
+                    <div class="code-block"><pre># Allow IT admins to use SSH
+# set rulebase security rules IT-SSH-Access from Trust
+# set rulebase security rules IT-SSH-Access to Trust
+# set rulebase security rules IT-SSH-Access source any
+# set rulebase security rules IT-SSH-Access source-user [ "company.local\IT-Admins" ]
+# set rulebase security rules IT-SSH-Access destination Grp-Servers
+# set rulebase security rules IT-SSH-Access application ssh
+# set rulebase security rules IT-SSH-Access service application-default
+# set rulebase security rules IT-SSH-Access action allow
+# set rulebase security rules IT-SSH-Access log-end yes
+
+# commit</pre></div>
+
+                    <h3>Deny Policy with Logging</h3>
+                    <div class="code-block"><pre># Block high-risk applications
+# set rulebase security rules Block-HighRisk-Apps from Trust
+# set rulebase security rules Block-HighRisk-Apps to Untrust
+# set rulebase security rules Block-HighRisk-Apps source any
+# set rulebase security rules Block-HighRisk-Apps destination any
+# set rulebase security rules Block-HighRisk-Apps application [ 
+    bittorrent 
+    tor 
+    ultrasurf 
+    psiphon 
+    hotspot-shield 
+]
+# set rulebase security rules Block-HighRisk-Apps service any
+# set rulebase security rules Block-HighRisk-Apps action deny
+# set rulebase security rules Block-HighRisk-Apps log-end yes
+
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-random"></i> NAT Policies</h2>
+                <div class="step-section">
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> NAT vs Security Policy Order</h4>
+                        <p><strong>DNAT (Destination NAT):</strong> Happens BEFORE security policy lookup. Security policy sees the POST-NAT destination.<br>
+                        <strong>SNAT (Source NAT):</strong> Happens AFTER security policy. Security policy sees the PRE-NAT source.</p>
+                    </div>
+
+                    <h3>Source NAT (Outbound Internet)</h3>
+                    <div class="code-block"><pre># Hide NAT - translate all internal to single public IP
+# set rulebase nat rules Outbound-SNAT source-translation dynamic-ip-and-port interface-address interface ethernet1/1
+# set rulebase nat rules Outbound-SNAT from Trust
+# set rulebase nat rules Outbound-SNAT to Untrust
+# set rulebase nat rules Outbound-SNAT source any
+# set rulebase nat rules Outbound-SNAT destination any
+# set rulebase nat rules Outbound-SNAT service any
+
+# commit</pre></div>
+
+                    <h3>Destination NAT (Port Forward to Internal Server)</h3>
+                    <div class="code-block"><pre># Inbound NAT - public IP to internal web server
+# set rulebase nat rules Inbound-WebServer from Untrust
+# set rulebase nat rules Inbound-WebServer to Untrust
+# set rulebase nat rules Inbound-WebServer source any
+# set rulebase nat rules Inbound-WebServer destination Public-WebServer-IP
+# set rulebase nat rules Inbound-WebServer service service-https
+# set rulebase nat rules Inbound-WebServer destination-translation translated-address 10.100.1.50
+# set rulebase nat rules Inbound-WebServer destination-translation translated-port 443
+
+# Security policy for the NAT'd traffic (uses POST-NAT destination)
+# set rulebase security rules Inbound-WebServer from Untrust
+# set rulebase security rules Inbound-WebServer to DMZ
+# set rulebase security rules Inbound-WebServer source any
+# set rulebase security rules Inbound-WebServer destination 10.100.1.50
+# set rulebase security rules Inbound-WebServer application ssl
+# set rulebase security rules Inbound-WebServer service application-default
+# set rulebase security rules Inbound-WebServer action allow
+
+# commit</pre></div>
+
+                    <h3>Bidirectional NAT (1:1 NAT)</h3>
+                    <div class="code-block"><pre># Server needs both inbound and outbound with same public IP
+# set rulebase nat rules Bidir-MailServer from any
+# set rulebase nat rules Bidir-MailServer to Untrust
+# set rulebase nat rules Bidir-MailServer source Mail-Server-Internal
+# set rulebase nat rules Bidir-MailServer destination any
+# set rulebase nat rules Bidir-MailServer source-translation static-ip translated-address 203.0.113.25
+# set rulebase nat rules Bidir-MailServer source-translation static-ip bi-directional yes
+
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-sort-amount-down"></i> Policy Ordering</h2>
+                <div class="step-section">
+                    <h3>Move Rules</h3>
+                    <div class="code-block"><pre># Move rule to top
+# move rulebase security rules Block-HighRisk-Apps top
+
+# Move rule before another rule
+# move rulebase security rules IT-SSH-Access before Allow-Users-Internet
+
+# Move rule after another rule
+# move rulebase security rules Allow-Business-Apps after IT-SSH-Access
+
+# commit</pre></div>
+
+                    <h3>Recommended Policy Order</h3>
+                    <table class="feature-table">
+                        <thead><tr><th>Order</th><th>Policy Type</th><th>Example</th></tr></thead>
+                        <tbody>
+                            <tr><td>1</td><td>Explicit denies</td><td>Block bad IPs, block bad apps</td></tr>
+                            <tr><td>2</td><td>Critical infrastructure</td><td>DNS, DHCP, AD traffic</td></tr>
+                            <tr><td>3</td><td>User-specific rules</td><td>IT-SSH, Finance-Database</td></tr>
+                            <tr><td>4</td><td>Application-based allows</td><td>Business apps by App-ID</td></tr>
+                            <tr><td>5</td><td>General outbound</td><td>Web browsing (if needed)</td></tr>
+                            <tr><td>6</td><td>Catch-all deny (optional)</td><td>Log unknown traffic</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="info-box">
+                        <h4><i class="fas fa-lightbulb"></i> App-ID and "application-default"</h4>
+                        <p><strong>application-default</strong> means "use the ports this application normally uses."</p>
+                        <p>Example: If you allow "web-browsing" with service "application-default", it allows HTTP on port 80 only. If someone tries web-browsing on port 8080, it won't match.</p>
+                        <p>This prevents port-hopping attacks where malware uses non-standard ports.</p>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-search"></i> Policy Troubleshooting</h2>
+                <div class="step-section">
+                    <h3>Test Policy Match</h3>
+                    <div class="code-block"><pre># Test which policy matches specific traffic
+> test security-policy-match source 10.1.1.50 destination 8.8.8.8 protocol 6 destination-port 443
+
+# With application
+> test security-policy-match source 10.1.1.50 destination 8.8.8.8 protocol 6 destination-port 443 application ssl
+
+# With source user
+> test security-policy-match source 10.1.1.50 destination 8.8.8.8 protocol 6 destination-port 443 source-user "company.local\john.doe"</pre></div>
+
+                    <h3>View Active Sessions</h3>
+                    <div class="code-block"><pre># Show all sessions
+> show session all
+
+# Filter sessions
+> show session all filter source 10.1.1.50
+> show session all filter destination 8.8.8.8
+> show session all filter application facebook-base
+> show session all filter state active
+
+# Session details
+> show session id 12345</pre></div>
+
+                    <h3>Traffic Logs</h3>
+                    <div class="code-block"><pre># View traffic logs
+> show log traffic direction equal backward
+
+# Filter by source/destination
+> show log traffic src in 10.1.1.50
+> show log traffic dst in 8.8.8.8
+
+# Filter by rule name
+> show log traffic rule equal "Allow-Users-Internet"
+
+# Filter by action
+> show log traffic action equal deny</pre></div>
+
+                    <h3>Policy Hit Count</h3>
+                    <div class="code-block"><pre># Show rule hit counts
+> show running security-policy
+
+# In GUI: Policies → Security → Hit Count column
+
+# Reset hit counts
+> reset rules hit-count security</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Policy Best Practices</h2>
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Best Practices</h4>
+                    <ul>
+                        <li><strong>Use App-ID:</strong> Never just allow "any" application</li>
+                        <li><strong>Use application-default:</strong> Prevents port-hopping</li>
+                        <li><strong>Attach security profiles:</strong> Every allow rule should have profiles</li>
+                        <li><strong>Enable logging:</strong> At minimum log-end, ideally log-start too</li>
+                        <li><strong>Name rules clearly:</strong> "IT-to-Servers-SSH" not "Rule_42"</li>
+                        <li><strong>Use tags:</strong> Tag rules for auditing and reporting</li>
+                        <li><strong>Review hit counts:</strong> Zero-hit rules may be unnecessary</li>
+                        <li><strong>Commit often:</strong> Small commits are easier to troubleshoot</li>
+                    </ul>
+                </div>
+
+                <div class="danger-box">
+                    <h4><i class="fas fa-ban"></i> Common Mistakes</h4>
+                    <ul>
+                        <li>❌ Using service "any" instead of "application-default"</li>
+                        <li>❌ No security profiles on allow rules</li>
+                        <li>❌ Overly broad rules (any-any-any-allow)</li>
+                        <li>❌ Forgetting to commit after changes</li>
+                        <li>❌ Wrong policy order (broad rules before specific)</li>
+                        <li>❌ Not logging denied traffic</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

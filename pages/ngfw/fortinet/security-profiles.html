@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate Security Profiles | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .profile-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .profile-card h4 { color: var(--accent-color); margin-top: 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>Security Profiles</span></div>
+            <div class="content">
+                <h1><i class="fas fa-virus-slash"></i> FortiGate Security Profiles (UTM)</h1>
+                <p class="lead">Complete guide to configuring antivirus, web filter, IPS, application control, SSL inspection, and FortiSandbox integration.</p>
+
+                <h2><i class="fas fa-layer-group"></i> Security Profile Overview</h2>
+                <table class="feature-table">
+                    <thead>
+                        <tr><th>Profile</th><th>Function</th><th>License Required</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Antivirus</strong></td><td>Scan files for malware signatures</td><td>FortiGuard AV</td></tr>
+                        <tr><td><strong>Web Filter</strong></td><td>Block/allow websites by category</td><td>FortiGuard Web Filter</td></tr>
+                        <tr><td><strong>DNS Filter</strong></td><td>Block malicious domains at DNS level</td><td>FortiGuard Web Filter</td></tr>
+                        <tr><td><strong>Application Control</strong></td><td>Control applications (Facebook, BitTorrent)</td><td>FortiGuard App Control</td></tr>
+                        <tr><td><strong>IPS</strong></td><td>Block exploits and attack signatures</td><td>FortiGuard IPS</td></tr>
+                        <tr><td><strong>File Filter</strong></td><td>Block file types (.exe, .bat)</td><td>Included</td></tr>
+                        <tr><td><strong>Email Filter</strong></td><td>Anti-spam, phishing protection</td><td>FortiGuard Anti-Spam</td></tr>
+                        <tr><td><strong>DLP</strong></td><td>Detect sensitive data leaving network</td><td>Included</td></tr>
+                        <tr><td><strong>SSL Inspection</strong></td><td>Decrypt HTTPS for inspection</td><td>Included</td></tr>
+                        <tr><td><strong>FortiSandbox</strong></td><td>Cloud/on-prem sandbox for zero-day</td><td>FortiSandbox License</td></tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-shield-virus"></i> Antivirus Profile</h2>
+                <div class="step-section">
+                    <h3>Create Antivirus Profile</h3>
+                    <div class="code-block"><pre># Create AV profile for client protection
+config antivirus profile
+    edit "AV-Client-Protect"
+        set comment "Standard client protection"
+        
+        # HTTP scanning
+        config http
+            set av-scan block
+            set outbreak-prevention block
+        end
+        
+        # FTP scanning
+        config ftp
+            set av-scan block
+            set outbreak-prevention block
+        end
+        
+        # SMTP scanning
+        config smtp
+            set av-scan block
+            set outbreak-prevention block
+        end
+        
+        # POP3 scanning
+        config pop3
+            set av-scan block
+            set outbreak-prevention block
+        end
+        
+        # IMAP scanning
+        config imap
+            set av-scan block
+            set outbreak-prevention block
+        end
+        
+        # Other protocols
+        config mapi
+            set av-scan block
+            set outbreak-prevention block
+        end
+        
+        config nntp
+            set av-scan block
+            set outbreak-prevention block
+        end
+        
+        # Submit unknown files to FortiSandbox
+        set analytics-wl disable
+        set analytics-bl enable
+        set analytics-db enable
+        set mobile-malware-db enable
+        set analytics-max-upload 10240  # 10MB max file size
+        set analytics-accept-filetype *  # All file types
+        
+    next
+end</pre></div>
+
+                    <h3>AV Profile for Servers (More Aggressive)</h3>
+                    <div class="code-block"><pre>config antivirus profile
+    edit "AV-Server-Strict"
+        set comment "Strict AV for inbound traffic"
+        
+        config http
+            set av-scan block
+            set quarantine enable  # Quarantine detected files
+            set outbreak-prevention block
+        end
+        
+        # Enable extended scan (slower but deeper)
+        set extended-utm-log enable
+        set scan-mode full  # Full file scan, not quick
+        
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-globe"></i> Web Filter Profile</h2>
+                <div class="step-section">
+                    <h3>Create Corporate Web Filter</h3>
+                    <div class="code-block"><pre>config webfilter profile
+    edit "WebFilter-Corporate"
+        set comment "Corporate web filtering policy"
+        
+        # FortiGuard Category Filtering
+        config ftgd-wf
+            # Block security risk categories
+            set category 1 2 3 4 5 6  # Malware, phishing, spam URLs, etc.
+            
+            # Configure each category
+            config filters
+                edit 1
+                    set category 26  # Malware
+                    set action block
+                next
+                edit 2
+                    set category 61  # Phishing
+                    set action block
+                next
+                edit 3
+                    set category 62  # Spam URLs
+                    set action block
+                next
+                edit 4
+                    set category 59  # Adult Content
+                    set action block
+                next
+                edit 5
+                    set category 24  # Gambling
+                    set action block
+                next
+                edit 6
+                    set category 75  # Streaming Media
+                    set action warning  # Warn but allow
+                next
+                edit 7
+                    set category 76  # Peer-to-peer
+                    set action block
+                next
+                edit 8
+                    set category 79  # Social Networking
+                    set action monitor  # Allow but log
+                next
+            end
+        end
+        
+        # Safe Search enforcement
+        set safe-search url  # Force safe search on Google, Bing, etc.
+        set youtube-restrict moderate
+        
+        # Block pages with expired SSL certificates
+        set https-replacemsg enable
+        
+        # Logging
+        set log-all-url enable
+        set extended-log enable
+        
+    next
+end</pre></div>
+
+                    <h3>Web Filter URL Override (Whitelist/Blacklist)</h3>
+                    <div class="code-block"><pre># Create URL filter to whitelist/blacklist specific sites
+config webfilter urlfilter
+    edit 1
+        set name "Corporate-Overrides"
+        config entries
+            edit 1
+                set url "*.company.com"
+                set type wildcard
+                set action allow
+            next
+            edit 2
+                set url "competitor.com"
+                set type simple
+                set action block
+            next
+            edit 3
+                set url "*.gambling-site.com"
+                set type wildcard
+                set action block
+            next
+        end
+    next
+end
+
+# Add to web filter profile
+config webfilter profile
+    edit "WebFilter-Corporate"
+        config override
+            set ovrd-user-group "Web-Override-Users"  # Who can request bypass
+            set ovrd-dur-mode constant
+            set ovrd-dur 86400  # 24 hour override
+        end
+        set web-filter-url-log enable
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-mobile-alt"></i> Application Control</h2>
+                <div class="step-section">
+                    <h3>Create Application Control Profile</h3>
+                    <div class="code-block"><pre>config application list
+    edit "AppControl-Corporate"
+        set comment "Corporate application policy"
+        
+        # Default action for unknown apps
+        set unknown-application-action pass
+        set unknown-application-log enable
+        
+        # Block high-risk apps
+        config entries
+            edit 1
+                set category 2  # P2P
+                set action block
+            next
+            edit 2
+                set category 7  # Proxy
+                set action block
+            next
+            edit 3
+                set category 17  # Game
+                set action block
+            next
+        end
+        
+        # Control specific applications
+        config entries
+            edit 10
+                set application 15836  # BitTorrent
+                set action block
+            next
+            edit 11
+                set application 16395  # Tor
+                set action block
+            next
+            edit 12
+                set application 16058  # TeamViewer
+                set action block  # Or set to 'pass' if needed
+            next
+            edit 13
+                set application 15895  # Facebook
+                set action pass  # Allow Facebook
+            next
+            edit 14
+                set application 31077  # Facebook.Video
+                set action block  # But block Facebook videos
+            next
+        end
+        
+    next
+end</pre></div>
+
+                    <div class="info-box">
+                        <h4><i class="fas fa-info-circle"></i> Finding Application IDs</h4>
+                        <p>To find application IDs:</p>
+                        <div class="code-block"><pre># Search for application by name
+diagnose sys siginfo <app-name>
+diagnose sys siginfo facebook
+
+# List all applications in category
+config application list
+    edit test
+        show full
+end</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> IPS (Intrusion Prevention System)</h2>
+                <div class="step-section">
+                    <h3>Create IPS Sensor</h3>
+                    <div class="code-block"><pre>config ips sensor
+    edit "IPS-Client-Protect"
+        set comment "IPS for client networks"
+        
+        # Protect against common client-side attacks
+        config entries
+            edit 1
+                set rule 27671  # Example: CVE signature
+                set status enable
+                set action block
+                set log-packet enable
+            next
+        end
+        
+        # Use filters to protect broad categories
+        config filter
+            edit 1
+                set location client
+                set severity high critical
+                set action block
+                set log enable
+                set log-packet enable
+            next
+            edit 2
+                set location client
+                set severity medium
+                set action default  # Use signature's default action
+                set log enable
+            next
+        end
+        
+    next
+end
+
+# Create IPS Sensor for Servers (Strict)
+config ips sensor
+    edit "IPS-Server-Protect"
+        set comment "IPS for server networks - strict"
+        
+        config filter
+            edit 1
+                set location server
+                set severity high critical medium
+                set action block
+                set log enable
+                set log-packet enable  # Capture packets for forensics
+            next
+            edit 2
+                set application IIS Apache Nginx PHP
+                set severity high critical
+                set action block
+            next
+        end
+        
+        config override
+            edit 1
+                set rule-id 12345  # Override specific rule
+                set status enable
+                set action block
+            next
+        end
+        
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-lock-open"></i> SSL/TLS Inspection</h2>
+                <div class="step-section">
+                    <h3>Why SSL Inspection is Critical</h3>
+                    <p>~90% of web traffic is encrypted. Without SSL inspection:</p>
+                    <ul>
+                        <li>Web Filter sees only domain, not URL path</li>
+                        <li>AV cannot scan files in HTTPS</li>
+                        <li>IPS cannot detect attacks in encrypted traffic</li>
+                        <li>App Control has limited visibility</li>
+                    </ul>
+
+                    <h3>SSL Inspection Modes</h3>
+                    <table class="feature-table">
+                        <thead><tr><th>Mode</th><th>Description</th><th>Use Case</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Certificate Inspection</strong></td><td>Inspect certificate only, not content</td><td>Basic protection, compliance concerns</td></tr>
+                            <tr><td><strong>Deep Inspection</strong></td><td>Decrypt, inspect, re-encrypt all traffic</td><td>Full visibility and protection</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Create SSL Inspection Profile</h3>
+                    <div class="code-block"><pre># Certificate Inspection (Light - Recommended Start)
+config firewall ssl-ssh-profile
+    edit "SSL-Certificate-Inspection"
+        set comment "Certificate inspection only"
+        
+        config ssl
+            set inspect-all disable  # Don't deep inspect
+            set client-certificate request  # Request client cert
+        end
+        
+        config https
+            set ports 443
+            set status certificate-inspection
+            set client-cert-request bypass
+        end
+        
+        # Exempt categories from inspection
+        config ssl-exempt
+            edit 1
+                set type category
+                set fortiguard-category 11  # Financial Services
+            next
+            edit 2
+                set type category
+                set fortiguard-category 26  # Health Care
+            next
+        end
+        
+    next
+end
+
+# Deep Inspection (Full Visibility)
+config firewall ssl-ssh-profile
+    edit "SSL-Deep-Inspection"
+        set comment "Full deep inspection"
+        
+        config ssl
+            set inspect-all deep-inspection
+        end
+        
+        config https
+            set ports 443 8443
+            set status deep-inspection
+            
+            # Use FortiGate's CA certificate
+            set client-cert-request bypass
+        end
+        
+        # VERY IMPORTANT: Exempt certificate-pinned sites
+        config ssl-exempt
+            edit 1
+                set type wildcard-fqdn
+                set wildcard-fqdn "*.apple.com"  # iOS updates
+            next
+            edit 2
+                set type wildcard-fqdn
+                set wildcard-fqdn "*.windows.com"  # Windows Update
+            next
+            edit 3
+                set type wildcard-fqdn
+                set wildcard-fqdn "*.microsoft.com"
+            next
+            edit 4
+                set type wildcard-fqdn
+                set wildcard-fqdn "*.icloud.com"
+            next
+            edit 5
+                set type category
+                set fortiguard-category 11  # Financial
+            next
+            edit 6
+                set type category
+                set fortiguard-category 26  # Health
+            next
+        end
+        
+    next
+end</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Deep Inspection Requirements</h4>
+                        <ul>
+                            <li><strong>CA Certificate:</strong> Must install FortiGate CA on all clients</li>
+                            <li><strong>GPO Deployment:</strong> Use Active Directory GPO to push certificate</li>
+                            <li><strong>Mobile Devices:</strong> MDM to push certificate to phones/tablets</li>
+                            <li><strong>Privacy:</strong> Some jurisdictions have legal requirements around inspection</li>
+                        </ul>
+                    </div>
+
+                    <h3>Export and Deploy FortiGate CA</h3>
+                    <div class="code-block"><pre># Export FortiGate CA certificate
+config vpn certificate local
+    edit "Fortinet_CA_SSL"
+        # Certificate is built-in, export from GUI
+    next
+end
+
+# GUI: Security Profiles → SSL/SSH Inspection → 
+#      Download Certificate (Fortinet_CA_SSL)</pre></div>
+
+                    <p>Deploy via GPO:</p>
+                    <ol>
+                        <li>Open Group Policy Management</li>
+                        <li>Edit GPO → Computer Configuration → Policies → Windows Settings</li>
+                        <li>Security Settings → Public Key Policies</li>
+                        <li>Trusted Root Certification Authorities</li>
+                        <li>Import the FortiGate CA certificate</li>
+                    </ol>
+                </div>
+
+                <h2><i class="fas fa-cloud-upload-alt"></i> FortiSandbox Integration</h2>
+                <div class="step-section">
+                    <h3>Configure FortiSandbox Connection</h3>
+                    <div class="code-block"><pre># Cloud FortiSandbox (FortiGuard)
+config system fortisandbox
+    set status enable
+    set forticloud enable
+end
+
+# On-premise FortiSandbox
+config system fortisandbox
+    set status enable
+    set server "10.1.1.200"  # FortiSandbox IP
+end
+
+# Verify connection
+diagnose test application forticldd 1</pre></div>
+
+                    <h3>Enable in AV Profile</h3>
+                    <div class="code-block"><pre>config antivirus profile
+    edit "AV-With-Sandbox"
+        set analytics-db enable
+        set analytics-max-upload 10240
+        set analytics-wl enable
+        set analytics-bl enable
+        set fortisandbox-mode inline-block  # Wait for verdict
+        # or: set fortisandbox-mode analytics  # Log only
+    next
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-link"></i> Apply Profiles to Policies</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Apply all security profiles to a policy
+config firewall policy
+    edit 10
+        set name "Users-to-Internet"
+        set srcintf "Trust"
+        set dstintf "Untrust"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set schedule "always"
+        set service "ALL"
+        set nat enable
+        
+        # Enable UTM
+        set utm-status enable
+        
+        # Apply profiles
+        set av-profile "AV-Client-Protect"
+        set webfilter-profile "WebFilter-Corporate"
+        set application-list "AppControl-Corporate"
+        set ips-sensor "IPS-Client-Protect"
+        set ssl-ssh-profile "SSL-Deep-Inspection"
+        
+        # Logging
+        set logtraffic all
+        set logtraffic-start enable
+    next
+end</pre></div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

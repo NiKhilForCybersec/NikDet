@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDE macOS Onboarding | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .method-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .method-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .step-box { background: rgba(99, 102, 241, 0.1); padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .step-box h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .success-box { background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+        .path-highlight { background: rgba(99, 102, 241, 0.2); padding: 0.125rem 0.375rem; border-radius: 4px; font-family: monospace; }
+        .permission-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid #f59e0b; }
+        .permission-card h5 { color: #f59e0b; margin: 0 0 0.5rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/mde/index.html">MDE</a><span class="separator">/</span><span>macOS Onboarding</span></div>
+            <div class="content">
+                <h1><i class="fab fa-apple"></i> MDE macOS Onboarding</h1>
+                <p class="lead">Complete guide to onboarding macOS devices to Microsoft Defender for Endpoint. Covers Intune, JAMF, and manual deployment with full disk access and system extension configuration.</p>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> macOS Requires Additional Permissions</h4>
+                    <p>Unlike Windows, macOS requires explicit user consent or MDM-pushed configuration profiles for:</p>
+                    <ul>
+                        <li><strong>System Extensions</strong> - For kernel-level protection</li>
+                        <li><strong>Full Disk Access</strong> - To scan all files</li>
+                        <li><strong>Network Extension</strong> - For network protection features</li>
+                    </ul>
+                    <p>Without MDM, users must manually approve these in System Preferences.</p>
+                </div>
+
+                <h2><i class="fas fa-clipboard-check"></i> Prerequisites</h2>
+                
+                <table class="prereq-table">
+                    <thead>
+                        <tr><th>Requirement</th><th>Details</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>macOS Version</strong></td><td>macOS 11 (Big Sur), 12 (Monterey), 13 (Ventura), 14 (Sonoma), 15 (Sequoia)</td></tr>
+                        <tr><td><strong>Architecture</strong></td><td>Intel (x64) and Apple Silicon (M1/M2/M3) supported</td></tr>
+                        <tr><td><strong>Disk Space</strong></td><td>Minimum 1 GB</td></tr>
+                        <tr><td><strong>Licensing</strong></td><td>MDE Plan 1, Plan 2, or included license</td></tr>
+                        <tr><td><strong>Admin Rights</strong></td><td>Local administrator access for installation</td></tr>
+                        <tr><td><strong>Network</strong></td><td>Outbound HTTPS (443) to Microsoft endpoints</td></tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-key"></i> Required Permissions (Critical)</h2>
+                
+                <div class="method-section">
+                    <h3>Understanding macOS Security Requirements</h3>
+                    <p>macOS has strict security controls that require explicit approval for security software. MDE needs these permissions to function fully:</p>
+
+                    <div class="permission-card">
+                        <h5><i class="fas fa-puzzle-piece"></i> System Extension</h5>
+                        <p>Required for: Real-time protection, behavior monitoring, kernel-level threat detection</p>
+                        <p>MDM Profile: <code>com.apple.system-extension-policy</code></p>
+                        <p>Team ID: <code>UBF8T346G9</code></p>
+                        <p>Bundle IDs: <code>com.microsoft.wdav.epsext</code>, <code>com.microsoft.wdav.netext</code></p>
+                    </div>
+
+                    <div class="permission-card">
+                        <h5><i class="fas fa-folder-open"></i> Full Disk Access (FDA)</h5>
+                        <p>Required for: Scanning all files including protected locations, quarantine access</p>
+                        <p>MDM Profile: <code>com.apple.TCC.configuration-profile-policy</code></p>
+                        <p>Code Requirement: <code>identifier "com.microsoft.wdav" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6]</code></p>
+                    </div>
+
+                    <div class="permission-card">
+                        <h5><i class="fas fa-globe"></i> Network Extension</h5>
+                        <p>Required for: Network protection, web content filtering</p>
+                        <p>MDM Profile: <code>com.apple.webcontent-filter</code></p>
+                        <p>Filter Type: Plugin</p>
+                    </div>
+
+                    <div class="permission-card">
+                        <h5><i class="fas fa-bell"></i> Notifications</h5>
+                        <p>Required for: Threat alerts, scan notifications</p>
+                        <p>MDM Profile: <code>com.apple.notificationsettings</code></p>
+                    </div>
+                </div>
+
+                <h2 id="intune"><i class="fas fa-cloud"></i> Method 1: Microsoft Intune (Recommended)</h2>
+                
+                <div class="method-section">
+                    <h3>Overview</h3>
+                    <p>Intune provides the smoothest deployment experience by automatically deploying the app and required configuration profiles.</p>
+
+                    <div class="step-box">
+                        <h4>Step 1: Connect Intune to MDE</h4>
+                        <ol>
+                            <li>Go to <a href="https://intune.microsoft.com" target="_blank">intune.microsoft.com</a></li>
+                            <li>Navigate to <span class="path-highlight">Endpoint security → Microsoft Defender for Endpoint</span></li>
+                            <li>Ensure <strong>"Connect macOS devices to Microsoft Defender for Endpoint"</strong> is set to <strong>On</strong></li>
+                            <li>If prompted, complete the connection setup in the Defender portal</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Create System Extension Profile</h4>
+                        <ol>
+                            <li>In Intune, go to <span class="path-highlight">Devices → macOS → Configuration profiles</span></li>
+                            <li>Click <strong>+ Create profile</strong></li>
+                            <li>Select:
+                                <ul>
+                                    <li><strong>Platform:</strong> macOS</li>
+                                    <li><strong>Profile type:</strong> Templates</li>
+                                    <li><strong>Template name:</strong> Extensions</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Create</strong></li>
+                            <li>Name: <code>MDE - System Extensions</code></li>
+                            <li>Click <strong>Next</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Configure System Extension Settings</h4>
+                        <ol>
+                            <li>Under <strong>System Extensions</strong>, click <strong>+ Add</strong></li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Bundle identifier:</strong> <code>com.microsoft.wdav.epsext</code></li>
+                                    <li><strong>Team identifier:</strong> <code>UBF8T346G9</code></li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>+ Add</strong> again for network extension:
+                                <ul>
+                                    <li><strong>Bundle identifier:</strong> <code>com.microsoft.wdav.netext</code></li>
+                                    <li><strong>Team identifier:</strong> <code>UBF8T346G9</code></li>
+                                </ul>
+                            </li>
+                            <li>Under <strong>Allowed system extension types</strong>:
+                                <ul>
+                                    <li><strong>Team identifier:</strong> <code>UBF8T346G9</code></li>
+                                    <li><strong>Allowed types:</strong> Endpoint Security Extension, Network Extension</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Create Privacy Preferences (Full Disk Access) Profile</h4>
+                        <ol>
+                            <li>Create another configuration profile</li>
+                            <li>Select:
+                                <ul>
+                                    <li><strong>Platform:</strong> macOS</li>
+                                    <li><strong>Profile type:</strong> Templates</li>
+                                    <li><strong>Template name:</strong> Custom</li>
+                                </ul>
+                            </li>
+                            <li>Name: <code>MDE - Full Disk Access</code></li>
+                            <li>Upload the following mobileconfig file (create it first):</li>
+                        </ol>
+                        <div class="code-block"><pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+    &lt;key&gt;PayloadContent&lt;/key&gt;
+    &lt;array&gt;
+        &lt;dict&gt;
+            &lt;key&gt;PayloadDescription&gt;Configures Privacy Preferences for MDE&lt;/key&gt;
+            &lt;key&gt;PayloadDisplayName&gt;Privacy Preferences Policy Control&lt;/key&gt;
+            &lt;key&gt;PayloadIdentifier&gt;com.microsoft.wdav.tcc&lt;/key&gt;
+            &lt;key&gt;PayloadType&gt;com.apple.TCC.configuration-profile-policy&lt;/key&gt;
+            &lt;key&gt;PayloadUUID&gt;REPLACE-WITH-UUID&lt;/key&gt;
+            &lt;key&gt;PayloadVersion&gt;1&lt;/key&gt;
+            &lt;key&gt;Services&lt;/key&gt;
+            &lt;dict&gt;
+                &lt;key&gt;SystemPolicyAllFiles&lt;/key&gt;
+                &lt;array&gt;
+                    &lt;dict&gt;
+                        &lt;key&gt;Allowed&lt;/key&gt;
+                        &lt;true/&gt;
+                        &lt;key&gt;CodeRequirement&lt;/key&gt;
+                        &lt;string&gt;identifier "com.microsoft.wdav" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = UBF8T346G9&lt;/string&gt;
+                        &lt;key&gt;Identifier&lt;/key&gt;
+                        &lt;string&gt;com.microsoft.wdav&lt;/string&gt;
+                        &lt;key&gt;IdentifierType&lt;/key&gt;
+                        &lt;string&gt;bundleID&lt;/string&gt;
+                        &lt;key&gt;StaticCode&lt;/key&gt;
+                        &lt;false/&gt;
+                    &lt;/dict&gt;
+                    &lt;dict&gt;
+                        &lt;key&gt;Allowed&lt;/key&gt;
+                        &lt;true/&gt;
+                        &lt;key&gt;CodeRequirement&lt;/key&gt;
+                        &lt;string&gt;identifier "com.microsoft.wdav.epsext" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = UBF8T346G9&lt;/string&gt;
+                        &lt;key&gt;Identifier&lt;/key&gt;
+                        &lt;string&gt;com.microsoft.wdav.epsext&lt;/string&gt;
+                        &lt;key&gt;IdentifierType&lt;/key&gt;
+                        &lt;string&gt;bundleID&lt;/string&gt;
+                        &lt;key&gt;StaticCode&lt;/key&gt;
+                        &lt;false/&gt;
+                    &lt;/dict&gt;
+                &lt;/array&gt;
+            &lt;/dict&gt;
+        &lt;/dict&gt;
+    &lt;/array&gt;
+    &lt;key&gt;PayloadDescription&gt;MDE Full Disk Access&lt;/key&gt;
+    &lt;key&gt;PayloadDisplayName&gt;MDE Full Disk Access&lt;/key&gt;
+    &lt;key&gt;PayloadIdentifier&gt;com.microsoft.wdav.fda&lt;/key&gt;
+    &lt;key&gt;PayloadType&gt;Configuration&lt;/key&gt;
+    &lt;key&gt;PayloadUUID&gt;REPLACE-WITH-UUID&lt;/key&gt;
+    &lt;key&gt;PayloadVersion&gt;1&lt;/key&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 5: Create Network Filter Profile</h4>
+                        <ol>
+                            <li>Create another configuration profile (Custom)</li>
+                            <li>Name: <code>MDE - Network Filter</code></li>
+                            <li>Upload this mobileconfig:</li>
+                        </ol>
+                        <div class="code-block"><pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+    &lt;key&gt;PayloadContent&lt;/key&gt;
+    &lt;array&gt;
+        &lt;dict&gt;
+            &lt;key&gt;FilterBrowsers&lt;/key&gt;
+            &lt;true/&gt;
+            &lt;key&gt;FilterDataProviderBundleIdentifier&lt;/key&gt;
+            &lt;string&gt;com.microsoft.wdav.netext&lt;/string&gt;
+            &lt;key&gt;FilterDataProviderDesignatedRequirement&lt;/key&gt;
+            &lt;string&gt;identifier "com.microsoft.wdav.netext" and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = UBF8T346G9&lt;/string&gt;
+            &lt;key&gt;FilterGrade&lt;/key&gt;
+            &lt;string&gt;firewall&lt;/string&gt;
+            &lt;key&gt;FilterPackets&lt;/key&gt;
+            &lt;false/&gt;
+            &lt;key&gt;FilterSockets&lt;/key&gt;
+            &lt;true/&gt;
+            &lt;key&gt;FilterType&lt;/key&gt;
+            &lt;string&gt;Plugin&lt;/string&gt;
+            &lt;key&gt;PayloadDisplayName&gt;Web Content Filter&lt;/key&gt;
+            &lt;key&gt;PayloadIdentifier&gt;com.microsoft.wdav.netext&lt;/key&gt;
+            &lt;key&gt;PayloadType&gt;com.apple.webcontent-filter&lt;/key&gt;
+            &lt;key&gt;PayloadUUID&gt;REPLACE-WITH-UUID&lt;/key&gt;
+            &lt;key&gt;PayloadVersion&gt;1&lt;/key&gt;
+            &lt;key&gt;PluginBundleID&lt;/key&gt;
+            &lt;string&gt;com.microsoft.wdav&lt;/string&gt;
+            &lt;key&gt;UserDefinedName&gt;Microsoft Defender Network Filter&lt;/string&gt;
+        &lt;/dict&gt;
+    &lt;/array&gt;
+    &lt;key&gt;PayloadDisplayName&gt;MDE Network Filter&lt;/key&gt;
+    &lt;key&gt;PayloadIdentifier&gt;com.microsoft.wdav.netfilter&lt;/key&gt;
+    &lt;key&gt;PayloadType&gt;Configuration&lt;/key&gt;
+    &lt;key&gt;PayloadUUID&gt;REPLACE-WITH-UUID&lt;/key&gt;
+    &lt;key&gt;PayloadVersion&gt;1&lt;/key&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 6: Deploy Microsoft Defender App</h4>
+                        <ol>
+                            <li>Go to <span class="path-highlight">Apps → macOS → + Add</span></li>
+                            <li>Select <strong>App type:</strong> macOS app (DMG)</li>
+                            <li>Download the MDE installer from the Defender portal:
+                                <ul>
+                                    <li>Settings → Endpoints → Onboarding</li>
+                                    <li>Select macOS</li>
+                                    <li>Download installation package</li>
+                                </ul>
+                            </li>
+                            <li>Upload the <code>wdav.pkg</code> file</li>
+                            <li>Configure app information and assign to groups</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 7: Create Onboarding Configuration</h4>
+                        <ol>
+                            <li>In Intune, go to <span class="path-highlight">Endpoint security → Endpoint detection and response</span></li>
+                            <li>Click <strong>+ Create policy</strong></li>
+                            <li>Select:
+                                <ul>
+                                    <li><strong>Platform:</strong> macOS</li>
+                                    <li><strong>Profile:</strong> Endpoint detection and response</li>
+                                </ul>
+                            </li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Configuration package type:</strong> Auto from connector</li>
+                                </ul>
+                            </li>
+                            <li>Assign to macOS device groups</li>
+                        </ol>
+                    </div>
+
+                    <div class="success-box">
+                        <h4><i class="fas fa-check-circle"></i> Deployment Order</h4>
+                        <p>Profiles deploy in order. Ensure configuration profiles are assigned to the same groups as the app. Devices should receive profiles before or alongside the app installation.</p>
+                    </div>
+                </div>
+
+                <h2 id="jamf"><i class="fas fa-cube"></i> Method 2: JAMF Pro</h2>
+                
+                <div class="method-section">
+                    <h3>JAMF Pro Deployment</h3>
+                    <p>JAMF Pro is the most common MDM for macOS-focused enterprises. Microsoft provides JAMF-specific configuration profiles.</p>
+
+                    <div class="step-box">
+                        <h4>Step 1: Download JAMF Configuration Profiles</h4>
+                        <ol>
+                            <li>Go to <a href="https://security.microsoft.com" target="_blank">security.microsoft.com</a></li>
+                            <li>Navigate to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                            <li>Select <strong>macOS</strong></li>
+                            <li>Select <strong>JAMF Pro</strong> as deployment method</li>
+                            <li>Download the package which includes:
+                                <ul>
+                                    <li><code>jamf_fulldisk.mobileconfig</code> - Full Disk Access</li>
+                                    <li><code>jamf_netfilter.mobileconfig</code> - Network Filter</li>
+                                    <li><code>jamf_sysext.mobileconfig</code> - System Extensions</li>
+                                    <li><code>jamf_notificationsettings.mobileconfig</code> - Notifications</li>
+                                    <li><code>jamf_onboarding.plist</code> - Onboarding configuration</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Upload Configuration Profiles to JAMF</h4>
+                        <ol>
+                            <li>Log in to JAMF Pro</li>
+                            <li>Go to <span class="path-highlight">Computers → Configuration Profiles</span></li>
+                            <li>Click <strong>+ New</strong></li>
+                            <li>Click <strong>Upload</strong> and select <code>jamf_sysext.mobileconfig</code></li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Name:</strong> Microsoft Defender - System Extensions</li>
+                                    <li><strong>Category:</strong> Security (or your preferred category)</li>
+                                    <li><strong>Level:</strong> Computer Level</li>
+                                    <li><strong>Distribution Method:</strong> Install Automatically</li>
+                                </ul>
+                            </li>
+                            <li>Under <strong>Scope</strong>, add target computers or groups</li>
+                            <li>Click <strong>Save</strong></li>
+                            <li>Repeat for other mobileconfig files</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Upload MDE Package</h4>
+                        <ol>
+                            <li>Download the MDE installer PKG from Microsoft</li>
+                            <li>In JAMF, go to <span class="path-highlight">Computers → Packages</span></li>
+                            <li>Click <strong>+ New</strong></li>
+                            <li>Upload <code>wdav.pkg</code></li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Display Name:</strong> Microsoft Defender for Endpoint</li>
+                                    <li><strong>Category:</strong> Security</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Save</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Create Deployment Policy</h4>
+                        <ol>
+                            <li>Go to <span class="path-highlight">Computers → Policies</span></li>
+                            <li>Click <strong>+ New</strong></li>
+                            <li>Configure General:
+                                <ul>
+                                    <li><strong>Display Name:</strong> Deploy Microsoft Defender for Endpoint</li>
+                                    <li><strong>Trigger:</strong> Recurring Check-in (and Enrollment Complete for new devices)</li>
+                                    <li><strong>Execution Frequency:</strong> Once per computer</li>
+                                </ul>
+                            </li>
+                            <li>Under <strong>Packages</strong>, click <strong>Configure</strong></li>
+                            <li>Add the Microsoft Defender package with action <strong>Install</strong></li>
+                            <li>Under <strong>Scope</strong>, add target computers/groups</li>
+                            <li>Click <strong>Save</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 5: Create Onboarding Configuration Profile</h4>
+                        <ol>
+                            <li>Create a new Configuration Profile</li>
+                            <li>Add <strong>Application & Custom Settings → Upload</strong></li>
+                            <li>Upload the onboarding plist file:
+                                <ul>
+                                    <li><strong>Preference Domain:</strong> <code>com.microsoft.wdav.atp</code></li>
+                                    <li>Upload <code>jamf_onboarding.plist</code></li>
+                                </ul>
+                            </li>
+                            <li>Scope and deploy</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 6: Configure Managed Preferences (Settings)</h4>
+                        <p>Create a PLIST to configure MDE behavior:</p>
+                        <div class="code-block"><pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+&lt;plist version="1.0"&gt;
+&lt;dict&gt;
+    &lt;key&gt;antivirusEngine&lt;/key&gt;
+    &lt;dict&gt;
+        &lt;key&gt;enableRealTimeProtection&lt;/key&gt;
+        &lt;true/&gt;
+        &lt;key&gt;passiveMode&lt;/key&gt;
+        &lt;false/&gt;
+        &lt;key&gt;threatTypeSettings&lt;/key&gt;
+        &lt;array&gt;
+            &lt;dict&gt;
+                &lt;key&gt;key&lt;/key&gt;
+                &lt;string&gt;potentially_unwanted_application&lt;/string&gt;
+                &lt;key&gt;value&lt;/key&gt;
+                &lt;string&gt;block&lt;/string&gt;
+            &lt;/dict&gt;
+        &lt;/array&gt;
+    &lt;/dict&gt;
+    &lt;key&gt;cloudService&lt;/key&gt;
+    &lt;dict&gt;
+        &lt;key&gt;enabled&lt;/key&gt;
+        &lt;true/&gt;
+        &lt;key&gt;automaticSampleSubmissionConsent&lt;/key&gt;
+        &lt;string&gt;safe&lt;/string&gt;
+        &lt;key&gt;automaticDefinitionUpdateEnabled&lt;/key&gt;
+        &lt;true/&gt;
+    &lt;/dict&gt;
+    &lt;key&gt;userInterface&lt;/key&gt;
+    &lt;dict&gt;
+        &lt;key&gt;hideStatusMenuIcon&lt;/key&gt;
+        &lt;false/&gt;
+        &lt;key&gt;userInitiatedFeedback&lt;/key&gt;
+        &lt;string&gt;enabled&lt;/string&gt;
+    &lt;/dict&gt;
+&lt;/dict&gt;
+&lt;/plist&gt;</pre></div>
+                    </div>
+                </div>
+
+                <h2 id="manual"><i class="fas fa-terminal"></i> Method 3: Manual Installation</h2>
+                
+                <div class="method-section">
+                    <h3>Manual Installation Steps</h3>
+                    <p>For testing, pilots, or environments without MDM.</p>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Manual Approval Required</h4>
+                        <p>Without MDM, users must manually approve system extensions and full disk access in System Preferences after installation.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Download Installer</h4>
+                        <ol>
+                            <li>Go to <a href="https://security.microsoft.com" target="_blank">security.microsoft.com</a></li>
+                            <li>Navigate to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                            <li>Select <strong>macOS</strong></li>
+                            <li>Download the installation package (<code>wdav.pkg</code>)</li>
+                            <li>Download the onboarding package</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Install the Package</h4>
+                        <div class="code-block"><pre># Install via command line
+sudo installer -pkg /path/to/wdav.pkg -target /
+
+# Or double-click the PKG file and follow the wizard</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Grant Permissions Manually</h4>
+                        <p>After installation, users will see prompts. If not, guide them to manually enable:</p>
+                        <ol>
+                            <li>Open <strong>System Preferences → Security & Privacy → Privacy</strong></li>
+                            <li><strong>Full Disk Access:</strong>
+                                <ul>
+                                    <li>Click the lock to make changes</li>
+                                    <li>Click <strong>+</strong></li>
+                                    <li>Navigate to <code>/Applications/Microsoft Defender.app</code></li>
+                                    <li>Also add <code>wdavdaemon</code> from <code>/Library/Application Support/Microsoft/Defender/</code></li>
+                                </ul>
+                            </li>
+                            <li><strong>System Extensions:</strong>
+                                <ul>
+                                    <li>Go to System Preferences → Security & Privacy → General</li>
+                                    <li>Click "Allow" next to the blocked Microsoft extension</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Onboard the Device</h4>
+                        <div class="code-block"><pre># Extract the onboarding package
+unzip WindowsDefenderATPOnboardingPackage.zip
+
+# Run the onboarding script
+sudo python3 MicrosoftDefenderATPOnboardingMacOs.py
+
+# Or apply the onboarding plist manually
+sudo cp WindowsDefenderATPOnboarding.plist /Library/Application\ Support/Microsoft/Defender/
+
+# Restart the Defender service
+sudo launchctl unload /Library/LaunchDaemons/com.microsoft.wdav.plist
+sudo launchctl load /Library/LaunchDaemons/com.microsoft.wdav.plist</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 5: Verify Installation</h4>
+                        <div class="code-block"><pre># Check MDE status
+mdatp health
+
+# Expected output should show:
+# healthy                    : true
+# licensed                   : true
+# real_time_protection_enabled : true
+# full_disk_access_enabled   : true
+
+# Check specific fields
+mdatp health --field healthy
+mdatp health --field full_disk_access_enabled
+mdatp health --field system_extensions_status</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Verification and Testing</h2>
+                
+                <div class="method-section">
+                    <div class="code-block"><pre>#!/bin/bash
+# MDE macOS Verification Script
+
+echo "=== MDE macOS Verification ==="
+echo ""
+
+# 1. Check if MDE is installed
+echo "[1] Installation Check:"
+if [ -d "/Applications/Microsoft Defender.app" ]; then
+    echo "    ✓ Microsoft Defender is installed"
+    VERSION=$(mdatp version 2>/dev/null)
+    echo "    Version: $VERSION"
+else
+    echo "    ✗ Microsoft Defender is NOT installed"
+    exit 1
+fi
+
+# 2. Check health status
+echo ""
+echo "[2] Health Status:"
+HEALTHY=$(mdatp health --field healthy)
+echo "    Healthy: $HEALTHY"
+
+ORG_ID=$(mdatp health --field org_id)
+echo "    Org ID: $ORG_ID"
+
+# 3. Check permissions
+echo ""
+echo "[3] Permissions:"
+FDA=$(mdatp health --field full_disk_access_enabled)
+echo "    Full Disk Access: $FDA"
+
+SYSEXT=$(mdatp health --field system_extensions_status)
+echo "    System Extensions: $SYSEXT"
+
+RTP=$(mdatp health --field real_time_protection_enabled)
+echo "    Real-time Protection: $RTP"
+
+# 4. Check network connectivity
+echo ""
+echo "[4] Connectivity Test:"
+mdatp connectivity test
+
+# 5. Run detection test
+echo ""
+echo "[5] Detection Test:"
+curl -s -o /tmp/eicar.com.txt https://secure.eicar.org/eicar.com.txt 2>/dev/null
+if [ -f /tmp/eicar.com.txt ]; then
+    echo "    ✗ EICAR file was NOT blocked - check real-time protection"
+else
+    echo "    ✓ EICAR file was blocked - real-time protection working"
+fi
+
+echo ""
+echo "=== Verification Complete ==="</pre></div>
+
+                    <h3>Common Verification Commands</h3>
+                    <div class="code-block"><pre># Full health check
+mdatp health
+
+# Check onboarding status
+mdatp health --field org_id
+
+# Check license status
+mdatp health --field licensed
+
+# Check real-time protection
+mdatp health --field real_time_protection_enabled
+
+# Check full disk access
+mdatp health --field full_disk_access_enabled
+
+# Check system extensions
+mdatp health --field system_extensions_status
+
+# Check definitions
+mdatp health --field definitions_status
+mdatp health --field definitions_updated
+
+# Test connectivity
+mdatp connectivity test
+
+# View threat history
+mdatp threat list
+
+# Update definitions
+mdatp definitions update</pre></div>
+                </div>
+
+                <h2><i class="fas fa-cog"></i> Configuration and Management</h2>
+                
+                <div class="method-section">
+                    <h3>Configure via Command Line</h3>
+                    <div class="code-block"><pre># Enable/disable real-time protection
+sudo mdatp config real-time-protection --value enabled
+sudo mdatp config real-time-protection --value disabled
+
+# Enable cloud protection
+sudo mdatp config cloud --value enabled
+
+# Configure sample submission (none, safe, all)
+sudo mdatp config cloud-automatic-sample-submission-consent --value safe
+
+# Enable/disable network protection
+sudo mdatp config network-protection enforcement-level --value block
+sudo mdatp config network-protection enforcement-level --value audit
+sudo mdatp config network-protection enforcement-level --value disabled
+
+# Configure PUA handling
+sudo mdatp threat policy set --type potentially_unwanted_application --action block</pre></div>
+
+                    <h3>Exclusions</h3>
+                    <div class="code-block"><pre># Add path exclusion
+sudo mdatp exclusion folder add --path /Users/Shared/VirtualMachines
+
+# Add file exclusion
+sudo mdatp exclusion file add --path /opt/app/data.db
+
+# Add process exclusion
+sudo mdatp exclusion process add --name com.apple.Xcode
+
+# Add extension exclusion
+sudo mdatp exclusion extension add --name .vmdk
+
+# List exclusions
+mdatp exclusion list
+
+# Remove exclusion
+sudo mdatp exclusion folder remove --path /Users/Shared/VirtualMachines</pre></div>
+
+                    <h3>Scans</h3>
+                    <div class="code-block"><pre># Quick scan
+sudo mdatp scan quick
+
+# Full scan
+sudo mdatp scan full
+
+# Custom scan
+sudo mdatp scan custom --path /Users/username/Downloads
+
+# List scan history
+mdatp scan list</pre></div>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Troubleshooting</h2>
+                
+                <div class="method-section">
+                    <h3>Issue: Full Disk Access Not Granted</h3>
+                    <div class="code-block"><pre># Check FDA status
+mdatp health --field full_disk_access_enabled
+
+# If false, user needs to:
+# 1. Open System Preferences → Security & Privacy → Privacy → Full Disk Access
+# 2. Click lock, authenticate
+# 3. Click + and add Microsoft Defender.app
+# 4. Also add wdavdaemon from /Library/Application Support/Microsoft/Defender/
+
+# With MDM, ensure the TCC profile is deployed and applied</pre></div>
+
+                    <h3>Issue: System Extension Blocked</h3>
+                    <div class="code-block"><pre># Check system extension status
+mdatp health --field system_extensions_status
+
+# Should show: "enabled"
+# If blocked, user needs to approve in:
+# System Preferences → Security & Privacy → General
+
+# With MDM, ensure system extension profile is deployed</pre></div>
+
+                    <h3>Issue: Not Onboarded</h3>
+                    <div class="code-block"><pre># Check onboarding
+mdatp health --field org_id
+
+# If empty, re-run onboarding
+sudo python3 MicrosoftDefenderATPOnboardingMacOs.py
+
+# Check logs
+log show --predicate 'subsystem == "com.microsoft.wdav"' --last 1h</pre></div>
+
+                    <h3>Issue: High CPU Usage</h3>
+                    <div class="code-block"><pre># Check what's being scanned
+sudo fs_usage -f filesys wdavdaemon
+
+# Add exclusions for high-activity paths
+sudo mdatp exclusion folder add --path /path/to/busy/folder
+
+# Check if specific process causing load
+sudo mdatp diagnostic real-time-protection-statistics</pre></div>
+                </div>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-arrow-right"></i> Next Steps</h4>
+                    <ul>
+                        <li><a href="pages/mde/troubleshooting.html">Comprehensive Troubleshooting Guide</a></li>
+                        <li><a href="pages/mde/onboarding-windows.html">Windows Onboarding Guide</a></li>
+                        <li><a href="pages/mde/onboarding-linux.html">Linux Onboarding Guide</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encryption & Certificates | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .analogy-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .analogy-box h4 { color: #f59e0b; margin: 0 0 0.5rem 0; }
+        .flow-diagram { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; line-height: 1.4; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .timeline { position: relative; padding-left: 2rem; margin: 1.5rem 0; }
+        .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-color); }
+        .timeline-item { position: relative; padding-bottom: 1.5rem; }
+        .timeline-item::before { content: ''; position: absolute; left: -2rem; top: 0.25rem; width: 12px; height: 12px; border-radius: 50%; background: var(--accent-color); border: 2px solid var(--bg-primary); }
+        .timeline-item h4 { color: var(--accent-color); margin: 0 0 0.25rem 0; }
+        .nav-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .nav-card { background: var(--card-bg); border-radius: 8px; padding: 1.25rem; text-decoration: none; color: var(--text-color); border: 1px solid var(--border-color); transition: all 0.2s; }
+        .nav-card:hover { transform: translateY(-2px); border-color: var(--accent-color); }
+        .nav-card h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .nav-card p { margin: 0; font-size: 0.9rem; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><span>Encryption & Certificates</span></div>
+            <div class="content">
+                <h1><i class="fas fa-lock"></i> Encryption & Certificates</h1>
+                <p class="lead">Complete guide to encryption, certificates, PKI, TLS/SSL, and HTTPS. From fundamentals to practical deployment.</p>
+
+                <h2><i class="fas fa-map"></i> Quick Navigation</h2>
+                <div class="nav-cards">
+                    <a href="pages/encryption/certificates-guide.html" class="nav-card">
+                        <h4><i class="fas fa-certificate"></i> Certificate Management Guide</h4>
+                        <p>Where to get certs, how to create, configure, and deploy them for any application</p>
+                    </a>
+                    <a href="#encryption-basics" class="nav-card">
+                        <h4><i class="fas fa-key"></i> Encryption Basics</h4>
+                        <p>Symmetric vs asymmetric, algorithms, hashing</p>
+                    </a>
+                    <a href="#tls-ssl" class="nav-card">
+                        <h4><i class="fas fa-shield-alt"></i> TLS/SSL</h4>
+                        <p>Protocol versions, handshakes, cipher suites</p>
+                    </a>
+                </div>
+
+                <div class="analogy-box">
+                    <h4><i class="fas fa-lightbulb"></i> Encryption Explained Simply</h4>
+                    <p>Imagine you want to send a secret letter:</p>
+                    <ul>
+                        <li><strong>Symmetric encryption:</strong> You and your friend share the SAME key to a lockbox. Fast, but how do you share the key securely?</li>
+                        <li><strong>Asymmetric encryption:</strong> Your friend has a PUBLIC mailbox anyone can drop letters into, but only THEIR PRIVATE key opens it.</li>
+                        <li><strong>TLS/HTTPS:</strong> Uses asymmetric to securely exchange a symmetric key, then symmetric for speed.</li>
+                        <li><strong>Certificate:</strong> A trusted third party (CA) vouches "This public key really belongs to google.com"</li>
+                    </ul>
+                </div>
+
+                <h2 id="encryption-basics"><i class="fas fa-key"></i> Symmetric vs Asymmetric Encryption</h2>
+                <div class="step-section">
+                    <h3>Symmetric Encryption (Same Key)</h3>
+                    <table class="feature-table">
+                        <tr><th>Algorithm</th><th>Key Size</th><th>Status</th><th>Use Case</th></tr>
+                        <tr><td><strong>AES-256</strong></td><td>256-bit</td><td>✅ Recommended</td><td>Everything - data at rest, TLS</td></tr>
+                        <tr><td><strong>AES-128</strong></td><td>128-bit</td><td>✅ Good</td><td>Data encryption when speed critical</td></tr>
+                        <tr><td><strong>ChaCha20</strong></td><td>256-bit</td><td>✅ Good</td><td>Mobile, TLS alternative to AES</td></tr>
+                        <tr><td>3DES</td><td>168-bit</td><td>⚠️ Legacy</td><td>Avoid - being deprecated</td></tr>
+                        <tr><td>DES</td><td>56-bit</td><td>❌ Broken</td><td>Never use</td></tr>
+                        <tr><td>RC4</td><td>Variable</td><td>❌ Broken</td><td>Never use</td></tr>
+                    </table>
+
+                    <div class="flow-diagram">
+   SYMMETRIC ENCRYPTION (AES)
+   
+   Same key encrypts AND decrypts
+   
+   Plaintext ──────▶ [ENCRYPT with Key] ──────▶ Ciphertext
+   "Hello"                  🔑                     "x8Fj2..."
+                           Key
+   Ciphertext ─────▶ [DECRYPT with Key] ─────▶ Plaintext
+   "x8Fj2..."               🔑                    "Hello"
+                       SAME Key
+   
+   Pros: FAST (100x faster than asymmetric)
+   Cons: How do you securely share the key?</div>
+
+                    <h3>Asymmetric Encryption (Key Pair)</h3>
+                    <table class="feature-table">
+                        <tr><th>Algorithm</th><th>Key Size</th><th>Status</th><th>Use Case</th></tr>
+                        <tr><td><strong>RSA</strong></td><td>2048-4096 bit</td><td>✅ Standard</td><td>TLS, code signing, encryption</td></tr>
+                        <tr><td><strong>ECDSA/ECDH</strong></td><td>256-384 bit</td><td>✅ Preferred</td><td>TLS, smaller keys, mobile</td></tr>
+                        <tr><td><strong>Ed25519</strong></td><td>256 bit</td><td>✅ Modern</td><td>SSH keys, signatures</td></tr>
+                        <tr><td>RSA 1024</td><td>1024 bit</td><td>❌ Weak</td><td>Never use</td></tr>
+                    </table>
+
+                    <div class="flow-diagram">
+   ASYMMETRIC ENCRYPTION (RSA)
+   
+   Different keys: Public encrypts, Private decrypts
+   
+   Bob generates KEY PAIR:
+   ┌─────────────────┐     ┌─────────────────┐
+   │   PUBLIC KEY    │     │   PRIVATE KEY   │
+   │  (share freely) │     │  (keep secret!) │
+   │    🔓           │     │       🔐        │
+   └─────────────────┘     └─────────────────┘
+   
+   Alice encrypts TO Bob:
+   
+   "Hello" ──▶ [ENCRYPT with Bob's PUBLIC key 🔓] ──▶ "x8Fj2..."
+   
+   Only Bob can decrypt:
+   
+   "x8Fj2..." ──▶ [DECRYPT with Bob's PRIVATE key 🔐] ──▶ "Hello"
+   
+   Pros: Solves key distribution problem
+   Cons: SLOW (use only for key exchange or small data)</div>
+                </div>
+
+                <h2><i class="fas fa-signature"></i> Digital Signatures</h2>
+                <div class="step-section">
+                    <div class="analogy-box">
+                        <h4><i class="fas fa-lightbulb"></i> Signature Analogy</h4>
+                        <p>A digital signature is like a wax seal on a letter:</p>
+                        <ul>
+                            <li><strong>Authenticity:</strong> Only the sender could create this seal</li>
+                            <li><strong>Integrity:</strong> If the letter is opened, the seal breaks</li>
+                            <li><strong>Non-repudiation:</strong> Sender can't deny they sent it</li>
+                        </ul>
+                    </div>
+
+                    <div class="flow-diagram">
+   DIGITAL SIGNATURE PROCESS
+   
+   SIGNING (Sender):
+   
+   1. Hash the message
+      "Hello Bob" ──▶ [SHA-256] ──▶ "a591a6d40..."  (fixed-size fingerprint)
+   
+   2. Encrypt hash with PRIVATE key = SIGNATURE
+      "a591a6d40..." ──▶ [Sign with 🔐] ──▶ "Rk9PQkFS..."
+   
+   3. Send message + signature
+      { message: "Hello Bob", signature: "Rk9PQkFS..." }
+   
+   
+   VERIFYING (Receiver):
+   
+   1. Hash the received message
+      "Hello Bob" ──▶ [SHA-256] ──▶ "a591a6d40..."
+   
+   2. Decrypt signature with sender's PUBLIC key
+      "Rk9PQkFS..." ──▶ [Verify with 🔓] ──▶ "a591a6d40..."
+   
+   3. Compare hashes
+      "a591a6d40..." == "a591a6d40..."  ✅ Valid signature!
+      
+   If message was tampered:
+      "a591a6d40..." != "different..."  ❌ Invalid!</div>
+                </div>
+
+                <h2><i class="fas fa-hashtag"></i> Hashing</h2>
+                <div class="step-section">
+                    <h3>What is Hashing?</h3>
+                    <p>Hashing is a <strong>one-way function</strong> that converts any data into a fixed-size fingerprint. You CANNOT reverse a hash to get the original data.</p>
+
+                    <table class="feature-table">
+                        <tr><th>Algorithm</th><th>Output Size</th><th>Status</th><th>Use Case</th></tr>
+                        <tr><td><strong>SHA-256</strong></td><td>256 bits</td><td>✅ Standard</td><td>Everything - TLS, blockchain, integrity</td></tr>
+                        <tr><td><strong>SHA-384/512</strong></td><td>384/512 bits</td><td>✅ Strong</td><td>High security requirements</td></tr>
+                        <tr><td><strong>SHA-3</strong></td><td>Variable</td><td>✅ Future</td><td>Post-quantum readiness</td></tr>
+                        <tr><td><strong>bcrypt</strong></td><td>184 bits</td><td>✅ Passwords</td><td>Password storage (slow by design)</td></tr>
+                        <tr><td><strong>Argon2</strong></td><td>Variable</td><td>✅ Best for passwords</td><td>Password storage (modern)</td></tr>
+                        <tr><td>MD5</td><td>128 bits</td><td>❌ Broken</td><td>Never for security (checksums only)</td></tr>
+                        <tr><td>SHA-1</td><td>160 bits</td><td>❌ Deprecated</td><td>Avoid - collision attacks exist</td></tr>
+                    </table>
+
+                    <div class="code-block"><pre># SHA-256 example
+echo -n "Hello" | sha256sum
+# 185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969
+
+# Small change = completely different hash
+echo -n "hello" | sha256sum  
+# 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+
+# Password hashing with bcrypt (via Python)
+import bcrypt
+hashed = bcrypt.hashpw(b"password", bcrypt.gensalt())
+# $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.nfTqB.q5h3LqC.</pre></div>
+
+                    <div class="danger-box">
+                        <h4><i class="fas fa-skull-crossbones"></i> Never Do This!</h4>
+                        <ul>
+                            <li>❌ MD5 for anything security-related</li>
+                            <li>❌ SHA-1 for signatures or certificates</li>
+                            <li>❌ Plain SHA-256 for passwords (use bcrypt/Argon2)</li>
+                            <li>❌ Unsalted password hashes</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-certificate"></i> Certificates & PKI</h2>
+                <div class="step-section">
+                    <div class="analogy-box">
+                        <h4><i class="fas fa-lightbulb"></i> Certificate Analogy</h4>
+                        <p>A certificate is like a <strong>government-issued ID card</strong>:</p>
+                        <ul>
+                            <li>The <strong>CA (Certificate Authority)</strong> is like the government</li>
+                            <li>The certificate says "This public key belongs to google.com"</li>
+                            <li>The CA's signature proves it's not forged</li>
+                            <li>Your browser has a list of CAs it trusts (like accepting foreign passports)</li>
+                        </ul>
+                    </div>
+
+                    <h3>Certificate Contents</h3>
+                    <div class="code-block"><pre># View certificate details
+openssl x509 -in certificate.pem -text -noout
+
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 04:00:00:00:00:01:2f:4e:e1:52:8b
+        
+        Signature Algorithm: sha256WithRSAEncryption
+        
+        Issuer: C=US, O=DigiCert Inc, CN=DigiCert TLS RSA SHA256 2020 CA1
+        
+        Validity:
+            Not Before: Jan  1 00:00:00 2024 GMT
+            Not After : Dec 31 23:59:59 2024 GMT
+            
+        Subject: C=US, ST=California, L=Mountain View, O=Google LLC, CN=*.google.com
+        
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public-Key: (2048 bit)
+            Modulus: 00:b4:c1:...
+            Exponent: 65537 (0x10001)
+            
+        X509v3 extensions:
+            X509v3 Subject Alternative Name:
+                DNS:*.google.com, DNS:google.com, DNS:*.youtube.com
+            X509v3 Key Usage: critical
+                Digital Signature, Key Encipherment
+            X509v3 Extended Key Usage:
+                TLS Web Server Authentication
+            Authority Information Access:
+                OCSP - URI:http://ocsp.digicert.com
+                
+    Signature Algorithm: sha256WithRSAEncryption
+         45:f5:f1:... (CA's signature)</pre></div>
+
+                    <h3>Certificate Chain (Chain of Trust)</h3>
+                    <div class="flow-diagram">
+   CERTIFICATE CHAIN (Trust Hierarchy)
+   
+   ┌─────────────────────────────────────────────────────────────┐
+   │                    ROOT CA CERTIFICATE                       │
+   │                   (Self-signed, in browser)                  │
+   │                                                              │
+   │  Issuer: DigiCert Root CA                                    │
+   │  Subject: DigiCert Root CA        ◀── Same (self-signed)    │
+   │  Valid: 2006-2031 (very long)                               │
+   │  🔐 Root CA Private Key signs →                              │
+   └────────────────────────┬────────────────────────────────────┘
+                            │ Signs
+                            ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                 INTERMEDIATE CA CERTIFICATE                  │
+   │                   (Issued by Root)                           │
+   │                                                              │
+   │  Issuer: DigiCert Root CA                                    │
+   │  Subject: DigiCert TLS RSA SHA256 2020 CA1                  │
+   │  Valid: 2020-2030                                            │
+   │  🔐 Intermediate CA Private Key signs →                      │
+   └────────────────────────┬────────────────────────────────────┘
+                            │ Signs
+                            ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                    SERVER CERTIFICATE                        │
+   │                  (Your website's cert)                       │
+   │                                                              │
+   │  Issuer: DigiCert TLS RSA SHA256 2020 CA1                   │
+   │  Subject: *.google.com                                       │
+   │  Valid: 2024-2025 (short, 1 year typical)                   │
+   │  Contains: google.com's PUBLIC KEY                          │
+   └─────────────────────────────────────────────────────────────┘
+   
+   VALIDATION: Browser traces chain from server cert → intermediate → root
+               If root is in browser's trust store → ✅ Valid!</div>
+
+                    <h3>Certificate Types</h3>
+                    <table class="feature-table">
+                        <tr><th>Type</th><th>Validation</th><th>Shows in Browser</th><th>Use Case</th></tr>
+                        <tr><td><strong>DV (Domain Validated)</strong></td><td>Prove you control domain</td><td>🔒 Padlock</td><td>Basic HTTPS, blogs</td></tr>
+                        <tr><td><strong>OV (Organization Validated)</strong></td><td>Verify organization exists</td><td>🔒 Padlock + org name</td><td>Business websites</td></tr>
+                        <tr><td><strong>EV (Extended Validation)</strong></td><td>Extensive org verification</td><td>🔒 Green bar (legacy)</td><td>Banks, high-trust sites</td></tr>
+                        <tr><td><strong>Wildcard (*.domain.com)</strong></td><td>Any of above</td><td>Covers all subdomains</td><td>Many subdomains</td></tr>
+                        <tr><td><strong>SAN (Multi-domain)</strong></td><td>Any of above</td><td>Multiple domains in one</td><td>Multiple domains</td></tr>
+                    </table>
+                </div>
+
+                <h2 id="tls-ssl"><i class="fas fa-shield-alt"></i> TLS/SSL & HTTPS</h2>
+                <div class="step-section">
+                    <h3>TLS Version History</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <h4>SSL 2.0 (1995) - ❌ BROKEN</h4>
+                            <p>First public version. Completely insecure, never use.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>SSL 3.0 (1996) - ❌ BROKEN (POODLE)</h4>
+                            <p>Better but still vulnerable. Disabled everywhere.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>TLS 1.0 (1999) - ❌ DEPRECATED</h4>
+                            <p>First TLS. Still vulnerable to BEAST. PCI DSS requires disabling.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>TLS 1.1 (2006) - ❌ DEPRECATED</h4>
+                            <p>Minor improvements. Also being phased out.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>TLS 1.2 (2008) - ✅ MINIMUM ACCEPTABLE</h4>
+                            <p>Still widely used. Supports modern ciphers. SHA-256.</p>
+                        </div>
+                        <div class="timeline-item">
+                            <h4>TLS 1.3 (2018) - ✅ RECOMMENDED</h4>
+                            <p>Current best. Faster handshake, removed weak ciphers, forward secrecy required.</p>
+                        </div>
+                    </div>
+
+                    <h3>TLS Handshake (Simplified)</h3>
+                    <div class="flow-diagram">
+   TLS 1.3 HANDSHAKE (Simplified)
+   
+   CLIENT                                              SERVER
+      │                                                    │
+      │ 1. ClientHello                                     │
+      │    - TLS version (1.3)                             │
+      │    - Supported cipher suites                       │
+      │    - Client random                                 │
+      │    - Key share (for DH)                            │
+      │───────────────────────────────────────────────────▶│
+      │                                                    │
+      │ 2. ServerHello + Certificate + Finished            │
+      │    - Chosen cipher suite                           │
+      │    - Server random                                 │
+      │    - Key share (for DH)                            │
+      │    - Server certificate (proves identity)          │
+      │    - Certificate verify (signature)                │
+      │◀───────────────────────────────────────────────────│
+      │                                                    │
+      │ 3. Both compute shared secret using DH             │
+      │    Derive encryption keys                          │
+      │                                                    │
+      │ 4. Client Finished (encrypted)                     │
+      │───────────────────────────────────────────────────▶│
+      │                                                    │
+      │ 5. Application data (encrypted with AES)           │
+      │◀──────────────────────────────────────────────────▶│
+      │                                                    │
+   
+   TLS 1.3 is 1 round-trip (vs 2 for TLS 1.2)</div>
+
+                    <h3>Cipher Suite Example</h3>
+                    <div class="code-block"><pre># TLS 1.3 cipher suite
+TLS_AES_256_GCM_SHA384
+│    │       │     │
+│    │       │     └── Hash for key derivation
+│    │       └── Mode (authenticated encryption)
+│    └── Symmetric cipher + key size
+└── Protocol
+
+# TLS 1.2 cipher suite (more complex)
+TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+│     │     │         │       │     │
+│     │     │         │       │     └── Hash
+│     │     │         │       └── AEAD mode
+│     │     │         └── Symmetric cipher
+│     │     └── Server authentication
+│     └── Key exchange (Ephemeral Diffie-Hellman)
+└── Protocol</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Recommended TLS Configuration</h4>
+                        <ul>
+                            <li>✅ TLS 1.2 minimum, prefer TLS 1.3</li>
+                            <li>✅ ECDHE key exchange (forward secrecy)</li>
+                            <li>✅ AES-GCM or ChaCha20-Poly1305 ciphers</li>
+                            <li>✅ SHA-256 or SHA-384 hashing</li>
+                            <li>❌ Disable SSL 2.0, 3.0, TLS 1.0, 1.1</li>
+                            <li>❌ Disable RC4, 3DES, export ciphers</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-tools"></i> Common Commands</h2>
+                <div class="step-section">
+                    <h3>OpenSSL Commands</h3>
+                    <div class="code-block"><pre># Generate private key
+openssl genrsa -out private.key 2048
+
+# Generate CSR (Certificate Signing Request)
+openssl req -new -key private.key -out request.csr
+
+# Generate self-signed certificate
+openssl req -x509 -new -key private.key -out cert.pem -days 365
+
+# View certificate
+openssl x509 -in cert.pem -text -noout
+
+# Test TLS connection
+openssl s_client -connect google.com:443 -tls1_3
+
+# Check certificate expiration
+openssl s_client -connect google.com:443 2>/dev/null | openssl x509 -noout -dates
+
+# Verify certificate chain
+openssl verify -CAfile ca-bundle.crt server.crt</pre></div>
+
+                    <h3>Let's Encrypt (Free Certificates)</h3>
+                    <div class="code-block"><pre># Install certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Get certificate
+sudo certbot --nginx -d example.com -d www.example.com
+
+# Auto-renewal (usually automatic)
+sudo certbot renew --dry-run
+
+# Certificates stored in:
+# /etc/letsencrypt/live/example.com/fullchain.pem
+# /etc/letsencrypt/live/example.com/privkey.pem</pre></div>
+                </div>
+
+                <h2><i class="fas fa-rocket"></i> Modern Developments</h2>
+                <div class="info-box">
+                    <h4><i class="fas fa-atom"></i> Post-Quantum Cryptography</h4>
+                    <p>Quantum computers could break RSA and ECC. NIST has standardized new algorithms:</p>
+                    <ul>
+                        <li><strong>CRYSTALS-Kyber:</strong> Key encapsulation (replacement for DH)</li>
+                        <li><strong>CRYSTALS-Dilithium:</strong> Digital signatures</li>
+                        <li><strong>SPHINCS+:</strong> Hash-based signatures</li>
+                    </ul>
+                    <p>Timeline: Start planning now, full transition by 2030s when quantum computers become practical.</p>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

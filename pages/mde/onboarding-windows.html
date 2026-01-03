@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDE Windows Onboarding | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .method-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .method-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .step-box { background: rgba(99, 102, 241, 0.1); padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .step-box h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .success-box { background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+        .toc-box { background: var(--card-bg); padding: 1.25rem; border-radius: 8px; margin: 1.5rem 0; }
+        .toc-box h4 { margin: 0 0 0.75rem 0; color: var(--accent-color); }
+        .toc-box ul { margin: 0; padding-left: 1.25rem; }
+        .toc-box li { margin: 0.25rem 0; }
+        .toc-box a { color: var(--text-muted); text-decoration: none; }
+        .toc-box a:hover { color: var(--accent-color); }
+        .path-highlight { background: rgba(99, 102, 241, 0.2); padding: 0.125rem 0.375rem; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/mde/index.html">MDE</a><span class="separator">/</span><span>Windows Onboarding</span></div>
+            <div class="content">
+                <h1><i class="fab fa-windows"></i> MDE Windows Onboarding</h1>
+                <p class="lead">Complete guide to onboarding Windows devices to Microsoft Defender for Endpoint. Covers all deployment methods with detailed step-by-step instructions.</p>
+
+                <div class="toc-box">
+                    <h4><i class="fas fa-list"></i> Table of Contents</h4>
+                    <ul>
+                        <li><a href="#prerequisites">Prerequisites</a></li>
+                        <li><a href="#download-package">Download Onboarding Package</a></li>
+                        <li><a href="#intune">Method 1: Microsoft Intune</a></li>
+                        <li><a href="#gpo">Method 2: Group Policy (GPO)</a></li>
+                        <li><a href="#sccm">Method 3: SCCM/ConfigMgr</a></li>
+                        <li><a href="#local-script">Method 4: Local Script</a></li>
+                        <li><a href="#vdi">Method 5: VDI Environments</a></li>
+                        <li><a href="#server">Windows Server Specific</a></li>
+                        <li><a href="#verify">Verify Onboarding</a></li>
+                        <li><a href="#offboarding">Offboarding</a></li>
+                    </ul>
+                </div>
+
+                <h2 id="prerequisites"><i class="fas fa-clipboard-check"></i> Prerequisites</h2>
+                
+                <table class="prereq-table">
+                    <thead>
+                        <tr><th>Requirement</th><th>Details</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Operating System</strong></td>
+                            <td>Windows 10 version 1709 or later, Windows 11, Windows Server 2012 R2 or later</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Licensing</strong></td>
+                            <td>Microsoft Defender for Endpoint Plan 1, Plan 2, or included license (M365 E5, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Azure AD</strong></td>
+                            <td>Device must be Azure AD joined, Hybrid Azure AD joined, or Azure AD registered</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Admin Rights</strong></td>
+                            <td>Local administrator access on the device for onboarding</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Network</strong></td>
+                            <td>Outbound HTTPS (443) to Microsoft Defender URLs (see <a href="pages/mde/index.html">MDE Overview</a>)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Windows Defender AV</strong></td>
+                            <td>Must be enabled (not in passive mode with third-party AV unless intended)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Important: Third-Party Antivirus</h4>
+                    <p>If you have a third-party antivirus installed, Windows Defender Antivirus will enter passive mode. MDE EDR functionality will still work, but real-time protection will be handled by the third-party AV. To use MDE's full protection, remove the third-party AV.</p>
+                </div>
+
+                <h2 id="download-package"><i class="fas fa-download"></i> Download Onboarding Package</h2>
+                
+                <div class="step-box">
+                    <h4>Step 1: Access Microsoft Defender Portal</h4>
+                    <ol>
+                        <li>Go to <a href="https://security.microsoft.com" target="_blank">https://security.microsoft.com</a></li>
+                        <li>Sign in with an account that has <strong>Security Administrator</strong> or <strong>Global Administrator</strong> role</li>
+                    </ol>
+                </div>
+
+                <div class="step-box">
+                    <h4>Step 2: Navigate to Onboarding Settings</h4>
+                    <ol>
+                        <li>In the left navigation, click <strong>Settings</strong></li>
+                        <li>Click <strong>Endpoints</strong></li>
+                        <li>Under "Device management", click <strong>Onboarding</strong></li>
+                    </ol>
+                </div>
+
+                <div class="step-box">
+                    <h4>Step 3: Select Deployment Method and Download</h4>
+                    <ol>
+                        <li>From the <strong>"Select operating system to start onboarding process"</strong> dropdown, select:
+                            <ul>
+                                <li><strong>Windows 10 and 11</strong> - for client devices</li>
+                                <li><strong>Windows Server 2019 and 2022</strong> - for modern servers</li>
+                                <li><strong>Windows Server 2012 R2 and 2016</strong> - for legacy servers (requires unified agent)</li>
+                            </ul>
+                        </li>
+                        <li>From the <strong>"Deployment method"</strong> dropdown, select your method:
+                            <ul>
+                                <li>Local Script (for up to 10 devices)</li>
+                                <li>Group Policy</li>
+                                <li>Microsoft Endpoint Configuration Manager</li>
+                                <li>Mobile Device Management / Microsoft Intune</li>
+                                <li>VDI onboarding scripts for non-persistent machines</li>
+                            </ul>
+                        </li>
+                        <li>Click <strong>Download package</strong></li>
+                        <li>Save the <code>WindowsDefenderATPOnboardingPackage.zip</code> file</li>
+                    </ol>
+                </div>
+
+                <!-- METHOD 1: INTUNE -->
+                <h2 id="intune"><i class="fas fa-cloud"></i> Method 1: Microsoft Intune (Recommended)</h2>
+                <p>The recommended method for cloud-managed devices. Provides automatic onboarding, policy management, and compliance reporting.</p>
+
+                <div class="method-section">
+                    <h3>Option A: Endpoint Detection and Response Policy (Preferred)</h3>
+                    <p>This is the modern, recommended approach using Intune's built-in EDR policy.</p>
+
+                    <div class="step-box">
+                        <h4>Step 1: Connect Intune to Microsoft Defender for Endpoint</h4>
+                        <ol>
+                            <li>Go to <a href="https://intune.microsoft.com" target="_blank">https://intune.microsoft.com</a></li>
+                            <li>Navigate to <span class="path-highlight">Endpoint security → Microsoft Defender for Endpoint</span></li>
+                            <li>Under "Connector settings", ensure these are set:
+                                <ul>
+                                    <li><strong>Connect Windows devices to Microsoft Defender for Endpoint:</strong> On</li>
+                                    <li><strong>Allow Microsoft Defender for Endpoint to enforce Endpoint Security Configurations:</strong> On</li>
+                                </ul>
+                            </li>
+                            <li>If not already connected, click <strong>Open the Microsoft Defender for Endpoint admin console</strong></li>
+                            <li>In Defender portal, go to <span class="path-highlight">Settings → Endpoints → Advanced features</span></li>
+                            <li>Enable <strong>Microsoft Intune connection</strong> and click <strong>Save preferences</strong></li>
+                            <li>Return to Intune and verify the connection status shows "Enabled"</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Create EDR Policy</h4>
+                        <ol>
+                            <li>In Intune, navigate to <span class="path-highlight">Endpoint security → Endpoint detection and response</span></li>
+                            <li>Click <strong>+ Create policy</strong></li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Platform:</strong> Windows 10, Windows 11, and Windows Server</li>
+                                    <li><strong>Profile:</strong> Endpoint detection and response</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Create</strong></li>
+                            <li>Enter a <strong>Name</strong>: e.g., "MDE EDR Onboarding - Windows"</li>
+                            <li>Add a <strong>Description</strong>: e.g., "Onboards Windows devices to Microsoft Defender for Endpoint"</li>
+                            <li>Click <strong>Next</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Configure Settings</h4>
+                        <ol>
+                            <li>In the Configuration settings page, configure:
+                                <ul>
+                                    <li><strong>Microsoft Defender for Endpoint client configuration package type:</strong> Auto from connector</li>
+                                    <li><strong>Sample sharing:</strong> Send all samples (recommended)</li>
+                                    <li><strong>Telemetry Reporting Frequency:</strong> Expedite (recommended for testing), Normal for production</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Next</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Assign to Devices</h4>
+                        <ol>
+                            <li>Under <strong>Assignments</strong>, click <strong>Add groups</strong></li>
+                            <li>Select the Azure AD groups containing your target devices</li>
+                            <li><strong>Recommended:</strong> Start with a pilot group before deploying to all devices</li>
+                            <li>Click <strong>Next</strong></li>
+                            <li>Review the configuration and click <strong>Create</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="success-box">
+                        <h4><i class="fas fa-check-circle"></i> What Happens Next</h4>
+                        <p>Devices in the assigned groups will receive the onboarding configuration during their next Intune sync (typically within 8 hours, or force sync manually). The device will appear in the Microsoft Defender portal within 5-30 minutes of successful onboarding.</p>
+                    </div>
+                </div>
+
+                <div class="method-section">
+                    <h3>Option B: Device Configuration Profile (Alternative)</h3>
+                    <p>Use this method if you need to use the downloaded onboarding package instead of the auto-connector.</p>
+
+                    <div class="step-box">
+                        <h4>Step 1: Prepare the Onboarding Package</h4>
+                        <ol>
+                            <li>Download the onboarding package from the Defender portal (select "Mobile Device Management / Microsoft Intune")</li>
+                            <li>Extract the ZIP file</li>
+                            <li>Locate <code>WindowsDefenderATP.onboarding</code> file</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Create Configuration Profile</h4>
+                        <ol>
+                            <li>In Intune, go to <span class="path-highlight">Devices → Configuration profiles</span></li>
+                            <li>Click <strong>+ Create profile</strong></li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Platform:</strong> Windows 10 and later</li>
+                                    <li><strong>Profile type:</strong> Templates</li>
+                                    <li><strong>Template name:</strong> Microsoft Defender for Endpoint (Windows 10 Desktop)</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Create</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Configure and Upload Package</h4>
+                        <ol>
+                            <li>Enter a <strong>Name</strong> and <strong>Description</strong></li>
+                            <li>Click <strong>Next</strong></li>
+                            <li>In Configuration settings:
+                                <ul>
+                                    <li><strong>Microsoft Defender for Endpoint onboarding:</strong> Click browse and select the <code>WindowsDefenderATP.onboarding</code> file</li>
+                                    <li><strong>Sample sharing for all files:</strong> Enable</li>
+                                    <li><strong>Expedite telemetry reporting frequency:</strong> Enable (for testing)</li>
+                                </ul>
+                            </li>
+                            <li>Complete assignments and create the profile</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- METHOD 2: GPO -->
+                <h2 id="gpo"><i class="fas fa-sitemap"></i> Method 2: Group Policy (GPO)</h2>
+                <p>Best for domain-joined Windows devices in environments with Active Directory infrastructure.</p>
+
+                <div class="method-section">
+                    <h3>Prerequisites for GPO Deployment</h3>
+                    <ul>
+                        <li>Active Directory domain environment</li>
+                        <li>Domain admin or delegated GPO management rights</li>
+                        <li>Network share accessible by target computers</li>
+                        <li>Windows 10 1709+ or Windows Server 2019+ devices</li>
+                    </ul>
+
+                    <div class="step-box">
+                        <h4>Step 1: Download and Extract Package</h4>
+                        <ol>
+                            <li>In Microsoft Defender portal, go to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                            <li>Select <strong>Windows 10 and 11</strong></li>
+                            <li>Select <strong>Group Policy</strong> as deployment method</li>
+                            <li>Click <strong>Download package</strong></li>
+                            <li>Extract the ZIP to a location like <code>C:\MDEOnboarding\</code></li>
+                            <li>Contents:
+                                <ul>
+                                    <li><code>WindowsDefenderATPOnboardingScript.cmd</code> - Onboarding script</li>
+                                    <li><code>OptionalParamsPolicy</code> folder - Additional configuration</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Create Network Share</h4>
+                        <ol>
+                            <li>Create a network share on a file server, e.g., <code>\\FileServer\MDEDeploy$</code></li>
+                            <li>Copy <code>WindowsDefenderATPOnboardingScript.cmd</code> to the share</li>
+                            <li>Set permissions:
+                                <ul>
+                                    <li><strong>Share permissions:</strong> Domain Computers - Read</li>
+                                    <li><strong>NTFS permissions:</strong> Domain Computers - Read & Execute</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <div class="code-block"><pre># PowerShell - Create share with proper permissions
+$SharePath = "C:\MDEDeploy"
+$ShareName = "MDEDeploy$"
+
+# Create folder
+New-Item -Path $SharePath -ItemType Directory -Force
+
+# Create SMB share
+New-SmbShare -Name $ShareName -Path $SharePath -ReadAccess "Domain Computers"
+
+# Set NTFS permissions
+$acl = Get-Acl $SharePath
+$rule = New-Object System.Security.AccessControl.FileSystemAccessRule("Domain Computers", "ReadAndExecute", "ContainerInherit,ObjectInherit", "None", "Allow")
+$acl.SetAccessRule($rule)
+Set-Acl $SharePath $acl</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Create Group Policy Object</h4>
+                        <ol>
+                            <li>Open <strong>Group Policy Management Console</strong> (gpmc.msc)</li>
+                            <li>Navigate to your domain or target OU</li>
+                            <li>Right-click and select <strong>Create a GPO in this domain, and Link it here...</strong></li>
+                            <li>Name: <code>MDE Onboarding - Windows Clients</code></li>
+                            <li>Right-click the new GPO and select <strong>Edit</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Configure Computer Startup Script</h4>
+                        <ol>
+                            <li>In the GPO Editor, navigate to:<br>
+                                <span class="path-highlight">Computer Configuration → Policies → Windows Settings → Scripts (Startup/Shutdown)</span></li>
+                            <li>Double-click <strong>Startup</strong></li>
+                            <li>Click <strong>Add</strong></li>
+                            <li>In "Script Name", enter the UNC path:<br>
+                                <code>\\FileServer\MDEDeploy$\WindowsDefenderATPOnboardingScript.cmd</code></li>
+                            <li>Click <strong>OK</strong> twice to save</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 5: Configure Additional GPO Settings (Recommended)</h4>
+                        <p>Enable additional MDE features via GPO:</p>
+                        <ol>
+                            <li>Navigate to:<br>
+                                <span class="path-highlight">Computer Configuration → Policies → Administrative Templates → Windows Components → Microsoft Defender Antivirus</span></li>
+                            <li>Configure these settings:
+                                <ul>
+                                    <li><strong>Turn off Microsoft Defender Antivirus:</strong> Disabled (ensures AV is enabled)</li>
+                                    <li><strong>Configure local administrator merge behavior for lists:</strong> Disabled</li>
+                                </ul>
+                            </li>
+                            <li>Navigate to <strong>MAPS</strong> subfolder:
+                                <ul>
+                                    <li><strong>Join Microsoft MAPS:</strong> Enabled → Advanced MAPS</li>
+                                    <li><strong>Send file samples when further analysis is required:</strong> Enabled → Send safe samples</li>
+                                </ul>
+                            </li>
+                            <li>Navigate to <strong>Real-time Protection</strong> subfolder:
+                                <ul>
+                                    <li><strong>Turn off real-time protection:</strong> Disabled</li>
+                                    <li><strong>Turn on behavior monitoring:</strong> Enabled</li>
+                                    <li><strong>Scan all downloaded files and attachments:</strong> Enabled</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 6: Link and Test GPO</h4>
+                        <ol>
+                            <li>Ensure the GPO is linked to the correct OU</li>
+                            <li>Check GPO order if multiple GPOs exist</li>
+                            <li>On a test device, run: <code>gpupdate /force</code></li>
+                            <li>Restart the device to trigger the startup script</li>
+                            <li>Verify onboarding (see <a href="#verify">Verification</a> section)</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- METHOD 3: SCCM -->
+                <h2 id="sccm"><i class="fas fa-server"></i> Method 3: SCCM / Configuration Manager</h2>
+                <p>For organizations using Microsoft Endpoint Configuration Manager (MECM/SCCM).</p>
+
+                <div class="method-section">
+                    <h3>SCCM Deployment Steps</h3>
+
+                    <div class="step-box">
+                        <h4>Step 1: Download the SCCM Package</h4>
+                        <ol>
+                            <li>In Microsoft Defender portal, go to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                            <li>Select <strong>Windows 10 and 11</strong></li>
+                            <li>Select <strong>Microsoft Endpoint Configuration Manager current branch and later</strong></li>
+                            <li>Click <strong>Download package</strong></li>
+                            <li>Extract to a folder</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Import Configuration Items</h4>
+                        <ol>
+                            <li>Open the <strong>Configuration Manager Console</strong></li>
+                            <li>Navigate to <span class="path-highlight">Assets and Compliance → Compliance Settings → Configuration Items</span></li>
+                            <li>Right-click and select <strong>Import Configuration Data</strong></li>
+                            <li>Browse to the extracted folder and select <code>WindowsDefenderATPOnboardingConfig.cab</code></li>
+                            <li>Complete the import wizard</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Create Configuration Baseline</h4>
+                        <ol>
+                            <li>Navigate to <span class="path-highlight">Assets and Compliance → Compliance Settings → Configuration Baselines</span></li>
+                            <li>Right-click and select <strong>Create Configuration Baseline</strong></li>
+                            <li>Name: <code>MDE Onboarding Baseline</code></li>
+                            <li>Click <strong>Add → Configuration Items</strong></li>
+                            <li>Select the imported MDE configuration item</li>
+                            <li>Click <strong>OK</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Deploy the Baseline</h4>
+                        <ol>
+                            <li>Right-click the configuration baseline</li>
+                            <li>Select <strong>Deploy</strong></li>
+                            <li>Configure:
+                                <ul>
+                                    <li><strong>Remediate noncompliant rules when supported:</strong> Checked</li>
+                                    <li><strong>Allow remediation outside the maintenance window:</strong> Checked (optional)</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>Browse</strong> and select target device collection</li>
+                            <li>Set schedule (e.g., run every 1 day)</li>
+                            <li>Complete the deployment wizard</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 5: Monitor Deployment</h4>
+                        <ol>
+                            <li>Navigate to <span class="path-highlight">Monitoring → Deployments</span></li>
+                            <li>Find your baseline deployment</li>
+                            <li>Review compliance statistics</li>
+                            <li>Investigate any non-compliant devices</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- METHOD 4: LOCAL SCRIPT -->
+                <h2 id="local-script"><i class="fas fa-terminal"></i> Method 4: Local Script</h2>
+                <p>Best for testing, pilots, or environments with fewer than 10 devices. Can also be used with third-party deployment tools.</p>
+
+                <div class="method-section">
+                    <h3>Manual Script Execution</h3>
+
+                    <div class="step-box">
+                        <h4>Step 1: Download the Script</h4>
+                        <ol>
+                            <li>In Microsoft Defender portal, go to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                            <li>Select <strong>Windows 10 and 11</strong></li>
+                            <li>Select <strong>Local Script (for up to 10 devices)</strong></li>
+                            <li>Click <strong>Download package</strong></li>
+                            <li>Extract <code>WindowsDefenderATPLocalOnboardingScript.cmd</code></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Run the Script</h4>
+                        <ol>
+                            <li>Copy the script to the target device</li>
+                            <li>Open <strong>Command Prompt as Administrator</strong></li>
+                            <li>Navigate to the script location</li>
+                            <li>Run the script:</li>
+                        </ol>
+                        <div class="code-block"><pre>cd C:\path\to\script
+WindowsDefenderATPLocalOnboardingScript.cmd</pre></div>
+                        <ol start="5">
+                            <li>When prompted, type <code>Y</code> to confirm</li>
+                            <li>The script will output "Machine successfully onboarded to Microsoft Defender for Endpoint"</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Alternative: PowerShell Silent Deployment</h4>
+                        <p>For scripted deployment without user interaction:</p>
+                        <div class="code-block"><pre># PowerShell - Silent onboarding
+$ScriptPath = "C:\MDEOnboarding\WindowsDefenderATPLocalOnboardingScript.cmd"
+
+# Run silently
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"$ScriptPath`"" -Wait -NoNewWindow
+
+# Verify onboarding status
+$service = Get-Service -Name "Sense" -ErrorAction SilentlyContinue
+if ($service.Status -eq "Running") {
+    Write-Host "MDE onboarding successful - Sense service is running" -ForegroundColor Green
+} else {
+    Write-Host "MDE onboarding may have failed - check Sense service" -ForegroundColor Red
+}</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Batch Deployment with PowerShell Remoting</h4>
+                        <p>Deploy to multiple devices using PowerShell remoting:</p>
+                        <div class="code-block"><pre># PowerShell - Remote deployment to multiple machines
+$Computers = @("PC001", "PC002", "PC003")
+$ScriptSource = "\\FileServer\MDEDeploy$\WindowsDefenderATPLocalOnboardingScript.cmd"
+
+foreach ($Computer in $Computers) {
+    Write-Host "Onboarding $Computer..." -ForegroundColor Yellow
+    
+    try {
+        Invoke-Command -ComputerName $Computer -ScriptBlock {
+            param($script)
+            # Copy script locally
+            Copy-Item -Path $script -Destination "C:\Temp\MDEOnboard.cmd" -Force
+            # Execute
+            Start-Process -FilePath "cmd.exe" -ArgumentList "/c C:\Temp\MDEOnboard.cmd" -Wait -NoNewWindow
+            # Cleanup
+            Remove-Item "C:\Temp\MDEOnboard.cmd" -Force
+        } -ArgumentList $ScriptSource
+        
+        Write-Host "  $Computer - Completed" -ForegroundColor Green
+    } catch {
+        Write-Host "  $Computer - Failed: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}</pre></div>
+                    </div>
+                </div>
+
+                <!-- METHOD 5: VDI -->
+                <h2 id="vdi"><i class="fas fa-clone"></i> Method 5: VDI Environments</h2>
+                <p>Special considerations for Virtual Desktop Infrastructure including persistent and non-persistent VMs.</p>
+
+                <div class="method-section">
+                    <h3>VDI Types and Considerations</h3>
+                    
+                    <table class="prereq-table">
+                        <thead>
+                            <tr><th>VDI Type</th><th>Onboarding Approach</th><th>Device Identity</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Persistent VDI</strong></td>
+                                <td>Standard onboarding (same as physical)</td>
+                                <td>Each VM has unique identity</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Non-Persistent VDI</strong></td>
+                                <td>Single onboarding in master image</td>
+                                <td>Shared identity or unique per session</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Windows Virtual Desktop / AVD</strong></td>
+                                <td>Use VDI script or Intune</td>
+                                <td>Unique identity per session host</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Non-Persistent VDI Challenge</h4>
+                        <p>Non-persistent VMs reset to a clean state, which can cause duplicate device entries in MDE. Use the VDI-specific onboarding script to handle device identity properly.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Download VDI Onboarding Script</h4>
+                        <ol>
+                            <li>In Microsoft Defender portal, go to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                            <li>Select <strong>Windows 10 and 11</strong></li>
+                            <li>Select <strong>VDI onboarding scripts for non-persistent machines</strong></li>
+                            <li>Click <strong>Download package</strong></li>
+                            <li>Extract the ZIP file - you'll get:
+                                <ul>
+                                    <li><code>WindowsDefenderATPOnboardingScript.cmd</code> - Standard onboarding</li>
+                                    <li><code>Onboard-NonPersistentMachine.ps1</code> - For non-persistent VDI</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Onboard the Master Image (Non-Persistent VDI)</h4>
+                        <ol>
+                            <li>Boot your VDI master/golden image</li>
+                            <li>Copy the onboarding script to the image</li>
+                            <li>Run as Administrator:</li>
+                        </ol>
+                        <div class="code-block"><pre># For non-persistent VDI - run in master image
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\MDEOnboarding\Onboard-NonPersistentMachine.ps1"</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Configure Image for VDI</h4>
+                        <p>Before sealing the image, ensure these settings:</p>
+                        <div class="code-block"><pre># PowerShell - VDI optimization for MDE
+# 1. Configure sample submission
+Set-MpPreference -SubmitSamplesConsent SendAllSamples
+
+# 2. Enable cloud-delivered protection
+Set-MpPreference -MAPSReporting Advanced
+
+# 3. Enable real-time protection
+Set-MpPreference -DisableRealtimeMonitoring $false
+
+# 4. For non-persistent: Clear machine-specific data before sealing
+# The VDI script handles this, but verify Sense service config
+Get-Service Sense | Select-Object Name, Status, StartType</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Seal the Image</h4>
+                        <ol>
+                            <li>Shut down the VM gracefully</li>
+                            <li>Take a snapshot or create the image</li>
+                            <li>Deploy to VDI pool</li>
+                        </ol>
+                    </div>
+
+                    <h3>Azure Virtual Desktop (AVD) Specific</h3>
+                    <div class="step-box">
+                        <h4>AVD Session Host Onboarding</h4>
+                        <ol>
+                            <li>For AVD, you can use either:
+                                <ul>
+                                    <li><strong>Intune:</strong> If session hosts are Intune-enrolled</li>
+                                    <li><strong>GPO:</strong> If session hosts are domain-joined</li>
+                                    <li><strong>Custom script extension:</strong> In ARM/Bicep templates</li>
+                                </ul>
+                            </li>
+                            <li>For pooled host pools (non-persistent), use the VDI script in the image</li>
+                            <li>For personal host pools (persistent), use standard onboarding</li>
+                        </ol>
+                        <div class="code-block"><pre># ARM template snippet - Custom script extension for MDE onboarding
+{
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "apiVersion": "2021-07-01",
+    "name": "[concat(parameters('vmName'), '/MDEOnboarding')]",
+    "location": "[parameters('location')]",
+    "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+            "fileUris": ["https://yourstorageaccount.blob.core.windows.net/scripts/WindowsDefenderATPOnboardingScript.cmd"],
+            "commandToExecute": "cmd /c WindowsDefenderATPOnboardingScript.cmd"
+        },
+        "protectedSettings": {
+            "storageAccountName": "[parameters('storageAccountName')]",
+            "storageAccountKey": "[parameters('storageAccountKey')]"
+        }
+    }
+}</pre></div>
+                    </div>
+                </div>
+
+                <!-- WINDOWS SERVER -->
+                <h2 id="server"><i class="fas fa-server"></i> Windows Server Specific</h2>
+                
+                <div class="method-section">
+                    <h3>Windows Server 2019 and 2022</h3>
+                    <p>Modern Windows Server versions have the MDE sensor built-in, similar to Windows 10/11.</p>
+
+                    <div class="step-box">
+                        <h4>Onboarding Windows Server 2019/2022</h4>
+                        <ol>
+                            <li>Use the same onboarding methods as Windows 10/11</li>
+                            <li>In the Defender portal, select <strong>Windows Server 2019 and 2022</strong></li>
+                            <li>Download and deploy the package using your preferred method</li>
+                        </ol>
+                        <div class="code-block"><pre># Verify server onboarding
+Get-Service Sense | Select Name, Status
+# Should return: Running
+
+# Check MDE registration
+Get-MpComputerStatus | Select-Object AMProductVersion, AMServiceEnabled, RealTimeProtectionEnabled</pre></div>
+                    </div>
+
+                    <h3>Windows Server 2012 R2 and 2016 (Legacy)</h3>
+                    <p>These legacy servers require the <strong>Microsoft Defender for Endpoint unified agent</strong>.</p>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Important: Unified Agent Required</h4>
+                        <p>Windows Server 2012 R2 and 2016 do not have the built-in MDE sensor. You must install the unified agent (MDE.exe installer).</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Prerequisites</h4>
+                        <ol>
+                            <li>Ensure the server is fully updated</li>
+                            <li>Install these prerequisites if not present:
+                                <ul>
+                                    <li>KB3080149 (for Server 2012 R2)</li>
+                                    <li>.NET Framework 4.5 or later</li>
+                                    <li>Latest servicing stack update</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Download Unified Agent</h4>
+                        <ol>
+                            <li>In Microsoft Defender portal, go to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                            <li>Select <strong>Windows Server 2012 R2 and 2016</strong></li>
+                            <li>Download:
+                                <ul>
+                                    <li><strong>Installation package</strong> (md4ws.msi) - The unified agent installer</li>
+                                    <li><strong>Onboarding package</strong> - Contains onboarding script</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Install the Unified Agent</h4>
+                        <div class="code-block"><pre># PowerShell - Install unified agent silently
+$InstallerPath = "C:\MDEOnboarding\md4ws.msi"
+
+# Silent installation
+msiexec.exe /i $InstallerPath /quiet /norestart
+
+# Wait for installation to complete
+Start-Sleep -Seconds 60
+
+# Verify installation
+Get-Service "Sense" | Select Name, Status</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Onboard the Server</h4>
+                        <ol>
+                            <li>After the unified agent is installed, run the onboarding script:</li>
+                        </ol>
+                        <div class="code-block"><pre># Run onboarding script
+cd C:\MDEOnboarding
+.\WindowsDefenderATPLocalOnboardingScript.cmd
+
+# Verify onboarding
+sc query sense
+# State should be: RUNNING</pre></div>
+                    </div>
+                </div>
+
+                <!-- VERIFICATION -->
+                <h2 id="verify"><i class="fas fa-check-double"></i> Verify Onboarding</h2>
+                
+                <div class="method-section">
+                    <h3>Method 1: Device Commands</h3>
+                    <div class="code-block"><pre># PowerShell - Comprehensive MDE verification
+Write-Host "=== MDE Onboarding Verification ===" -ForegroundColor Cyan
+
+# 1. Check Sense service
+$sense = Get-Service "Sense" -ErrorAction SilentlyContinue
+Write-Host "`n[1] Sense Service:" -ForegroundColor Yellow
+if ($sense) {
+    Write-Host "    Status: $($sense.Status)" -ForegroundColor $(if($sense.Status -eq "Running"){"Green"}else{"Red"})
+    Write-Host "    Start Type: $($sense.StartType)"
+} else {
+    Write-Host "    NOT FOUND - MDE not installed" -ForegroundColor Red
+}
+
+# 2. Check MDE registration
+Write-Host "`n[2] MDE Status:" -ForegroundColor Yellow
+try {
+    $mdestatus = Get-MpComputerStatus
+    Write-Host "    AV Version: $($mdestatus.AMProductVersion)"
+    Write-Host "    Engine Version: $($mdestatus.AMEngineVersion)"
+    Write-Host "    Real-time Protection: $($mdestatus.RealTimeProtectionEnabled)"
+    Write-Host "    Behavior Monitor: $($mdestatus.BehaviorMonitorEnabled)"
+    Write-Host "    On Access Protection: $($mdestatus.OnAccessProtectionEnabled)"
+} catch {
+    Write-Host "    Unable to get MDE status" -ForegroundColor Red
+}
+
+# 3. Check onboarding status via registry
+Write-Host "`n[3] Onboarding Status:" -ForegroundColor Yellow
+$onboardingState = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status" -ErrorAction SilentlyContinue
+if ($onboardingState) {
+    Write-Host "    Onboarding State: $($onboardingState.OnboardingState)" -ForegroundColor $(if($onboardingState.OnboardingState -eq 1){"Green"}else{"Red"})
+    Write-Host "    Org ID: $($onboardingState.OrgId)"
+} else {
+    Write-Host "    Registry key not found - may not be onboarded" -ForegroundColor Red
+}
+
+# 4. Check connectivity
+Write-Host "`n[4] Cloud Connectivity:" -ForegroundColor Yellow
+$connectivityTest = Test-NetConnection -ComputerName "winatp-gw-cus.microsoft.com" -Port 443 -WarningAction SilentlyContinue
+Write-Host "    winatp-gw-cus.microsoft.com:443 - $(if($connectivityTest.TcpTestSucceeded){'Connected'}else{'FAILED'})" -ForegroundColor $(if($connectivityTest.TcpTestSucceeded){"Green"}else{"Red"})</pre></div>
+
+                    <h3>Method 2: Detection Test</h3>
+                    <p>Run the EICAR test file to verify detection and reporting:</p>
+                    <div class="code-block"><pre># PowerShell - Run EICAR detection test
+# This creates a harmless test file that triggers AV detection
+
+$EicarString = 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+$TestPath = "$env:TEMP\eicar_test.com"
+
+# Create EICAR file (will be immediately detected and blocked)
+try {
+    [System.IO.File]::WriteAllText($TestPath, $EicarString)
+    Write-Host "EICAR file created - check for detection alert" -ForegroundColor Yellow
+} catch {
+    Write-Host "EICAR file was blocked by real-time protection - AV is working!" -ForegroundColor Green
+}
+
+# Cleanup (may already be quarantined)
+Remove-Item $TestPath -Force -ErrorAction SilentlyContinue</pre></div>
+
+                    <h3>Method 3: Microsoft Defender Portal</h3>
+                    <ol>
+                        <li>Go to <a href="https://security.microsoft.com" target="_blank">security.microsoft.com</a></li>
+                        <li>Navigate to <span class="path-highlight">Assets → Devices</span></li>
+                        <li>Search for your device by name</li>
+                        <li>Verify device appears with "Onboarded" status</li>
+                        <li>Check the device timeline for events</li>
+                    </ol>
+
+                    <div class="success-box">
+                        <h4><i class="fas fa-clock"></i> Timeline</h4>
+                        <p>Devices typically appear in the portal within <strong>5-30 minutes</strong> of successful onboarding. If the device doesn't appear after 1 hour, check the troubleshooting guide.</p>
+                    </div>
+                </div>
+
+                <!-- OFFBOARDING -->
+                <h2 id="offboarding"><i class="fas fa-sign-out-alt"></i> Offboarding</h2>
+                
+                <div class="method-section">
+                    <h3>When to Offboard</h3>
+                    <ul>
+                        <li>Device being decommissioned</li>
+                        <li>Device leaving organizational control</li>
+                        <li>Troubleshooting (offboard and re-onboard)</li>
+                        <li>Migration to different tenant</li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Offboarding Effects</h4>
+                        <p>Offboarding stops the device from sending sensor data to MDE. The device will remain in the portal for up to 180 days in an "Inactive" state. Historical data is retained according to your data retention settings.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Download Offboarding Package</h4>
+                        <ol>
+                            <li>In Microsoft Defender portal, go to <span class="path-highlight">Settings → Endpoints → Offboarding</span></li>
+                            <li>Select the same OS and deployment method as onboarding</li>
+                            <li>Click <strong>Download package</strong></li>
+                            <li>Note: Offboarding packages <strong>expire after 30 days</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Run Offboarding Script</h4>
+                        <div class="code-block"><pre># PowerShell - Run offboarding script (as Administrator)
+cd C:\MDEOffboarding
+.\WindowsDefenderATPOffboardingScript_valid_until_YYYY-MM-DD.cmd
+
+# After offboarding, verify
+$onboardingState = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Advanced Threat Protection\Status" -ErrorAction SilentlyContinue
+Write-Host "Onboarding State: $($onboardingState.OnboardingState)"
+# Should return 0 (offboarded)</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Cleanup (Optional)</h4>
+                        <p>For complete removal, restart the device after offboarding. The Sense service will stop sending data but remains installed as part of Windows.</p>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-arrow-right"></i> Next Steps</h4>
+                    <ul>
+                        <li><a href="pages/mde/onboarding-linux.html">Linux Onboarding Guide</a></li>
+                        <li><a href="pages/mde/onboarding-macos.html">macOS Onboarding Guide</a></li>
+                        <li><a href="pages/mde/troubleshooting.html">Troubleshooting Guide</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

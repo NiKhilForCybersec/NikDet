@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palo Alto Initial Setup | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .success-box { background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/paloalto/index.html">Palo Alto</a><span class="separator">/</span><span>Initial Setup</span></div>
+            <div class="content">
+                <h1><i class="fas fa-play-circle"></i> Palo Alto Initial Setup</h1>
+                <p class="lead">Complete Day 1 configuration guide. From unboxing to a fully functional firewall with management access.</p>
+
+                <h2><i class="fas fa-box-open"></i> Step 1: Physical Setup & Console Access</h2>
+                <div class="step-section">
+                    <h3>Console Connection Settings</h3>
+                    <table class="feature-table">
+                        <tr><th>Setting</th><th>Value</th></tr>
+                        <tr><td>Baud Rate</td><td><strong>9600</strong></td></tr>
+                        <tr><td>Data Bits</td><td>8</td></tr>
+                        <tr><td>Parity</td><td>None</td></tr>
+                        <tr><td>Stop Bits</td><td>1</td></tr>
+                        <tr><td>Flow Control</td><td>None</td></tr>
+                    </table>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Default Credentials</h4>
+                        <p><strong>Username:</strong> admin<br>
+                        <strong>Password:</strong> admin</p>
+                        <p>You MUST change this immediately!</p>
+                    </div>
+
+                    <h3>First Login</h3>
+                    <div class="code-block"><pre>login: admin
+Password: admin
+
+Warning: Your device is still configured with the default admin account credentials.
+Please change your password prior to deployment.
+
+admin@PA-220></pre></div>
+                </div>
+
+                <h2><i class="fas fa-network-wired"></i> Step 2: Configure Management Interface</h2>
+                <div class="step-section">
+                    <h3>CLI Configuration</h3>
+                    <div class="code-block"><pre># Enter configuration mode
+> configure
+
+# Set management interface IP
+# set deviceconfig system ip-address <ip> netmask <mask> default-gateway <gw>
+# set deviceconfig system ip-address 192.168.1.1 netmask 255.255.255.0 default-gateway 192.168.1.254
+
+# Or configure via MGT interface settings
+# set deviceconfig system type static
+# set deviceconfig system ip-address 192.168.1.1
+# set deviceconfig system netmask 255.255.255.0
+# set deviceconfig system default-gateway 192.168.1.254
+
+# Configure permitted management services
+# set deviceconfig system permitted-ip 10.0.0.0/8
+# set deviceconfig system service disable-telnet yes
+# set deviceconfig system service disable-http yes
+
+# COMMIT THE CHANGES!
+# commit
+
+Commit job 2 is in progress. Use Ctrl+C to return to command prompt
+.......55%...80%.......100%
+Configuration committed successfully
+
+# Exit configuration mode
+# exit</pre></div>
+
+                    <h3>Default Management Access</h3>
+                    <div class="info-box">
+                        <h4>Factory Default IP</h4>
+                        <p>Most Palo Alto models have default management IP:</p>
+                        <ul>
+                            <li><strong>MGT Interface IP:</strong> 192.168.1.1</li>
+                            <li><strong>Subnet:</strong> 255.255.255.0</li>
+                            <li><strong>Web GUI:</strong> https://192.168.1.1</li>
+                        </ul>
+                        <p>Connect laptop to MGT port with IP 192.168.1.x</p>
+                    </div>
+
+                    <h3>Configure DNS</h3>
+                    <div class="code-block"><pre>> configure
+# set deviceconfig system dns-setting servers primary 8.8.8.8
+# set deviceconfig system dns-setting servers secondary 8.8.4.4
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-user-shield"></i> Step 3: Change Admin Password</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre>> configure
+
+# Change admin password
+# set mgt-config users admin password
+Enter password   :
+Confirm password :
+
+# Or set via hash
+# set mgt-config users admin phash $1$xxxxx...
+
+# COMMIT!
+# commit</pre></div>
+
+                    <h3>Create Additional Admin Accounts</h3>
+                    <div class="code-block"><pre># Create superuser admin
+# set mgt-config users emergency-admin permissions role-based superuser yes
+# set mgt-config users emergency-admin password
+Enter password   :
+Confirm password :
+
+# Create read-only admin
+# set mgt-config users readonly-admin permissions role-based custom profile "Read Only Admin"
+# set mgt-config users readonly-admin password
+
+# Restrict admin access by source IP
+# set mgt-config users admin permitted-ip 10.0.0.0/8
+# set mgt-config users admin permitted-ip 192.168.0.0/16
+
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-key"></i> Step 4: License Registration</h2>
+                <div class="step-section">
+                    <h3>Check License Status</h3>
+                    <div class="code-block"><pre>> request license info
+
+Serial: 0123456789
+Threat Prevention: none
+URL Filtering: none
+GlobalProtect Gateway: none
+WildFire License: none
+...</pre></div>
+
+                    <h3>Retrieve License from Server</h3>
+                    <div class="code-block"><pre># Requires internet connectivity and device registered on support.paloaltonetworks.com
+
+> request license fetch
+
+Successfully retrieved license keys</pre></div>
+
+                    <h3>Manual License Installation</h3>
+                    <div class="code-block"><pre># If no internet, install license file manually
+# First, upload license file via SCP or GUI
+
+> scp import license from username@host:path
+
+# Or via GUI: Device → Licenses → Activate feature using authorization code</pre></div>
+
+                    <h3>Register Device</h3>
+                    <ol>
+                        <li>Go to <a href="https://support.paloaltonetworks.com" target="_blank">support.paloaltonetworks.com</a></li>
+                        <li>Create/login to account</li>
+                        <li>Assets → Devices → Register New Device</li>
+                        <li>Enter Serial Number (from <code>show system info</code>)</li>
+                        <li>Enter Auth Codes from purchase</li>
+                        <li>On firewall: <code>request license fetch</code></li>
+                    </ol>
+                </div>
+
+                <h2><i class="fas fa-cog"></i> Step 5: System Settings</h2>
+                <div class="step-section">
+                    <h3>Hostname and Domain</h3>
+                    <div class="code-block"><pre>> configure
+# set deviceconfig system hostname FW-DC-PRIMARY
+# set deviceconfig system domain company.local
+# commit</pre></div>
+
+                    <h3>NTP Configuration</h3>
+                    <div class="code-block"><pre># set deviceconfig system ntp-servers primary-ntp-server ntp-server-address time.windows.com
+# set deviceconfig system ntp-servers secondary-ntp-server ntp-server-address pool.ntp.org
+# set deviceconfig system timezone America/Toronto
+# commit
+
+# Verify NTP sync
+> show ntp</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-clock"></i> NTP is Critical!</h4>
+                        <p>Accurate time is essential for:</p>
+                        <ul>
+                            <li>Log timestamps and SIEM correlation</li>
+                            <li>Certificate validation</li>
+                            <li>HA synchronization</li>
+                            <li>Scheduled policies</li>
+                        </ul>
+                    </div>
+
+                    <h3>Login Banner</h3>
+                    <div class="code-block"><pre># set deviceconfig system login-banner "Authorized access only. All activity is monitored."
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-download"></i> Step 6: Software Update</h2>
+                <div class="step-section">
+                    <h3>Check Current Version</h3>
+                    <div class="code-block"><pre>> show system info
+
+hostname: PA-220
+ip-address: 192.168.1.1
+...
+sw-version: 11.1.2
+...</pre></div>
+
+                    <h3>Download and Install Updates</h3>
+                    <div class="code-block"><pre># Check for available updates
+> request system software check
+
+# Download specific version
+> request system software download version 11.1.3
+
+# Check download status
+> show jobs all
+
+# Install (will reboot!)
+> request system software install version 11.1.3
+
+# Monitor installation
+> show jobs all</pre></div>
+
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> Upgrade Path</h4>
+                        <p>Always check release notes for supported upgrade paths:</p>
+                        <ul>
+                            <li>10.1 → 10.2 → 11.0 → 11.1 (correct)</li>
+                            <li>10.1 → 11.1 (may not be supported!)</li>
+                        </ul>
+                        <p>Download upgrade path matrix from Palo Alto support portal.</p>
+                    </div>
+
+                    <h3>Update Content (Signatures)</h3>
+                    <div class="code-block"><pre># Check current content versions
+> show system info | match -i version
+
+# Download latest content
+> request content upgrade check
+> request content upgrade download latest
+> request content upgrade install version latest
+
+# Download latest antivirus
+> request anti-virus upgrade check
+> request anti-virus upgrade download latest
+> request anti-virus upgrade install version latest
+
+# Download WildFire updates
+> request wildfire upgrade check
+> request wildfire upgrade download latest
+> request wildfire upgrade install version latest</pre></div>
+
+                    <h3>Enable Automatic Updates</h3>
+                    <div class="code-block"><pre># Via GUI: Device → Dynamic Updates
+# Set schedules for:
+# - Applications and Threats: Daily
+# - Antivirus: Every 5 minutes
+# - WildFire: Every minute (real-time recommended)
+# - URL Filtering: Daily
+
+# Via CLI:
+> configure
+# set deviceconfig system update-schedule threats recurring daily action download-and-install at 03:00
+# set deviceconfig system update-schedule anti-virus recurring every-5-mins action download-and-install
+# set deviceconfig system update-schedule wildfire recurring every-min action download-and-install
+# commit</pre></div>
+                </div>
+
+                <h2><i class="fas fa-save"></i> Step 7: Backup Configuration</h2>
+                <div class="step-section">
+                    <h3>Export Configuration</h3>
+                    <div class="code-block"><pre># Save named snapshot
+> save config to initial-config-backup.xml
+
+# Export to SCP server
+> scp export configuration from running-config.xml to username@10.1.1.50:/backups/
+
+# Export via TFTP
+> tftp export configuration from running-config.xml to 10.1.1.50</pre></div>
+
+                    <h3>GUI Export</h3>
+                    <ol>
+                        <li>Device → Setup → Operations</li>
+                        <li>Export named configuration snapshot</li>
+                        <li>Or: Export Panorama configuration bundle</li>
+                    </ol>
+
+                    <h3>Scheduled Backups (via Panorama)</h3>
+                    <p>For scheduled backups, use Panorama or external script via API:</p>
+                    <div class="code-block"><pre># API call to export config
+curl -k "https://firewall/api/?type=export&category=configuration" \
+  -d "key=LUFRPT..." \
+  -o backup.xml</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-circle"></i> Step 8: Verify Setup</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># System information
+> show system info
+
+# Check interface status
+> show interface all
+
+# Check licenses
+> request license info
+
+# Check NTP sync
+> show ntp
+
+# Check content versions
+> show system info | match version
+
+# Test DNS
+> ping host google.com
+
+# Check management connectivity
+> show system state filter sys.s1.p*.mp*</pre></div>
+
+                    <div class="success-box">
+                        <h4><i class="fas fa-check-circle"></i> Initial Setup Complete!</h4>
+                        <p>Your Palo Alto firewall now has:</p>
+                        <ul>
+                            <li>✅ Secure admin access with strong password</li>
+                            <li>✅ Management IP configured</li>
+                            <li>✅ Licenses activated</li>
+                            <li>✅ DNS and NTP configured</li>
+                            <li>✅ Latest software and content</li>
+                            <li>✅ Configuration backed up</li>
+                        </ul>
+                        <p>Next: <a href="pages/ngfw/paloalto/interfaces-zones.html">Configure Interfaces & Zones →</a></p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

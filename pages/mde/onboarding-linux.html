@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDE Linux Onboarding | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .method-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .method-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .step-box { background: rgba(99, 102, 241, 0.1); padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .step-box h4 { color: var(--accent-color); margin: 0 0 0.5rem 0; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .success-box { background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0; }
+        .prereq-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .prereq-table th, .prereq-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .prereq-table th { background: var(--card-bg); color: var(--accent-color); }
+        .distro-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
+        .distro-tab { background: var(--card-bg); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.2s; }
+        .distro-tab:hover, .distro-tab.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+        .path-highlight { background: rgba(99, 102, 241, 0.2); padding: 0.125rem 0.375rem; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/mde/index.html">MDE</a><span class="separator">/</span><span>Linux Onboarding</span></div>
+            <div class="content">
+                <h1><i class="fab fa-linux"></i> MDE Linux Onboarding</h1>
+                <p class="lead">Complete guide to onboarding Linux servers and workstations to Microsoft Defender for Endpoint. Covers RHEL, Ubuntu, Debian, SLES, Oracle Linux, and more.</p>
+
+                <h2><i class="fas fa-clipboard-check"></i> Supported Linux Distributions</h2>
+                <table class="prereq-table">
+                    <thead>
+                        <tr><th>Distribution</th><th>Supported Versions</th><th>Architecture</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>RHEL / CentOS</strong></td><td>7.2+, 8.x, 9.x</td><td>x64, ARM64</td></tr>
+                        <tr><td><strong>Ubuntu</strong></td><td>16.04 LTS, 18.04 LTS, 20.04 LTS, 22.04 LTS</td><td>x64, ARM64</td></tr>
+                        <tr><td><strong>Debian</strong></td><td>9 (Stretch), 10 (Buster), 11 (Bullseye), 12 (Bookworm)</td><td>x64, ARM64</td></tr>
+                        <tr><td><strong>SUSE Linux Enterprise</strong></td><td>12.x, 15.x</td><td>x64</td></tr>
+                        <tr><td><strong>Oracle Linux</strong></td><td>7.2+, 8.x</td><td>x64</td></tr>
+                        <tr><td><strong>Amazon Linux</strong></td><td>2, 2023</td><td>x64, ARM64</td></tr>
+                        <tr><td><strong>Fedora</strong></td><td>33+</td><td>x64</td></tr>
+                        <tr><td><strong>Rocky Linux</strong></td><td>8.x, 9.x</td><td>x64</td></tr>
+                        <tr><td><strong>Alma Linux</strong></td><td>8.x, 9.x</td><td>x64</td></tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-cog"></i> Prerequisites</h2>
+                
+                <div class="method-section">
+                    <h3>System Requirements</h3>
+                    <table class="prereq-table">
+                        <thead>
+                            <tr><th>Requirement</th><th>Specification</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Disk Space</strong></td><td>Minimum 2 GB (1 GB for installation, 1 GB for logs)</td></tr>
+                            <tr><td><strong>Memory</strong></td><td>Minimum 1 GB RAM (2 GB recommended)</td></tr>
+                            <tr><td><strong>Kernel</strong></td><td>3.10.0-327 or later (for fanotify support)</td></tr>
+                            <tr><td><strong>File Systems</strong></td><td>ext2, ext3, ext4, xfs, btrfs, tmpfs</td></tr>
+                            <tr><td><strong>Network</strong></td><td>Outbound HTTPS (443) to Microsoft endpoints</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Required Dependencies</h3>
+                    <div class="code-block"><pre># Required packages (install based on your distro)
+# - curl or wget (for downloading)
+# - gnupg (for package verification)
+# - apt-transport-https (Debian/Ubuntu only)
+# - policycoreutils (for SELinux systems)
+
+# Check kernel version (must be 3.10.0-327+)
+uname -r
+
+# Check fanotify support (required for real-time protection)
+cat /boot/config-$(uname -r) | grep CONFIG_FANOTIFY
+# Should show: CONFIG_FANOTIFY=y and CONFIG_FANOTIFY_ACCESS_PERMISSIONS=y</pre></div>
+                </div>
+
+                <h2><i class="fas fa-download"></i> Download Onboarding Package</h2>
+                
+                <div class="step-box">
+                    <h4>Step 1: Access Microsoft Defender Portal</h4>
+                    <ol>
+                        <li>Go to <a href="https://security.microsoft.com" target="_blank">https://security.microsoft.com</a></li>
+                        <li>Navigate to <span class="path-highlight">Settings → Endpoints → Onboarding</span></li>
+                        <li>Select <strong>Linux Server</strong> from the operating system dropdown</li>
+                        <li>Select your deployment method:
+                            <ul>
+                                <li><strong>Local Script</strong> - Manual installation</li>
+                                <li><strong>Puppet</strong> - For Puppet-managed environments</li>
+                                <li><strong>Ansible</strong> - For Ansible-managed environments</li>
+                            </ul>
+                        </li>
+                        <li>Click <strong>Download onboarding package</strong></li>
+                        <li>Also download the <strong>installation package</strong> (Python script)</li>
+                    </ol>
+                </div>
+
+                <h2 id="rhel"><i class="fab fa-redhat"></i> RHEL / CentOS / Rocky / Alma Linux</h2>
+                
+                <div class="method-section">
+                    <h3>Manual Installation - RHEL 8.x / 9.x</h3>
+
+                    <div class="step-box">
+                        <h4>Step 1: Install Prerequisites</h4>
+                        <div class="code-block"><pre># Update system
+sudo dnf update -y
+
+# Install required packages
+sudo dnf install -y curl gnupg2 yum-utils
+
+# For RHEL 8, enable CodeReady Builder repo (for some dependencies)
+sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
+
+# For Rocky/Alma, enable PowerTools/CRB
+sudo dnf config-manager --set-enabled powertools  # Rocky 8
+sudo dnf config-manager --set-enabled crb         # Rocky 9</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Add Microsoft Repository</h4>
+                        <div class="code-block"><pre># Import Microsoft GPG key
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+
+# Add the Microsoft repository
+# For RHEL 8:
+sudo dnf config-manager --add-repo https://packages.microsoft.com/config/rhel/8/prod.repo
+
+# For RHEL 9:
+sudo dnf config-manager --add-repo https://packages.microsoft.com/config/rhel/9/prod.repo
+
+# Verify repository was added
+sudo dnf repolist | grep packages-microsoft</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Install MDE Package</h4>
+                        <div class="code-block"><pre># Install Microsoft Defender for Endpoint
+sudo dnf install -y mdatp
+
+# Verify installation
+mdatp version
+# Should output version number like: 101.xx.xx</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Onboard the Device</h4>
+                        <div class="code-block"><pre># Copy the onboarding package to the server
+# The package is named: MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# Make it executable
+chmod +x MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# Run the onboarding script (as root)
+sudo python3 MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# Alternative: Use the JSON file directly
+# Extract WindowsDefenderATPOnboarding.json from the ZIP
+sudo mdatp onboard --onboarding-json WindowsDefenderATPOnboarding.json</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 5: Verify Onboarding</h4>
+                        <div class="code-block"><pre># Check MDE health status
+mdatp health
+
+# Expected output (key fields):
+# healthy                                     : true
+# licensed                                    : true
+# org_id                                      : [your-org-id]
+# real_time_protection_enabled                : true
+# cloud_enabled                               : true
+# cloud_automatic_sample_submission_consent   : "safe"
+
+# Check service status
+sudo systemctl status mdatp
+
+# Run detection test
+mdatp connectivity test
+
+# Run EICAR test
+curl -o /tmp/eicar.com.txt https://secure.eicar.org/eicar.com.txt
+# Should be immediately detected and quarantined</pre></div>
+                    </div>
+
+                    <h3>RHEL 7.x Specific Instructions</h3>
+                    <div class="warning-box">
+                        <h4><i class="fas fa-exclamation-triangle"></i> RHEL 7 Considerations</h4>
+                        <p>RHEL 7 uses yum instead of dnf and requires enabling EPEL repository for some dependencies.</p>
+                    </div>
+
+                    <div class="code-block"><pre># RHEL 7 / CentOS 7 installation
+# Install EPEL repository
+sudo yum install -y epel-release
+
+# Import Microsoft GPG key
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+
+# Add Microsoft repository
+sudo yum-config-manager --add-repo https://packages.microsoft.com/config/rhel/7/prod.repo
+
+# Install MDE
+sudo yum install -y mdatp
+
+# Continue with onboarding steps (same as above)</pre></div>
+                </div>
+
+                <h2 id="ubuntu"><i class="fab fa-ubuntu"></i> Ubuntu</h2>
+                
+                <div class="method-section">
+                    <h3>Manual Installation - Ubuntu 20.04 / 22.04 LTS</h3>
+
+                    <div class="step-box">
+                        <h4>Step 1: Install Prerequisites</h4>
+                        <div class="code-block"><pre># Update package lists
+sudo apt update
+
+# Install required packages
+sudo apt install -y curl gnupg apt-transport-https software-properties-common</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Add Microsoft Repository</h4>
+                        <div class="code-block"><pre># Import Microsoft GPG key
+curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+
+# Add the repository
+# For Ubuntu 20.04 (Focal):
+echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/20.04/prod focal main" | sudo tee /etc/apt/sources.list.d/microsoft-prod.list
+
+# For Ubuntu 22.04 (Jammy):
+echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/22.04/prod jammy main" | sudo tee /etc/apt/sources.list.d/microsoft-prod.list
+
+# Update package lists
+sudo apt update</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Install MDE Package</h4>
+                        <div class="code-block"><pre># Install Microsoft Defender for Endpoint
+sudo apt install -y mdatp
+
+# If you encounter dependency issues:
+sudo apt --fix-broken install
+
+# Verify installation
+mdatp version</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Onboard the Device</h4>
+                        <div class="code-block"><pre># Copy onboarding package to the server
+# Run the onboarding script
+sudo python3 MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# Or use the JSON method
+sudo mdatp onboard --onboarding-json /path/to/WindowsDefenderATPOnboarding.json</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 5: Verify and Configure</h4>
+                        <div class="code-block"><pre># Check health
+mdatp health
+
+# Enable real-time protection (if not enabled by default)
+sudo mdatp config real-time-protection --value enabled
+
+# Enable cloud protection
+sudo mdatp config cloud --value enabled
+
+# Set sample submission
+sudo mdatp config cloud-automatic-sample-submission-consent --value safe
+
+# Check status
+mdatp health --field healthy
+# Should return: true</pre></div>
+                    </div>
+                </div>
+
+                <h2 id="debian"><i class="fab fa-debian"></i> Debian</h2>
+                
+                <div class="method-section">
+                    <h3>Manual Installation - Debian 11 / 12</h3>
+
+                    <div class="step-box">
+                        <h4>Step 1: Install Prerequisites</h4>
+                        <div class="code-block"><pre># Update and install prerequisites
+sudo apt update
+sudo apt install -y curl gnupg apt-transport-https</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Add Microsoft Repository</h4>
+                        <div class="code-block"><pre># Import GPG key
+curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+
+# For Debian 11 (Bullseye):
+echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/11/prod bullseye main" | sudo tee /etc/apt/sources.list.d/microsoft-prod.list
+
+# For Debian 12 (Bookworm):
+echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" | sudo tee /etc/apt/sources.list.d/microsoft-prod.list
+
+# Update
+sudo apt update</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Install and Onboard</h4>
+                        <div class="code-block"><pre># Install MDE
+sudo apt install -y mdatp
+
+# Onboard (same as Ubuntu)
+sudo python3 MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# Verify
+mdatp health</pre></div>
+                    </div>
+                </div>
+
+                <h2 id="sles"><i class="fab fa-suse"></i> SUSE Linux Enterprise Server (SLES)</h2>
+                
+                <div class="method-section">
+                    <h3>Manual Installation - SLES 15</h3>
+
+                    <div class="step-box">
+                        <h4>Step 1: Add Microsoft Repository</h4>
+                        <div class="code-block"><pre># Import GPG key
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+
+# Add repository
+# For SLES 15:
+sudo zypper addrepo -G https://packages.microsoft.com/config/sles/15/prod.repo
+
+# Refresh repositories
+sudo zypper refresh</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Install and Onboard</h4>
+                        <div class="code-block"><pre># Install MDE
+sudo zypper install -y mdatp
+
+# Onboard
+sudo python3 MicrosoftDefenderATPOnboardingLinuxServer.py
+
+# Verify
+mdatp health</pre></div>
+                    </div>
+                </div>
+
+                <h2 id="ansible"><i class="fas fa-cogs"></i> Automated Deployment - Ansible</h2>
+                
+                <div class="method-section">
+                    <h3>Ansible Playbook for MDE Deployment</h3>
+
+                    <div class="step-box">
+                        <h4>Step 1: Create Inventory File</h4>
+                        <div class="code-block"><pre># inventory.yml
+all:
+  children:
+    linux_servers:
+      hosts:
+        server1.example.com:
+        server2.example.com:
+        server3.example.com:
+      vars:
+        ansible_user: admin
+        ansible_become: yes</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Create Variables File</h4>
+                        <div class="code-block"><pre># vars/mde_vars.yml
+---
+mde_onboarding_json_path: "/path/to/WindowsDefenderATPOnboarding.json"
+mde_channel: "prod"  # or insiders-fast, insiders-slow</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Create Ansible Playbook</h4>
+                        <div class="code-block"><pre># mde_deploy.yml
+---
+- name: Deploy Microsoft Defender for Endpoint to Linux
+  hosts: linux_servers
+  become: yes
+  vars_files:
+    - vars/mde_vars.yml
+  
+  tasks:
+    # ============ RHEL/CentOS/Rocky ============
+    - name: Install prerequisites (RHEL family)
+      when: ansible_os_family == "RedHat"
+      block:
+        - name: Import Microsoft GPG key
+          rpm_key:
+            key: https://packages.microsoft.com/keys/microsoft.asc
+            state: present
+
+        - name: Add Microsoft repository (RHEL 8+)
+          yum_repository:
+            name: microsoft-prod
+            description: Microsoft Packages
+            baseurl: "https://packages.microsoft.com/config/rhel/{{ ansible_distribution_major_version }}/prod/"
+            gpgcheck: yes
+            gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+            enabled: yes
+          when: ansible_distribution_major_version | int >= 8
+
+        - name: Install mdatp package (RHEL family)
+          dnf:
+            name: mdatp
+            state: present
+
+    # ============ Ubuntu/Debian ============
+    - name: Install prerequisites (Debian family)
+      when: ansible_os_family == "Debian"
+      block:
+        - name: Install apt prerequisites
+          apt:
+            name:
+              - curl
+              - gnupg
+              - apt-transport-https
+            state: present
+            update_cache: yes
+
+        - name: Add Microsoft GPG key
+          apt_key:
+            url: https://packages.microsoft.com/keys/microsoft.asc
+            state: present
+            keyring: /usr/share/keyrings/microsoft-prod.gpg
+
+        - name: Add Microsoft repository (Ubuntu)
+          apt_repository:
+            repo: "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/ubuntu/{{ ansible_distribution_version }}/prod {{ ansible_distribution_release }} main"
+            state: present
+            filename: microsoft-prod
+          when: ansible_distribution == "Ubuntu"
+
+        - name: Install mdatp package (Debian family)
+          apt:
+            name: mdatp
+            state: present
+            update_cache: yes
+
+    # ============ Onboarding ============
+    - name: Copy onboarding JSON file
+      copy:
+        src: "{{ mde_onboarding_json_path }}"
+        dest: /tmp/mdatp_onboard.json
+        mode: '0600'
+
+    - name: Onboard device to MDE
+      command: mdatp onboard --onboarding-json /tmp/mdatp_onboard.json
+      register: onboard_result
+      changed_when: "'Onboarding successful' in onboard_result.stdout"
+      failed_when: onboard_result.rc != 0 and 'already onboarded' not in onboard_result.stderr
+
+    - name: Remove onboarding file
+      file:
+        path: /tmp/mdatp_onboard.json
+        state: absent
+
+    # ============ Configuration ============
+    - name: Enable real-time protection
+      command: mdatp config real-time-protection --value enabled
+      changed_when: false
+
+    - name: Enable cloud protection
+      command: mdatp config cloud --value enabled
+      changed_when: false
+
+    - name: Configure sample submission
+      command: mdatp config cloud-automatic-sample-submission-consent --value safe
+      changed_when: false
+
+    # ============ Verification ============
+    - name: Check MDE health
+      command: mdatp health --field healthy
+      register: mde_health
+      changed_when: false
+
+    - name: Display MDE health status
+      debug:
+        msg: "MDE Health Status: {{ mde_health.stdout }}"
+
+    - name: Fail if MDE is unhealthy
+      fail:
+        msg: "MDE is not healthy on {{ inventory_hostname }}"
+      when: mde_health.stdout != "true"</pre></div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Run the Playbook</h4>
+                        <div class="code-block"><pre># Run the playbook
+ansible-playbook -i inventory.yml mde_deploy.yml
+
+# Run with verbose output
+ansible-playbook -i inventory.yml mde_deploy.yml -v
+
+# Run on specific hosts
+ansible-playbook -i inventory.yml mde_deploy.yml --limit server1.example.com</pre></div>
+                    </div>
+                </div>
+
+                <h2 id="puppet"><i class="fas fa-puppet"></i> Automated Deployment - Puppet</h2>
+                
+                <div class="method-section">
+                    <h3>Puppet Module for MDE</h3>
+
+                    <div class="step-box">
+                        <h4>Puppet Manifest</h4>
+                        <div class="code-block"><pre># modules/mdatp/manifests/init.pp
+class mdatp (
+  String $onboarding_json_content,
+  Boolean $real_time_protection = true,
+  Boolean $cloud_enabled = true,
+  String $sample_submission = 'safe',
+) {
+
+  # Add Microsoft repository based on OS
+  case $facts['os']['family'] {
+    'RedHat': {
+      yumrepo { 'microsoft-prod':
+        descr    => 'Microsoft Packages',
+        baseurl  => "https://packages.microsoft.com/config/rhel/${facts['os']['release']['major']}/prod/",
+        gpgcheck => 1,
+        gpgkey   => 'https://packages.microsoft.com/keys/microsoft.asc',
+        enabled  => 1,
+      }
+
+      package { 'mdatp':
+        ensure  => installed,
+        require => Yumrepo['microsoft-prod'],
+      }
+    }
+    'Debian': {
+      apt::source { 'microsoft-prod':
+        location => "https://packages.microsoft.com/ubuntu/${facts['os']['distro']['release']['full']}/prod",
+        release  => $facts['os']['distro']['codename'],
+        repos    => 'main',
+        key      => {
+          id     => 'BC528686B50D79E339D3721CEB3E94ADBE1229CF',
+          source => 'https://packages.microsoft.com/keys/microsoft.asc',
+        },
+      }
+
+      package { 'mdatp':
+        ensure  => installed,
+        require => Apt::Source['microsoft-prod'],
+      }
+    }
+  }
+
+  # Create onboarding JSON file
+  file { '/tmp/mdatp_onboard.json':
+    ensure  => file,
+    content => $onboarding_json_content,
+    mode    => '0600',
+    require => Package['mdatp'],
+  }
+
+  # Onboard device
+  exec { 'mdatp_onboard':
+    command => '/usr/bin/mdatp onboard --onboarding-json /tmp/mdatp_onboard.json',
+    unless  => '/usr/bin/mdatp health --field org_id | grep -q "[a-f0-9]"',
+    require => [Package['mdatp'], File['/tmp/mdatp_onboard.json']],
+  }
+
+  # Configure MDE
+  exec { 'mdatp_config_rtp':
+    command => "/usr/bin/mdatp config real-time-protection --value ${real_time_protection}",
+    unless  => "/usr/bin/mdatp health --field real_time_protection_enabled | grep -q ${real_time_protection}",
+    require => Exec['mdatp_onboard'],
+  }
+}</pre></div>
+                    </div>
+                </div>
+
+                <h2><i class="fas fa-cog"></i> Post-Installation Configuration</h2>
+                
+                <div class="method-section">
+                    <h3>Configure MDE Settings</h3>
+
+                    <div class="code-block"><pre># View current configuration
+mdatp health
+
+# Enable/disable real-time protection
+sudo mdatp config real-time-protection --value enabled
+sudo mdatp config real-time-protection --value disabled
+
+# Enable cloud-delivered protection
+sudo mdatp config cloud --value enabled
+
+# Configure sample submission
+# Options: none, safe, all
+sudo mdatp config cloud-automatic-sample-submission-consent --value safe
+
+# Enable/disable behavior monitoring
+sudo mdatp config behavior-monitoring --value enabled
+
+# Configure network protection (block, audit, disabled)
+sudo mdatp config network-protection enforcement-level --value block
+
+# Configure PUA (potentially unwanted applications)
+sudo mdatp threat policy set --type potentially_unwanted_application --action block</pre></div>
+
+                    <h3>Exclusions Management</h3>
+                    <div class="code-block"><pre># Add path exclusion
+sudo mdatp exclusion folder add --path /var/log/myapp
+
+# Add file exclusion
+sudo mdatp exclusion file add --path /opt/myapp/data.db
+
+# Add process exclusion
+sudo mdatp exclusion process add --name myprocess
+
+# Add extension exclusion
+sudo mdatp exclusion extension add --name .log
+
+# List all exclusions
+mdatp exclusion list
+
+# Remove exclusion
+sudo mdatp exclusion folder remove --path /var/log/myapp</pre></div>
+
+                    <h3>Scan Management</h3>
+                    <div class="code-block"><pre># Run quick scan
+sudo mdatp scan quick
+
+# Run full scan
+sudo mdatp scan full
+
+# Scan specific path
+sudo mdatp scan custom --path /home/user/downloads
+
+# View scan history
+mdatp scan list
+
+# Cancel running scan
+sudo mdatp scan cancel</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Verification Commands</h2>
+                
+                <div class="method-section">
+                    <div class="code-block"><pre>#!/bin/bash
+# MDE Linux Verification Script
+
+echo "=== MDE Linux Verification ==="
+echo ""
+
+# 1. Check if mdatp is installed
+echo "[1] Package Installation:"
+if command -v mdatp &> /dev/null; then
+    echo "    ✓ mdatp is installed"
+    echo "    Version: $(mdatp version)"
+else
+    echo "    ✗ mdatp is NOT installed"
+    exit 1
+fi
+
+# 2. Check service status
+echo ""
+echo "[2] Service Status:"
+if systemctl is-active --quiet mdatp; then
+    echo "    ✓ mdatp service is running"
+else
+    echo "    ✗ mdatp service is NOT running"
+fi
+
+# 3. Check health
+echo ""
+echo "[3] Health Status:"
+HEALTH=$(mdatp health --field healthy)
+echo "    Healthy: $HEALTH"
+
+ORG_ID=$(mdatp health --field org_id)
+echo "    Org ID: $ORG_ID"
+
+RTP=$(mdatp health --field real_time_protection_enabled)
+echo "    Real-time Protection: $RTP"
+
+CLOUD=$(mdatp health --field cloud_enabled)
+echo "    Cloud Protection: $CLOUD"
+
+# 4. Check connectivity
+echo ""
+echo "[4] Connectivity Test:"
+mdatp connectivity test
+
+# 5. Check definitions
+echo ""
+echo "[5] Definition Updates:"
+DEFS=$(mdatp health --field definitions_status)
+echo "    Definitions Status: $DEFS"
+
+DEF_UPDATED=$(mdatp health --field definitions_updated)
+echo "    Last Updated: $DEF_UPDATED"
+
+echo ""
+echo "=== Verification Complete ==="</pre></div>
+                </div>
+
+                <h2><i class="fas fa-sync"></i> Updates and Maintenance</h2>
+                
+                <div class="method-section">
+                    <h3>Update MDE</h3>
+                    <div class="code-block"><pre># Update definitions manually
+sudo mdatp definitions update
+
+# Update the mdatp package
+# RHEL/CentOS:
+sudo dnf update mdatp
+
+# Ubuntu/Debian:
+sudo apt update && sudo apt upgrade mdatp
+
+# SLES:
+sudo zypper update mdatp
+
+# Check for available updates
+mdatp health --field app_update_available</pre></div>
+
+                    <h3>Configure Automatic Updates</h3>
+                    <div class="code-block"><pre># Create systemd timer for definition updates
+sudo tee /etc/systemd/system/mdatp-definitions.service << 'EOF'
+[Unit]
+Description=Update Microsoft Defender definitions
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/mdatp definitions update
+EOF
+
+sudo tee /etc/systemd/system/mdatp-definitions.timer << 'EOF'
+[Unit]
+Description=Run mdatp definition updates every 4 hours
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=4h
+
+[Install]
+WantedBy=timers.target
+EOF
+
+# Enable and start the timer
+sudo systemctl daemon-reload
+sudo systemctl enable mdatp-definitions.timer
+sudo systemctl start mdatp-definitions.timer
+
+# Verify timer
+systemctl list-timers | grep mdatp</pre></div>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Common Issues</h2>
+                
+                <div class="method-section">
+                    <h3>Issue: "Real-time protection not working"</h3>
+                    <div class="code-block"><pre># Check if fanotify is supported
+cat /proc/sys/fs/fanotify/max_user_marks
+# Should return a number (default: 8192)
+
+# If fanotify is not available, check kernel config
+grep CONFIG_FANOTIFY /boot/config-$(uname -r)
+
+# Enable real-time protection
+sudo mdatp config real-time-protection --value enabled
+
+# Check for conflicts with other AV
+sudo systemctl list-units | grep -E "clamd|sophos|eset"</pre></div>
+
+                    <h3>Issue: "Onboarding failed"</h3>
+                    <div class="code-block"><pre># Check if already onboarded
+mdatp health --field org_id
+
+# If shows an org_id, device is already onboarded
+# To re-onboard (offboard first):
+sudo mdatp offboard --offboarding-json /path/to/offboarding.json
+
+# Check network connectivity
+curl -v https://winatp-gw-cus.microsoft.com/test
+
+# Check logs
+sudo journalctl -u mdatp -f</pre></div>
+
+                    <h3>Issue: "Service won't start"</h3>
+                    <div class="code-block"><pre># Check service status
+sudo systemctl status mdatp
+
+# View detailed logs
+sudo journalctl -u mdatp --no-pager -n 100
+
+# Check if license is valid
+mdatp health --field licensed
+
+# Try restarting
+sudo systemctl restart mdatp</pre></div>
+                </div>
+
+                <div class="info-box">
+                    <h4><i class="fas fa-arrow-right"></i> Next Steps</h4>
+                    <ul>
+                        <li><a href="pages/mde/onboarding-macos.html">macOS Onboarding Guide</a></li>
+                        <li><a href="pages/mde/troubleshooting.html">Troubleshooting Guide</a></li>
+                        <li><a href="pages/mde/index.html">MDE Overview</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conditional Access Deep Dive | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .analogy-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .analogy-box h4 { color: #f59e0b; margin: 0 0 0.5rem 0; }
+        .flow-diagram { background: #1e1e2e; padding: 1.5rem; border-radius: 8px; font-family: monospace; font-size: 0.7rem; overflow-x: auto; white-space: pre; line-height: 1.4; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .success-box { background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0; }
+        .policy-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-color); }
+        .policy-card h4 { color: var(--accent-color); margin-top: 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iam/index.html">IAM</a><span class="separator">/</span><a href="pages/iam/entra-id/index.html">Entra ID</a><span class="separator">/</span><span>Conditional Access</span></div>
+            <div class="content">
+                <h1><i class="fas fa-shield-alt"></i> Conditional Access Deep Dive</h1>
+                <p class="lead">Complete guide to Conditional Access policies - the cornerstone of Zero Trust security in Microsoft Entra ID.</p>
+
+                <div class="analogy-box">
+                    <h4><i class="fas fa-lightbulb"></i> What is Conditional Access?</h4>
+                    <p><strong>Simple:</strong> "If-then" statements for authentication.</p>
+                    <p><strong>IF</strong> a user matches certain conditions (who, where, what device, what app)<br>
+                    <strong>THEN</strong> apply these requirements (MFA, block, allow, require compliant device)</p>
+                    <p><strong>Example:</strong> IF user is accessing email FROM outside the corporate network THEN require MFA.</p>
+                </div>
+
+                <h2><i class="fas fa-sitemap"></i> Conditional Access Architecture</h2>
+                <div class="flow-diagram">
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CONDITIONAL ACCESS EVALUATION FLOW                                         │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                         │
+│   USER ATTEMPTS ACCESS                                                                                  │
+│        │                                                                                                │
+│        ▼                                                                                                │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│   │                              SIGNALS (Input Data)                                                │  │
+│   │                                                                                                  │  │
+│   │  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐               │  │
+│   │  │    USER    │  │   DEVICE   │  │  LOCATION  │  │    APP     │  │    RISK    │               │  │
+│   │  │            │  │            │  │            │  │            │  │            │               │  │
+│   │  │ • Identity │  │ • Platform │  │ • IP addr  │  │ • Cloud app│  │ • Sign-in  │               │  │
+│   │  │ • Groups   │  │ • Compliant│  │ • Country  │  │ • On-prem  │  │   risk     │               │  │
+│   │  │ • Roles    │  │ • Hybrid   │  │ • Named    │  │ • Actions  │  │ • User     │               │  │
+│   │  │ • Guest    │  │   joined   │  │   locations│  │            │  │   risk     │               │  │
+│   │  └────────────┘  └────────────┘  └────────────┘  └────────────┘  └────────────┘               │  │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│        │                                                                                                │
+│        ▼                                                                                                │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│   │                              CONDITIONAL ACCESS ENGINE                                           │  │
+│   │                                                                                                  │  │
+│   │   For each policy (ALL policies evaluated):                                                     │  │
+│   │                                                                                                  │  │
+│   │   ┌─────────────────────────────────────────────────────────────────────────────────────────┐   │  │
+│   │   │  POLICY 1: "Require MFA for external access"                                            │   │  │
+│   │   │  Conditions: Users=All, Apps=All, Locations=NOT Corporate                               │   │  │
+│   │   │  Grant: Require MFA                                                                      │   │  │
+│   │   │  Result: APPLIES ✓                                                                       │   │  │
+│   │   └─────────────────────────────────────────────────────────────────────────────────────────┘   │  │
+│   │                                                                                                  │  │
+│   │   ┌─────────────────────────────────────────────────────────────────────────────────────────┐   │  │
+│   │   │  POLICY 2: "Block legacy authentication"                                                 │   │  │
+│   │   │  Conditions: Users=All, Apps=All, Client apps=Other clients                             │   │  │
+│   │   │  Grant: Block                                                                            │   │  │
+│   │   │  Result: Does not apply (using modern auth)                                              │   │  │
+│   │   └─────────────────────────────────────────────────────────────────────────────────────────┘   │  │
+│   │                                                                                                  │  │
+│   │   ┌─────────────────────────────────────────────────────────────────────────────────────────┐   │  │
+│   │   │  POLICY 3: "Require compliant device for sensitive apps"                                │   │  │
+│   │   │  Conditions: Users=All, Apps=SharePoint,Exchange, Devices=Any                           │   │  │
+│   │   │  Grant: Require compliant device                                                         │   │  │
+│   │   │  Result: APPLIES ✓                                                                       │   │  │
+│   │   └─────────────────────────────────────────────────────────────────────────────────────────┘   │  │
+│   │                                                                                                  │  │
+│   │   AGGREGATE RESULT: Must satisfy ALL applicable policies                                        │  │
+│   │   Policy 1 (MFA) + Policy 3 (Compliant device) = Require BOTH                                  │  │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│        │                                                                                                │
+│        ▼                                                                                                │
+│   ┌─────────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│   │                              ACCESS DECISION                                                     │  │
+│   │                                                                                                  │  │
+│   │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │  │
+│   │  │    GRANT     │    │    BLOCK     │    │   SESSION    │    │   REPORT     │                  │  │
+│   │  │              │    │              │    │   CONTROLS   │    │    ONLY      │                  │  │
+│   │  │ • Allow      │    │ • Deny       │    │              │    │              │                  │  │
+│   │  │ • Require MFA│    │   access     │    │ • App enforced│   │ • Log but    │                  │  │
+│   │  │ • Compliant  │    │              │    │   restrictions│   │   don't      │                  │  │
+│   │  │   device     │    │              │    │ • Sign-in     │   │   enforce    │                  │  │
+│   │  │ • Hybrid join│    │              │    │   frequency   │   │              │                  │  │
+│   │  │ • App protect│    │              │    │ • Persistent  │   │              │                  │  │
+│   │  │ • Password   │    │              │    │   browser     │   │              │                  │  │
+│   │  │   change     │    │              │    │               │   │              │                  │  │
+│   │  └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘                  │  │
+│   └─────────────────────────────────────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘</div>
+
+                <h2><i class="fas fa-puzzle-piece"></i> Policy Components</h2>
+                <div class="step-section">
+                    <h3>Assignments (WHO and WHAT)</h3>
+                    <table class="feature-table">
+                        <tr><th>Assignment</th><th>Options</th><th>Notes</th></tr>
+                        <tr>
+                            <td><strong>Users and groups</strong></td>
+                            <td>All users, specific users, groups, directory roles, guests</td>
+                            <td>Can include AND exclude</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud apps or actions</strong></td>
+                            <td>All apps, specific apps, user actions (register security info)</td>
+                            <td>Can target specific SaaS apps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Conditions</strong></td>
+                            <td>Device platforms, locations, client apps, device state, filters</td>
+                            <td>Fine-tune when policy applies</td>
+                        </tr>
+                    </table>
+
+                    <h3>Conditions (WHEN)</h3>
+                    <table class="feature-table">
+                        <tr><th>Condition</th><th>Options</th><th>Example Use</th></tr>
+                        <tr>
+                            <td><strong>Device platforms</strong></td>
+                            <td>Windows, macOS, iOS, Android, Linux</td>
+                            <td>Require MDM for mobile</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Locations</strong></td>
+                            <td>Named locations (IP ranges), countries, trusted locations</td>
+                            <td>MFA outside corporate network</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Client apps</strong></td>
+                            <td>Browser, mobile apps, desktop clients, legacy auth</td>
+                            <td>Block legacy authentication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Device state</strong></td>
+                            <td>Compliant, Hybrid Azure AD joined, filter for devices</td>
+                            <td>Only allow managed devices</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sign-in risk (P2)</strong></td>
+                            <td>Low, medium, high</td>
+                            <td>Block or require MFA for risky sign-ins</td>
+                        </tr>
+                        <tr>
+                            <td><strong>User risk (P2)</strong></td>
+                            <td>Low, medium, high</td>
+                            <td>Force password change for compromised users</td>
+                        </tr>
+                    </table>
+
+                    <h3>Access Controls (THEN)</h3>
+                    <table class="feature-table">
+                        <tr><th>Control Type</th><th>Options</th></tr>
+                        <tr>
+                            <td><strong>Grant</strong></td>
+                            <td>
+                                • Block access<br>
+                                • Grant access (with requirements):<br>
+                                &nbsp;&nbsp;- Require MFA<br>
+                                &nbsp;&nbsp;- Require compliant device<br>
+                                &nbsp;&nbsp;- Require Hybrid Azure AD join<br>
+                                &nbsp;&nbsp;- Require approved client app<br>
+                                &nbsp;&nbsp;- Require app protection policy<br>
+                                &nbsp;&nbsp;- Require password change<br>
+                                &nbsp;&nbsp;- Require authentication strength
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Session</strong></td>
+                            <td>
+                                • Use app enforced restrictions<br>
+                                • Use Conditional Access App Control<br>
+                                • Sign-in frequency (re-auth timer)<br>
+                                • Persistent browser session<br>
+                                • Customize continuous access evaluation
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-star"></i> Essential Policies (Must Have)</h2>
+
+                <div class="policy-card">
+                    <h4>Policy 1: Require MFA for All Users</h4>
+                    <p><strong>Why:</strong> MFA blocks 99.9% of account compromise attacks.</p>
+                    <div class="code-block"><pre>Name: CA001-Require-MFA-All-Users
+State: On
+
+Assignments:
+  Users: All users
+  Exclude: Emergency access accounts (break-glass)
+  
+  Cloud apps: All cloud apps
+  
+Access Controls:
+  Grant: Require multifactor authentication</pre></div>
+                </div>
+
+                <div class="policy-card">
+                    <h4>Policy 2: Block Legacy Authentication</h4>
+                    <p><strong>Why:</strong> Legacy protocols (IMAP, POP3, SMTP) don't support MFA and are easily exploited.</p>
+                    <div class="code-block"><pre>Name: CA002-Block-Legacy-Auth
+State: On
+
+Assignments:
+  Users: All users
+  Exclude: Service accounts that require legacy auth (minimize!)
+  
+  Cloud apps: All cloud apps
+  
+  Conditions:
+    Client apps: Other clients (legacy authentication clients)
+  
+Access Controls:
+  Grant: Block access</pre></div>
+                </div>
+
+                <div class="policy-card">
+                    <h4>Policy 3: Require MFA for Admins</h4>
+                    <p><strong>Why:</strong> Admin accounts are high-value targets. Always require MFA.</p>
+                    <div class="code-block"><pre>Name: CA003-Require-MFA-Admins
+State: On
+
+Assignments:
+  Users: Directory roles:
+    - Global Administrator
+    - Security Administrator  
+    - Exchange Administrator
+    - SharePoint Administrator
+    - User Administrator
+    - Privileged Role Administrator
+    - (all privileged roles)
+  Exclude: Emergency access accounts
+  
+  Cloud apps: All cloud apps
+  
+Access Controls:
+  Grant: Require multifactor authentication</pre></div>
+                </div>
+
+                <div class="policy-card">
+                    <h4>Policy 4: Block High-Risk Sign-ins (P2 Required)</h4>
+                    <p><strong>Why:</strong> Automatically block sign-ins that Identity Protection flags as high risk.</p>
+                    <div class="code-block"><pre>Name: CA004-Block-HighRisk-SignIn
+State: On
+
+Assignments:
+  Users: All users
+  Exclude: Emergency access accounts
+  
+  Cloud apps: All cloud apps
+  
+  Conditions:
+    Sign-in risk: High
+  
+Access Controls:
+  Grant: Block access</pre></div>
+                </div>
+
+                <div class="policy-card">
+                    <h4>Policy 5: Require Compliant Device for Sensitive Apps</h4>
+                    <p><strong>Why:</strong> Ensure only managed, secure devices access sensitive data.</p>
+                    <div class="code-block"><pre>Name: CA005-Require-Compliant-Device-Sensitive
+State: On
+
+Assignments:
+  Users: All users
+  Exclude: Guest users (they can't have compliant devices)
+  
+  Cloud apps: 
+    - Microsoft 365 (Exchange, SharePoint, Teams)
+    - Sensitive internal apps
+  
+Access Controls:
+  Grant: Require device to be marked as compliant
+         OR Require Hybrid Azure AD joined device</pre></div>
+                </div>
+
+                <div class="policy-card">
+                    <h4>Policy 6: Require MFA for Azure Management</h4>
+                    <p><strong>Why:</strong> Protect Azure resources from unauthorized access.</p>
+                    <div class="code-block"><pre>Name: CA006-Require-MFA-Azure-Management
+State: On
+
+Assignments:
+  Users: All users
+  Exclude: Emergency access accounts
+  
+  Cloud apps: Microsoft Azure Management
+  
+Access Controls:
+  Grant: Require multifactor authentication</pre></div>
+                </div>
+
+                <h2><i class="fas fa-exclamation-triangle"></i> Emergency Access Accounts</h2>
+                <div class="danger-box">
+                    <h4>Critical: Always Have Break-Glass Accounts!</h4>
+                    <p>Emergency access accounts prevent lockout if:</p>
+                    <ul>
+                        <li>MFA service is down</li>
+                        <li>Conditional Access misconfiguration</li>
+                        <li>Admin accounts compromised</li>
+                        <li>Federation service fails</li>
+                    </ul>
+                    <p><strong>Requirements:</strong></p>
+                    <ul>
+                        <li>Cloud-only accounts (not synced)</li>
+                        <li>Excluded from ALL Conditional Access policies</li>
+                        <li>Permanent Global Admin role</li>
+                        <li>Very strong, unique password (stored securely)</li>
+                        <li>Monitor sign-ins closely (alert on any use)</li>
+                        <li>At least 2 accounts for redundancy</li>
+                    </ul>
+                </div>
+
+                <h2><i class="fas fa-map-marker-alt"></i> Named Locations</h2>
+                <div class="step-section">
+                    <h3>Create Named Locations</h3>
+                    <p><strong>Path:</strong> Entra ID → Protection → Conditional Access → Named locations</p>
+                    
+                    <div class="code-block"><pre># PowerShell to create named location
+$params = @{
+    "@odata.type" = "#microsoft.graph.ipNamedLocation"
+    displayName = "Corporate Network"
+    isTrusted = $true
+    ipRanges = @(
+        @{
+            "@odata.type" = "#microsoft.graph.iPv4CidrRange"
+            cidrAddress = "203.0.113.0/24"
+        }
+        @{
+            "@odata.type" = "#microsoft.graph.iPv4CidrRange"
+            cidrAddress = "198.51.100.0/24"
+        }
+    )
+}
+New-MgIdentityConditionalAccessNamedLocation -BodyParameter $params</pre></div>
+
+                    <h3>Location Types</h3>
+                    <table class="feature-table">
+                        <tr><th>Type</th><th>Use Case</th></tr>
+                        <tr><td><strong>IP ranges location</strong></td><td>Corporate office IPs, VPN exit points</td></tr>
+                        <tr><td><strong>Countries/Regions</strong></td><td>Block access from high-risk countries</td></tr>
+                        <tr><td><strong>Trusted location</strong></td><td>Mark as trusted to skip MFA</td></tr>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Troubleshooting</h2>
+                <div class="step-section">
+                    <h3>What-If Tool</h3>
+                    <p><strong>Path:</strong> Entra ID → Protection → Conditional Access → What If</p>
+                    <p>Test what policies would apply for a specific user/app/condition without actually signing in.</p>
+
+                    <h3>Sign-in Logs</h3>
+                    <p><strong>Path:</strong> Entra ID → Monitoring → Sign-in logs</p>
+                    <p>Look for:</p>
+                    <ul>
+                        <li><strong>Conditional Access:</strong> Shows which policies applied and their result</li>
+                        <li><strong>Failure reason:</strong> Why access was blocked</li>
+                        <li><strong>Authentication Details:</strong> What MFA method was used</li>
+                    </ul>
+
+                    <h3>Common Issues</h3>
+                    <table class="feature-table">
+                        <tr><th>Issue</th><th>Cause</th><th>Solution</th></tr>
+                        <tr>
+                            <td>Users blocked unexpectedly</td>
+                            <td>Policy too broad</td>
+                            <td>Use What-If, check exclusions</td>
+                        </tr>
+                        <tr>
+                            <td>MFA not required</td>
+                            <td>User excluded or condition not met</td>
+                            <td>Check group membership, client app</td>
+                        </tr>
+                        <tr>
+                            <td>Compliant device fails</td>
+                            <td>Device not enrolled or not compliant in Intune</td>
+                            <td>Check Intune compliance status</td>
+                        </tr>
+                        <tr>
+                            <td>Legacy auth still working</td>
+                            <td>Block policy not applied to app</td>
+                            <td>Ensure policy targets the right apps</td>
+                        </tr>
+                    </table>
+
+                    <h3>PowerShell Queries</h3>
+                    <div class="code-block"><pre># Get all Conditional Access policies
+Get-MgIdentityConditionalAccessPolicy | Select-Object DisplayName, State
+
+# Get specific policy details
+Get-MgIdentityConditionalAccessPolicy -ConditionalAccessPolicyId "policy-id" | Format-List
+
+# Get sign-in logs with CA results
+Get-MgAuditLogSignIn -Top 100 | Select-Object UserPrincipalName, AppDisplayName, ConditionalAccessStatus</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Best Practices</h2>
+                <div class="success-box">
+                    <h4><i class="fas fa-lightbulb"></i> Conditional Access Best Practices</h4>
+                    <ul>
+                        <li><strong>Start in Report-Only:</strong> Test policies before enforcing</li>
+                        <li><strong>Always have emergency accounts:</strong> Excluded from all policies</li>
+                        <li><strong>Name policies clearly:</strong> CA001-Require-MFA-AllUsers</li>
+                        <li><strong>Document everything:</strong> Why each policy exists</li>
+                        <li><strong>Use groups for exclusions:</strong> Easier to manage than individual users</li>
+                        <li><strong>Review regularly:</strong> Policies can become stale</li>
+                        <li><strong>Monitor sign-in logs:</strong> Watch for blocked legitimate users</li>
+                        <li><strong>Layer policies:</strong> Multiple policies can apply - they stack</li>
+                        <li><strong>Block by default:</strong> Require conditions to grant access</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

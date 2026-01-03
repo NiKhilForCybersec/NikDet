@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiGate Logging & SIEM Integration | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .step-section h3 { color: var(--accent-color); margin-top: 0; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .warning-box { background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #f59e0b; margin: 1rem 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
+        .feature-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        .feature-table th, .feature-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .feature-table th { background: var(--card-bg); color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/ngfw/index.html">NGFW</a><span class="separator">/</span><a href="pages/ngfw/fortinet/index.html">FortiGate</a><span class="separator">/</span><span>Logging & SIEM</span></div>
+            <div class="content">
+                <h1><i class="fas fa-database"></i> FortiGate Logging & SIEM Integration</h1>
+                <p class="lead">Complete guide to configuring logging, FortiAnalyzer, syslog, and integrating with Microsoft Sentinel and Splunk.</p>
+
+                <h2><i class="fas fa-list"></i> Log Types Overview</h2>
+                <table class="feature-table">
+                    <thead>
+                        <tr><th>Log Type</th><th>Content</th><th>Key Fields</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Traffic</strong></td><td>Allowed/denied sessions</td><td>srcip, dstip, srcport, dstport, action, policyid</td></tr>
+                        <tr><td><strong>UTM</strong></td><td>Security profile matches</td><td>type (av, ips, web), action, threat, url</td></tr>
+                        <tr><td><strong>Event</strong></td><td>System events</td><td>subtype (system, user, router), level</td></tr>
+                        <tr><td><strong>Anomaly</strong></td><td>DoS/anomaly detections</td><td>attack, srcip, count</td></tr>
+                        <tr><td><strong>Forward Traffic</strong></td><td>Traffic logs (subset)</td><td>All traffic fields</td></tr>
+                        <tr><td><strong>Local Traffic</strong></td><td>Traffic to/from FortiGate</td><td>Management access logs</td></tr>
+                    </tbody>
+                </table>
+
+                <h2><i class="fas fa-cog"></i> Configure Logging Settings</h2>
+                <div class="step-section">
+                    <h3>Global Log Settings</h3>
+                    <div class="code-block"><pre>config log setting
+    set resolve-ip enable           # Resolve IPs to hostnames
+    set resolve-port enable         # Resolve ports to service names
+    set log-user-in-upper enable    # Consistent username format
+    set fwpolicy-implicit-log enable # Log implicit denies
+    set local-in-allow enable       # Log allowed local-in traffic
+    set local-in-deny-unicast enable
+    set local-in-deny-broadcast disable
+    set local-out enable            # Log FortiGate-originated traffic
+    set daemon-log enable
+    set neighbor-log enable
+    set brief-traffic-format disable # Full log format
+    set user-anonymize disable
+    set expolicy-implicit-log enable
+    set log-policy-comment enable   # Include policy comments in logs
+    set log-policy-name enable      # Include policy names
+end</pre></div>
+
+                    <h3>Enable Logging on Policies</h3>
+                    <div class="code-block"><pre>config firewall policy
+    edit 10
+        set logtraffic all          # Log all traffic (allowed and denied)
+        # Options: disable, utm, all
+        
+        set logtraffic-start enable # Log session start (not just end)
+        # Useful for long-lived sessions
+        
+        set capture-packet enable   # Capture packet on UTM events
+        # Warning: High storage impact
+    next
+end
+
+# Log implicit deny (traffic that matches no policy)
+config log setting
+    set fwpolicy-implicit-log enable
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-server"></i> Syslog Configuration</h2>
+                <div class="step-section">
+                    <h3>Configure Syslog Server</h3>
+                    <div class="code-block"><pre>config log syslogd setting
+    set status enable
+    set server "10.1.1.100"         # SIEM/Syslog server IP
+    set mode udp                     # udp, tcp, or reliable (TCP with TLS)
+    set port 514                     # Standard syslog port
+    set facility local7              # Syslog facility
+    set source-ip 10.1.1.1          # FortiGate source IP
+    set format default               # default, csv, or cef
+    set max-log-rate 0              # 0 = unlimited
+    set priority default
+    set certificate ""              # For TLS mode
+end
+
+# For multiple syslog servers (up to 4)
+config log syslogd2 setting
+    set status enable
+    set server "10.1.1.101"
+    set mode udp
+    set port 514
+end
+
+config log syslogd3 setting
+    set status enable
+    set server "10.1.1.102"
+end</pre></div>
+
+                    <h3>Configure Syslog Filters</h3>
+                    <div class="code-block"><pre>config log syslogd filter
+    set severity information        # Minimum severity
+    # Options: emergency, alert, critical, error, warning, notification, information, debug
+    
+    set forward-traffic enable
+    set local-traffic enable
+    set multicast-traffic enable
+    set sniffer-traffic enable
+    set anomaly enable
+    set voip enable
+    set dns enable
+    
+    # UTM log types
+    set filter "logid(0001000014,0419016384)"  # Specific log IDs
+    set filter-type include                     # include or exclude
+end</pre></div>
+
+                    <h3>CEF Format for SIEM</h3>
+                    <div class="code-block"><pre># Enable CEF format (Common Event Format)
+config log syslogd setting
+    set format cef
+end
+
+# CEF Example Output:
+# CEF:0|Fortinet|Fortigate|v7.4.3|00013|traffic:forward close|5|
+# src=10.1.1.50 dst=8.8.8.8 spt=52341 dpt=443 proto=6 
+# act=accept deviceDirection=0 ...</pre></div>
+
+                    <h3>Reliable Syslog (TCP with TLS)</h3>
+                    <div class="code-block"><pre>config log syslogd setting
+    set status enable
+    set server "siem.company.com"
+    set mode reliable                # TCP with TLS
+    set port 6514                    # Standard TLS syslog port
+    set certificate "SIEM-CA-Cert"   # CA certificate for verification
+    set enc-algorithm high           # AES256 encryption
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-chart-bar"></i> FortiAnalyzer Integration</h2>
+                <div class="step-section">
+                    <h3>Configure FortiAnalyzer Connection</h3>
+                    <div class="code-block"><pre>config log fortianalyzer setting
+    set status enable
+    set server "10.1.1.200"         # FortiAnalyzer IP
+    set serial "FAZ-VM0000000000"   # FAZ serial (optional, for verification)
+    set upload-option realtime      # realtime, 1-minute, 5-minute
+    set reliable enable             # Reliable logging
+    set enc-algorithm high          # Encryption
+    
+    # Source IP for logs
+    set source-ip 10.1.1.1
+    
+    # High availability
+    set ha-peer-ip "10.1.1.201"     # Secondary FortiAnalyzer
+    set ha-peer-serial "FAZ-VM0000000001"
+end
+
+# Verify connection
+diagnose log test
+get log fortianalyzer setting
+execute log fortianalyzer test-connectivity</pre></div>
+
+                    <h3>FortiAnalyzer Filter</h3>
+                    <div class="code-block"><pre>config log fortianalyzer filter
+    set severity information
+    set forward-traffic enable
+    set local-traffic enable
+    set anomaly enable
+    
+    # Include all UTM logs
+    set dlp-archive enable
+    set gtp enable
+    set free-style enable
+    set dns enable
+end</pre></div>
+                </div>
+
+                <h2><i class="fab fa-microsoft"></i> Microsoft Sentinel Integration</h2>
+                <div class="step-section">
+                    <h3>Option 1: FortiGate Data Connector (Recommended)</h3>
+                    <p>Microsoft Sentinel has a native FortiGate connector that uses CEF over syslog.</p>
+
+                    <div class="info-box">
+                        <h4>Prerequisites</h4>
+                        <ul>
+                            <li>Azure Log Analytics workspace</li>
+                            <li>Linux VM with Log Analytics agent (syslog forwarder)</li>
+                            <li>FortiGate configured to send CEF logs</li>
+                        </ul>
+                    </div>
+
+                    <h3>Step 1: Deploy Linux Syslog Forwarder</h3>
+                    <div class="code-block"><pre># On Linux VM (Ubuntu/RHEL)
+# Install Log Analytics agent
+wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh
+sudo sh onboard_agent.sh -w &lt;workspace-id&gt; -s &lt;shared-key&gt; -d opinsights.azure.com
+
+# Configure rsyslog to receive logs
+sudo nano /etc/rsyslog.d/security-config-omsagent.conf
+
+# Add:
+# if $rawmsg contains "CEF:" then @@127.0.0.1:25226
+# & stop
+# if $rawmsg contains "ASA-" then @@127.0.0.1:25226
+# & stop
+
+# Open firewall for syslog
+sudo ufw allow 514/udp
+sudo ufw allow 514/tcp
+
+# Restart rsyslog
+sudo systemctl restart rsyslog</pre></div>
+
+                    <h3>Step 2: Configure FortiGate for CEF to Sentinel</h3>
+                    <div class="code-block"><pre>config log syslogd setting
+    set status enable
+    set server "10.1.1.150"         # Linux forwarder IP
+    set mode udp
+    set port 514
+    set format cef                   # MUST be CEF for Sentinel
+    set facility local4
+end
+
+config log syslogd filter
+    set severity information
+    set forward-traffic enable
+    set local-traffic enable
+    set anomaly enable
+    set dns enable
+end</pre></div>
+
+                    <h3>Step 3: Enable Sentinel Connector</h3>
+                    <ol>
+                        <li>In Azure Portal → Microsoft Sentinel → Data connectors</li>
+                        <li>Search "Fortinet" → Select "Fortinet FortiGate"</li>
+                        <li>Click "Open connector page"</li>
+                        <li>Follow the configuration steps</li>
+                        <li>Verify data in: CommonSecurityLog table</li>
+                    </ol>
+
+                    <h3>Sentinel KQL Queries for FortiGate</h3>
+                    <div class="code-block"><pre>// All FortiGate logs
+CommonSecurityLog
+| where DeviceVendor == "Fortinet"
+| take 100
+
+// Blocked traffic
+CommonSecurityLog
+| where DeviceVendor == "Fortinet"
+| where DeviceAction == "deny"
+| summarize count() by SourceIP, DestinationIP, DestinationPort
+| top 10 by count_
+
+// IPS/IDS detections
+CommonSecurityLog
+| where DeviceVendor == "Fortinet"
+| where Activity contains "intrusion"
+| project TimeGenerated, SourceIP, DestinationIP, Activity, Message
+
+// Web filter blocks
+CommonSecurityLog
+| where DeviceVendor == "Fortinet"
+| where Activity contains "webfilter"
+| where DeviceAction == "blocked"
+| summarize count() by SourceIP, RequestURL
+
+// Failed logins
+CommonSecurityLog
+| where DeviceVendor == "Fortinet"
+| where Activity contains "login" and DeviceAction == "failure"
+| project TimeGenerated, SourceIP, SourceUserName, Message
+
+// Top talkers
+CommonSecurityLog
+| where DeviceVendor == "Fortinet"
+| where DeviceAction == "accept"
+| summarize TotalBytes = sum(SentBytes + ReceivedBytes) by SourceIP
+| top 10 by TotalBytes</pre></div>
+
+                    <h3>Option 2: Direct API Integration (FortiGate Cloud)</h3>
+                    <p>FortiGate Cloud can forward logs to Azure Event Hub, which Sentinel can ingest.</p>
+                </div>
+
+                <h2><i class="fas fa-chart-simple"></i> Splunk Integration</h2>
+                <div class="step-section">
+                    <h3>Option 1: Syslog to Splunk</h3>
+                    <div class="code-block"><pre># Configure FortiGate to send syslog to Splunk
+config log syslogd setting
+    set status enable
+    set server "splunk.company.com"
+    set mode udp
+    set port 514
+    set format default              # Or csv for easier parsing
+    set facility local0
+end
+
+# On Splunk:
+# 1. Settings → Data Inputs → UDP → New Local UDP
+# 2. Port: 514
+# 3. Source type: fgt_log (or create custom)
+# 4. Index: firewall (or your index)</pre></div>
+
+                    <h3>Option 2: Fortinet App for Splunk</h3>
+                    <p>Install the Fortinet FortiGate App from Splunkbase for pre-built dashboards.</p>
+
+                    <div class="code-block"><pre># Splunk searches for FortiGate
+# All FortiGate logs
+index=firewall sourcetype=fgt_log
+
+# Blocked traffic
+index=firewall sourcetype=fgt_log action=deny
+| stats count by srcip, dstip, dstport
+
+# IPS events
+index=firewall sourcetype=fgt_log type=utm subtype=ips
+| table _time, srcip, dstip, attack, severity, action
+
+# Top applications
+index=firewall sourcetype=fgt_log type=traffic
+| stats sum(sentbyte) as bytes by app
+| sort -bytes
+| head 20
+
+# Failed VPN logins
+index=firewall sourcetype=fgt_log type=event subtype=vpn action=tunnel-down
+| stats count by remip, user</pre></div>
+
+                    <h3>Recommended Splunk Index Settings</h3>
+                    <div class="code-block"><pre># In indexes.conf
+[firewall]
+homePath = $SPLUNK_DB/firewall/db
+coldPath = $SPLUNK_DB/firewall/colddb
+thawedPath = $SPLUNK_DB/firewall/thaweddb
+maxTotalDataSizeMB = 500000
+frozenTimePeriodInSecs = 7776000  # 90 days</pre></div>
+                </div>
+
+                <h2><i class="fas fa-database"></i> Local Disk Logging</h2>
+                <div class="step-section">
+                    <h3>Configure Local Logging</h3>
+                    <div class="code-block"><pre>config log disk setting
+    set status enable
+    set max-log-file-size 100       # MB before rotation
+    set roll-day sunday             # Weekly rotation
+    set roll-schedule daily         # Or weekly
+    set roll-time 00:00             # Rotation time
+    set diskfull overwrite          # What to do when disk full
+    # Options: overwrite, nolog
+    set log-quota 0                 # 0 = unlimited (use available space)
+    set maximum-log-age 365         # Days to keep logs
+    set upload enable               # Upload to FortiAnalyzer when connected
+    set upload-destination faz      # faz or fmg
+end
+
+config log disk filter
+    set severity information
+    set forward-traffic enable
+    set local-traffic enable
+    set anomaly enable
+end</pre></div>
+                </div>
+
+                <h2><i class="fas fa-bug"></i> Troubleshooting Logging</h2>
+                <div class="step-section">
+                    <div class="code-block"><pre># Test logging
+diagnose log test
+
+# Check syslog connectivity
+execute log filter device 3  # Syslog device
+execute log filter category traffic
+execute log display
+
+# Debug syslog transmission
+diagnose debug enable
+diagnose debug application syslogd -1
+# Look for "send" messages
+
+# Check FortiAnalyzer connectivity
+execute log fortianalyzer test-connectivity
+diagnose log test
+
+# Check log disk space
+diagnose sys logdisk usage
+
+# Real-time log viewing
+execute log filter category traffic
+execute log filter field srcip 10.1.1.50
+execute log display
+
+# Clear log filter
+execute log filter reset</pre></div>
+                </div>
+
+                <h2><i class="fas fa-check-double"></i> Logging Best Practices</h2>
+                <div class="info-box">
+                    <h4><i class="fas fa-lightbulb"></i> Best Practices</h4>
+                    <ul>
+                        <li><strong>Log everything:</strong> Storage is cheap, missing logs is expensive</li>
+                        <li><strong>Use reliable logging:</strong> TCP instead of UDP for critical deployments</li>
+                        <li><strong>Enable session start logs:</strong> Needed for long-lived sessions</li>
+                        <li><strong>Include policy names:</strong> Makes SIEM queries much easier</li>
+                        <li><strong>NTP is critical:</strong> Logs with wrong timestamps are useless</li>
+                        <li><strong>Multiple destinations:</strong> Local + FortiAnalyzer + SIEM</li>
+                        <li><strong>Monitor log rate:</strong> High rates indicate issues or attacks</li>
+                        <li><strong>Test regularly:</strong> Verify logs are reaching SIEM</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

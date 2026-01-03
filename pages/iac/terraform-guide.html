@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform Complete Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iac/index.html">IaC</a><span class="separator">/</span><span>Terraform Guide</span></div>
+            <div class="content">
+                <h1><i class="fas fa-mountain" style="color: #7c3aed;"></i> Terraform Complete Guide</h1>
+                <p class="lead">Infrastructure provisioning, state management, modules, security best practices, and enterprise patterns.</p>
+
+                <h2>What is Terraform?</h2>
+                <p>Terraform is a <strong>declarative</strong> infrastructure provisioning tool by HashiCorp. You describe your desired infrastructure state, and Terraform figures out how to achieve it.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border-left: 4px solid #ef4444;">
+                        <h4 style="margin-top: 0; color: #ef4444;">Imperative (How)</h4>
+                        <p style="font-size: 0.85rem; margin-bottom: 0;">"Create VM1, then attach disk, then configure network, then..."<br>Step-by-step instructions</p>
+                    </div>
+                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border-left: 4px solid #22c55e;">
+                        <h4 style="margin-top: 0; color: #22c55e;">Declarative (What)</h4>
+                        <p style="font-size: 0.85rem; margin-bottom: 0;">"I want a VM with these specs"<br>Terraform figures out the steps</p>
+                    </div>
+                </div>
+
+                <h2>Core Concepts</h2>
+                <table>
+                    <thead><tr><th>Concept</th><th>What It Is</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Provider</strong></td><td>Plugin that interfaces with cloud/service APIs</td><td>aws, azurerm, google, kubernetes</td></tr>
+                        <tr><td><strong>Resource</strong></td><td>Infrastructure component to create/manage</td><td>aws_instance, azurerm_virtual_machine</td></tr>
+                        <tr><td><strong>Data Source</strong></td><td>Read-only reference to existing infrastructure</td><td>aws_ami (lookup existing AMI)</td></tr>
+                        <tr><td><strong>Variable</strong></td><td>Input parameters for configuration</td><td>var.environment, var.instance_type</td></tr>
+                        <tr><td><strong>Output</strong></td><td>Values exported after apply</td><td>IP addresses, resource IDs</td></tr>
+                        <tr><td><strong>State</strong></td><td>Terraform's record of managed infrastructure</td><td>terraform.tfstate file</td></tr>
+                        <tr><td><strong>Module</strong></td><td>Reusable, encapsulated Terraform configuration</td><td>modules/vpc, modules/eks</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Terraform Workflow</h2>
+                <div class="step-container">
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">1</div></div><div class="step-content"><div class="step-title">terraform init</div><p>Initialize working directory, download providers and modules</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">2</div></div><div class="step-content"><div class="step-title">terraform plan</div><p>Preview changes Terraform will make (dry run)</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">3</div></div><div class="step-content"><div class="step-title">terraform apply</div><p>Execute the plan, create/modify/destroy resources</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">4</div></div><div class="step-content"><div class="step-title">terraform destroy</div><p>Tear down all managed infrastructure</p></div></div>
+                </div>
+
+                <h2>Basic Configuration Example</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># main.tf - AWS Infrastructure</span>
+
+<span style="color: #f59e0b;">terraform</span> {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+  
+  <span style="color: #6aa3f7;"># Remote state configuration (CRITICAL for teams)</span>
+  backend "s3" {
+    bucket         = "company-terraform-state"
+    key            = "prod/infrastructure/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-locks"  <span style="color: #6aa3f7;"># State locking</span>
+  }
+}
+
+<span style="color: #f59e0b;">provider</span> "aws" {
+  region = var.aws_region
+  
+  default_tags {
+    tags = {
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+      Project     = var.project_name
+    }
+  }
+}
+
+<span style="color: #6aa3f7;"># Variables</span>
+<span style="color: #f59e0b;">variable</span> "aws_region" {
+  description = "AWS region for resources"
+  type        = string
+  default     = "us-east-1"
+}
+
+<span style="color: #f59e0b;">variable</span> "environment" {
+  description = "Environment name (dev/staging/prod)"
+  type        = string
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be dev, staging, or prod."
+  }
+}
+
+<span style="color: #f59e0b;">variable</span> "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+}
+
+<span style="color: #6aa3f7;"># Data source - lookup latest Amazon Linux 2 AMI</span>
+<span style="color: #f59e0b;">data</span> "aws_ami" "amazon_linux_2" {
+  most_recent = true
+  owners      = ["amazon"]
+  
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+<span style="color: #6aa3f7;"># VPC</span>
+<span style="color: #f59e0b;">resource</span> "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  
+  tags = {
+    Name = "${var.project_name}-${var.environment}-vpc"
+  }
+}
+
+<span style="color: #6aa3f7;"># Subnet</span>
+<span style="color: #f59e0b;">resource</span> "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "${var.aws_region}a"
+  
+  tags = {
+    Name = "${var.project_name}-${var.environment}-private-subnet"
+  }
+}
+
+<span style="color: #6aa3f7;"># Security Group</span>
+<span style="color: #f59e0b;">resource</span> "aws_security_group" "app" {
+  name        = "${var.project_name}-${var.environment}-app-sg"
+  description = "Security group for application servers"
+  vpc_id      = aws_vpc.main.id
+  
+  <span style="color: #6aa3f7;"># Ingress rules</span>
+  ingress {
+    description = "HTTPS from VPC"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.main.cidr_block]
+  }
+  
+  <span style="color: #6aa3f7;"># Egress rules</span>
+  egress {
+    description = "Allow all outbound"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+<span style="color: #6aa3f7;"># EC2 Instance</span>
+<span style="color: #f59e0b;">resource</span> "aws_instance" "app_server" {
+  ami           = data.aws_ami.amazon_linux_2.id
+  instance_type = var.environment == "prod" ? "t3.large" : "t3.micro"
+  subnet_id     = aws_subnet.private.id
+  
+  vpc_security_group_ids = [aws_security_group.app.id]
+  
+  root_block_device {
+    encrypted   = true  <span style="color: #6aa3f7;"># SECURITY: Always encrypt</span>
+    volume_size = 50
+    volume_type = "gp3"
+  }
+  
+  metadata_options {
+    http_tokens = "required"  <span style="color: #6aa3f7;"># SECURITY: Require IMDSv2</span>
+  }
+  
+  tags = {
+    Name = "${var.project_name}-${var.environment}-app-server"
+  }
+}
+
+<span style="color: #6aa3f7;"># Outputs</span>
+<span style="color: #f59e0b;">output</span> "vpc_id" {
+  description = "VPC ID"
+  value       = aws_vpc.main.id
+}
+
+<span style="color: #f59e0b;">output</span> "instance_private_ip" {
+  description = "Private IP of application server"
+  value       = aws_instance.app_server.private_ip
+}</pre>
+                </div>
+
+                <h2>State Management (CRITICAL)</h2>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> State Security is Critical</div>
+                    <p style="margin: 0;">The state file contains <strong>sensitive data</strong> including resource IDs, configuration, and potentially secrets. Never commit state to git. Always use remote state with encryption.</p>
+                </div>
+
+                <h3>Local vs Remote State</h3>
+                <table>
+                    <thead><tr><th>Aspect</th><th>Local State</th><th>Remote State</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Location</strong></td><td>terraform.tfstate on disk</td><td>S3, Azure Blob, GCS, Terraform Cloud</td></tr>
+                        <tr><td><strong>Team Collaboration</strong></td><td>❌ Single user only</td><td>✅ Multiple users can work together</td></tr>
+                        <tr><td><strong>Locking</strong></td><td>❌ No locking</td><td>✅ DynamoDB, Blob lease prevents conflicts</td></tr>
+                        <tr><td><strong>Security</strong></td><td>❌ On local disk</td><td>✅ Encrypted at rest, access controls</td></tr>
+                        <tr><td><strong>Backup</strong></td><td>❌ Manual</td><td>✅ Automatic versioning</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Remote State Backends</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># AWS S3 Backend (Recommended for AWS)</span>
+<span style="color: #f59e0b;">terraform</span> {
+  backend "s3" {
+    bucket         = "mycompany-terraform-state"
+    key            = "environments/prod/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-state-locks"
+    
+    <span style="color: #6aa3f7;"># Role assumption for cross-account state</span>
+    role_arn = "arn:aws:iam::123456789012:role/TerraformStateAccess"
+  }
+}
+
+<span style="color: #6aa3f7;"># Azure Blob Backend</span>
+<span style="color: #f59e0b;">terraform</span> {
+  backend "azurerm" {
+    resource_group_name  = "terraform-state-rg"
+    storage_account_name = "companyterraformstate"
+    container_name       = "tfstate"
+    key                  = "prod.terraform.tfstate"
+    use_oidc             = true  <span style="color: #6aa3f7;"># Workload identity</span>
+  }
+}
+
+<span style="color: #6aa3f7;"># Terraform Cloud Backend</span>
+<span style="color: #f59e0b;">terraform</span> {
+  cloud {
+    organization = "my-company"
+    workspaces {
+      name = "prod-infrastructure"
+    }
+  }
+}</pre>
+                </div>
+
+                <h2>Module Design Patterns</h2>
+                <p>Modules are reusable, encapsulated Terraform configurations. Well-designed modules are key to maintainable IaC.</p>
+
+                <h3>Module Structure</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;">modules/
+├── vpc/
+│   ├── main.tf          <span style="color: #6aa3f7;"># Primary resources</span>
+│   ├── variables.tf     <span style="color: #6aa3f7;"># Input variables</span>
+│   ├── outputs.tf       <span style="color: #6aa3f7;"># Output values</span>
+│   ├── versions.tf      <span style="color: #6aa3f7;"># Provider/TF version constraints</span>
+│   └── README.md        <span style="color: #6aa3f7;"># Module documentation</span>
+├── eks/
+├── rds/
+└── security-group/
+
+environments/
+├── dev/
+│   ├── main.tf          <span style="color: #6aa3f7;"># Calls modules with dev config</span>
+│   ├── terraform.tfvars <span style="color: #6aa3f7;"># Dev-specific values</span>
+│   └── backend.tf       <span style="color: #6aa3f7;"># Dev state backend</span>
+├── staging/
+└── prod/</pre>
+                </div>
+
+                <h3>Calling Modules</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># environments/prod/main.tf</span>
+
+<span style="color: #f59e0b;">module</span> "vpc" {
+  source = "../../modules/vpc"
+  
+  environment      = "prod"
+  vpc_cidr         = "10.0.0.0/16"
+  azs              = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  private_subnets  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets   = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  enable_nat       = true
+  enable_flow_logs = true  <span style="color: #6aa3f7;"># Security: Enable VPC flow logs</span>
+}
+
+<span style="color: #f59e0b;">module</span> "eks" {
+  source = "../../modules/eks"
+  
+  cluster_name    = "prod-cluster"
+  vpc_id          = module.vpc.vpc_id
+  subnet_ids      = module.vpc.private_subnet_ids
+  
+  <span style="color: #6aa3f7;"># Security settings</span>
+  enable_secrets_encryption = true
+  kms_key_arn              = module.kms.key_arn
+  enable_audit_logs        = true
+}
+
+<span style="color: #6aa3f7;"># Using public registry modules</span>
+<span style="color: #f59e0b;">module</span> "s3_bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "3.15.0"  <span style="color: #6aa3f7;"># Always pin versions</span>
+  
+  bucket = "my-app-data-bucket"
+  
+  <span style="color: #6aa3f7;"># Security hardening</span>
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+  
+  server_side_encryption_configuration = {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm = "aws:kms"
+      }
+    }
+  }
+}</pre>
+                </div>
+
+                <h2>Security Best Practices</h2>
+
+                <h3>1. Never Hardcode Secrets</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #ef4444;"># ❌ WRONG - Never do this</span>
+resource "aws_db_instance" "bad" {
+  password = "SuperSecret123!"  <span style="color: #ef4444;"># Exposed in state and code!</span>
+}
+
+<span style="color: #22c55e;"># ✅ CORRECT - Use secrets manager</span>
+data "aws_secretsmanager_secret_version" "db_password" {
+  secret_id = "prod/database/password"
+}
+
+resource "aws_db_instance" "good" {
+  password = data.aws_secretsmanager_secret_version.db_password.secret_string
+}
+
+<span style="color: #22c55e;"># ✅ CORRECT - Use sensitive variables</span>
+variable "db_password" {
+  type      = string
+  sensitive = true  <span style="color: #6aa3f7;"># Masks in CLI output</span>
+}
+
+<span style="color: #22c55e;"># ✅ CORRECT - Generate random passwords</span>
+resource "random_password" "db_password" {
+  length  = 32
+  special = true
+}
+
+resource "aws_secretsmanager_secret_version" "db_password" {
+  secret_id     = aws_secretsmanager_secret.db.id
+  secret_string = random_password.db_password.result
+}</pre>
+                </div>
+
+                <h3>2. Secure Resource Configuration</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># S3 Bucket - Security Hardened</span>
+resource "aws_s3_bucket" "secure" {
+  bucket = "my-secure-bucket"
+}
+
+resource "aws_s3_bucket_public_access_block" "secure" {
+  bucket = aws_s3_bucket.secure.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "secure" {
+  bucket = aws_s3_bucket.secure.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.s3.arn
+      sse_algorithm     = "aws:kms"
+    }
+  }
+}
+
+resource "aws_s3_bucket_versioning" "secure" {
+  bucket = aws_s3_bucket.secure.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_logging" "secure" {
+  bucket = aws_s3_bucket.secure.id
+
+  target_bucket = aws_s3_bucket.logs.id
+  target_prefix = "s3-access-logs/"
+}
+
+<span style="color: #6aa3f7;"># EC2 Instance - Security Hardened</span>
+resource "aws_instance" "secure" {
+  ami           = data.aws_ami.amazon_linux_2.id
+  instance_type = "t3.medium"
+  
+  <span style="color: #6aa3f7;"># Require IMDSv2 (prevent SSRF attacks)</span>
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
+  
+  <span style="color: #6aa3f7;"># Encrypt root volume</span>
+  root_block_device {
+    encrypted   = true
+    kms_key_id  = aws_kms_key.ebs.arn
+    volume_type = "gp3"
+  }
+  
+  <span style="color: #6aa3f7;"># Use IAM instance profile instead of keys</span>
+  iam_instance_profile = aws_iam_instance_profile.app.name
+  
+  <span style="color: #6aa3f7;"># Disable public IP</span>
+  associate_public_ip_address = false
+}</pre>
+                </div>
+
+                <h3>3. Provider Authentication</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #ef4444;"># ❌ WRONG - Never hardcode credentials</span>
+provider "aws" {
+  access_key = "AKIAIOSFODNN7EXAMPLE"
+  secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+}
+
+<span style="color: #22c55e;"># ✅ CORRECT - Use environment variables</span>
+<span style="color: #6aa3f7;"># AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY set in env</span>
+provider "aws" {
+  region = "us-east-1"
+}
+
+<span style="color: #22c55e;"># ✅ BEST - Use IAM roles / OIDC (no static credentials)</span>
+<span style="color: #6aa3f7;"># For CI/CD: GitHub Actions OIDC</span>
+provider "aws" {
+  region = "us-east-1"
+  
+  assume_role {
+    role_arn = "arn:aws:iam::123456789012:role/TerraformDeployRole"
+  }
+}
+
+<span style="color: #22c55e;"># ✅ BEST - Azure with OIDC</span>
+provider "azurerm" {
+  features {}
+  
+  use_oidc        = true
+  subscription_id = var.subscription_id
+  tenant_id       = var.tenant_id
+  client_id       = var.client_id
+}</pre>
+                </div>
+
+                <h2>CI/CD Integration</h2>
+                <h3>GitHub Actions Pipeline</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># .github/workflows/terraform.yml</span>
+name: 'Terraform'
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write   <span style="color: #6aa3f7;"># OIDC token</span>
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::123456789012:role/GitHubActionsRole
+        aws-region: us-east-1
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+    
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive
+    
+    - name: Terraform Init
+      run: terraform init
+      working-directory: environments/prod
+    
+    - name: Terraform Validate
+      run: terraform validate
+      working-directory: environments/prod
+    
+    <span style="color: #6aa3f7;"># Security scanning</span>
+    - name: Run tfsec
+      uses: aquasecurity/tfsec-action@v1.0.0
+      with:
+        soft_fail: false
+    
+    - name: Run Checkov
+      uses: bridgecrewio/checkov-action@v12
+      with:
+        directory: environments/prod
+        framework: terraform
+    
+    - name: Terraform Plan
+      id: plan
+      run: terraform plan -no-color -out=tfplan
+      working-directory: environments/prod
+      continue-on-error: true
+    
+    <span style="color: #6aa3f7;"># Post plan as PR comment</span>
+    - name: Post Plan to PR
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const output = `#### Terraform Plan 📖
+          \`\`\`
+          ${{ steps.plan.outputs.stdout }}
+          \`\`\`
+          `;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+    
+    <span style="color: #6aa3f7;"># Apply only on main branch merge</span>
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve tfplan
+      working-directory: environments/prod</pre>
+                </div>
+
+                <h2>Common Patterns</h2>
+
+                <h3>Conditional Resource Creation</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Create resource only in prod</span>
+resource "aws_cloudwatch_alarm" "cpu" {
+  count = var.environment == "prod" ? 1 : 0
+  
+  alarm_name = "high-cpu-${var.environment}"
+  <span style="color: #6aa3f7;"># ... other config</span>
+}
+
+<span style="color: #6aa3f7;"># For_each for multiple similar resources</span>
+variable "environments" {
+  default = {
+    dev     = { instance_type = "t3.micro",  count = 1 }
+    staging = { instance_type = "t3.small",  count = 2 }
+    prod    = { instance_type = "t3.large",  count = 3 }
+  }
+}
+
+resource "aws_instance" "app" {
+  for_each = var.environments
+  
+  instance_type = each.value.instance_type
+  tags = {
+    Name = "app-${each.key}"
+  }
+}</pre>
+                </div>
+
+                <h3>Terraform Import (Existing Resources)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Import existing resource into Terraform state</span>
+terraform import aws_instance.existing i-1234567890abcdef0
+
+<span style="color: #6aa3f7;"># Or use import block (Terraform 1.5+)</span>
+import {
+  to = aws_s3_bucket.existing
+  id = "my-existing-bucket"
+}
+
+resource "aws_s3_bucket" "existing" {
+  bucket = "my-existing-bucket"
+}</pre>
+                </div>
+
+                <h2>Troubleshooting</h2>
+                <table>
+                    <thead><tr><th>Issue</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>State lock error</td><td>Previous run crashed / concurrent runs</td><td><code>terraform force-unlock LOCK_ID</code></td></tr>
+                        <tr><td>Provider not found</td><td>Init not run / wrong version</td><td><code>terraform init -upgrade</code></td></tr>
+                        <tr><td>State out of sync</td><td>Manual changes outside Terraform</td><td><code>terraform refresh</code> or import</td></tr>
+                        <tr><td>Dependency cycle</td><td>Circular references between resources</td><td>Use <code>depends_on</code> or restructure</td></tr>
+                        <tr><td>Resource already exists</td><td>Resource created outside TF</td><td><code>terraform import</code></td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

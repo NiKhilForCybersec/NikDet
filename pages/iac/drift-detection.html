@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drift Detection | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iac/index.html">IaC</a><span class="separator">/</span><span>Drift Detection</span></div>
+            <div class="content">
+                <h1><i class="fas fa-random" style="color: var(--accent-warning);"></i> Configuration Drift Detection</h1>
+                <p class="lead">Detect when actual infrastructure state diverges from desired state defined in code.</p>
+
+                <h2>What is Drift?</h2>
+                <div class="info-box">
+                    <p style="margin: 0;"><strong>Configuration drift</strong> occurs when the actual state of infrastructure differs from the desired state defined in IaC. This happens due to: manual changes via console/CLI, emergency fixes not committed to code, or automated processes modifying resources.</p>
+                </div>
+
+                <h2>Why Drift is a Security Problem</h2>
+                <table>
+                    <thead><tr><th>Drift Type</th><th>Security Impact</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Security group changes</strong></td><td>Unauthorized access paths</td><td>Port 22 opened to 0.0.0.0/0 for "quick troubleshooting"</td></tr>
+                        <tr><td><strong>IAM policy changes</strong></td><td>Privilege escalation</td><td>Admin added * permissions for testing</td></tr>
+                        <tr><td><strong>Encryption disabled</strong></td><td>Data exposure</td><td>S3 bucket encryption turned off</td></tr>
+                        <tr><td><strong>Logging disabled</strong></td><td>Loss of visibility</td><td>CloudTrail logging disabled</td></tr>
+                        <tr><td><strong>Public access enabled</strong></td><td>Data breach</td><td>S3 bucket made public</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Terraform Drift Detection</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Manual drift check</span>
+terraform plan -detailed-exitcode
+<span style="color: #6aa3f7;"># Exit codes: 0=no changes, 1=error, 2=changes detected</span>
+
+<span style="color: #6aa3f7;"># Refresh state and detect drift</span>
+terraform refresh
+terraform plan
+
+<span style="color: #6aa3f7;"># Scheduled drift detection (CI/CD)</span>
+<span style="color: #6aa3f7;"># Run terraform plan on schedule, alert if exit code = 2</span></pre>
+                </div>
+
+                <h3>GitHub Actions Scheduled Drift Check</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># .github/workflows/drift-detection.yml</span>
+name: Drift Detection
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  <span style="color: #6aa3f7;"># Every 6 hours</span>
+  workflow_dispatch:
+
+jobs:
+  detect-drift:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: Terraform Init
+        run: terraform init
+        working-directory: environments/${{ matrix.environment }}
+      
+      - name: Terraform Plan (Drift Check)
+        id: plan
+        run: |
+          terraform plan -detailed-exitcode -out=tfplan 2>&1 | tee plan.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        working-directory: environments/${{ matrix.environment }}
+        continue-on-error: true
+      
+      - name: Alert on Drift
+        if: steps.plan.outputs.exitcode == '2'
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "⚠️ Drift detected in ${{ matrix.environment }}!",
+              "attachments": [
+                {
+                  "color": "warning",
+                  "text": "Terraform detected configuration drift. Review and remediate."
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}</pre>
+                </div>
+
+                <h2>Cloud-Native Drift Detection</h2>
+                <h3>AWS Config Rules</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Terraform: AWS Config rule for S3 public access</span>
+resource "aws_config_config_rule" "s3_public_access" {
+  name = "s3-bucket-public-read-prohibited"
+  
+  source {
+    owner             = "AWS"
+    source_identifier = "S3_BUCKET_PUBLIC_READ_PROHIBITED"
+  }
+}
+
+resource "aws_config_config_rule" "security_group_open" {
+  name = "restricted-ssh"
+  
+  source {
+    owner             = "AWS"
+    source_identifier = "INCOMING_SSH_DISABLED"
+  }
+}
+
+<span style="color: #6aa3f7;"># Auto-remediation with SSM</span>
+resource "aws_config_remediation_configuration" "s3_remediation" {
+  config_rule_name = aws_config_config_rule.s3_public_access.name
+  target_type      = "SSM_DOCUMENT"
+  target_id        = "AWSConfigRemediation-ConfigureS3BucketPublicAccessBlock"
+  automatic        = true
+  
+  parameter {
+    name         = "BucketName"
+    resource_value = "RESOURCE_ID"
+  }
+}</pre>
+                </div>
+
+                <h3>Azure Policy</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Azure Policy for detecting drift</span>
+resource "azurerm_policy_assignment" "require_encryption" {
+  name                 = "require-storage-encryption"
+  scope                = data.azurerm_subscription.current.id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9"
+  
+  <span style="color: #6aa3f7;"># Effect: Audit (detect) or Deny (prevent)</span>
+  parameters = jsonencode({
+    effect = { value = "Audit" }
+  })
+}</pre>
+                </div>
+
+                <h2>Remediation Strategies</h2>
+                <table>
+                    <thead><tr><th>Strategy</th><th>When to Use</th><th>How</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Auto-remediate</strong></td><td>Clear security violations</td><td>AWS Config auto-remediation, ArgoCD self-heal</td></tr>
+                        <tr><td><strong>Alert and review</strong></td><td>Most drift scenarios</td><td>Notify team, investigate, update IaC or revert</td></tr>
+                        <tr><td><strong>Import to IaC</strong></td><td>Legitimate manual change</td><td>terraform import, update code to match</td></tr>
+                        <tr><td><strong>Revert to IaC</strong></td><td>Unauthorized change</td><td>terraform apply to restore desired state</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Prevention: Reducing Drift</h2>
+                <ul>
+                    <li><strong>Restrict console access:</strong> Limit who can make manual changes</li>
+                    <li><strong>Read-only roles:</strong> Most users should have read-only cloud console access</li>
+                    <li><strong>Service Control Policies:</strong> Prevent specific actions outside IaC</li>
+                    <li><strong>GitOps with self-heal:</strong> ArgoCD automatically reverts manual changes</li>
+                    <li><strong>Break-glass procedures:</strong> Document process for emergency manual changes</li>
+                    <li><strong>Mandatory PR for all changes:</strong> Even emergency fixes go through code review</li>
+                </ul>
+
+                <h2>Monitoring KQL (Azure)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;">// Detect manual Azure portal/CLI changes</span>
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where OperationNameValue has "write" or OperationNameValue has "delete"
+| where Caller !has "terraform" and Caller !has "pipeline" and Caller !has "github"
+| project TimeGenerated, Caller, OperationNameValue, ResourceGroup, Resource
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// Security group changes</span>
+AzureActivity
+| where TimeGenerated > ago(7d)
+| where OperationNameValue has "networkSecurityGroups"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, OperationNameValue, Properties</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

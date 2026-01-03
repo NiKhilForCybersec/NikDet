@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iac/index.html">IaC</a><span class="separator">/</span><span>Ansible Guide</span></div>
+            <div class="content">
+                <h1><i class="fas fa-play-circle" style="color: #ee0000;"></i> Ansible Complete Guide</h1>
+                <p class="lead">Configuration management, application deployment, and orchestration with agentless automation.</p>
+
+                <h2>What is Ansible?</h2>
+                <p>Ansible is an <strong>agentless</strong> configuration management tool. It connects to targets via SSH (Linux) or WinRM (Windows) and executes tasks to achieve desired state.</p>
+
+                <table>
+                    <thead><tr><th>Aspect</th><th>Terraform</th><th>Ansible</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Purpose</strong></td><td>Provision infrastructure</td><td>Configure infrastructure</td></tr>
+                        <tr><td><strong>Model</strong></td><td>Declarative</td><td>Procedural + Declarative</td></tr>
+                        <tr><td><strong>Agent</strong></td><td>None (API-based)</td><td>None (SSH/WinRM)</td></tr>
+                        <tr><td><strong>State</strong></td><td>Maintains state file</td><td>Stateless (checks each run)</td></tr>
+                        <tr><td><strong>Use case</strong></td><td>Create VMs, networks, cloud resources</td><td>Install packages, configure OS, deploy apps</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Core Concepts</h2>
+                <table>
+                    <thead><tr><th>Concept</th><th>Description</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Inventory</strong></td><td>List of managed hosts (static file or dynamic from cloud)</td></tr>
+                        <tr><td><strong>Playbook</strong></td><td>YAML file defining tasks to execute</td></tr>
+                        <tr><td><strong>Play</strong></td><td>Mapping of hosts to tasks</td></tr>
+                        <tr><td><strong>Task</strong></td><td>Single action (install package, copy file, etc.)</td></tr>
+                        <tr><td><strong>Module</strong></td><td>Reusable unit of code (apt, yum, copy, template)</td></tr>
+                        <tr><td><strong>Role</strong></td><td>Reusable collection of tasks, vars, files, templates</td></tr>
+                        <tr><td><strong>Handler</strong></td><td>Task triggered by notification (e.g., restart service)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Inventory</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># inventory/hosts.yml</span>
+all:
+  children:
+    webservers:
+      hosts:
+        web1.example.com:
+        web2.example.com:
+      vars:
+        http_port: 80
+        
+    databases:
+      hosts:
+        db1.example.com:
+          ansible_host: 10.0.1.10
+        db2.example.com:
+          ansible_host: 10.0.1.11
+      vars:
+        db_port: 5432
+        
+    production:
+      children:
+        webservers:
+        databases:
+      vars:
+        env: production
+        
+  vars:
+    ansible_user: deploy
+    ansible_ssh_private_key_file: ~/.ssh/deploy_key</pre>
+                </div>
+
+                <h2>Playbook Example</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># playbooks/webserver.yml</span>
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes  <span style="color: #6aa3f7;"># Run as root</span>
+  
+  vars:
+    nginx_version: "1.24.0"
+    app_root: /var/www/myapp
+    
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+      notify: Restart nginx
+      
+    - name: Create app directory
+      file:
+        path: "{{ app_root }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        
+    - name: Deploy nginx config
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/sites-available/myapp.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart nginx
+      
+    - name: Enable site
+      file:
+        src: /etc/nginx/sites-available/myapp.conf
+        dest: /etc/nginx/sites-enabled/myapp.conf
+        state: link
+      notify: Restart nginx
+      
+    - name: Ensure nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+        
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted</pre>
+                </div>
+
+                <h2>Security Hardening Playbook</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># playbooks/security-hardening.yml</span>
+---
+- name: Security hardening
+  hosts: all
+  become: yes
+  
+  tasks:
+    <span style="color: #6aa3f7;"># SSH hardening</span>
+    - name: Disable root SSH login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+      notify: Restart sshd
+      
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+      notify: Restart sshd
+      
+    <span style="color: #6aa3f7;"># Firewall</span>
+    - name: Install UFW
+      apt:
+        name: ufw
+        state: present
+        
+    - name: Allow SSH
+      ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+        
+    - name: Allow HTTPS
+      ufw:
+        rule: allow
+        port: '443'
+        proto: tcp
+        
+    - name: Enable UFW
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
+        
+    <span style="color: #6aa3f7;"># Automatic updates</span>
+    - name: Install unattended-upgrades
+      apt:
+        name: unattended-upgrades
+        state: present
+        
+    - name: Enable automatic security updates
+      copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+          
+    <span style="color: #6aa3f7;"># Audit logging</span>
+    - name: Install auditd
+      apt:
+        name: auditd
+        state: present
+        
+    - name: Enable auditd
+      service:
+        name: auditd
+        state: started
+        enabled: yes
+        
+  handlers:
+    - name: Restart sshd
+      service:
+        name: sshd
+        state: restarted</pre>
+                </div>
+
+                <h2>Ansible Vault (Secrets)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Create encrypted vars file</span>
+ansible-vault create group_vars/production/vault.yml
+
+<span style="color: #6aa3f7;"># Edit encrypted file</span>
+ansible-vault edit group_vars/production/vault.yml
+
+<span style="color: #6aa3f7;"># Encrypt existing file</span>
+ansible-vault encrypt secrets.yml
+
+<span style="color: #6aa3f7;"># Decrypt file</span>
+ansible-vault decrypt secrets.yml
+
+<span style="color: #6aa3f7;"># Run playbook with vault</span>
+ansible-playbook playbook.yml --ask-vault-pass
+<span style="color: #6aa3f7;"># Or with password file</span>
+ansible-playbook playbook.yml --vault-password-file ~/.vault_pass
+
+<span style="color: #6aa3f7;"># vault.yml contents</span>
+---
+vault_db_password: supersecret123
+vault_api_key: abcd1234</pre>
+                </div>
+
+                <h2>Role Structure</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;">roles/
+└── nginx/
+    ├── tasks/
+    │   └── main.yml       <span style="color: #6aa3f7;"># Tasks to execute</span>
+    ├── handlers/
+    │   └── main.yml       <span style="color: #6aa3f7;"># Handlers</span>
+    ├── templates/
+    │   └── nginx.conf.j2  <span style="color: #6aa3f7;"># Jinja2 templates</span>
+    ├── files/
+    │   └── ssl.crt        <span style="color: #6aa3f7;"># Static files</span>
+    ├── vars/
+    │   └── main.yml       <span style="color: #6aa3f7;"># Role variables</span>
+    ├── defaults/
+    │   └── main.yml       <span style="color: #6aa3f7;"># Default variables</span>
+    ├── meta/
+    │   └── main.yml       <span style="color: #6aa3f7;"># Role dependencies</span>
+    └── README.md
+
+<span style="color: #6aa3f7;"># Use role in playbook</span>
+- hosts: webservers
+  roles:
+    - nginx
+    - { role: app, tags: ['app'] }
+    - role: monitoring
+      vars:
+        monitor_port: 9090</pre>
+                </div>
+
+                <h2>Common Commands</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Run playbook</span>
+ansible-playbook -i inventory/hosts.yml playbooks/site.yml
+
+<span style="color: #6aa3f7;"># Check mode (dry run)</span>
+ansible-playbook playbook.yml --check
+
+<span style="color: #6aa3f7;"># Limit to specific hosts</span>
+ansible-playbook playbook.yml --limit webservers
+
+<span style="color: #6aa3f7;"># Run specific tags</span>
+ansible-playbook playbook.yml --tags "nginx,firewall"
+
+<span style="color: #6aa3f7;"># Ad-hoc commands</span>
+ansible all -m ping
+ansible webservers -m shell -a "uptime"
+ansible databases -m apt -a "name=postgresql state=present" --become
+
+<span style="color: #6aa3f7;"># List hosts in inventory</span>
+ansible-inventory --list -i inventory/</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ransomware Defense Model | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/mental-models/index.html">Mental Models</a><span class="separator">/</span><span>Ransomware Defense</span></div>
+            <div class="content">
+                <h1><i class="fas fa-virus-slash" style="color: var(--accent-danger);"></i> Ransomware Defense Model</h1>
+                <p class="lead">Complete kill-chain detection strategy with 25+ detection rules, controls by plane, and metrics.</p>
+
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Why This Matters</div>
+                    <p style="margin: 0;">Ransomware is not detected by a single rule. It's a <strong>multi-stage attack</strong> with many opportunities for detection. A mature SOC detects ransomware at multiple points in the kill chain — if you only detect the final encryption, you've already lost.</p>
+                </div>
+
+                <h2>The Ransomware Kill Chain (MITRE ATT&CK)</h2>
+                <table>
+                    <thead><tr><th>Stage</th><th>MITRE Tactic</th><th>Common Techniques</th><th>Detection Window</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>1. Initial Access</strong></td><td>TA0001</td><td>T1566 Phishing, T1190 Exploit, T1133 VPN</td><td>🟢 Day 0 - BEST</td></tr>
+                        <tr><td><strong>2. Execution</strong></td><td>TA0002</td><td>T1059 Scripts, T1204 User Execution</td><td>🟢 Day 0-1 - GOOD</td></tr>
+                        <tr><td><strong>3. Persistence</strong></td><td>TA0003</td><td>T1547 Autostart, T1053 Scheduled Task</td><td>🟡 Day 1-3</td></tr>
+                        <tr><td><strong>4. Privilege Escalation</strong></td><td>TA0004</td><td>T1068 Exploit, T1078 Valid Accounts</td><td>🟡 Day 1-5</td></tr>
+                        <tr><td><strong>5. Defense Evasion</strong></td><td>TA0005</td><td>T1562 Impair Defenses, T1070 Indicator Removal</td><td>🟡 Day 1-7 - CRITICAL</td></tr>
+                        <tr><td><strong>6. Credential Access</strong></td><td>TA0006</td><td>T1003 LSASS, T1558 Kerberoasting</td><td>🟠 Day 2-7 - HIGH</td></tr>
+                        <tr><td><strong>7. Discovery</strong></td><td>TA0007</td><td>T1083 File Discovery, T1018 Remote Systems</td><td>🟠 Day 3-10</td></tr>
+                        <tr><td><strong>8. Lateral Movement</strong></td><td>TA0008</td><td>T1021 RDP/SMB, T1570 Tool Transfer</td><td>🔴 Day 5-14 - SPREADING</td></tr>
+                        <tr><td><strong>9. Collection</strong></td><td>TA0009</td><td>T1560 Archive Data, T1074 Data Staged</td><td>🔴 Day 7-14</td></tr>
+                        <tr><td><strong>10. Exfiltration</strong></td><td>TA0010</td><td>T1041 Exfil Over C2, T1567 Cloud Storage</td><td>🔴 Day 10-21</td></tr>
+                        <tr><td><strong>11. Impact</strong></td><td>TA0040</td><td>T1486 Encryption, T1490 Inhibit Recovery</td><td>🟣 Day 14-30 - TOO LATE</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-clock"></i> The Detection Window</div>
+                    <p style="margin: 0;">Ransomware operators typically spend <strong>5-21 days</strong> in an environment before encrypting. This is your detection window. Every stage is a detection opportunity.<br><br>
+                    <strong>Goal:</strong> Detect at Stage 1-4 (before credential theft) = minimal damage. Detect at Stage 5-8 = containable. Detect at Stage 9-11 = significant damage.</p>
+                </div>
+
+                <h2>The 25+ Detection Rules You Need</h2>
+
+                <h3>🟢 Stage 1-2: Initial Access & Execution (5 rules)</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Detection Rule</th><th>MITRE</th><th>Tool</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>Phishing email with malicious attachment</td><td>T1566.001</td><td>Defender for O365</td></tr>
+                        <tr><td>2</td><td>Phishing email with malicious link</td><td>T1566.002</td><td>Defender for O365</td></tr>
+                        <tr><td>3</td><td>Macro execution from Office document</td><td>T1204.002</td><td>MDE</td></tr>
+                        <tr><td>4</td><td>Suspicious PowerShell execution</td><td>T1059.001</td><td>MDE + SIEM</td></tr>
+                        <tr><td>5</td><td>External RDP/VPN brute force</td><td>T1133</td><td>SIEM</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>🟡 Stage 3-5: Persistence, Priv Esc, Defense Evasion (7 rules)</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Detection Rule</th><th>MITRE</th><th>Tool</th></tr></thead>
+                    <tbody>
+                        <tr><td>6</td><td>Scheduled task created for persistence</td><td>T1053.005</td><td>MDE + SIEM</td></tr>
+                        <tr><td>7</td><td>Registry run key modification</td><td>T1547.001</td><td>MDE</td></tr>
+                        <tr><td>8</td><td>New service created</td><td>T1543.003</td><td>MDE + SIEM</td></tr>
+                        <tr><td>9</td><td>Local admin account created</td><td>T1136.001</td><td>SIEM</td></tr>
+                        <tr><td>10</td><td>Security tool disabled/tampered</td><td>T1562.001</td><td>MDE + SIEM</td></tr>
+                        <tr><td>11</td><td>Windows event log cleared</td><td>T1070.001</td><td>SIEM</td></tr>
+                        <tr><td>12</td><td>Shadow copy deletion</td><td>T1490</td><td>MDE + SIEM</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>🟠 Stage 6-7: Credential Access & Discovery (6 rules)</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Detection Rule</th><th>MITRE</th><th>Tool</th></tr></thead>
+                    <tbody>
+                        <tr><td>13</td><td>LSASS memory access (credential dumping)</td><td>T1003.001</td><td>MDE</td></tr>
+                        <tr><td>14</td><td>SAM database access</td><td>T1003.002</td><td>MDE</td></tr>
+                        <tr><td>15</td><td>Kerberoasting (SPN enumeration)</td><td>T1558.003</td><td>Defender for Identity</td></tr>
+                        <tr><td>16</td><td>DCSync attack</td><td>T1003.006</td><td>Defender for Identity</td></tr>
+                        <tr><td>17</td><td>Network share enumeration</td><td>T1135</td><td>MDE + SIEM</td></tr>
+                        <tr><td>18</td><td>AD reconnaissance (BloodHound, ADFind)</td><td>T1087.002</td><td>Defender for Identity</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>🔴 Stage 8-10: Lateral Movement, Collection, Exfil (5 rules)</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Detection Rule</th><th>MITRE</th><th>Tool</th></tr></thead>
+                    <tbody>
+                        <tr><td>19</td><td>Suspicious RDP connections (internal)</td><td>T1021.001</td><td>SIEM</td></tr>
+                        <tr><td>20</td><td>PsExec / SMB lateral movement</td><td>T1021.002</td><td>MDE + SIEM</td></tr>
+                        <tr><td>21</td><td>WMI remote execution</td><td>T1047</td><td>MDE</td></tr>
+                        <tr><td>22</td><td>Large data staging/archiving</td><td>T1074.001</td><td>MDE + DLP</td></tr>
+                        <tr><td>23</td><td>Data exfiltration to cloud storage</td><td>T1567.002</td><td>CASB + DLP</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>🟣 Stage 11: Impact — Last Line of Defense (3 rules)</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Detection Rule</th><th>MITRE</th><th>Tool</th></tr></thead>
+                    <tbody>
+                        <tr><td>24</td><td>Mass file encryption (entropy change)</td><td>T1486</td><td>MDE</td></tr>
+                        <tr><td>25</td><td>Ransomware note creation</td><td>T1486</td><td>MDE</td></tr>
+                        <tr><td>26</td><td>Critical service stopped (backup, security)</td><td>T1489</td><td>SIEM</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Controls by Plane</h2>
+
+                <h3>📊 Data Plane Controls</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Type</th><th>What It Prevents</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>EDR/XDR with prevention mode</strong></td><td>Preventive + Detective</td><td>Malware execution, ransomware payloads</td></tr>
+                        <tr><td><strong>Attack Surface Reduction (ASR) rules</strong></td><td>Preventive</td><td>Office macro abuse, credential theft, script abuse</td></tr>
+                        <tr><td><strong>Application whitelisting</strong></td><td>Preventive</td><td>Unauthorized executables</td></tr>
+                        <tr><td><strong>Email filtering</strong></td><td>Preventive</td><td>Phishing, malicious attachments</td></tr>
+                        <tr><td><strong>Backup protection</strong></td><td>Corrective</td><td>Backup encryption/deletion</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>🔐 Control Plane Controls</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Type</th><th>What It Prevents</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>MFA everywhere</strong></td><td>Preventive</td><td>Credential-only compromise</td></tr>
+                        <tr><td><strong>Privileged Access Workstations (PAWs)</strong></td><td>Preventive</td><td>Admin credential exposure</td></tr>
+                        <tr><td><strong>Tiered admin model</strong></td><td>Preventive</td><td>Single-hop to Domain Admin</td></tr>
+                        <tr><td><strong>LAPS for local admin</strong></td><td>Preventive</td><td>Lateral movement via shared local admin</td></tr>
+                        <tr><td><strong>Credential Guard</strong></td><td>Preventive</td><td>LSASS credential dumping</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>⚙️ Management Plane Controls</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Type</th><th>What It Prevents</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>GPO change monitoring</strong></td><td>Detective</td><td>Malware deployment via GPO</td></tr>
+                        <tr><td><strong>Limit GPO/SCCM admin access</strong></td><td>Preventive</td><td>Mass malware deployment</td></tr>
+                        <tr><td><strong>Security tool tamper protection</strong></td><td>Preventive</td><td>Disabling EDR/AV</td></tr>
+                        <tr><td><strong>Backup admin separation</strong></td><td>Preventive</td><td>Backup deletion by compromised admin</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Metrics for Ransomware Resilience</h2>
+
+                <h3>Detection Effectiveness</h3>
+                <table>
+                    <thead><tr><th>Metric</th><th>Target</th><th>How to Measure</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Kill Chain Coverage %</strong></td><td>≥80% of stages</td><td>Map rules to MITRE tactics, count coverage</td></tr>
+                        <tr><td><strong>MTTD (Mean Time to Detect)</strong></td><td>&lt;24 hours</td><td>Time from first IOC to SOC alert</td></tr>
+                        <tr><td><strong>Detection True Positive Rate</strong></td><td>≥70%</td><td>(True positives) / (Total alerts)</td></tr>
+                        <tr><td><strong>Purple Team Detection Rate</strong></td><td>≥80%</td><td>Simulated attacks detected / total simulated</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Response Effectiveness</h3>
+                <table>
+                    <thead><tr><th>Metric</th><th>Target</th><th>How to Measure</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>MTTR (Mean Time to Respond)</strong></td><td>&lt;4 hours</td><td>Time from detection to containment</td></tr>
+                        <tr><td><strong>MTTC (Mean Time to Contain)</strong></td><td>&lt;1 hour</td><td>Time to isolate affected systems</td></tr>
+                        <tr><td><strong>Backup RTO Achievement</strong></td><td>100%</td><td>Actual recovery time vs target</td></tr>
+                        <tr><td><strong>Tabletop Exercise Frequency</strong></td><td>Quarterly</td><td>Exercises conducted per year</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Interview Answer</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin: 1.5rem 0; border-left: 4px solid var(--accent-primary);">
+                    <p><em>"Ransomware defense requires a kill-chain approach—you can't rely on a single detection rule. I map the attack stages using MITRE ATT&CK, from initial access through impact, and ensure we have detection coverage at each stage. That typically means 20-25+ detection rules covering phishing, suspicious execution, persistence mechanisms, credential dumping, lateral movement, and finally encryption behaviors.</em></p>
+                    <p><em>But detection isn't enough. I layer preventive controls across all three planes: Data plane controls like EDR in block mode and ASR rules; Control plane controls like MFA, tiered admin model, and Credential Guard; and Management plane controls to protect GPO, backup systems, and security tools from tampering.</em></p>
+                    <p><em>I align everything to NIST CSF—Identify, Protect, Detect, Respond, Recover—to ensure completeness.</em></p>
+                    <p style="margin-bottom: 0;"><em>Finally, I track metrics at each level: detection coverage percentage, MTTD under 24 hours, MTTR under 4 hours, and regular testing through purple team exercises and backup restoration tests. The goal is to detect early in the kill chain—ideally before credential theft—and have proven recovery capability if everything else fails."</em></p>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitOps & CI/CD | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iac/index.html">IaC</a><span class="separator">/</span><span>GitOps</span></div>
+            <div class="content">
+                <h1><i class="fab fa-git-alt" style="color: #f05032;"></i> GitOps & CI/CD for Infrastructure</h1>
+                <p class="lead">Git as the single source of truth for infrastructure: declarative, versioned, automated, and auditable.</p>
+
+                <h2>What is GitOps?</h2>
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> GitOps Principles</div>
+                    <ul style="margin: 0.5rem 0 0 0;">
+                        <li><strong>Declarative:</strong> Entire system described declaratively in Git</li>
+                        <li><strong>Versioned:</strong> All changes tracked with full audit trail</li>
+                        <li><strong>Automated:</strong> Approved changes automatically applied</li>
+                        <li><strong>Reconciled:</strong> System continuously ensures actual = desired state</li>
+                    </ul>
+                </div>
+
+                <h2>GitOps Models</h2>
+                <table>
+                    <thead><tr><th>Model</th><th>How It Works</th><th>Tools</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Push-based</strong></td><td>CI/CD pushes changes to cluster after merge</td><td>GitHub Actions, GitLab CI, Jenkins</td></tr>
+                        <tr><td><strong>Pull-based</strong></td><td>Agent in cluster pulls changes from Git</td><td>ArgoCD, Flux, Rancher Fleet</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>ArgoCD Architecture</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; font-size: 0.75rem; margin: 1rem 0;">
+<pre style="margin: 0;">┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│   Git Repo      │      │    ArgoCD       │      │  Kubernetes     │
+│                 │      │                 │      │                 │
+│  ┌───────────┐  │      │  ┌───────────┐  │      │  ┌───────────┐  │
+│  │ manifests │◄─┼──────┼──│ Reconciler│──┼──────┼─►│  Workloads│  │
+│  │ helm      │  │ Poll │  │           │  │ Apply│  │           │  │
+│  │ kustomize │  │      │  │  Compares │  │      │  │           │  │
+│  └───────────┘  │      │  │  Desired  │  │      │  └───────────┘  │
+│                 │      │  │  vs Actual│  │      │                 │
+└─────────────────┘      │  └───────────┘  │      └─────────────────┘
+                         └─────────────────┘
+                         
+Sync Loop: Git → ArgoCD → Compare → Apply → Monitor → Repeat</pre>
+                </div>
+
+                <h3>ArgoCD Application Definition</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># argocd-application.yaml</span>
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-application
+  namespace: argocd
+spec:
+  project: default
+  
+  source:
+    repoURL: https://github.com/company/k8s-manifests.git
+    targetRevision: main
+    path: applications/my-app
+    
+    <span style="color: #6aa3f7;"># For Helm charts</span>
+    helm:
+      valueFiles:
+        - values-prod.yaml
+      parameters:
+        - name: image.tag
+          value: "1.2.3"
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: production
+  
+  syncPolicy:
+    automated:
+      prune: true       <span style="color: #6aa3f7;"># Delete resources not in Git</span>
+      selfHeal: true    <span style="color: #6aa3f7;"># Revert manual changes</span>
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m</pre>
+                </div>
+
+                <h2>Repository Structure</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Monorepo structure</span>
+infrastructure/
+├── terraform/
+│   ├── modules/           <span style="color: #6aa3f7;"># Reusable modules</span>
+│   │   ├── vpc/
+│   │   ├── eks/
+│   │   └── rds/
+│   └── environments/
+│       ├── dev/
+│       ├── staging/
+│       └── prod/
+├── kubernetes/
+│   ├── base/              <span style="color: #6aa3f7;"># Kustomize base</span>
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   └── kustomization.yaml
+│   └── overlays/
+│       ├── dev/
+│       ├── staging/
+│       └── prod/
+│           ├── kustomization.yaml
+│           ├── replica-patch.yaml
+│           └── resource-patch.yaml
+├── helm/
+│   └── charts/
+│       └── my-app/
+│           ├── Chart.yaml
+│           ├── values.yaml
+│           ├── values-dev.yaml
+│           ├── values-prod.yaml
+│           └── templates/
+└── .github/
+    └── workflows/
+        ├── terraform.yml
+        └── k8s-validate.yml</pre>
+                </div>
+
+                <h2>Branch Strategy</h2>
+                <table>
+                    <thead><tr><th>Branch</th><th>Purpose</th><th>Deploys To</th></tr></thead>
+                    <tbody>
+                        <tr><td><code>main</code></td><td>Production-ready code</td><td>Production (auto or manual)</td></tr>
+                        <tr><td><code>staging</code></td><td>Pre-production testing</td><td>Staging (auto)</td></tr>
+                        <tr><td><code>develop</code></td><td>Integration branch</td><td>Dev (auto)</td></tr>
+                        <tr><td><code>feature/*</code></td><td>New features</td><td>Preview environments</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Security Considerations</h2>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-shield-alt"></i> GitOps Security</div>
+                    <ul style="margin: 0.5rem 0 0 0;">
+                        <li><strong>No secrets in Git:</strong> Use Sealed Secrets, External Secrets, or Vault</li>
+                        <li><strong>Branch protection:</strong> Require PR reviews for main/prod branches</li>
+                        <li><strong>Signed commits:</strong> GPG/SSH signing for auditability</li>
+                        <li><strong>RBAC:</strong> Limit who can approve changes to production</li>
+                        <li><strong>Audit logs:</strong> All Git operations and ArgoCD syncs logged</li>
+                    </ul>
+                </div>
+
+                <h3>Sealed Secrets Example</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Install sealed-secrets controller</span>
+kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.24.0/controller.yaml
+
+<span style="color: #6aa3f7;"># Create a regular secret (locally, don't commit!)</span>
+kubectl create secret generic db-creds \
+  --from-literal=username=admin \
+  --from-literal=password=supersecret \
+  --dry-run=client -o yaml > secret.yaml
+
+<span style="color: #6aa3f7;"># Seal the secret (safe to commit)</span>
+kubeseal --format yaml < secret.yaml > sealed-secret.yaml
+
+<span style="color: #6aa3f7;"># sealed-secret.yaml (safe to commit to Git)</span>
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: db-creds
+spec:
+  encryptedData:
+    username: AgBQx5T...  <span style="color: #6aa3f7;"># Encrypted with cluster's public key</span>
+    password: AgCMk9p...</pre>
+                </div>
+
+                <h2>CI/CD Pipeline Stages</h2>
+                <div class="step-container">
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">1</div></div><div class="step-content"><div class="step-title">Lint & Validate</div><p>terraform fmt, terraform validate, yamllint, kubeval</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">2</div></div><div class="step-content"><div class="step-title">Security Scan</div><p>Checkov, tfsec, Trivy for misconfigurations</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">3</div></div><div class="step-content"><div class="step-title">Plan/Diff</div><p>terraform plan, argocd app diff</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">4</div></div><div class="step-content"><div class="step-title">Review</div><p>Human review of plan output in PR</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">5</div></div><div class="step-content"><div class="step-title">Apply</div><p>terraform apply, ArgoCD sync (auto or manual)</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">6</div></div><div class="step-content"><div class="step-title">Verify</div><p>Smoke tests, health checks, rollback if needed</p></div></div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XDR vs SIEM Strategy | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .bucket { background: var(--bg-card); border-radius: var(--radius-md); padding: 1.5rem; margin: 1rem 0; }
+        .bucket.retire { border-left: 4px solid #ef4444; }
+        .bucket.rewrite { border-left: 4px solid #f59e0b; }
+        .bucket.build { border-left: 4px solid #22c55e; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/mental-models/index.html">Mental Models</a><span class="separator">/</span><span>XDR vs SIEM</span></div>
+            <div class="content">
+                <h1><i class="fas fa-project-diagram" style="color: var(--accent-primary);"></i> XDR vs SIEM Detection Strategy</h1>
+                <p class="lead">When to use XDR, when to use SIEM, and how to build a complementary detection architecture.</p>
+
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> The XDR-First Principle</div>
+                    <p style="margin: 0;"><strong>Let XDR handle what it does best.</strong> Don't build SIEM rules for things XDR already detects well. Focus SIEM investment on gaps: management plane, application layer, cross-domain correlation, and third-party integrations.</p>
+                </div>
+
+                <h2>What XDR Sees Well</h2>
+                <table>
+                    <thead><tr><th>Domain</th><th>XDR Coverage</th><th>Examples</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Endpoint Execution</strong></td><td>🟢 Excellent</td><td>Malware, ransomware, suspicious processes, scripts, LOLBins</td></tr>
+                        <tr><td><strong>Identity (Basic)</strong></td><td>🟡 Good</td><td>Sign-in anomalies, impossible travel, MFA bypass attempts</td></tr>
+                        <tr><td><strong>Email Threats</strong></td><td>🟢 Excellent</td><td>Phishing, malicious attachments, BEC attempts</td></tr>
+                        <tr><td><strong>Cloud App Access</strong></td><td>🟡 Good</td><td>Shadow IT, risky OAuth apps, anomalous access patterns</td></tr>
+                        <tr><td><strong>Network (Endpoint-based)</strong></td><td>🟡 Partial</td><td>C2 connections from endpoints, lateral movement</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>What XDR Misses (SIEM Territory)</h2>
+                <table>
+                    <thead><tr><th>Domain</th><th>XDR Coverage</th><th>Why SIEM Needed</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Management Plane</strong></td><td>🔴 Weak</td><td>XDR doesn't see cloud console actions, IaC changes, CI/CD pipelines</td></tr>
+                        <tr><td><strong>Application Layer</strong></td><td>🔴 Weak</td><td>XDR doesn't understand business app logic, API abuse, data exports</td></tr>
+                        <tr><td><strong>Cross-Domain Correlation</strong></td><td>🔴 Weak</td><td>Identity + endpoint + network + app requires SIEM correlation</td></tr>
+                        <tr><td><strong>Network Infrastructure</strong></td><td>🔴 Weak</td><td>Firewall, VPN, proxy logs need SIEM for analysis</td></tr>
+                        <tr><td><strong>OT/IoT</strong></td><td>🔴 Weak</td><td>No XDR agent on OT devices, need network-based detection</td></tr>
+                        <tr><td><strong>Compliance/Audit</strong></td><td>🔴 Weak</td><td>Long-term retention, audit queries, compliance reporting</td></tr>
+                        <tr><td><strong>Third-Party SaaS</strong></td><td>🔴 Weak</td><td>Non-Microsoft SaaS apps need log ingestion to SIEM</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>The Three Buckets Framework</h2>
+                <p>When migrating or building detections, classify every rule into one of three buckets:</p>
+
+                <div class="bucket retire">
+                    <h3 style="margin-top: 0; color: #ef4444;"><i class="fas fa-trash"></i> Bucket 1: RETIRE</h3>
+                    <p><strong>XDR already detects this → Don't duplicate in SIEM</strong></p>
+                    <ul>
+                        <li>Malware execution</li>
+                        <li>Common endpoint behaviors</li>
+                        <li>Known attack tools (Mimikatz, Cobalt Strike)</li>
+                        <li>Email-based phishing</li>
+                        <li>Basic identity anomalies (impossible travel)</li>
+                        <li>Ransomware encryption indicators</li>
+                    </ul>
+                    <p style="margin-bottom: 0;"><strong>Action:</strong> Retire SIEM rule, ensure XDR alert flows to SIEM for correlation if needed.</p>
+                </div>
+
+                <div class="bucket rewrite">
+                    <h3 style="margin-top: 0; color: #f59e0b;"><i class="fas fa-sync"></i> Bucket 2: KEEP/REWRITE</h3>
+                    <p><strong>SIEM adds value via correlation → Optimize for SIEM</strong></p>
+                    <ul>
+                        <li>Identity + endpoint correlation (sign-in → process execution)</li>
+                        <li>VPN + sign-in + privilege changes</li>
+                        <li>SaaS admin action + data access spike</li>
+                        <li>Multi-stage attack sequences</li>
+                        <li>Business context enrichment</li>
+                        <li>Cross-tenant correlation</li>
+                    </ul>
+                    <p style="margin-bottom: 0;"><strong>Action:</strong> Rewrite with optimal SIEM logic, incorporate XDR signals as inputs.</p>
+                </div>
+
+                <div class="bucket build">
+                    <h3 style="margin-top: 0; color: #22c55e;"><i class="fas fa-hammer"></i> Bucket 3: BUILD IN SIEM</h3>
+                    <p><strong>XDR doesn't cover this → SIEM is the only option</strong></p>
+                    <ul>
+                        <li>Cloud management plane misuse (AWS/Azure/GCP console)</li>
+                        <li>Application/API abuse</li>
+                        <li>Logging/audit tampering</li>
+                        <li>CI/CD pipeline attacks</li>
+                        <li>Network infrastructure changes</li>
+                        <li>OT/IoT threats</li>
+                        <li>Compliance-specific monitoring</li>
+                    </ul>
+                    <p style="margin-bottom: 0;"><strong>Action:</strong> Build new detection in SIEM, ensure signals are available.</p>
+                </div>
+
+                <h2>Bucket Classification Examples</h2>
+                <table>
+                    <thead><tr><th>Detection</th><th>Bucket</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>Mimikatz execution</td><td style="color: #ef4444;">Retire</td><td>MDE detects with high fidelity</td></tr>
+                        <tr><td>PowerShell encoded command</td><td style="color: #ef4444;">Retire</td><td>MDE has built-in detection + AMSI integration</td></tr>
+                        <tr><td>Impossible travel + endpoint login</td><td style="color: #f59e0b;">Rewrite</td><td>Needs correlation of identity + endpoint signals</td></tr>
+                        <tr><td>Admin creates user + assigns Global Admin</td><td style="color: #f59e0b;">Rewrite</td><td>Sequence detection across audit events</td></tr>
+                        <tr><td>CloudTrail logging disabled</td><td style="color: #22c55e;">Build</td><td>XDR has no visibility into AWS management plane</td></tr>
+                        <tr><td>Mass export from SaaS application</td><td style="color: #22c55e;">Build</td><td>XDR doesn't understand application business logic</td></tr>
+                        <tr><td>Terraform state file accessed</td><td style="color: #22c55e;">Build</td><td>CI/CD pipeline monitoring not in XDR scope</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>When to Write SIEM Correlations</h2>
+                <div class="info-box">
+                    <p style="margin: 0;"><strong>Write SIEM correlation when:</strong></p>
+                    <ul style="margin: 0.5rem 0 0 0;">
+                        <li><strong>Multiple asset classes</strong> are involved (identity + endpoint + network)</li>
+                        <li><strong>Sequence/time/context</strong> matters (A then B within X minutes)</li>
+                        <li><strong>Actions look legitimate</strong> individually but risky in combination</li>
+                        <li><strong>Blast radius is high</strong> (admin actions, sensitive data)</li>
+                        <li><strong>XDR sees only part</strong> of the story (endpoint saw it, but not the trigger)</li>
+                        <li><strong>Business context</strong> is required (HR data vs public data)</li>
+                    </ul>
+                </div>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-star"></i> The Golden Rule</div>
+                    <p style="margin: 0;"><strong>If misuse can happen without malware, SIEM correlation is usually required.</strong><br>
+                    XDR excels at detecting malicious binaries and known attack tools. It struggles with "living off the land" attacks that use legitimate tools and credentials. That's where SIEM correlation shines.</p>
+                </div>
+
+                <h2>Correlation Patterns That Need SIEM</h2>
+                <table>
+                    <thead><tr><th>Pattern</th><th>Why SIEM</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Identity + Endpoint</strong></td><td>Correlate authentication with subsequent activity</td><td>User signs in from unusual location → immediately accesses sensitive file share</td></tr>
+                        <tr><td><strong>Sequence Detection</strong></td><td>Order and timing matter</td><td>Failed login attempts → successful login → privilege escalation → data access</td></tr>
+                        <tr><td><strong>Threshold + Context</strong></td><td>Volume anomalies with business context</td><td>User exports 10x normal data volume during off-hours</td></tr>
+                        <tr><td><strong>Cross-System</strong></td><td>Attack spans multiple systems</td><td>VPN login from new location → RDP to server → database query</td></tr>
+                        <tr><td><strong>Management Plane Changes</strong></td><td>XDR doesn't see admin consoles</td><td>Admin disables MFA requirement → creates new admin account</td></tr>
+                        <tr><td><strong>Baseline Deviation</strong></td><td>Requires historical context</td><td>Service account used interactively for first time in 6 months</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Detection Architecture</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; font-size: 0.75rem; margin: 1rem 0;">
+<pre style="margin: 0;">┌─────────────────────────────────────────────────────────────────────────┐
+│                         DETECTION ARCHITECTURE                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────────┐    ┌──────────────────────┐                   │
+│  │       XDR/EDR        │    │        SIEM          │                   │
+│  │  ──────────────────  │    │  ──────────────────  │                   │
+│  │  • Endpoint threats  │    │  • Management plane  │                   │
+│  │  • Email threats     │    │  • Cross-domain      │                   │
+│  │  • Known malware     │    │  • Application layer │                   │
+│  │  • Identity basics   │    │  • Network infra     │                   │
+│  │  • Cloud apps        │    │  • Compliance/Audit  │                   │
+│  └──────────┬───────────┘    └──────────┬───────────┘                   │
+│             │                           │                                │
+│             └───────────┬───────────────┘                                │
+│                         │                                                │
+│                         ▼                                                │
+│              ┌─────────────────────┐                                     │
+│              │   SOAR / XDR Hub    │                                     │
+│              │   ───────────────   │                                     │
+│              │  Unified alerting   │                                     │
+│              │  Automated response │                                     │
+│              │  Case management    │                                     │
+│              └─────────────────────┘                                     │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘</pre>
+                </div>
+
+                <h2>Microsoft-Specific: Defender XDR + Sentinel</h2>
+                <table>
+                    <thead><tr><th>Use Defender XDR For</th><th>Use Sentinel For</th></tr></thead>
+                    <tbody>
+                        <tr><td>Endpoint detection (MDE)</td><td>Azure/AWS/GCP management plane</td></tr>
+                        <tr><td>Email detection (MDO)</td><td>Third-party SaaS logs</td></tr>
+                        <tr><td>Identity detection (MDI)</td><td>Custom application logs</td></tr>
+                        <tr><td>Cloud app detection (MDA)</td><td>Network infrastructure (firewalls, VPN)</td></tr>
+                        <tr><td>Automated investigation</td><td>Cross-domain correlation rules</td></tr>
+                        <tr><td>Built-in threat intel</td><td>Long-term retention and compliance</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

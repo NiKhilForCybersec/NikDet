@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IaC Security Scanning | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/iac/index.html">IaC</a><span class="separator">/</span><span>Security Scanning</span></div>
+            <div class="content">
+                <h1><i class="fas fa-search" style="color: var(--accent-danger);"></i> IaC Security Scanning</h1>
+                <p class="lead">Shift-left security: detect misconfigurations and vulnerabilities in infrastructure code before deployment.</p>
+
+                <h2>Why Scan IaC?</h2>
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Shift Left Security</div>
+                    <p style="margin: 0;">Finding misconfigurations in code review is <strong>100x cheaper</strong> than finding them in production. IaC scanning catches: public S3 buckets, unencrypted databases, overly permissive security groups, missing logging, compliance violations — all before resources exist.</p>
+                </div>
+
+                <h2>Tool Comparison</h2>
+                <table>
+                    <thead><tr><th>Tool</th><th>Best For</th><th>Languages</th><th>License</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Checkov</strong></td><td>Comprehensive, many frameworks</td><td>Terraform, CloudFormation, K8s, ARM, Dockerfile</td><td>Apache 2.0</td></tr>
+                        <tr><td><strong>tfsec</strong></td><td>Fast Terraform scanning</td><td>Terraform only</td><td>MIT</td></tr>
+                        <tr><td><strong>KICS</strong></td><td>Multi-framework, Checkmarx backed</td><td>Terraform, K8s, Docker, Ansible, CloudFormation</td><td>Apache 2.0</td></tr>
+                        <tr><td><strong>Terrascan</strong></td><td>Policy as code (Rego)</td><td>Terraform, K8s, Helm, Dockerfile</td><td>Apache 2.0</td></tr>
+                        <tr><td><strong>Snyk IaC</strong></td><td>Developer-friendly, CI integration</td><td>Terraform, K8s, CloudFormation</td><td>Commercial</td></tr>
+                        <tr><td><strong>Trivy</strong></td><td>All-in-one (containers + IaC)</td><td>Terraform, CloudFormation, K8s, Dockerfile</td><td>Apache 2.0</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Checkov</h2>
+                <p>Most comprehensive open-source scanner with 2000+ built-in policies.</p>
+
+                <h3>Installation & Basic Usage</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Install</span>
+pip install checkov
+<span style="color: #6aa3f7;"># or</span>
+brew install checkov
+
+<span style="color: #6aa3f7;"># Scan Terraform directory</span>
+checkov -d /path/to/terraform
+
+<span style="color: #6aa3f7;"># Scan specific file</span>
+checkov -f main.tf
+
+<span style="color: #6aa3f7;"># Output formats</span>
+checkov -d . -o json > results.json
+checkov -d . -o sarif > results.sarif  <span style="color: #6aa3f7;"># For GitHub Security tab</span>
+checkov -d . -o junit > results.xml    <span style="color: #6aa3f7;"># For CI/CD</span>
+
+<span style="color: #6aa3f7;"># Skip specific checks</span>
+checkov -d . --skip-check CKV_AWS_18,CKV_AWS_21
+
+<span style="color: #6aa3f7;"># Run only specific checks</span>
+checkov -d . --check CKV_AWS_20,CKV_AWS_21
+
+<span style="color: #6aa3f7;"># Scan with external checks (custom policies)</span>
+checkov -d . --external-checks-dir /path/to/custom-checks
+
+<span style="color: #6aa3f7;"># Scan Kubernetes manifests</span>
+checkov -d kubernetes/ --framework kubernetes
+
+<span style="color: #6aa3f7;"># Scan Dockerfile</span>
+checkov -f Dockerfile --framework dockerfile</pre>
+                </div>
+
+                <h3>Common Checkov Findings</h3>
+                <table>
+                    <thead><tr><th>Check ID</th><th>Description</th><th>Risk</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>CKV_AWS_20</strong></td><td>S3 bucket has public access enabled</td><td>Data exposure</td></tr>
+                        <tr><td><strong>CKV_AWS_19</strong></td><td>S3 bucket not encrypted with KMS</td><td>Data at rest exposure</td></tr>
+                        <tr><td><strong>CKV_AWS_23</strong></td><td>Security group allows all traffic</td><td>Network exposure</td></tr>
+                        <tr><td><strong>CKV_AWS_8</strong></td><td>Instance doesn't use IMDSv2</td><td>SSRF risk</td></tr>
+                        <tr><td><strong>CKV_AWS_17</strong></td><td>RDS not encrypted</td><td>Data at rest exposure</td></tr>
+                        <tr><td><strong>CKV_AWS_24</strong></td><td>CloudWatch log group not encrypted</td><td>Log exposure</td></tr>
+                        <tr><td><strong>CKV_AZURE_9</strong></td><td>Network watcher flow log retention</td><td>Missing audit logs</td></tr>
+                        <tr><td><strong>CKV_K8S_21</strong></td><td>Container runs as root</td><td>Container escape risk</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Inline Suppressions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Suppress specific check with comment (Terraform)</span>
+resource "aws_s3_bucket" "public_website" {
+  bucket = "public-static-website"
+  
+  <span style="color: #6aa3f7;"># checkov:skip=CKV_AWS_20: This bucket hosts public static website content</span>
+}
+
+<span style="color: #6aa3f7;"># Multiple suppressions</span>
+resource "aws_instance" "legacy" {
+  <span style="color: #6aa3f7;"># checkov:skip=CKV_AWS_8: Legacy application requires IMDSv1</span>
+  <span style="color: #6aa3f7;"># checkov:skip=CKV_AWS_79: Exception approved by security team (JIRA-1234)</span>
+  
+  metadata_options {
+    http_tokens = "optional"
+  }
+}</pre>
+                </div>
+
+                <h2>tfsec</h2>
+                <p>Fast, Terraform-focused scanner (now part of Trivy).</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Install</span>
+brew install tfsec
+<span style="color: #6aa3f7;"># or</span>
+curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+
+<span style="color: #6aa3f7;"># Basic scan</span>
+tfsec .
+
+<span style="color: #6aa3f7;"># With specific checks</span>
+tfsec . --include-passed --include-ignored
+
+<span style="color: #6aa3f7;"># Output formats</span>
+tfsec . --format json
+tfsec . --format sarif
+tfsec . --format junit
+
+<span style="color: #6aa3f7;"># Soft fail (exit 0 even with issues)</span>
+tfsec . --soft-fail
+
+<span style="color: #6aa3f7;"># Minimum severity</span>
+tfsec . --minimum-severity HIGH</pre>
+                </div>
+
+                <h3>tfsec Suppressions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Suppress in code</span>
+resource "aws_security_group_rule" "allow_all" {
+  <span style="color: #6aa3f7;">#tfsec:ignore:aws-ec2-no-public-ingress-sgr</span>
+  type        = "ingress"
+  from_port   = 443
+  to_port     = 443
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+}
+
+<span style="color: #6aa3f7;"># Or use .tfsec/config.yml</span>
+<span style="color: #6aa3f7;"># .tfsec/config.yml</span>
+exclude:
+  - aws-ec2-no-public-ingress-sgr
+  
+severity_overrides:
+  aws-s3-enable-bucket-logging: LOW</pre>
+                </div>
+
+                <h2>Trivy (All-in-One)</h2>
+                <p>Scans containers, filesystems, AND IaC in one tool.</p>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Install</span>
+brew install trivy
+
+<span style="color: #6aa3f7;"># Scan IaC</span>
+trivy config .
+
+<span style="color: #6aa3f7;"># Scan with severity filter</span>
+trivy config . --severity HIGH,CRITICAL
+
+<span style="color: #6aa3f7;"># Scan container image + config</span>
+trivy image myapp:latest
+trivy config kubernetes/
+
+<span style="color: #6aa3f7;"># Combined scan (filesystem, config, secrets)</span>
+trivy fs --scanners vuln,misconfig,secret .</pre>
+                </div>
+
+                <h2>CI/CD Integration</h2>
+
+                <h3>GitHub Actions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># .github/workflows/iac-security.yml</span>
+name: IaC Security Scan
+
+on:
+  pull_request:
+    paths:
+      - '**.tf'
+      - '**.yaml'
+      - '**.yml'
+      - 'Dockerfile'
+
+jobs:
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+          framework: terraform
+          output_format: sarif
+          output_file_path: results.sarif
+          soft_fail: false
+          
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+  tfsec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          soft_fail: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'</pre>
+                </div>
+
+                <h3>Pre-commit Hooks</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># .pre-commit-config.yaml</span>
+repos:
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.83.5
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: terraform_tfsec
+      - id: terraform_checkov
+        args:
+          - --args=--skip-check CKV_AWS_18
+
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: '2.4.0'
+    hooks:
+      - id: checkov
+        args: [--soft-fail]
+
+<span style="color: #6aa3f7;"># Install hooks</span>
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files</pre>
+                </div>
+
+                <h2>Custom Policies (OPA/Rego)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># custom-policy.rego - Require specific tags on all resources</span>
+package custom.terraform.aws
+
+import future.keywords.if
+import future.keywords.in
+
+<span style="color: #6aa3f7;"># Deny resources without required tags</span>
+deny[msg] {
+    resource := input.resource[type][name]
+    required_tags := {"Environment", "Owner", "CostCenter"}
+    provided_tags := {tag | resource.tags[tag]}
+    missing := required_tags - provided_tags
+    count(missing) > 0
+    msg := sprintf("Resource %s.%s missing required tags: %v", [type, name, missing])
+}
+
+<span style="color: #6aa3f7;"># Deny S3 buckets without versioning</span>
+deny[msg] {
+    bucket := input.resource.aws_s3_bucket[name]
+    not bucket.versioning[_].enabled == true
+    msg := sprintf("S3 bucket %s must have versioning enabled", [name])
+}
+
+<span style="color: #6aa3f7;"># Deny EC2 without encrypted EBS</span>
+deny[msg] {
+    instance := input.resource.aws_instance[name]
+    block := instance.root_block_device[_]
+    not block.encrypted == true
+    msg := sprintf("EC2 instance %s must have encrypted root volume", [name])
+}
+
+<span style="color: #6aa3f7;"># Run with conftest</span>
+<span style="color: #6aa3f7;"># conftest test --policy custom-policy.rego terraform.tfplan.json</span></pre>
+                </div>
+
+                <h2>Compliance Frameworks</h2>
+                <table>
+                    <thead><tr><th>Framework</th><th>Checkov Support</th><th>Key Checks</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>CIS AWS Benchmark</strong></td><td>✅ Full</td><td>IAM, logging, networking, encryption</td></tr>
+                        <tr><td><strong>CIS Azure Benchmark</strong></td><td>✅ Full</td><td>Identity, storage, networking, logging</td></tr>
+                        <tr><td><strong>CIS GCP Benchmark</strong></td><td>✅ Full</td><td>IAM, compute, storage, networking</td></tr>
+                        <tr><td><strong>CIS Kubernetes</strong></td><td>✅ Full</td><td>Control plane, worker nodes, policies</td></tr>
+                        <tr><td><strong>SOC 2</strong></td><td>✅ Partial</td><td>Encryption, access control, logging</td></tr>
+                        <tr><td><strong>HIPAA</strong></td><td>✅ Partial</td><td>Encryption, access control, audit logs</td></tr>
+                        <tr><td><strong>PCI-DSS</strong></td><td>✅ Partial</td><td>Network segmentation, encryption, logging</td></tr>
+                    </tbody>
+                </table>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); margin: 1rem 0;">
+<pre style="margin: 0; font-size: 0.75rem;"><span style="color: #6aa3f7;"># Run Checkov with specific compliance framework</span>
+checkov -d . --framework terraform --check CKV_AWS_*
+
+<span style="color: #6aa3f7;"># Run CIS Benchmark checks only</span>
+checkov -d . --check CKV_AWS_1,CKV_AWS_2,CKV_AWS_3  <span style="color: #6aa3f7;"># Specific CIS checks</span>
+
+<span style="color: #6aa3f7;"># Generate compliance report</span>
+checkov -d . -o json | jq '.results.passed_checks | group_by(.check_id) | map({check: .[0].check_id, count: length})'</pre>
+                </div>
+
+                <h2>Remediation Workflow</h2>
+                <div class="step-container">
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">1</div></div><div class="step-content"><div class="step-title">Scan in CI/CD</div><p>Automatically scan all PRs with IaC changes</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">2</div></div><div class="step-content"><div class="step-title">Block on Critical/High</div><p>Fail builds for critical/high severity findings</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">3</div></div><div class="step-content"><div class="step-title">Review Findings</div><p>Developer and security review findings in PR</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">4</div></div><div class="step-content"><div class="step-title">Fix or Suppress</div><p>Fix issue or add documented suppression with justification</p></div></div>
+                    <div class="step"><div class="step-indicator"><div class="step-number-badge">5</div></div><div class="step-content"><div class="step-title">Track Exceptions</div><p>Document all suppressions in security risk register</p></div></div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

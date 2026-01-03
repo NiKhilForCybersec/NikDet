@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Planes Deep Dive | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .plane-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 1.5rem; margin: 1rem 0; }
+        .plane-card.data { border-left: 4px solid #4ade80; }
+        .plane-card.control { border-left: 4px solid #60a5fa; }
+        .plane-card.management { border-left: 4px solid #f87171; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/mental-models/index.html">Mental Models</a><span class="separator">/</span><span>Three Planes</span></div>
+            <div class="content">
+                <h1><i class="fas fa-layer-group" style="color: var(--accent-primary);"></i> The Three Planes Deep Dive</h1>
+                <p class="lead">Understanding Data, Control, and Management planes across every technology stream.</p>
+
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Critical Understanding</div>
+                    <p style="margin: 0;"><strong>Planes are NOT a hierarchy. They are a LENS.</strong> You apply the plane lens to <em>each stream</em> to localize where risks live. Every stream has all three planes.</p>
+                </div>
+
+                <h2>The Three Planes Defined</h2>
+
+                <div class="plane-card data">
+                    <h3 style="margin-top: 0; color: #4ade80;"><i class="fas fa-database"></i> Data Plane</h3>
+                    <p><strong>What it is:</strong> Where normal business activity happens — users accessing data, apps processing transactions, APIs exchanging information.</p>
+                    <h4>Examples</h4>
+                    <ul>
+                        <li>User reads patient record in EHR</li>
+                        <li>API call retrieves customer data</li>
+                        <li>Employee downloads file from SharePoint</li>
+                        <li>Database query returns financial records</li>
+                        <li>Email sent with attachment</li>
+                    </ul>
+                    <p><strong>Key Question:</strong> "Who is accessing what data, and is it appropriate?"</p>
+                    <p style="margin-bottom: 0;"><strong>Risk Pattern:</strong> Unauthorized access, data exfiltration, business logic abuse</p>
+                </div>
+
+                <div class="plane-card control">
+                    <h3 style="margin-top: 0; color: #60a5fa;"><i class="fas fa-lock"></i> Control Plane</h3>
+                    <p><strong>What it is:</strong> The systems that decide who has access to what — authentication, authorization, policy enforcement.</p>
+                    <h4>Examples</h4>
+                    <ul>
+                        <li>User authenticates to Entra ID</li>
+                        <li>MFA challenge accepted/denied</li>
+                        <li>Conditional Access policy evaluated</li>
+                        <li>Firewall allows/blocks connection</li>
+                        <li>VPN grants network access</li>
+                        <li>Role assignment grants permissions</li>
+                    </ul>
+                    <p><strong>Key Question:</strong> "Are the right people getting the right access?"</p>
+                    <p style="margin-bottom: 0;"><strong>Risk Pattern:</strong> Credential theft, MFA bypass, privilege escalation, policy bypass</p>
+                </div>
+
+                <div class="plane-card management">
+                    <h3 style="margin-top: 0; color: #f87171;"><i class="fas fa-cogs"></i> Management Plane</h3>
+                    <p><strong>What it is:</strong> Where administrators configure and change the environment — the most dangerous plane because changes here affect everything.</p>
+                    <h4>Examples</h4>
+                    <ul>
+                        <li>Admin creates new user account</li>
+                        <li>Security policy modified in Azure portal</li>
+                        <li>Firewall rule added/removed</li>
+                        <li>Logging disabled on a system</li>
+                        <li>CI/CD pipeline deploys code</li>
+                        <li>Terraform applies infrastructure changes</li>
+                    </ul>
+                    <p><strong>Key Question:</strong> "Who can change the rules, and did they do it appropriately?"</p>
+                    <p style="margin-bottom: 0;"><strong>Risk Pattern:</strong> Environment takeover, persistence, defense evasion, logging tampering</p>
+                </div>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> The Plane Priority Rule</div>
+                    <p style="margin: 0;"><strong>Management plane compromises are always the worst.</strong> If an attacker can change the rules (disable logging, create admin accounts, modify policies), they can make data plane and control plane attacks invisible. This is why management plane monitoring is critical.</p>
+                </div>
+
+                <h2>Mapping Systems to Three Planes</h2>
+                <table>
+                    <thead><tr><th>System</th><th>Data Plane Activity</th><th>Control Plane Activity</th><th>Management Plane Activity</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Entra ID</strong></td><td>App access, token usage</td><td>Sign-in, MFA, Conditional Access</td><td>User creation, role assignment, policy changes</td></tr>
+                        <tr><td><strong>M365 / SharePoint</strong></td><td>File access, download, share</td><td>Authentication, sharing permissions</td><td>Site creation, admin settings, DLP policy</td></tr>
+                        <tr><td><strong>AWS / Azure Cloud</strong></td><td>S3 object access, VM data</td><td>IAM authentication, resource access</td><td>Console actions, IAM changes, resource creation</td></tr>
+                        <tr><td><strong>Database</strong></td><td>Queries, data read/write</td><td>Login, permission checks</td><td>User creation, schema changes, config</td></tr>
+                        <tr><td><strong>Firewall</strong></td><td>Traffic forwarding</td><td>Allow/deny decisions</td><td>Rule changes, policy updates</td></tr>
+                        <tr><td><strong>Endpoint (MDE)</strong></td><td>Process execution, file access</td><td>User session, privilege use</td><td>Agent config, policy deployment</td></tr>
+                        <tr><td><strong>Kubernetes</strong></td><td>Pod workload execution</td><td>RBAC authorization, network policies</td><td>Cluster config, namespace admin, secret management</td></tr>
+                        <tr><td><strong>CI/CD Pipeline</strong></td><td>Code commits, builds</td><td>Branch protection, approval gates</td><td>Pipeline config, secret management, deploy targets</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Applying Planes to Technology Streams</h2>
+
+                <h3>Identity & Access Stream × Planes</h3>
+                <table>
+                    <thead><tr><th>Plane</th><th>What Happens Here</th><th>Example Risks</th><th>Detection Focus</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #4ade80;"><strong>Data</strong></td><td>Login events, token usage, session activity</td><td>Credential stuffing, session hijacking</td><td>Failed logins, token anomalies</td></tr>
+                        <tr><td style="color: #60a5fa;"><strong>Control</strong></td><td>Role assignments, MFA enforcement, access policies</td><td>Privilege escalation, MFA bypass</td><td>Role changes, MFA failures, CA bypasses</td></tr>
+                        <tr><td style="color: #f87171;"><strong>Management</strong></td><td>Creating/deleting users, granting admin, disabling logs</td><td>Backdoor account creation, audit tampering</td><td>Admin account creation, audit log changes</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Cloud Infrastructure Stream × Planes</h3>
+                <table>
+                    <thead><tr><th>Plane</th><th>What Happens Here</th><th>Example Risks</th><th>Detection Focus</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #4ade80;"><strong>Data</strong></td><td>Resource usage, service activity, compute operations</td><td>Crypto mining, resource abuse</td><td>Unusual compute patterns, cost spikes</td></tr>
+                        <tr><td style="color: #60a5fa;"><strong>Control</strong></td><td>IAM bindings, firewall policies, service permissions</td><td>Over-permissive IAM, firewall bypass</td><td>IAM policy changes, SG modifications</td></tr>
+                        <tr><td style="color: #f87171;"><strong>Management</strong></td><td>Project settings, logging config, security service toggle</td><td>Disable CloudTrail, delete audit logs</td><td>Logging disabled, CSPM changes</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>CI/CD & DevOps Stream × Planes</h3>
+                <table>
+                    <thead><tr><th>Plane</th><th>What Happens Here</th><th>Example Risks</th><th>Detection Focus</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #4ade80;"><strong>Data</strong></td><td>Code commits, builds, deployments</td><td>Malicious code in commit, backdoor in artifact</td><td>Suspicious code patterns, unsigned commits</td></tr>
+                        <tr><td style="color: #60a5fa;"><strong>Control</strong></td><td>Branch protection, required reviews, pipeline permissions</td><td>Bypass code review, direct push to main</td><td>Branch protection bypass, approval skips</td></tr>
+                        <tr><td style="color: #f87171;"><strong>Management</strong></td><td>Pipeline config, secrets management, webhook settings</td><td>Disable branch protection, expose secrets</td><td>Pipeline config changes, secret access</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Network Spans All Three Planes</h2>
+                <p>Network is special — it exists in all three planes simultaneously:</p>
+                <ul>
+                    <li><strong style="color: #4ade80;">Data plane:</strong> Traffic flows (packets moving between systems)</li>
+                    <li><strong style="color: #60a5fa;">Control plane:</strong> Access decisions (firewall allow/deny, VPN authentication)</li>
+                    <li><strong style="color: #f87171;">Management plane:</strong> Configuration changes (new firewall rules, route changes)</li>
+                </ul>
+                <p>This is why network security is complex — you need visibility into all three aspects.</p>
+
+                <h2>Detection Strategy by Plane</h2>
+                <table>
+                    <thead><tr><th>Plane</th><th>Detection Approach</th><th>Primary Tools</th><th>Alert Priority</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #4ade80;"><strong>Data Plane</strong></td><td>Volume-based, pattern matching, DLP</td><td>XDR, DLP, CASB, UEBA</td><td>Medium (high volume)</td></tr>
+                        <tr><td style="color: #60a5fa;"><strong>Control Plane</strong></td><td>Policy violations, anomaly detection</td><td>Identity Protection, XDR, SIEM</td><td>High</td></tr>
+                        <tr><td style="color: #f87171;"><strong>Management Plane</strong></td><td>Change monitoring, baseline deviation</td><td>SIEM, CSPM, audit logs</td><td>Critical</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Interview Answer</h2>
+                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); margin: 1.5rem 0; border-left: 4px solid var(--accent-primary);">
+                    <p><em>"The three planes — Data, Control, and Management — are a lens I apply to every technology stream to localize where risks live.</em></p>
+                    <p><em>The <strong>Data plane</strong> is where normal business activity happens — users accessing files, APIs exchanging data. High volume, individual events often benign.</em></p>
+                    <p><em>The <strong>Control plane</strong> is where access decisions are made — authentication, authorization, policy enforcement. Changes here affect many users.</em></p>
+                    <p><em>The <strong>Management plane</strong> is where configuration happens — creating users, changing policies, disabling logging. This is the most dangerous because attackers who compromise the management plane can disable all other controls and hide their tracks.</em></p>
+                    <p style="margin-bottom: 0;"><em>My detection strategy prioritizes management plane visibility because that's where attackers establish persistence and evade detection. XDR handles data plane well, but SIEM is essential for management plane monitoring across cloud, identity, and infrastructure."</em></p>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

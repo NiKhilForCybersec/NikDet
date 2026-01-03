@@ -1,108 +1,269 @@
 /* ============================================
    SOC & Detection Engineering Compendium
-   Main JavaScript - Consistent Sidebar
+   Main JavaScript - Dynamic Sidebar
    ============================================ */
 
 document.addEventListener('DOMContentLoaded', function() {
+    injectSidebar();
     initSidebar();
     initThemeToggle();
-    initSearch();
+    initSidebarSearch();
     initCodeCopy();
     initTabs();
     initTerminalAnimation();
 });
 
 /* ============================================
-   Sidebar Navigation - Consistent Collapsible
+   Dynamic Sidebar Injection
+   ============================================ */
+function injectSidebar() {
+    // Only inject if sidebar doesn't exist
+    if (document.getElementById('sidebar')) return;
+    
+    const sidebarHTML = `
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <input type="text" class="sidebar-search" id="sidebarSearch" placeholder="Search pages... (Ctrl+K)">
+        </div>
+        <a href="index.html" class="sidebar-home-link"><i class="fas fa-home"></i> Home</a>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-graduation-cap section-icon"></i><span>Foundations</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/foundations/index.html">SOC Foundations</a></li>
+                    <li><a href="pages/foundations/what-is-soc.html">What is a SOC?</a></li>
+                    <li><a href="pages/foundations/attack-basics.html">How Attacks Work</a></li>
+                    <li><a href="pages/foundations/tools-overview.html">Security Tools Overview</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-user-shield section-icon"></i><span>SOC Operations</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/soc-operations/index.html">Operations Overview</a></li>
+                    <li><a href="pages/soc-operations/l1-operations.html">L1 Operations</a></li>
+                    <li><a href="pages/soc-operations/l2-operations.html">L2 Operations</a></li>
+                    <li><a href="pages/soc-operations/incident-response.html">Incident Response</a></li>
+                    <li><a href="pages/soc-operations/metrics-kpis.html">Metrics & KPIs</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-book-open section-icon"></i><span>Playbooks</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/playbooks/index.html">All Playbooks</a></li>
+                    <li><a href="pages/playbooks/investigation/phishing.html">Phishing Investigation</a></li>
+                    <li><a href="pages/playbooks/investigation/malware.html">Malware Investigation</a></li>
+                    <li><a href="pages/playbooks/investigation/lateral-movement.html">Lateral Movement</a></li>
+                    <li><a href="pages/playbooks/investigation/data-exfiltration.html">Data Exfiltration</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-crosshairs section-icon"></i><span>Threat Hunting</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/threat-hunting/index.html">Hunting Overview</a></li>
+                    <li><a href="pages/threat-hunting/methodology.html">Methodology</a></li>
+                    <li><a href="pages/threat-hunting/hypothesis-development.html">Hypothesis Development</a></li>
+                    <li><a href="pages/threat-hunting/mitre-attack.html">MITRE ATT&CK</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-shield-halved section-icon"></i><span>Detection Engineering</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/detection-engineering/index.html">Detection Overview</a></li>
+                    <li><a href="pages/detection-engineering/detection-lifecycle.html">Detection Lifecycle</a></li>
+                    <li><a href="pages/detection-engineering/sigma-rules.html">Sigma Rules</a></li>
+                    <li><a href="pages/detection-engineering/detection-as-code.html">Detection as Code</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-database section-icon"></i><span>SIEM & Queries</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/sentinel/index.html">Microsoft Sentinel</a></li>
+                    <li><a href="pages/sentinel/kql-fundamentals.html">KQL Fundamentals</a></li>
+                    <li><a href="pages/sentinel/kql-library.html">KQL Library</a></li>
+                    <li><a href="pages/splunk/index.html">Splunk</a></li>
+                    <li><a href="pages/splunk/spl-library.html">SPL Library</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-server section-icon"></i><span>Log Analysis</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/log-analysis/index.html">Log Analysis Overview</a></li>
+                    <li><a href="pages/log-analysis/windows-events.html">Windows Events</a></li>
+                    <li><a href="pages/log-analysis/sysmon.html">Sysmon</a></li>
+                    <li><a href="pages/log-analysis/linux-logs.html">Linux Logs</a></li>
+                    <li><a href="pages/log-analysis/network-logs.html">Network Logs</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-cloud section-icon"></i><span>Cloud Security</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/cloud-security/index.html">Cloud Overview</a></li>
+                    <li><a href="pages/cloud-security/azure-security.html">Azure Security</a></li>
+                    <li><a href="pages/cloud-security/aws-security.html">AWS Security</a></li>
+                    <li><a href="pages/cloud-security/m365-security.html">M365 Security</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-sitemap section-icon"></i><span>Frameworks</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/frameworks/mitre-attack.html">MITRE ATT&CK</a></li>
+                    <li><a href="pages/frameworks/nist-csf.html">NIST CSF 2.0</a></li>
+                    <li><a href="pages/frameworks/cis-controls.html">CIS Controls v8</a></li>
+                    <li><a href="pages/risk-assessment/index.html">Risk Assessment</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-briefcase section-icon"></i><span>Interview Prep</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/interview-career/index.html">Interview Overview</a></li>
+                    <li><a href="pages/interview-career/interview-cheatsheet.html">Cheat Sheet</a></li>
+                    <li><a href="pages/interview-career/interview-behavioral.html">Behavioral Q&A</a></li>
+                    <li><a href="pages/interview-career/interview-technical.html">Technical Q&A</a></li>
+                    <li><a href="pages/interview-career/ai-security-risk.html">AI Security</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-book-bookmark section-icon"></i><span>References</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/references/index.html">All References</a></li>
+                    <li><a href="pages/references/cheatsheets.html">Cheatsheets</a></li>
+                    <li><a href="pages/references/glossary.html">Glossary</a></li>
+                    <li><a href="pages/infrastructure/log-sources.html">Log Sources</a></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <span>SOC Compendium</span>
+            <span>161+ Pages</span>
+        </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <button class="sidebar-toggle" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+    `;
+    
+    // Insert sidebar at the start of body
+    document.body.insertAdjacentHTML('afterbegin', sidebarHTML);
+    
+    // Mark current page as active
+    markActivePage();
+}
+
+function markActivePage() {
+    const currentPath = window.location.pathname;
+    const links = document.querySelectorAll('.sidebar-links a');
+    
+    links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (currentPath.endsWith(href) || currentPath.includes(href.replace('index.html', ''))) {
+            link.classList.add('active');
+            // Expand parent section
+            const section = link.closest('.sidebar-section');
+            if (section) {
+                section.classList.remove('collapsed');
+            }
+        }
+    });
+}
+
+/* ============================================
+   Sidebar Navigation - Collapsible Sections
    ============================================ */
 function initSidebar() {
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const sidebarClose = document.getElementById('sidebarClose');
+    const sidebarToggle = document.getElementById('sidebarToggle');
     
     // Toggle collapsible sections
-    const sectionHeaders = document.querySelectorAll('.nav-section-header[data-toggle]');
+    const sectionHeaders = document.querySelectorAll('.sidebar-section-header');
     
     sectionHeaders.forEach(header => {
-        // Set initial state
-        const targetId = header.getAttribute('data-toggle');
-        const targetNav = document.getElementById(targetId);
-        
-        if (targetNav && !targetNav.classList.contains('expanded')) {
-            header.classList.add('collapsed');
-        }
-        
-        header.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('data-toggle');
-            const targetNav = document.getElementById(targetId);
-            
-            if (targetNav) {
-                const isExpanded = targetNav.classList.contains('expanded');
-                
-                if (isExpanded) {
-                    targetNav.classList.remove('expanded');
-                    this.classList.add('collapsed');
-                } else {
-                    targetNav.classList.add('expanded');
-                    this.classList.remove('collapsed');
-                }
-            }
+        header.addEventListener('click', function() {
+            const section = this.closest('.sidebar-section');
+            section.classList.toggle('collapsed');
         });
     });
     
-    // Mobile sidebar toggle
-    if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', function() {
-            openSidebar();
-        });
-    }
+    // Start with all sections collapsed except the one with active link
+    document.querySelectorAll('.sidebar-section').forEach(section => {
+        if (!section.querySelector('.sidebar-links a.active')) {
+            section.classList.add('collapsed');
+        }
+    });
     
-    // Close sidebar button
-    if (sidebarClose) {
-        sidebarClose.addEventListener('click', function() {
-            closeSidebar();
+    // Mobile sidebar toggle
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('active');
+            this.querySelector('i').classList.toggle('fa-bars');
+            this.querySelector('i').classList.toggle('fa-times');
         });
     }
     
     // Close sidebar when clicking overlay
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', function() {
-            closeSidebar();
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+            sidebarToggle.querySelector('i').classList.add('fa-bars');
+            sidebarToggle.querySelector('i').classList.remove('fa-times');
         });
     }
     
     // Close sidebar on escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && sidebar && sidebar.classList.contains('open')) {
-            closeSidebar();
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
         }
     });
+}
+
+/* ============================================
+   Sidebar Search
+   ============================================ */
+function initSidebarSearch() {
+    const searchInput = document.getElementById('sidebarSearch');
     
-    // Expand section containing active link
-    const activeLink = document.querySelector('.nav-links li a.active');
-    if (activeLink) {
-        const parentNav = activeLink.closest('.nav-links');
-        if (parentNav && parentNav.id) {
-            parentNav.classList.add('expanded');
-            const header = document.querySelector(`[data-toggle="${parentNav.id}"]`);
-            if (header) {
-                header.classList.remove('collapsed');
+    if (searchInput) {
+        // Keyboard shortcut
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
             }
-        }
-    }
-    
-    function openSidebar() {
-        if (sidebar) sidebar.classList.add('open');
-        if (sidebarOverlay) sidebarOverlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeSidebar() {
-        if (sidebar) sidebar.classList.remove('open');
-        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-        document.body.style.overflow = '';
+        });
+        
+        // Filter sidebar links
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const sections = document.querySelectorAll('.sidebar-section');
+            
+            sections.forEach(section => {
+                const links = section.querySelectorAll('.sidebar-links a');
+                let hasMatch = false;
+                
+                links.forEach(link => {
+                    const text = link.textContent.toLowerCase();
+                    if (text.includes(query) || query === '') {
+                        link.style.display = '';
+                        hasMatch = true;
+                    } else {
+                        link.style.display = 'none';
+                    }
+                });
+                
+                // Show/hide section based on matches
+                if (hasMatch || query === '') {
+                    section.style.display = '';
+                    if (query !== '') {
+                        section.classList.remove('collapsed');
+                    }
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        });
     }
 }
 
@@ -136,27 +297,6 @@ function updateThemeIcon(theme) {
         if (icon) {
             icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
         }
-    }
-}
-
-/* ============================================
-   Search Functionality
-   ============================================ */
-function initSearch() {
-    const searchInput = document.getElementById('globalSearch');
-    
-    if (searchInput) {
-        // Keyboard shortcut
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                searchInput.focus();
-            }
-            
-            if (e.key === 'Escape' && document.activeElement === searchInput) {
-                searchInput.blur();
-            }
-        });
     }
 }
 

@@ -20,6 +20,13 @@ function injectSidebar() {
     if (document.getElementById('sidebar')) return;
     
     const sidebarHTML = `
+    <style>
+        /* Inline sidebar collapse styles - fallback */
+        .sidebar .sidebar-section .sidebar-links { display: none !important; }
+        .sidebar .sidebar-section.expanded .sidebar-links { display: block !important; }
+        .sidebar .sidebar-section-header .chevron { transform: rotate(-90deg); transition: transform 0.2s ease; }
+        .sidebar .sidebar-section.expanded .sidebar-section-header .chevron { transform: rotate(0deg); }
+    </style>
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <input type="text" class="sidebar-search" id="sidebarSearch" placeholder="Search pages... (Ctrl+K)">
@@ -489,28 +496,34 @@ function initSidebar() {
     const toggle = document.getElementById('sidebarToggle');
     const overlay = document.getElementById('sidebarOverlay');
     
-    if (!sidebar || !toggle) return;
-    
     // Toggle sidebar on mobile
-    toggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('active');
-    });
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            if (overlay) overlay.classList.toggle('active');
+        });
+    }
     
     // Close sidebar when clicking overlay
-    if (overlay) {
+    if (overlay && sidebar) {
         overlay.addEventListener('click', () => {
             sidebar.classList.remove('open');
             overlay.classList.remove('active');
         });
     }
     
-    // Section expand/collapse
+    // Section expand/collapse - MUST run even if toggle doesn't exist
     const headers = document.querySelectorAll('.sidebar-section-header');
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const section = header.parentElement;
+    console.log('Sidebar: Found', headers.length, 'section headers');
+    
+    headers.forEach((header, index) => {
+        header.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const section = this.parentElement;
+            const wasExpanded = section.classList.contains('expanded');
             section.classList.toggle('expanded');
+            console.log('Section', index, 'clicked. Was expanded:', wasExpanded, 'Now expanded:', section.classList.contains('expanded'));
         });
     });
     

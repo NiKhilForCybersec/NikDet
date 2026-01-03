@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security FAQ | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>FAQ</span>
+            </div>
+
+            <h1>Security Frequently Asked Questions</h1>
+            <p class="lead">Common questions about security controls, implementation, and best practices. If you're wondering "why" or "how" about any security topic, start here.</p>
+
+            <div class="content">
+                <h2 id="general">General Security Questions</h2>
+
+                <div style="margin: 1rem 0;">
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">What's the most important security control to implement first?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Answer: Multi-Factor Authentication (MFA)</strong></p>
+                            <p>MFA provides the highest security ROI. It stops 99.9% of account compromise attacks with minimal cost and disruption. Without MFA, a single stolen password gives attackers full access. Start with MFA for all users, then expand to other controls.</p>
+                            <p><strong>Priority order:</strong> 1) MFA → 2) Email security → 3) EDR → 4) Patching → 5) Backups → 6) Network segmentation</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">How much should we spend on security?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Industry benchmarks:</strong></p>
+                            <ul>
+                                <li>Average: 5-15% of IT budget</li>
+                                <li>Regulated industries (finance, healthcare): 10-20%</li>
+                                <li>Tech companies: 15-25%</li>
+                            </ul>
+                            <p><strong>Better question:</strong> What's the cost of a breach vs. the cost of prevention? Average breach costs $4.5M. If $200K/year in security prevents one breach every 10 years, that's $2M spent to prevent $4.5M loss.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Is "good enough" security acceptable?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Answer: It depends on what "good enough" means.</strong></p>
+                            <p>Perfect security doesn't exist. The goal is risk reduction to an acceptable level. What's acceptable depends on:</p>
+                            <ul>
+                                <li>What you're protecting (PII, financial data, IP)</li>
+                                <li>Regulatory requirements (you may not have a choice)</li>
+                                <li>Threat landscape (are you a high-value target?)</li>
+                                <li>Business impact tolerance (what can you survive?)</li>
+                            </ul>
+                            <p><strong>However:</strong> Basic hygiene (MFA, patching, backups, EDR) is non-negotiable. Skipping these is negligence, not risk acceptance.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">What's the difference between a vulnerability and a risk?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Vulnerability:</strong> A weakness that could be exploited. Example: Unpatched Apache server with known CVE.</p>
+                            <p><strong>Threat:</strong> Something that might exploit a vulnerability. Example: Attackers actively scanning for vulnerable Apache servers.</p>
+                            <p><strong>Risk:</strong> The likelihood and impact of a threat exploiting a vulnerability. Example: 70% chance of breach within 90 days, $500K potential loss.</p>
+                            <p><strong>Formula:</strong> Risk = Threat × Vulnerability × Impact</p>
+                            <p>You fix vulnerabilities, defend against threats, and manage risks.</p>
+                        </div>
+                    </details>
+                </div>
+
+                <h2 id="identity-faq">Identity & Access Questions</h2>
+
+                <div style="margin: 1rem 0;">
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Why can't I just use strong passwords instead of MFA?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Because passwords fail in multiple ways that MFA prevents:</strong></p>
+                            <ul>
+                                <li><strong>Phishing:</strong> Users enter strong passwords into fake login pages. MFA (especially FIDO2) won't work on fake sites.</li>
+                                <li><strong>Credential stuffing:</strong> Passwords from breached sites are tried everywhere. MFA blocks these attempts.</li>
+                                <li><strong>Keyloggers:</strong> Malware captures passwords but can't capture time-based MFA codes.</li>
+                                <li><strong>Password reuse:</strong> Users reuse passwords despite policies. MFA protects even if password is reused and leaked elsewhere.</li>
+                            </ul>
+                            <p>Strong passwords are still important, but they're only one factor. MFA adds something you HAVE or ARE to something you KNOW.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">What's the difference between SSO and MFA?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>SSO (Single Sign-On):</strong> Sign in once, access many applications. Convenience feature that reduces password fatigue.</p>
+                            <p><strong>MFA (Multi-Factor Authentication):</strong> Require two or more factors to prove identity. Security feature that prevents account takeover.</p>
+                            <p><strong>They complement each other:</strong></p>
+                            <ul>
+                                <li>SSO without MFA: Convenient but risky (one password = access to everything)</li>
+                                <li>MFA without SSO: Secure but annoying (MFA prompt for every app)</li>
+                                <li>SSO + MFA: Best of both (one MFA-protected login, access to all apps)</li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Should executives have different security requirements?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Yes, but STRICTER, not looser.</strong></p>
+                            <p>Executives are high-value targets for:</p>
+                            <ul>
+                                <li>BEC (Business Email Compromise) - impersonating execs for wire fraud</li>
+                                <li>Whaling - targeted phishing of executives</li>
+                                <li>Credential theft - their access is more valuable</li>
+                            </ul>
+                            <p><strong>Executives should have:</strong></p>
+                            <ul>
+                                <li>Phishing-resistant MFA (FIDO2 keys)</li>
+                                <li>Enhanced monitoring on their accounts</li>
+                                <li>More restricted mobile device policies</li>
+                                <li>Personal security awareness training</li>
+                            </ul>
+                            <p><strong>Never:</strong> Exempt executives from security controls because they're "too busy" or "important."</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">What's "Privileged Access Management" and do I need it?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>PAM protects admin accounts - the keys to your kingdom.</strong></p>
+                            <p>Admin accounts (Domain Admin, Global Admin, root) can:</p>
+                            <ul>
+                                <li>Access any data</li>
+                                <li>Create/delete users</li>
+                                <li>Disable security controls</li>
+                                <li>Deploy ransomware company-wide</li>
+                            </ul>
+                            <p><strong>PAM provides:</strong></p>
+                            <ul>
+                                <li><strong>Vaulting:</strong> Passwords stored securely, not known to admins</li>
+                                <li><strong>Just-in-time access:</strong> Admin rights granted only when needed, auto-expire</li>
+                                <li><strong>Session recording:</strong> Record what admins do with elevated access</li>
+                                <li><strong>Approval workflows:</strong> Require approval for sensitive access</li>
+                            </ul>
+                            <p><strong>You need PAM if:</strong> You have more than a handful of admins, or any regulatory requirements (SOX, PCI, HIPAA).</p>
+                        </div>
+                    </details>
+                </div>
+
+                <h2 id="data-faq">Data Protection Questions</h2>
+
+                <div style="margin: 1rem 0;">
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">If everything is encrypted, why do I need DLP?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Encryption and DLP solve different problems:</strong></p>
+                            <p><strong>Encryption:</strong> Protects data from unauthorized access if storage/transmission is compromised.</p>
+                            <p><strong>DLP:</strong> Prevents authorized users from sending data to unauthorized places.</p>
+                            <p><strong>Example:</strong> An employee has legitimate access to customer data (they can decrypt it). They email it to their personal account to take to a competitor. Encryption didn't stop this - they had the key. DLP would block or alert on the transfer.</p>
+                            <p>Encryption protects against outsiders. DLP protects against insiders and accidents.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">What data should be classified as "Confidential" vs "Restricted"?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Think about impact of exposure:</strong></p>
+                            <p><strong>Restricted (highest):</strong> Exposure causes severe harm</p>
+                            <ul>
+                                <li>Credentials, passwords, API keys</li>
+                                <li>Customer payment data (PCI)</li>
+                                <li>SSNs, government IDs</li>
+                                <li>Trade secrets, M&A data</li>
+                                <li>Health records (PHI)</li>
+                            </ul>
+                            <p><strong>Confidential:</strong> Exposure causes significant harm</p>
+                            <ul>
+                                <li>Financial reports (pre-release)</li>
+                                <li>Employee PII (non-SSN)</li>
+                                <li>Customer lists, pricing</li>
+                                <li>Contracts, legal documents</li>
+                                <li>Internal strategies</li>
+                            </ul>
+                            <p><strong>Rule of thumb:</strong> If it would be a news headline or trigger breach notification, it's at least Confidential. If it's regulated data or would cause existential business harm, it's Restricted.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Is cloud storage secure? Should I trust Microsoft/Google with my data?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Cloud providers are generally more secure than on-premises for most organizations.</strong></p>
+                            <p><strong>Why cloud is often more secure:</strong></p>
+                            <ul>
+                                <li>24/7 security teams larger than most companies</li>
+                                <li>Physical security at data centers</li>
+                                <li>Automatic patching and updates</li>
+                                <li>Encryption by default</li>
+                                <li>Compliance certifications (SOC 2, ISO 27001, etc.)</li>
+                            </ul>
+                            <p><strong>Your responsibilities:</strong></p>
+                            <ul>
+                                <li>Proper configuration (misconfig is #1 cloud breach cause)</li>
+                                <li>Access control (who can access your tenant)</li>
+                                <li>Data classification and handling</li>
+                                <li>Monitoring for suspicious activity</li>
+                            </ul>
+                            <p><strong>If you need more control:</strong> Use Customer-Managed Keys (CMK) so Microsoft/Google can't access your data even if compelled.</p>
+                        </div>
+                    </details>
+                </div>
+
+                <h2 id="endpoint-faq">Endpoint Security Questions</h2>
+
+                <div style="margin: 1rem 0;">
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">What's the difference between antivirus and EDR?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Antivirus (AV):</strong> Traditional, signature-based. Knows about malware X, blocks malware X.</p>
+                            <ul>
+                                <li>Matches files against database of known bad</li>
+                                <li>Can't detect new/unknown malware</li>
+                                <li>Limited visibility into what malware did</li>
+                            </ul>
+                            <p><strong>EDR (Endpoint Detection & Response):</strong> Behavior-based, comprehensive visibility.</p>
+                            <ul>
+                                <li>Monitors process behavior, not just file signatures</li>
+                                <li>Detects "living off the land" attacks using legitimate tools</li>
+                                <li>Records full timeline of activity for investigation</li>
+                                <li>Enables response: isolate machine, kill process, collect evidence</li>
+                            </ul>
+                            <p><strong>Analogy:</strong> AV is like a "wanted poster" that catches known criminals. EDR is like a security camera system that catches suspicious behavior and records everything.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Should I allow personal devices (BYOD)?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>It's a risk/convenience tradeoff with no universal answer.</strong></p>
+                            <p><strong>Arguments for BYOD:</strong></p>
+                            <ul>
+                                <li>Employee satisfaction, flexibility</li>
+                                <li>Cost savings (no device purchase)</li>
+                                <li>Users prefer their own devices</li>
+                                <li>Can't stop it entirely anyway</li>
+                            </ul>
+                            <p><strong>Arguments against BYOD:</strong></p>
+                            <ul>
+                                <li>Can't fully manage/secure</li>
+                                <li>Data exposure risk</li>
+                                <li>Support complexity</li>
+                                <li>Compliance challenges</li>
+                            </ul>
+                            <p><strong>If you allow BYOD:</strong></p>
+                            <ul>
+                                <li>Require device registration and compliance (MDM)</li>
+                                <li>Use app-level protection (MAM) to contain corporate data</li>
+                                <li>Limit what data can be accessed from BYOD</li>
+                                <li>Enable remote wipe of corporate data</li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">How quickly do I really need to patch?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Depends on the vulnerability, but faster than you think.</strong></p>
+                            <p><strong>Timeline reality:</strong></p>
+                            <ul>
+                                <li>Vulnerability disclosed → Exploits available: Often within hours/days</li>
+                                <li>Actively exploited vulnerabilities: Attackers already using them</li>
+                                <li>Average time to weaponize: 7-14 days for critical CVEs</li>
+                            </ul>
+                            <p><strong>Recommended SLAs:</strong></p>
+                            <ul>
+                                <li><strong>Critical + Actively exploited:</strong> 24-72 hours</li>
+                                <li><strong>Critical:</strong> 7 days</li>
+                                <li><strong>High:</strong> 14 days</li>
+                                <li><strong>Medium:</strong> 30 days</li>
+                                <li><strong>Low:</strong> 90 days</li>
+                            </ul>
+                            <p><strong>Reality check:</strong> If you can't patch quickly, have compensating controls (network isolation, additional monitoring, WAF rules).</p>
+                        </div>
+                    </details>
+                </div>
+
+                <h2 id="network-faq">Network Security Questions</h2>
+
+                <div style="margin: 1rem 0;">
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Do I still need a firewall if I'm in the cloud?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Yes, but it looks different.</strong></p>
+                            <p><strong>Traditional firewall role:</strong> Control traffic at network perimeter.</p>
+                            <p><strong>In cloud, you need:</strong></p>
+                            <ul>
+                                <li><strong>Cloud-native firewalls:</strong> Security Groups (AWS), NSGs (Azure), firewall rules (GCP)</li>
+                                <li><strong>Web Application Firewalls (WAF):</strong> Protect web apps from attacks</li>
+                                <li><strong>Cloud firewalls:</strong> Azure Firewall, AWS Network Firewall for centralized control</li>
+                                <li><strong>SaaS security:</strong> CASB for SaaS traffic visibility</li>
+                            </ul>
+                            <p>The perimeter moved, but the need for traffic control didn't disappear.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">What is Zero Trust and do I need it?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Zero Trust is a security model, not a product.</strong></p>
+                            <p><strong>Core principle:</strong> Never trust, always verify. Don't assume internal = safe.</p>
+                            <p><strong>Key components:</strong></p>
+                            <ul>
+                                <li><strong>Verify explicitly:</strong> Authenticate and authorize every access request based on all available data (identity, device, location, etc.)</li>
+                                <li><strong>Least privilege:</strong> Give minimum access needed, just-in-time</li>
+                                <li><strong>Assume breach:</strong> Design as if attackers are already inside</li>
+                            </ul>
+                            <p><strong>Do you need it?</strong> You should adopt Zero Trust principles. Full implementation takes time - it's a journey, not a destination. Start with:</p>
+                            <ul>
+                                <li>MFA everywhere</li>
+                                <li>Device compliance checks</li>
+                                <li>Network segmentation</li>
+                                <li>Least privilege access</li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Should I inspect encrypted (HTTPS) traffic?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>It's a tradeoff between security visibility and privacy/complexity.</strong></p>
+                            <p><strong>Arguments for TLS inspection:</strong></p>
+                            <ul>
+                                <li>90%+ of web traffic is encrypted - without inspection, you're blind</li>
+                                <li>Malware uses HTTPS to hide C2 traffic</li>
+                                <li>DLP can't see encrypted content</li>
+                            </ul>
+                            <p><strong>Arguments against:</strong></p>
+                            <ul>
+                                <li>Privacy concerns (you can see everything)</li>
+                                <li>Breaks certificate pinning in some apps</li>
+                                <li>Compliance issues in some industries</li>
+                                <li>Performance overhead</li>
+                            </ul>
+                            <p><strong>Best practice:</strong> Inspect with exceptions for banking, healthcare, and other sensitive sites. Be transparent with employees.</p>
+                        </div>
+                    </details>
+                </div>
+
+                <h2 id="monitoring-faq">Monitoring & Detection Questions</h2>
+
+                <div style="margin: 1rem 0;">
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">Do I need a SOC? Can't the tools just alert me?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Tools generate alerts. Humans analyze and respond.</strong></p>
+                            <p><strong>What happens without a SOC:</strong></p>
+                            <ul>
+                                <li>Alerts pile up unreviewed</li>
+                                <li>False positives overwhelm true positives</li>
+                                <li>No one to investigate when alerts fire at 2 AM</li>
+                                <li>Attacks go unnoticed for months</li>
+                            </ul>
+                            <p><strong>SOC options:</strong></p>
+                            <ul>
+                                <li><strong>In-house SOC:</strong> Full control, expensive (24/7 needs ~8-10 analysts minimum)</li>
+                                <li><strong>Managed SOC (MSSP/MDR):</strong> External team monitors, you respond to escalations. More affordable.</li>
+                                <li><strong>Hybrid:</strong> In-house during business hours, MSSP after hours</li>
+                            </ul>
+                            <p><strong>Minimum:</strong> Someone must review alerts daily. If you can't staff it, outsource it.</p>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">How do I know if I've been breached?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Often you don't - until it's obvious.</strong></p>
+                            <p><strong>Signs of compromise:</strong></p>
+                            <ul>
+                                <li>Unusual login locations or times</li>
+                                <li>New admin accounts you didn't create</li>
+                                <li>Unexpected software or services running</li>
+                                <li>High outbound data transfer</li>
+                                <li>Disabled security tools</li>
+                                <li>Customer reports of spam from your domain</li>
+                                <li>Ransomware note (obvious, but too late)</li>
+                            </ul>
+                            <p><strong>Proactive detection:</strong></p>
+                            <ul>
+                                <li>Regular threat hunting</li>
+                                <li>SIEM with behavioral analytics</li>
+                                <li>Compromise assessments</li>
+                                <li>External attack surface monitoring</li>
+                                <li>Dark web monitoring for leaked credentials</li>
+                            </ul>
+                        </div>
+                    </details>
+
+                    <details style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 0.5rem 0;">
+                        <summary style="padding: 1rem; cursor: pointer; font-weight: 600;">How long should I keep security logs?</summary>
+                        <div style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                            <p><strong>Long enough to investigate incidents, meet compliance, and support legal needs.</strong></p>
+                            <p><strong>Minimum recommendations:</strong></p>
+                            <ul>
+                                <li><strong>Security alerts/incidents:</strong> 7 years (legal)</li>
+                                <li><strong>Authentication logs:</strong> 1-2 years</li>
+                                <li><strong>Firewall/network logs:</strong> 90 days hot, 1 year archive</li>
+                                <li><strong>Endpoint telemetry:</strong> 30-90 days hot</li>
+                                <li><strong>Email logs:</strong> 90 days (longer for compliance)</li>
+                            </ul>
+                            <p><strong>Regulatory requirements vary:</strong></p>
+                            <ul>
+                                <li>PCI-DSS: 1 year, 3 months immediately available</li>
+                                <li>HIPAA: 6 years</li>
+                                <li>SOX: 7 years</li>
+                                <li>GDPR: As long as necessary (minimize)</li>
+                            </ul>
+                        </div>
+                    </details>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

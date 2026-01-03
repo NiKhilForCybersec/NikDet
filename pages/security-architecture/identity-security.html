@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Security Configuration | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Identity Security</span>
+            </div>
+
+            <h1>Identity Security Configuration Guide</h1>
+            <p class="lead">Complete implementation guide for enterprise identity security including Entra ID, Active Directory, MFA, Conditional Access, PAM, and identity governance.</p>
+
+            <div class="content">
+                <h2 id="entra-config">Entra ID Security Configuration</h2>
+
+                <h3>Security Defaults vs Conditional Access</h3>
+                <table>
+                    <thead><tr><th>Feature</th><th>Security Defaults</th><th>Conditional Access</th><th>Recommendation</th></tr></thead>
+                    <tbody>
+                        <tr><td>MFA Requirement</td><td>All users, all apps</td><td>Customizable per scenario</td><td>CA for enterprises</td></tr>
+                        <tr><td>Legacy Auth Block</td><td>Blocked</td><td>Configurable</td><td>Block via CA</td></tr>
+                        <tr><td>Admin Protection</td><td>MFA always</td><td>Risk-based + device</td><td>CA with stricter controls</td></tr>
+                        <tr><td>Cost</td><td>Free</td><td>P1/P2 required</td><td>Invest in P2</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Conditional Access Policies - Recommended Set</h3>
+                <table>
+                    <thead><tr><th>Policy Name</th><th>Target</th><th>Conditions</th><th>Controls</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>CA001-Block-Legacy-Auth</strong></td><td>All users</td><td>Client apps = Other, Exchange ActiveSync</td><td>Block</td></tr>
+                        <tr><td><strong>CA002-Require-MFA-All</strong></td><td>All users</td><td>All cloud apps</td><td>Require MFA</td></tr>
+                        <tr><td><strong>CA003-Require-Compliant-Device</strong></td><td>All users</td><td>All cloud apps, exclude trusted locations</td><td>Require compliant device</td></tr>
+                        <tr><td><strong>CA004-Block-High-Risk-Signin</strong></td><td>All users</td><td>Sign-in risk = High</td><td>Block</td></tr>
+                        <tr><td><strong>CA005-Require-Password-Change-Risk</strong></td><td>All users</td><td>User risk = High</td><td>Require password change + MFA</td></tr>
+                        <tr><td><strong>CA006-Admin-Phishing-Resistant</strong></td><td>Admin roles</td><td>All cloud apps</td><td>Require phishing-resistant MFA (FIDO2)</td></tr>
+                        <tr><td><strong>CA007-Block-Countries</strong></td><td>All users</td><td>Location = blocked countries</td><td>Block</td></tr>
+                        <tr><td><strong>CA008-Require-ToU</strong></td><td>All users</td><td>First access</td><td>Require Terms of Use</td></tr>
+                        <tr><td><strong>CA009-Session-Controls</strong></td><td>All users</td><td>Unmanaged devices</td><td>App-enforced restrictions, sign-in frequency 4 hrs</td></tr>
+                        <tr><td><strong>CA010-Admin-Session</strong></td><td>Admin roles</td><td>Azure portal, M365 admin</td><td>Sign-in frequency 1 hr, no persistent browser</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Authentication Methods Configuration</h3>
+                <table>
+                    <thead><tr><th>Method</th><th>Security Level</th><th>Enabled For</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>FIDO2 Security Keys</td><td>Highest (Phishing-resistant)</td><td>Admins, high-security users</td><td>Enforce attestation, restrict to approved vendors</td></tr>
+                        <tr><td>Windows Hello for Business</td><td>High (Phishing-resistant)</td><td>All Windows users</td><td>Cloud trust or hybrid deployment</td></tr>
+                        <tr><td>Microsoft Authenticator (Passwordless)</td><td>High</td><td>All users</td><td>Number matching ON, location ON</td></tr>
+                        <tr><td>Microsoft Authenticator (Push)</td><td>Medium-High</td><td>All users</td><td>Number matching ON, additional context ON</td></tr>
+                        <tr><td>Phone (SMS/Voice)</td><td>Low</td><td>Disabled or limited</td><td>Disable for admins, use as backup only</td></tr>
+                        <tr><td>Email OTP</td><td>Low</td><td>Guests only</td><td>Enable for B2B guests</td></tr>
+                        <tr><td>Software OATH tokens</td><td>Medium</td><td>Legacy systems</td><td>Time-based only, 30 sec interval</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Identity Protection Configuration</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>User Risk Policy</th><th>Sign-in Risk Policy</th></tr></thead>
+                    <tbody>
+                        <tr><td>Target</td><td>All users</td><td>All users</td></tr>
+                        <tr><td>Risk Level Threshold</td><td>High</td><td>Medium and above</td></tr>
+                        <tr><td>Controls</td><td>Require password change + MFA</td><td>Require MFA</td></tr>
+                        <tr><td>Exclude</td><td>Break-glass accounts</td><td>Break-glass accounts</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="privileged-access">Privileged Access Management</h2>
+
+                <h3>Admin Tiering Model</h3>
+                <table>
+                    <thead><tr><th>Tier</th><th>Scope</th><th>Examples</th><th>Controls</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Tier 0</strong></td><td>Identity infrastructure</td><td>Domain Admins, Schema Admins, Azure AD Global Admin</td><td>PAW required, FIDO2, 1hr sessions, vaulted</td></tr>
+                        <tr><td><strong>Tier 1</strong></td><td>Server/Application</td><td>Server Admins, SQL Admins, Exchange Admins</td><td>Privileged workstation, MFA, 4hr sessions</td></tr>
+                        <tr><td><strong>Tier 2</strong></td><td>Workstation/User</td><td>Helpdesk, Desktop Support</td><td>Standard workstation, MFA</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Privileged Identity Management (PIM) Configuration</h3>
+                <table>
+                    <thead><tr><th>Role</th><th>Assignment Type</th><th>Activation Duration</th><th>Approval Required</th><th>MFA Required</th></tr></thead>
+                    <tbody>
+                        <tr><td>Global Administrator</td><td>Eligible only</td><td>1 hour max</td><td>Yes (2 approvers)</td><td>Yes (FIDO2)</td></tr>
+                        <tr><td>Privileged Role Administrator</td><td>Eligible only</td><td>1 hour max</td><td>Yes</td><td>Yes (FIDO2)</td></tr>
+                        <tr><td>Security Administrator</td><td>Eligible only</td><td>4 hours max</td><td>Yes</td><td>Yes</td></tr>
+                        <tr><td>Exchange Administrator</td><td>Eligible only</td><td>8 hours max</td><td>No</td><td>Yes</td></tr>
+                        <tr><td>User Administrator</td><td>Eligible only</td><td>8 hours max</td><td>No</td><td>Yes</td></tr>
+                        <tr><td>Helpdesk Administrator</td><td>Permanent for L1</td><td>N/A</td><td>N/A</td><td>Yes</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Break-Glass Account Configuration</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Configuration</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>Number of accounts</td><td>2 minimum</td><td>Redundancy</td></tr>
+                        <tr><td>Account naming</td><td>Non-obvious (not "BreakGlass")</td><td>Avoid targeting</td></tr>
+                        <tr><td>Authentication</td><td>Long complex password (25+ chars)</td><td>Offline access, no MFA</td></tr>
+                        <tr><td>MFA</td><td>Excluded from MFA policies</td><td>Emergency access when MFA down</td></tr>
+                        <tr><td>Conditional Access</td><td>Excluded from all blocking policies</td><td>Emergency access</td></tr>
+                        <tr><td>Password storage</td><td>Physical safe, split knowledge</td><td>Prevent unauthorized use</td></tr>
+                        <tr><td>Monitoring</td><td>Alert on ANY login</td><td>Detect misuse immediately</td></tr>
+                        <tr><td>Testing</td><td>Quarterly use test</td><td>Verify functionality</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ad-security">Active Directory Security Hardening</h2>
+
+                <h3>Critical AD Security Settings</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Configuration</th><th>GPO/Location</th></tr></thead>
+                    <tbody>
+                        <tr><td>LAPS (Local Admin Password Solution)</td><td>Enabled, 30-day rotation</td><td>GPO + Intune</td></tr>
+                        <tr><td>Protected Users Group</td><td>All privileged accounts</td><td>AD group membership</td></tr>
+                        <tr><td>Credential Guard</td><td>Enabled with UEFI lock</td><td>GPO - Device Guard</td></tr>
+                        <tr><td>LDAP Signing</td><td>Required</td><td>Domain Controller policy</td></tr>
+                        <tr><td>LDAP Channel Binding</td><td>Required (when supported)</td><td>Domain Controller policy</td></tr>
+                        <tr><td>SMB Signing</td><td>Required</td><td>GPO - Security Options</td></tr>
+                        <tr><td>NTLMv2 Only</td><td>Send NTLMv2 response only</td><td>GPO - Security Options</td></tr>
+                        <tr><td>Kerberos Armoring</td><td>Enabled (FAST)</td><td>GPO + DC configuration</td></tr>
+                        <tr><td>AdminSDHolder</td><td>Review protected groups</td><td>AD configuration</td></tr>
+                        <tr><td>Recycle Bin</td><td>Enabled</td><td>AD optional feature</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Service Account Security</h3>
+                <table>
+                    <thead><tr><th>Account Type</th><th>Use Case</th><th>Password Management</th><th>Privileges</th></tr></thead>
+                    <tbody>
+                        <tr><td>gMSA (Group Managed Service Account)</td><td>Windows services, scheduled tasks</td><td>Automatic (AD managed)</td><td>Minimum required</td></tr>
+                        <tr><td>sMSA (Standalone MSA)</td><td>Single server services</td><td>Automatic (AD managed)</td><td>Minimum required</td></tr>
+                        <tr><td>Standard service account</td><td>Legacy applications only</td><td>PAM vaulted, 90-day rotation</td><td>Minimum required</td></tr>
+                        <tr><td>Workload Identity (Entra)</td><td>Cloud applications</td><td>Certificate or federated</td><td>Minimum required</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="monitoring">Identity Monitoring Requirements</h2>
+
+                <h3>Critical Identity Alerts</h3>
+                <table>
+                    <thead><tr><th>Alert</th><th>Source</th><th>Severity</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Global Admin role assigned</td><td>Entra ID Audit</td><td>Critical</td><td>Verify immediately, reverse if unauthorized</td></tr>
+                        <tr><td>Break-glass account login</td><td>Sign-in logs</td><td>Critical</td><td>Verify legitimate emergency</td></tr>
+                        <tr><td>Conditional Access policy disabled</td><td>Entra ID Audit</td><td>High</td><td>Verify change, investigate</td></tr>
+                        <tr><td>Legacy authentication success</td><td>Sign-in logs</td><td>Medium</td><td>Identify source, migrate or block</td></tr>
+                        <tr><td>High-risk sign-in</td><td>Identity Protection</td><td>High</td><td>Investigate, reset credentials if needed</td></tr>
+                        <tr><td>User added to Domain Admins</td><td>AD Security log 4728</td><td>Critical</td><td>Verify immediately</td></tr>
+                        <tr><td>KRBTGT password change</td><td>AD Security log</td><td>Critical</td><td>Verify legitimate (should be scheduled)</td></tr>
+                        <tr><td>DCSync attack detected</td><td>Defender for Identity</td><td>Critical</td><td>Immediate IR, assume compromise</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Identity Security KQL Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Admin role assignments</span>
+AuditLogs
+| where OperationName has "Add member to role"
+| extend Role = tostring(TargetResources[0].modifiedProperties[1].newValue)
+| extend Target = tostring(TargetResources[0].userPrincipalName)
+| where Role has_any ("Global Administrator", "Privileged Role", "Security Admin")
+| project TimeGenerated, InitiatedBy.user.userPrincipalName, Target, Role
+
+<span style="color: #6aa3f7;">// Conditional Access policy changes</span>
+AuditLogs
+| where OperationName has_any ("Update conditional access policy", "Delete conditional access policy")
+| project TimeGenerated, InitiatedBy.user.userPrincipalName, OperationName, TargetResources
+
+<span style="color: #6aa3f7;">// MFA registration changes</span>
+AuditLogs
+| where OperationName has_any ("User registered security info", "User deleted security info")
+| project TimeGenerated, InitiatedBy.user.userPrincipalName, OperationName
+
+<span style="color: #6aa3f7;">// PIM role activations</span>
+AuditLogs
+| where OperationName == "Add member to role in PIM completed (permanent)"
+   or OperationName == "Add eligible member to role in PIM completed"
+| extend Role = tostring(TargetResources[0].displayName)
+| project TimeGenerated, InitiatedBy.user.userPrincipalName, Role
+</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

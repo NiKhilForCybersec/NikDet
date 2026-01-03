@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Security Configuration | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Network Security</span>
+            </div>
+
+            <h1>Network Security Configuration Guide</h1>
+            <p class="lead">Complete implementation guide for enterprise network security including firewalls, segmentation, IDS/IPS, DNS security, zero trust network access, and monitoring.</p>
+
+            <div class="content">
+                <h2 id="segmentation">Network Segmentation</h2>
+
+                <h3>Enterprise Network Zones</h3>
+                <table>
+                    <thead><tr><th>Zone</th><th>Purpose</th><th>Trust Level</th><th>Access Controls</th><th>Example Systems</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>Restricted</strong></td><td>Highest security assets</td><td>Highest</td><td>Explicit allow, MFA, logging</td><td>Domain controllers, PAM, SIEM</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Datacenter</strong></td><td>Production servers</td><td>High</td><td>Service-based, app-aware</td><td>App servers, databases</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Corporate</strong></td><td>End-user devices</td><td>Medium</td><td>User + device auth</td><td>Workstations, printers</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Guest</strong></td><td>Untrusted devices</td><td>Low</td><td>Internet only</td><td>Guest WiFi, contractors</td></tr>
+                        <tr><td style="color: #6aa3f7;"><strong>DMZ</strong></td><td>External-facing</td><td>Untrusted</td><td>Strict inbound/outbound</td><td>Web servers, email gateway</td></tr>
+                        <tr><td style="color: #a78bf6;"><strong>OT/ICS</strong></td><td>Operational technology</td><td>Isolated</td><td>Air-gapped or data diode</td><td>SCADA, PLCs, HMIs</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>VLAN Design</h3>
+                <table>
+                    <thead><tr><th>VLAN ID</th><th>Name</th><th>Subnet</th><th>Purpose</th><th>Gateway/Firewall</th></tr></thead>
+                    <tbody>
+                        <tr><td>10</td><td>Management</td><td>10.10.10.0/24</td><td>Network device management</td><td>Restricted access</td></tr>
+                        <tr><td>20</td><td>Servers-Prod</td><td>10.10.20.0/24</td><td>Production servers</td><td>Datacenter firewall</td></tr>
+                        <tr><td>30</td><td>Servers-Dev</td><td>10.10.30.0/24</td><td>Development servers</td><td>Datacenter firewall</td></tr>
+                        <tr><td>40</td><td>Database</td><td>10.10.40.0/24</td><td>Database servers</td><td>Restricted, app-only</td></tr>
+                        <tr><td>100</td><td>Corporate-Users</td><td>10.10.100.0/23</td><td>Employee workstations</td><td>Internal firewall</td></tr>
+                        <tr><td>110</td><td>Corporate-Wireless</td><td>10.10.110.0/24</td><td>Corporate WiFi</td><td>Internal firewall</td></tr>
+                        <tr><td>200</td><td>Guest</td><td>172.16.200.0/24</td><td>Guest network</td><td>Internet only</td></tr>
+                        <tr><td>250</td><td>IoT</td><td>10.10.250.0/24</td><td>IoT devices</td><td>Isolated, monitored</td></tr>
+                        <tr><td>500</td><td>DMZ</td><td>192.168.1.0/24</td><td>Public-facing</td><td>Perimeter firewall</td></tr>
+                        <tr><td>600</td><td>OT</td><td>10.100.0.0/16</td><td>Industrial control</td><td>Data diode/DMZ</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="firewall">Firewall Configuration</h2>
+
+                <h3>Firewall Rule Best Practices</h3>
+                <table>
+                    <thead><tr><th>Principle</th><th>Implementation</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td>Default deny</td><td>Implicit deny at rule end</td><td>Drop all traffic not explicitly allowed</td></tr>
+                        <tr><td>Least privilege</td><td>Only required ports/protocols</td><td>Allow TCP 443 to web server, not "any"</td></tr>
+                        <tr><td>Specific sources</td><td>Named IP ranges/groups</td><td>Allow from 10.10.100.0/24, not "any"</td></tr>
+                        <tr><td>Application awareness</td><td>Layer 7 inspection</td><td>Allow "Salesforce" not just TCP 443</td></tr>
+                        <tr><td>Logging</td><td>Log all denied, sample allowed</td><td>100% deny logs, 10% allow sample</td></tr>
+                        <tr><td>Regular review</td><td>Quarterly rule review</td><td>Remove unused rules, validate business need</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Standard Firewall Rules</h3>
+                <table>
+                    <thead><tr><th>Rule</th><th>Source</th><th>Destination</th><th>Service</th><th>Action</th><th>Log</th></tr></thead>
+                    <tbody>
+                        <tr><td>Block known malicious</td><td>Threat intel feeds</td><td>Any</td><td>Any</td><td>Block</td><td>Yes</td></tr>
+                        <tr><td>Block geo (embargoed)</td><td>Blocked countries</td><td>Any</td><td>Any</td><td>Block</td><td>Yes</td></tr>
+                        <tr><td>Allow DNS</td><td>Internal</td><td>DNS servers</td><td>UDP 53</td><td>Allow</td><td>Sample</td></tr>
+                        <tr><td>Allow web (outbound)</td><td>Corporate</td><td>Internet</td><td>HTTP/HTTPS</td><td>Allow (inspect)</td><td>Sample</td></tr>
+                        <tr><td>Allow M365</td><td>Corporate</td><td>M365 IPs</td><td>HTTPS</td><td>Allow</td><td>No</td></tr>
+                        <tr><td>Deny SMB outbound</td><td>Any</td><td>Internet</td><td>TCP 445</td><td>Block</td><td>Yes</td></tr>
+                        <tr><td>Deny RDP outbound</td><td>Any</td><td>Internet</td><td>TCP 3389</td><td>Block</td><td>Yes</td></tr>
+                        <tr><td>Allow servers to DB</td><td>App servers</td><td>DB VLAN</td><td>SQL (1433)</td><td>Allow</td><td>Sample</td></tr>
+                        <tr><td>Default deny</td><td>Any</td><td>Any</td><td>Any</td><td>Block</td><td>Yes</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ids-ips">IDS/IPS Configuration</h2>
+
+                <h3>Detection Categories</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Action</th><th>Examples</th><th>Tuning Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Malware C2</td><td>Block + Alert</td><td>Cobalt Strike, Metasploit, RATs</td><td>High confidence, low FP</td></tr>
+                        <tr><td>Exploit attempts</td><td>Block + Alert</td><td>CVE exploits, buffer overflow</td><td>Keep signatures updated</td></tr>
+                        <tr><td>Web attacks</td><td>Block + Alert</td><td>SQLi, XSS, RCE</td><td>Tune for web apps</td></tr>
+                        <tr><td>Reconnaissance</td><td>Alert only</td><td>Port scans, directory traversal</td><td>High volume, tune threshold</td></tr>
+                        <tr><td>Policy violations</td><td>Alert only</td><td>Cleartext passwords, P2P</td><td>Informational</td></tr>
+                        <tr><td>Anomaly</td><td>Alert only</td><td>Unusual protocols, data sizes</td><td>Baseline required</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>IPS Bypass Prevention</h3>
+                <table>
+                    <thead><tr><th>Evasion Technique</th><th>Countermeasure</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Fragmentation</td><td>Fragment reassembly</td><td>Enable full reassembly before inspection</td></tr>
+                        <tr><td>Encryption (TLS)</td><td>TLS inspection</td><td>Decrypt, inspect, re-encrypt (with exceptions)</td></tr>
+                        <tr><td>Protocol tunneling</td><td>Deep packet inspection</td><td>Inspect HTTP content, DNS payloads</td></tr>
+                        <tr><td>Encoding</td><td>Normalize before inspection</td><td>URL decode, base64 decode</td></tr>
+                        <tr><td>Slow attacks</td><td>Session timeout</td><td>Reasonable timeout values</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dns-security">DNS Security</h2>
+
+                <h3>DNS Security Configuration</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Technology</th><th>Configuration</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>Protective DNS</td><td>Cisco Umbrella / Cloudflare Gateway</td><td>All DNS through protective service</td><td>Block malicious domains</td></tr>
+                        <tr><td>DNS logging</td><td>Windows DNS / BIND logging</td><td>Log all queries with client IP</td><td>Forensics, hunting</td></tr>
+                        <tr><td>DNSSEC</td><td>Domain validation</td><td>Validate signed responses</td><td>Prevent spoofing</td></tr>
+                        <tr><td>DNS over HTTPS block</td><td>Firewall rule</td><td>Block DoH providers except corporate</td><td>Maintain visibility</td></tr>
+                        <tr><td>Split DNS</td><td>Internal/external views</td><td>Internal names not resolvable externally</td><td>Information hiding</td></tr>
+                        <tr><td>Sinkholing</td><td>Internal DNS</td><td>Redirect known-bad to sinkhole</td><td>Contain infections</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>DNS Threat Detection</h3>
+                <table>
+                    <thead><tr><th>Threat</th><th>Indicator</th><th>Detection</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>DNS tunneling</td><td>Long subdomain queries, high volume</td><td>Query length >50 chars, >500 queries to single domain</td><td>Block domain, investigate host</td></tr>
+                        <tr><td>DGA domains</td><td>Random-looking domains</td><td>Entropy analysis, ML models</td><td>Block, investigate host</td></tr>
+                        <tr><td>Fast flux</td><td>Rapidly changing IPs</td><td>Multiple A records, short TTL</td><td>Block domain</td></tr>
+                        <tr><td>Typosquatting</td><td>Misspelled legitimate domains</td><td>Edit distance analysis</td><td>Block, alert users</td></tr>
+                        <tr><td>Newly registered</td><td>Domain age <30 days</td><td>WHOIS lookup, threat intel</td><td>Extra scrutiny</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ztna">Zero Trust Network Access</h2>
+
+                <h3>ZTNA Architecture</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Function</th><th>Technology Options</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Identity Provider</td><td>User authentication</td><td>Entra ID, Okta, Ping</td><td>MFA required, risk-based</td></tr>
+                        <tr><td>Device Trust</td><td>Endpoint validation</td><td>Intune, JAMF, CrowdStrike</td><td>Compliance required</td></tr>
+                        <tr><td>Policy Engine</td><td>Access decisions</td><td>ZTNA provider</td><td>Least privilege, context-aware</td></tr>
+                        <tr><td>ZTNA Connector</td><td>Application access</td><td>Zscaler, Cloudflare, Netskope</td><td>Per-application access</td></tr>
+                        <tr><td>Microsegmentation</td><td>Workload isolation</td><td>Illumio, Guardicore</td><td>App-to-app policies</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>ZTNA Access Policies</h3>
+                <table>
+                    <thead><tr><th>Application</th><th>User Group</th><th>Device Requirement</th><th>Network</th><th>Additional Checks</th></tr></thead>
+                    <tbody>
+                        <tr><td>Email (M365)</td><td>All employees</td><td>Managed or compliant</td><td>Any</td><td>MFA, CA policies</td></tr>
+                        <tr><td>Internal apps</td><td>Employees + contractors</td><td>Managed only</td><td>Any</td><td>MFA, app-specific</td></tr>
+                        <tr><td>Finance systems</td><td>Finance team</td><td>Managed, encrypted</td><td>Corporate or VPN</td><td>MFA, location check</td></tr>
+                        <tr><td>Dev environments</td><td>Engineering</td><td>Managed</td><td>Any</td><td>MFA, just-in-time</td></tr>
+                        <tr><td>Admin consoles</td><td>IT admins</td><td>PAW only</td><td>Corporate only</td><td>FIDO2 MFA, session recording</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="monitoring">Network Monitoring</h2>
+
+                <h3>Network Detection Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Outbound connections to rare destinations</span>
+CommonSecurityLog
+| where TimeGenerated > ago(24h)
+| where DeviceAction == "Allow"
+| where DestinationIP !startswith "10." and DestinationIP !startswith "192.168."
+| summarize ConnectionCount = count(), Bytes = sum(SentBytes) by DestinationIP, DestinationPort
+| where ConnectionCount < 5
+| order by Bytes desc
+
+<span style="color: #6aa3f7;">// KQL - Potential lateral movement</span>
+CommonSecurityLog
+| where DestinationPort in (445, 135, 3389, 22, 5985)
+| where SourceIP startswith "10." and DestinationIP startswith "10."
+| summarize TargetCount = dcount(DestinationIP) by SourceIP, DestinationPort
+| where TargetCount > 10
+
+<span style="color: #6aa3f7;">// KQL - DNS query anomalies</span>
+DnsEvents
+| where TimeGenerated > ago(1h)
+| extend SubdomainLength = strlen(tostring(split(Name, ".")[0]))
+| where SubdomainLength > 40
+| summarize Count = count() by Name, ClientIP
+| where Count > 10
+
+<span style="color: #6aa3f7;">// KQL - Large outbound transfers</span>
+CommonSecurityLog
+| where SentBytes > 104857600  // 100MB
+| where DestinationIP !startswith "10."
+| project TimeGenerated, SourceIP, DestinationIP, SentBytes, ApplicationProtocol
+</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

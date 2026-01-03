@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Security Configuration | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Email Security</span>
+            </div>
+
+            <h1>Email Security Configuration Guide</h1>
+            <p class="lead">Complete implementation guide for enterprise email security including authentication, anti-phishing, anti-malware, encryption, and DLP for Microsoft 365 and hybrid environments.</p>
+
+            <div class="content">
+                <h2 id="authentication">Email Authentication (SPF/DKIM/DMARC)</h2>
+
+                <h3>SPF Configuration</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Record</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>Basic SPF</td><td><code>v=spf1 include:spf.protection.outlook.com -all</code></td><td>M365 only sending</td></tr>
+                        <tr><td>With marketing</td><td><code>v=spf1 include:spf.protection.outlook.com include:sendgrid.net -all</code></td><td>M365 + SendGrid</td></tr>
+                        <tr><td>On-prem relay</td><td><code>v=spf1 ip4:203.0.113.10 include:spf.protection.outlook.com -all</code></td><td>Hybrid with on-prem relay</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>DKIM Configuration</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Value</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Selector 1 CNAME</td><td>selector1._domainkey → selector1-domain-com._domainkey.tenant.onmicrosoft.com</td><td>Primary signing key</td></tr>
+                        <tr><td>Selector 2 CNAME</td><td>selector2._domainkey → selector2-domain-com._domainkey.tenant.onmicrosoft.com</td><td>Rotation key</td></tr>
+                        <tr><td>Key rotation</td><td>Automatic by Microsoft</td><td>Quarterly rotation</td></tr>
+                        <tr><td>Signing</td><td>Enabled for all outbound</td><td>Enable in Defender portal</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>DMARC Configuration</h3>
+                <table>
+                    <thead><tr><th>Phase</th><th>Record</th><th>Duration</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>1. Monitor</td><td><code>v=DMARC1; p=none; rua=mailto:dmarc@company.com; ruf=mailto:dmarc@company.com</code></td><td>2-4 weeks</td><td>Collect reports, no enforcement</td></tr>
+                        <tr><td>2. Quarantine</td><td><code>v=DMARC1; p=quarantine; pct=10; rua=mailto:dmarc@company.com</code></td><td>2-4 weeks</td><td>Start enforcement at 10%</td></tr>
+                        <tr><td>3. Quarantine 50%</td><td><code>v=DMARC1; p=quarantine; pct=50; rua=mailto:dmarc@company.com</code></td><td>2 weeks</td><td>Increase enforcement</td></tr>
+                        <tr><td>4. Reject</td><td><code>v=DMARC1; p=reject; rua=mailto:dmarc@company.com</code></td><td>Ongoing</td><td>Full enforcement</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="defender">Microsoft Defender for Office 365</h2>
+
+                <h3>Safe Attachments Policy</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Recommended Value</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>Action</td><td>Dynamic Delivery</td><td>Immediate delivery, attachment scanned</td></tr>
+                        <tr><td>Redirect</td><td>Enabled → security@company.com</td><td>Quarantined items reviewed</td></tr>
+                        <tr><td>Apply if malware detected</td><td>Replace with warning</td><td>User notification</td></tr>
+                        <tr><td>SharePoint/OneDrive/Teams</td><td>Enabled</td><td>Scan files in all locations</td></tr>
+                        <tr><td>Priority</td><td>0 (highest)</td><td>Apply before other policies</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Safe Links Policy</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Recommended Value</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>Action</td><td>On - URLs rewritten, checked on click</td><td>Time-of-click protection</td></tr>
+                        <tr><td>Apply to Office apps</td><td>Enabled</td><td>Protect links in documents</td></tr>
+                        <tr><td>Apply to Teams</td><td>Enabled</td><td>Protect links in chat</td></tr>
+                        <tr><td>Track clicks</td><td>Enabled</td><td>Forensics and reporting</td></tr>
+                        <tr><td>Let users click through</td><td>Disabled</td><td>Block access to known bad</td></tr>
+                        <tr><td>Do not rewrite</td><td>Specific trusted URLs only</td><td>Minimize exclusions</td></tr>
+                        <tr><td>Display org branding</td><td>Enabled</td><td>User trust in warning pages</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Anti-Phishing Policy</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Standard</th><th>Strict</th><th>Target</th></tr></thead>
+                    <tbody>
+                        <tr><td>Impersonation - Users</td><td>Quarantine if impersonating protected users</td><td>Same</td><td>Executives, VIPs</td></tr>
+                        <tr><td>Impersonation - Domains</td><td>Quarantine if impersonating protected domains</td><td>Same</td><td>Company domains, partners</td></tr>
+                        <tr><td>Mailbox intelligence</td><td>Enabled, move to junk</td><td>Enabled, quarantine</td><td>All users</td></tr>
+                        <tr><td>Spoof intelligence</td><td>Enabled, move to junk</td><td>Enabled, quarantine</td><td>All</td></tr>
+                        <tr><td>First contact safety tip</td><td>Enabled</td><td>Enabled</td><td>All</td></tr>
+                        <tr><td>User impersonation safety tip</td><td>Enabled</td><td>Enabled</td><td>All</td></tr>
+                        <tr><td>Unusual characters tip</td><td>Enabled</td><td>Enabled</td><td>All</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="transport-rules">Transport Rules (Mail Flow)</h2>
+
+                <h3>Recommended Transport Rules</h3>
+                <table>
+                    <thead><tr><th>Rule Name</th><th>Condition</th><th>Action</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>External sender warning</td><td>Sender is external</td><td>Prepend disclaimer "[External]"</td><td>User awareness</td></tr>
+                        <tr><td>Block executable attachments</td><td>Attachment extension is exe, bat, ps1, etc.</td><td>Reject with message</td><td>Malware prevention</td></tr>
+                        <tr><td>Block password-protected ZIP</td><td>Attachment is password protected</td><td>Reject or quarantine</td><td>Evasion prevention</td></tr>
+                        <tr><td>Encrypt if confidential</td><td>Subject or body contains "Confidential"</td><td>Apply OME encryption</td><td>Data protection</td></tr>
+                        <tr><td>BCC compliance</td><td>Sent to external</td><td>BCC compliance@company.com</td><td>Archiving/compliance</td></tr>
+                        <tr><td>Block auto-forward external</td><td>Forward to external</td><td>Reject with message</td><td>Data loss prevention</td></tr>
+                        <tr><td>Executive impersonation</td><td>From header contains exec name, external</td><td>Prepend warning</td><td>BEC prevention</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Blocked File Extensions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-size: 0.8rem; margin: 0.5rem 0;">
+                    <p><strong>High-risk (always block):</strong> .exe, .scr, .bat, .cmd, .ps1, .vbs, .js, .jse, .wsf, .wsh, .msi, .msp, .com, .pif, .application, .gadget, .msc, .jar, .hta</p>
+                    <p><strong>Medium-risk (consider blocking):</strong> .docm, .xlsm, .pptm (macros), .iso, .img, .vhd (disk images), .lnk, .url (shortcuts)</p>
+                </div>
+
+                <h2 id="encryption">Email Encryption</h2>
+
+                <h3>Microsoft Purview Message Encryption</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Configuration</th><th>User Experience</th></tr></thead>
+                    <tbody>
+                        <tr><td>Encrypt to external</td><td>Transport rule: If external + sensitive → Encrypt</td><td>Recipient gets link to decrypt</td></tr>
+                        <tr><td>Encrypt by label</td><td>Sensitivity label with encryption</td><td>User applies label, auto-encrypted</td></tr>
+                        <tr><td>Encrypt on demand</td><td>User selects "Encrypt" button</td><td>Manual encryption option</td></tr>
+                        <tr><td>Do Not Forward</td><td>Prevents forwarding, copy, print</td><td>Stricter controls</td></tr>
+                        <tr><td>S/MIME</td><td>Certificate-based encryption</td><td>For regulated industries</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>TLS Enforcement</h3>
+                <table>
+                    <thead><tr><th>Partner Domain</th><th>TLS Requirement</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Banking partners</td><td>TLS 1.2+ required</td><td>Connector with TLS enforcement</td></tr>
+                        <tr><td>Healthcare partners</td><td>TLS 1.2+ required</td><td>Connector with TLS enforcement</td></tr>
+                        <tr><td>General external</td><td>Opportunistic TLS</td><td>Default - try TLS, fallback allowed</td></tr>
+                        <tr><td>Government</td><td>TLS 1.2+ with specific certs</td><td>Custom connector</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="monitoring">Email Security Monitoring</h2>
+
+                <h3>Key Email Alerts</h3>
+                <table>
+                    <thead><tr><th>Alert</th><th>Trigger</th><th>Severity</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Phishing campaign detected</td><td>Multiple users received same phishing</td><td>High</td><td>Purge messages, alert users</td></tr>
+                        <tr><td>User reported phishing</td><td>Report Message button clicked</td><td>Medium</td><td>Investigate, provide feedback</td></tr>
+                        <tr><td>Malware delivered</td><td>Malware bypassed filters</td><td>Critical</td><td>Purge, scan endpoints</td></tr>
+                        <tr><td>Inbox rule to external</td><td>Auto-forward rule created</td><td>High</td><td>Investigate account compromise</td></tr>
+                        <tr><td>Admin submitted threat</td><td>Admin submission for analysis</td><td>Medium</td><td>Review and action</td></tr>
+                        <tr><td>SPF/DKIM/DMARC failure</td><td>Authentication failures spike</td><td>Medium</td><td>Review legitimate senders</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Email Security KQL Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Phishing emails that were delivered</span>
+EmailEvents
+| where ThreatTypes has "Phish"
+| where DeliveryAction == "Delivered"
+| summarize Count = count() by SenderFromAddress, Subject
+| order by Count desc
+
+<span style="color: #6aa3f7;">// Users who clicked malicious links</span>
+UrlClickEvents
+| where ThreatTypes has_any ("Phish", "Malware")
+| where IsClickedThrough == true
+| summarize ClickCount = count() by AccountUpn
+| order by ClickCount desc
+
+<span style="color: #6aa3f7;">// Emails with suspicious attachments</span>
+EmailAttachmentInfo
+| where FileType in ("exe", "scr", "js", "vbs", "ps1")
+| join EmailEvents on NetworkMessageId
+| project TimeGenerated, SenderFromAddress, RecipientEmailAddress, FileName, FileType
+
+<span style="color: #6aa3f7;">// Authentication failures (spoofing attempts)</span>
+EmailEvents
+| where AuthenticationDetails has "fail"
+| extend SPF = extractjson("$.SPF", AuthenticationDetails)
+| extend DKIM = extractjson("$.DKIM", AuthenticationDetails)
+| extend DMARC = extractjson("$.DMARC", AuthenticationDetails)
+| where SPF == "fail" or DKIM == "fail" or DMARC == "fail"
+| summarize Count = count() by SenderFromDomain
+</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

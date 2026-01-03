@@ -6,7 +6,6 @@
     <title>KQL Query Library | SOC Compendium</title>
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
@@ -14,341 +13,363 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">References</a><span class="separator">/</span><span>KQL Library</span></div>
-            <div class="page-header">
-                <h1><i class="fab fa-microsoft" style="color: #0078d4;"></i> KQL Query Library</h1>
-                <p class="lead">Ready-to-use KQL queries for Microsoft Sentinel covering authentication, endpoint, email, cloud, and threat hunting scenarios.</p>
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">References</a><span class="separator">/</span>
+                <span>KQL Library</span>
             </div>
+
+            <h1>KQL Query Library</h1>
+            <p class="lead">Comprehensive collection of KQL queries for Microsoft Sentinel, Defender for Endpoint, and Azure AD. Copy-paste ready for SOC operations.</p>
+
             <div class="content">
-                <div class="info-box tip">
-                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> How to Use</div>
-                    <p style="margin: 0.3rem 0 0 0;">Copy these queries and customize the placeholder values (marked in comments) for your environment. All queries are designed for Microsoft Sentinel.</p>
-                </div>
-
                 <h2 id="authentication">Authentication & Identity</h2>
-
-                <h3>Failed Sign-ins by User</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>SigninLogs
-| where TimeGenerated > ago(7d)
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Failed logins - last 24 hours</span>
+SigninLogs
+| where TimeGenerated > ago(24h)
 | where ResultType != "0"
-| summarize 
-    FailedAttempts = count(),
-    UniqueIPs = dcount(IPAddress),
-    LastAttempt = max(TimeGenerated)
-    by UserPrincipalName
-| where FailedAttempts > 10
-| order by FailedAttempts desc</code></pre>
-                    </div>
-                </div>
+| summarize FailCount = count() by UserPrincipalName, IPAddress, ResultDescription
+| where FailCount > 5
+| order by FailCount desc
 
-                <h3>Impossible Travel Detection</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>SigninLogs
-| where TimeGenerated > ago(24h)
+<span style="color: #6aa3f7;">// Brute force detection</span>
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType != "0"
+| summarize Failures = count(), IPs = dcount(IPAddress) by UserPrincipalName
+| where Failures > 10
+
+<span style="color: #6aa3f7;">// Password spray detection</span>
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType in ("50126", "50053")
+| summarize Users = dcount(UserPrincipalName), Attempts = count() by IPAddress
+| where Users > 5
+
+<span style="color: #6aa3f7;">// Successful login after failures</span>
+let failures = SigninLogs | where ResultType != "0" | summarize FailCount = count() by UserPrincipalName, IPAddress;
+SigninLogs
 | where ResultType == "0"
-| extend Country = tostring(LocationDetails.countryOrRegion)
-| order by UserPrincipalName, TimeGenerated asc
-| extend PrevCountry = prev(Country), PrevUser = prev(UserPrincipalName), PrevTime = prev(TimeGenerated)
+| join kind=inner failures on UserPrincipalName, IPAddress
+| where FailCount > 3
+
+<span style="color: #6aa3f7;">// Impossible travel</span>
+SigninLogs
+| where ResultType == "0"
+| project TimeGenerated, UserPrincipalName, IPAddress, Location
+| order by UserPrincipalName, TimeGenerated
+| extend PrevTime = prev(TimeGenerated), PrevLocation = prev(Location), PrevUser = prev(UserPrincipalName)
 | where UserPrincipalName == PrevUser
-| where Country != PrevCountry
-| extend MinutesBetween = datetime_diff('minute', TimeGenerated, PrevTime)
-| where MinutesBetween < 120
-| project TimeGenerated, UserPrincipalName, FromCountry = PrevCountry, ToCountry = Country, MinutesBetween, IPAddress</code></pre>
-                    </div>
-                </div>
+| extend TimeDiff = datetime_diff('hour', TimeGenerated, PrevTime)
+| where TimeDiff < 2 and Location != PrevLocation
 
-                <h3>Sign-ins from Anonymous/Tor IPs</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>SigninLogs
-| where TimeGenerated > ago(24h)
+<span style="color: #6aa3f7;">// MFA fatigue attack</span>
+SigninLogs
+| where ResultType in ("50074", "50076")
+| summarize MFAAttempts = count() by UserPrincipalName, bin(TimeGenerated, 1h)
+| where MFAAttempts > 5
+
+<span style="color: #6aa3f7;">// Legacy authentication</span>
+SigninLogs
+| where ClientAppUsed in ("Exchange ActiveSync", "IMAP4", "POP3", "SMTP", "Other clients")
+| summarize count() by UserPrincipalName, ClientAppUsed, ResultType
+
+<span style="color: #6aa3f7;">// Risky sign-ins</span>
+SigninLogs
 | where RiskLevelDuringSignIn in ("high", "medium")
-| where ResultType == "0"
-| extend RiskDetail = tostring(RiskDetail)
-| where RiskDetail has_any ("anonymizedIPAddress", "maliciousIPAddress")
-| project TimeGenerated, UserPrincipalName, IPAddress, AppDisplayName, RiskLevelDuringSignIn, RiskDetail</code></pre>
-                    </div>
+| project TimeGenerated, UserPrincipalName, IPAddress, RiskLevelDuringSignIn, RiskDetail
+
+<span style="color: #6aa3f7;">// New country login</span>
+let userCountries = SigninLogs | where TimeGenerated > ago(30d) | summarize Countries = make_set(Location) by UserPrincipalName;
+SigninLogs
+| where TimeGenerated > ago(24h)
+| join kind=leftouter userCountries on UserPrincipalName
+| where Location !in (Countries)
+
+<span style="color: #6aa3f7;">// Service principal sign-ins</span>
+AADServicePrincipalSignInLogs
+| where TimeGenerated > ago(24h)
+| summarize count() by ServicePrincipalName, IPAddress, ResultType
+</pre>
                 </div>
 
-                <h3>Password Spray Detection</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>SigninLogs
-| where TimeGenerated > ago(1h)
-| where ResultType == "50126"  // Invalid password
-| summarize 
-    TargetedUsers = dcount(UserPrincipalName),
-    UserList = make_set(UserPrincipalName, 20),
-    TotalAttempts = count()
-    by IPAddress
-| where TargetedUsers > 10  // Many users from same IP
-| extend AttemptsPerUser = TotalAttempts / TargetedUsers
-| where AttemptsPerUser < 3  // Few attempts per user (spray pattern)</code></pre>
-                    </div>
-                </div>
+                <h2 id="privileged">Privileged Account Activity</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Admin role assignments</span>
+AuditLogs
+| where OperationName has "Add member to role"
+| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+| extend Role = tostring(TargetResources[0].modifiedProperties[1].newValue)
+| project TimeGenerated, InitiatedBy.user.userPrincipalName, TargetUser, Role
 
-                <h3>MFA Fatigue Attack Detection</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>SigninLogs
-| where TimeGenerated > ago(1h)
-| where ResultType in ("50074", "50076")  // MFA required
-| summarize MfaPrompts = count() by UserPrincipalName, bin(TimeGenerated, 10m)
-| where MfaPrompts > 5
+<span style="color: #6aa3f7;">// Global Admin activity</span>
+SigninLogs
+| where TimeGenerated > ago(24h)
 | join kind=inner (
-    SigninLogs
-    | where TimeGenerated > ago(1h)
-    | where ResultType == "0"
-) on UserPrincipalName
-| project TimeGenerated, UserPrincipalName, MfaPrompts, IPAddress</code></pre>
-                    </div>
+    IdentityInfo | where AssignedRoles has "Global Administrator"
+) on $left.UserPrincipalName == $right.AccountUPN
+| project TimeGenerated, UserPrincipalName, IPAddress, AppDisplayName
+
+<span style="color: #6aa3f7;">// Privileged group changes</span>
+AuditLogs
+| where OperationName in ("Add member to group", "Remove member from group")
+| where TargetResources[0].displayName has_any ("Admin", "Privileged", "Executive")
+| project TimeGenerated, Operation = OperationName, Group = TargetResources[0].displayName, Actor = InitiatedBy.user.userPrincipalName
+
+<span style="color: #6aa3f7;">// New user with admin role</span>
+let newUsers = AuditLogs | where OperationName == "Add user" | extend UPN = tostring(TargetResources[0].userPrincipalName) | project UPN, Created = TimeGenerated;
+AuditLogs
+| where OperationName has "Add member to role"
+| extend UPN = tostring(TargetResources[0].userPrincipalName)
+| join kind=inner newUsers on UPN
+| where TimeGenerated - Created < 1h
+
+<span style="color: #6aa3f7;">// Password reset by admin</span>
+AuditLogs
+| where OperationName == "Reset password (by admin)"
+| extend Target = tostring(TargetResources[0].userPrincipalName)
+| extend Admin = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, Admin, Target
+</pre>
                 </div>
 
-                <h2 id="endpoint">Endpoint Security</h2>
-
-                <h3>Suspicious PowerShell Execution</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>DeviceProcessEvents
+                <h2 id="endpoint">Endpoint Security (Defender)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Process creation with command line</span>
+DeviceProcessEvents
 | where TimeGenerated > ago(24h)
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any (
-    "-enc", "-encoded", "-e ",
-    "downloadstring", "downloadfile", "webclient",
-    "invoke-expression", "iex ", "bypass",
-    "-nop", "-w hidden", "frombase64"
-)
-| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine, InitiatingProcessFileName</code></pre>
-                    </div>
-                </div>
+| where FileName in~ ("powershell.exe", "cmd.exe", "wscript.exe", "cscript.exe")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine, AccountName
 
-                <h3>LSASS Access Detection</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>DeviceProcessEvents
-| where TimeGenerated > ago(24h)
-| where ProcessCommandLine has_any ("sekurlsa", "mimikatz", "lsass")
-    or (FileName =~ "procdump.exe" and ProcessCommandLine has "lsass")
-    or (FileName =~ "rundll32.exe" and ProcessCommandLine has "comsvcs" and ProcessCommandLine has "MiniDump")
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessFileName</code></pre>
-                    </div>
-                </div>
+<span style="color: #6aa3f7;">// Encoded PowerShell</span>
+DeviceProcessEvents
+| where FileName =~ "powershell.exe"
+| where ProcessCommandLine has_any ("-enc", "-encoded", "-e ", "frombase64")
+| project TimeGenerated, DeviceName, ProcessCommandLine
 
-                <h3>Persistence via Registry Run Keys</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>DeviceRegistryEvents
-| where TimeGenerated > ago(24h)
-| where ActionType == "RegistryValueSet"
-| where RegistryKey has_any ("\\CurrentVersion\\Run", "\\CurrentVersion\\RunOnce")
-| project TimeGenerated, DeviceName, RegistryKey, RegistryValueName, RegistryValueData, InitiatingProcessFileName, InitiatingProcessAccountName</code></pre>
-                    </div>
-                </div>
+<span style="color: #6aa3f7;">// LOLBAS execution</span>
+DeviceProcessEvents
+| where FileName in~ ("certutil.exe", "mshta.exe", "regsvr32.exe", "rundll32.exe", "msiexec.exe", "bitsadmin.exe")
+| where ProcessCommandLine has_any ("http", "ftp", "/i:", "-decode", "javascript")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine
 
-                <h3>Scheduled Task Creation</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>DeviceProcessEvents
-| where TimeGenerated > ago(24h)
+<span style="color: #6aa3f7;">// Suspicious parent-child process</span>
+DeviceProcessEvents
+| where InitiatingProcessFileName in~ ("outlook.exe", "winword.exe", "excel.exe", "powerpnt.exe")
+| where FileName in~ ("powershell.exe", "cmd.exe", "wscript.exe", "mshta.exe")
+| project TimeGenerated, DeviceName, Parent = InitiatingProcessFileName, Child = FileName, CommandLine = ProcessCommandLine
+
+<span style="color: #6aa3f7;">// Credential dumping indicators</span>
+DeviceProcessEvents
+| where FileName in~ ("mimikatz.exe", "procdump.exe", "dumpert.exe")
+   or ProcessCommandLine has_any ("sekurlsa", "lsass", "comsvcs.dll", "MiniDump")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine
+
+<span style="color: #6aa3f7;">// Scheduled task creation</span>
+DeviceProcessEvents
 | where FileName =~ "schtasks.exe"
 | where ProcessCommandLine has "/create"
-| extend TaskName = extract(@"/tn\s+['\"]?([^'\"\/]+)", 1, ProcessCommandLine)
-| extend TaskAction = extract(@"/tr\s+['\"]?([^'\"]+)", 1, ProcessCommandLine)
-| project TimeGenerated, DeviceName, AccountName, TaskName, TaskAction, ProcessCommandLine</code></pre>
-                    </div>
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// Service installation</span>
+DeviceProcessEvents
+| where FileName =~ "sc.exe"
+| where ProcessCommandLine has_any ("create", "config")
+| project TimeGenerated, DeviceName, ProcessCommandLine
+
+<span style="color: #6aa3f7;">// Registry persistence</span>
+DeviceRegistryEvents
+| where RegistryKey has_any ("Run", "RunOnce", "Winlogon")
+| where ActionType == "RegistryValueSet"
+| project TimeGenerated, DeviceName, RegistryKey, RegistryValueName, RegistryValueData
+
+<span style="color: #6aa3f7;">// Malware detections</span>
+DeviceEvents
+| where ActionType == "AntivirusDetection"
+| project TimeGenerated, DeviceName, FileName, ThreatName = AdditionalFields
+
+<span style="color: #6aa3f7;">// USB device connections</span>
+DeviceEvents
+| where ActionType == "PnpDeviceConnected"
+| where DeviceDescription has_any ("USB", "Removable")
+| project TimeGenerated, DeviceName, DeviceDescription, DeviceId
+</pre>
                 </div>
 
-                <h3>Lateral Movement via Remote Services</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>DeviceNetworkEvents
+                <h2 id="network">Network & C2 Detection</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Outbound connections to rare destinations</span>
+DeviceNetworkEvents
 | where TimeGenerated > ago(24h)
-| where RemotePort in (135, 445, 3389, 5985, 5986)  // RPC, SMB, RDP, WinRM
-| where ActionType == "ConnectionSuccess"
-| where LocalIP != RemoteIP
-| summarize 
-    ConnectionCount = count(),
-    TargetPorts = make_set(RemotePort),
-    TargetIPs = make_set(RemoteIP)
-    by DeviceName, InitiatingProcessFileName
-| where ConnectionCount > 10</code></pre>
-                    </div>
+| where RemoteIPType == "Public"
+| summarize ConnectionCount = count(), Devices = dcount(DeviceName) by RemoteIP
+| where Devices == 1 and ConnectionCount > 100
+
+<span style="color: #6aa3f7;">// Beaconing detection (regular intervals)</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteIPType == "Public"
+| summarize Timestamps = make_list(TimeGenerated) by DeviceName, RemoteIP
+| extend Intervals = array_sort_asc(Timestamps)
+| where array_length(Intervals) > 10
+
+<span style="color: #6aa3f7;">// High data transfer</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteIPType == "Public"
+| summarize BytesSent = sum(SentBytes) by DeviceName, RemoteIP
+| where BytesSent > 104857600  // 100 MB
+| extend SentMB = round(BytesSent / 1048576.0, 2)
+
+<span style="color: #6aa3f7;">// DNS to known bad domains</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemoteUrl has_any ("pastebin", "ngrok", "duckdns", "no-ip")
+| project TimeGenerated, DeviceName, RemoteUrl
+
+<span style="color: #6aa3f7;">// Lateral movement ports</span>
+DeviceNetworkEvents
+| where RemotePort in (445, 135, 139, 3389, 22, 5985, 5986)
+| where LocalIP startswith "10." and RemoteIP startswith "10."
+| summarize Connections = count() by DeviceName, RemoteIP, RemotePort
+| where Connections > 5
+
+<span style="color: #6aa3f7;">// TOR exit node connections</span>
+let torExits = externaldata(ip:string) [@"https://check.torproject.org/exit-addresses"] with (format="txt");
+DeviceNetworkEvents
+| where RemoteIP in (torExits)
+| project TimeGenerated, DeviceName, RemoteIP
+</pre>
                 </div>
 
                 <h2 id="email">Email Security</h2>
-
-                <h3>Emails with Suspicious Attachments</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>EmailAttachmentInfo
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Phishing emails delivered</span>
+EmailEvents
 | where TimeGenerated > ago(24h)
-| where FileName has_any (".exe", ".js", ".vbs", ".ps1", ".bat", ".cmd", ".hta", ".iso", ".img")
-| join kind=inner (
-    EmailEvents
-    | where TimeGenerated > ago(24h)
-) on NetworkMessageId
-| project TimeGenerated, SenderFromAddress, RecipientEmailAddress, Subject, FileName, FileType, SHA256</code></pre>
-                    </div>
-                </div>
+| where ThreatTypes has "Phish"
+| where DeliveryAction == "Delivered"
+| project TimeGenerated, SenderFromAddress, RecipientEmailAddress, Subject
 
-                <h3>URL Clicks Leading to External Sites</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>UrlClickEvents
+<span style="color: #6aa3f7;">// Malware attachments</span>
+EmailAttachmentInfo
+| where TimeGenerated > ago(24h)
+| where ThreatTypes has "Malware"
+| join kind=inner EmailEvents on NetworkMessageId
+| project TimeGenerated, Sender = SenderFromAddress, Recipient = RecipientEmailAddress, FileName, ThreatNames
+
+<span style="color: #6aa3f7;">// URL clicks</span>
+UrlClickEvents
 | where TimeGenerated > ago(24h)
 | where IsClickedThrough == true
-| extend UrlDomain = tostring(parse_url(Url).Host)
-| where UrlDomain !endswith "microsoft.com" and UrlDomain !endswith "office.com"
-| summarize ClickCount = count(), Users = make_set(AccountUpn) by Url, UrlDomain
-| order by ClickCount desc</code></pre>
-                    </div>
-                </div>
+| project TimeGenerated, AccountUpn, Url, ActionType
 
-                <h3>Inbox Rule Creation (Persistence)</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>OfficeActivity
-| where TimeGenerated > ago(7d)
-| where Operation in ("New-InboxRule", "Set-InboxRule")
-| extend RuleParams = tostring(Parameters)
-| where RuleParams has_any ("DeleteMessage", "ForwardTo", "RedirectTo", "MoveToFolder")
-| project TimeGenerated, UserId, Operation, RuleParams, ClientIP</code></pre>
-                    </div>
-                </div>
+<span style="color: #6aa3f7;">// Inbox rules created</span>
+CloudAppEvents
+| where ActionType == "New-InboxRule"
+| where RawEventData has_any ("ForwardTo", "RedirectTo", "DeleteMessage")
+| project TimeGenerated, AccountDisplayName, RawEventData
 
-                <h2 id="cloud">Cloud & Azure AD</h2>
+<span style="color: #6aa3f7;">// Email forwarding to external</span>
+CloudAppEvents
+| where ActionType == "Set-Mailbox"
+| where RawEventData has "ForwardingSmtpAddress"
+| project TimeGenerated, AccountDisplayName, RawEventData
 
-                <h3>OAuth App Consent (Consent Phishing)</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>AuditLogs
-| where TimeGenerated > ago(7d)
+<span style="color: #6aa3f7;">// OAuth app consent</span>
+AuditLogs
 | where OperationName == "Consent to application"
 | extend AppName = tostring(TargetResources[0].displayName)
 | extend User = tostring(InitiatedBy.user.userPrincipalName)
-| extend Permissions = tostring(TargetResources[0].modifiedProperties)
-| project TimeGenerated, User, AppName, Permissions</code></pre>
-                    </div>
+| project TimeGenerated, User, AppName
+</pre>
                 </div>
 
-                <h3>Privileged Role Assignment</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>AuditLogs
-| where TimeGenerated > ago(7d)
-| where OperationName has "Add member to role"
-| extend TargetUser = tostring(TargetResources[0].userPrincipalName)
-| extend RoleName = tostring(TargetResources[0].modifiedProperties[1].newValue)
-| extend InitiatedBy = tostring(InitiatedBy.user.userPrincipalName)
-| where RoleName has_any ("Global Administrator", "Privileged", "Security")
-| project TimeGenerated, InitiatedBy, TargetUser, RoleName</code></pre>
-                    </div>
-                </div>
+                <h2 id="cloud">Cloud Security (Azure)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Azure activity - resource creation</span>
+AzureActivity
+| where OperationNameValue has "MICROSOFT.COMPUTE/VIRTUALMACHINES/WRITE"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, ResourceGroup, Resource
 
-                <h3>Guest User Added</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>AuditLogs
-| where TimeGenerated > ago(7d)
-| where OperationName == "Invite external user"
-| extend InvitedUser = tostring(TargetResources[0].userPrincipalName)
-| extend InvitedBy = tostring(InitiatedBy.user.userPrincipalName)
-| project TimeGenerated, InvitedBy, InvitedUser</code></pre>
-                    </div>
+<span style="color: #6aa3f7;">// Key Vault access</span>
+AzureDiagnostics
+| where ResourceType == "VAULTS"
+| where OperationName in ("SecretGet", "SecretList", "KeyGet")
+| project TimeGenerated, CallerIPAddress, identity_claim_upn_s, OperationName
+
+<span style="color: #6aa3f7;">// Storage account changes</span>
+AzureActivity
+| where OperationNameValue has "MICROSOFT.STORAGE"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, OperationNameValue, ResourceGroup
+
+<span style="color: #6aa3f7;">// Network security group changes</span>
+AzureActivity
+| where OperationNameValue has "MICROSOFT.NETWORK/NETWORKSECURITYGROUPS"
+| project TimeGenerated, Caller, OperationNameValue, Properties
+
+<span style="color: #6aa3f7;">// Subscription-level changes</span>
+AzureActivity
+| where CategoryValue == "Administrative"
+| where OperationNameValue has_any ("roleAssignments", "policyAssignments")
+| project TimeGenerated, Caller, OperationNameValue
+</pre>
                 </div>
 
                 <h2 id="hunting">Threat Hunting</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// Rare process names</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| summarize ExecutionCount = count(), Devices = dcount(DeviceName) by FileName
+| where ExecutionCount < 5 and Devices == 1
 
-                <h3>Beaconing Detection (C2)</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>DeviceNetworkEvents
+<span style="color: #6aa3f7;">// Process from unusual path</span>
+DeviceProcessEvents
+| where FolderPath !startswith "C:\\Windows" and FolderPath !startswith "C:\\Program Files"
+| where FolderPath has_any ("\\Temp\\", "\\AppData\\", "\\Downloads\\", "\\Public\\")
+| project TimeGenerated, DeviceName, FileName, FolderPath
+
+<span style="color: #6aa3f7;">// Unsigned binaries</span>
+DeviceProcessEvents
 | where TimeGenerated > ago(24h)
-| where ActionType == "ConnectionSuccess"
-| where RemoteIPType == "Public"
-| summarize 
-    ConnectionCount = count(),
-    Timestamps = make_list(TimeGenerated)
-    by DeviceName, RemoteIP, InitiatingProcessFileName
-| where ConnectionCount > 20
-| mv-apply Timestamps to typeof(datetime) on (
-    order by Timestamps asc
-    | extend NextTime = next(Timestamps)
-    | extend Interval = datetime_diff('second', NextTime, Timestamps)
-    | summarize AvgInterval = avg(Interval), StdDev = stdev(Interval)
-)
-| where StdDev < 60  // Low variance = regular beaconing
-| where AvgInterval between (30 .. 3600)</code></pre>
-                    </div>
-                </div>
+| where isempty(ProcessVersionInfoCompanyName)
+| summarize count() by FileName, FolderPath
+| where count_ < 5
 
-                <h3>Data Staging Detection</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>DeviceFileEvents
-| where TimeGenerated > ago(24h)
-| where ActionType == "FileCreated"
-| where FileName endswith ".zip" or FileName endswith ".rar" or FileName endswith ".7z"
-| where FolderPath has_any ("\\Temp\\", "\\AppData\\", "\\ProgramData\\")
-| extend FileSizeMB = FileSize / 1024 / 1024
-| where FileSizeMB > 50
-| project TimeGenerated, DeviceName, AccountName, FileName, FolderPath, FileSizeMB</code></pre>
-                    </div>
-                </div>
-
-                <h3>First-Time User on System</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                    <div class="query-body">
-<pre class="code-block"><code>let HistoricalUsers = 
-    DeviceLogonEvents
-    | where TimeGenerated between (ago(30d) .. ago(1d))
-    | summarize KnownUsers = make_set(AccountName) by DeviceName;
-DeviceLogonEvents
+<span style="color: #6aa3f7;">// First-time execution</span>
+let baseline = DeviceProcessEvents | where TimeGenerated between (ago(30d) .. ago(1d)) | distinct FileName, DeviceName;
+DeviceProcessEvents
 | where TimeGenerated > ago(1d)
-| where LogonType in ("Interactive", "RemoteInteractive")
-| join kind=leftanti (HistoricalUsers) on DeviceName, $left.AccountName == $right.KnownUsers
-| project TimeGenerated, DeviceName, AccountName, LogonType, RemoteIP</code></pre>
-                    </div>
+| join kind=leftanti baseline on FileName, DeviceName
+| summarize FirstSeen = min(TimeGenerated) by DeviceName, FileName, FolderPath
+
+<span style="color: #6aa3f7;">// WMI persistence</span>
+DeviceEvents
+| where ActionType == "WmiBindingEvent"
+| project TimeGenerated, DeviceName, AdditionalFields
+
+<span style="color: #6aa3f7;">// DLL side-loading candidates</span>
+DeviceImageLoadEvents
+| where FolderPath !startswith "C:\\Windows\\System32"
+| where FileName in~ ("version.dll", "cryptsp.dll", "dbghelp.dll")
+| project TimeGenerated, DeviceName, FileName, FolderPath, InitiatingProcessFileName
+</pre>
                 </div>
 
-                <h2>Quick Reference Card</h2>
-                <table>
-                    <thead><tr><th>Scenario</th><th>Key Table</th><th>Key Fields</th></tr></thead>
-                    <tbody>
-                        <tr><td>Authentication issues</td><td>SigninLogs</td><td>ResultType, IPAddress, UserPrincipalName</td></tr>
-                        <tr><td>Process execution</td><td>DeviceProcessEvents</td><td>FileName, ProcessCommandLine, InitiatingProcessFileName</td></tr>
-                        <tr><td>File activity</td><td>DeviceFileEvents</td><td>ActionType, FileName, FolderPath, SHA256</td></tr>
-                        <tr><td>Network connections</td><td>DeviceNetworkEvents</td><td>RemoteIP, RemotePort, InitiatingProcessFileName</td></tr>
-                        <tr><td>Email threats</td><td>EmailEvents</td><td>SenderFromAddress, Subject, ThreatTypes</td></tr>
-                        <tr><td>Azure AD changes</td><td>AuditLogs</td><td>OperationName, TargetResources, InitiatedBy</td></tr>
-                        <tr><td>M365 activity</td><td>OfficeActivity</td><td>Operation, UserId, ClientIP</td></tr>
-                    </tbody>
-                </table>
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../js/main.js"></script>
 </body>

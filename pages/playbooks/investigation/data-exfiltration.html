@@ -19,474 +19,221 @@
                 <span>Data Exfiltration</span>
             </div>
 
-            <div class="playbook-header">
-                <div class="playbook-id">INV-009</div>
-                <h1>Data Exfiltration Investigation</h1>
-                <p class="lead">Comprehensive investigation for suspected data theft. Covers network-based exfiltration, cloud uploads, email, USB, encrypted channels, DNS tunneling, and steganography.</p>
-                <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">Critical</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">MITRE Tactic</span><span class="playbook-meta-value">TA0010</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">2-4 hours</span></div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
-                    <span class="mitre-tag">T1041</span>
-                    <span class="mitre-tag">T1048</span>
-                    <span class="mitre-tag">T1567</span>
-                    <span class="mitre-tag">T1052</span>
-                    <span class="mitre-tag">T1030</span>
-                    <span class="mitre-tag">T1537</span>
-                </div>
-            </div>
+            <h1><i class="fas fa-file-export"></i> Data Exfiltration Investigation</h1>
+            <p class="lead">Investigating potential unauthorized data transfer out of the organization.</p>
 
             <div class="content">
+                <!-- WHY THIS MATTERS -->
+                <h2 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h2>
+
                 <div class="info-box danger">
-                    <div class="info-box-title"><i class="fas fa-database"></i> Data Breach Implications</div>
-                    <p style="margin: 0.3rem 0;">Data exfiltration may trigger regulatory notification requirements: GDPR (72 hours), US state laws (varies), HIPAA (60 days), PCI-DSS (immediate). Engage Legal and Compliance early if sensitive data is involved. Document all findings meticulously for potential legal proceedings.</p>
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> Data Exfiltration = The Actual Damage</div>
+                    <p style="margin: 0.5rem 0;">Everything attackers do leads to this. Data exfiltration is often the final goal - whether for:</p>
+                    <table>
+                        <thead><tr><th>Type</th><th>Data Targeted</th><th>Business Impact</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Financial theft</strong></td><td>Banking credentials, payment data</td><td>Direct monetary loss</td></tr>
+                            <tr><td><strong>IP theft</strong></td><td>Source code, designs, formulas</td><td>Competitive advantage lost, billions possible</td></tr>
+                            <tr><td><strong>Ransom leverage</strong></td><td>Any sensitive data</td><td>Double extortion - pay or data published</td></tr>
+                            <tr><td><strong>Espionage</strong></td><td>Strategic plans, communications</td><td>National security, market position</td></tr>
+                            <tr><td><strong>PII theft</strong></td><td>Customer/employee personal data</td><td>Regulatory fines, lawsuits, reputation</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h2 id="overview">Exfiltration Methods</h2>
+                <h3>Breach Notification Triggers</h3>
                 <table>
-                    <thead><tr><th>Method</th><th>MITRE ID</th><th>Description</th><th>Detection Difficulty</th><th>Key Detection</th></tr></thead>
+                    <thead><tr><th>If This Data Leaves...</th><th>Notification Required</th><th>Timeline</th><th>Penalties</th></tr></thead>
                     <tbody>
-                        <tr><td>Over C2 Channel</td><td>T1041</td><td>Data sent via existing C2</td><td>Medium</td><td>Outbound volume anomaly</td></tr>
-                        <tr><td>Alternative Protocol</td><td>T1048</td><td>DNS, ICMP, SMTP tunneling</td><td>Hard</td><td>Protocol analysis</td></tr>
-                        <tr><td>Cloud Storage</td><td>T1567.002</td><td>Dropbox, Drive, OneDrive</td><td>Easy</td><td>DLP, proxy categorization</td></tr>
-                        <tr><td>Code Repository</td><td>T1567.001</td><td>GitHub, GitLab push</td><td>Medium</td><td>Git traffic, DLP</td></tr>
-                        <tr><td>Physical Media</td><td>T1052</td><td>USB, external drives</td><td>Easy</td><td>USB logs, endpoint DLP</td></tr>
-                        <tr><td>Email</td><td>T1048.003</td><td>Attachments to external</td><td>Easy</td><td>Email DLP, gateway</td></tr>
-                        <tr><td>Web Service</td><td>T1567</td><td>File sharing sites</td><td>Medium</td><td>Proxy logs, DLP</td></tr>
-                        <tr><td>Scheduled Transfer</td><td>T1029</td><td>Data chunked over time</td><td>Hard</td><td>Baseline deviation</td></tr>
-                        <tr><td>Traffic Duplication</td><td>T1020</td><td>Port mirroring/sniffing</td><td>Very Hard</td><td>Network anomalies</td></tr>
-                        <tr><td>Transfer to Cloud</td><td>T1537</td><td>Cloud account exfil</td><td>Medium</td><td>Cloud activity logs</td></tr>
+                        <tr><td>PII (names + SSN/financial)</td><td>State breach notification laws</td><td>30-90 days depending on state</td><td>Per-record fines, class actions</td></tr>
+                        <tr><td>PHI (health information)</td><td>HIPAA breach notification</td><td>60 days to individuals, HHS</td><td>Up to $1.5M per violation category</td></tr>
+                        <tr><td>Payment card data</td><td>PCI-DSS, card brand notification</td><td>Immediately to acquirer</td><td>Fines, increased processing fees</td></tr>
+                        <tr><td>EU resident data</td><td>GDPR notification</td><td>72 hours to DPA</td><td>Up to 4% global revenue</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="step1">Step 1: Initial Assessment (15 min)</h2>
+                <!-- WHEN TO USE -->
+                <h2 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h2>
 
-                <h3>1.1 Alert Context</h3>
+                <h3>Exfiltration Indicators</h3>
                 <table>
-                    <thead><tr><th>Question</th><th>Why It Matters</th><th>Impact Assessment</th></tr></thead>
+                    <thead><tr><th>Indicator</th><th>Source</th><th>Confidence</th><th>Priority</th></tr></thead>
                     <tbody>
-                        <tr><td>What triggered the alert?</td><td>DLP, volume, suspicious destination</td><td>Determines investigation path</td></tr>
-                        <tr><td>What data was involved?</td><td>Classification level, regulatory status</td><td>Breach notification requirements</td></tr>
-                        <tr><td>How much data?</td><td>Volume of potential exposure</td><td>Scope of breach</td></tr>
-                        <tr><td>Source user/system?</td><td>Insider vs compromised vs malware</td><td>Response approach differs</td></tr>
-                        <tr><td>Was transfer successful?</td><td>Blocked vs allowed</td><td>Containment urgency</td></tr>
-                        <tr><td>Destination?</td><td>Personal, competitor, unknown</td><td>Intent and risk level</td></tr>
-                        <tr><td>Still ongoing?</td><td>Active vs completed exfil</td><td>Immediate action needed</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Large upload to personal cloud</strong></td><td>CASB, DLP, proxy</td><td>High</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f85149;"><strong>DNS tunneling detected</strong></td><td>DNS security, NDR</td><td>Very High</td><td>CRITICAL</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Archive creation + external transfer</strong></td><td>EDR, DLP</td><td>High</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Unusual volume to external IP</strong></td><td>Firewall, NDR</td><td>Medium</td><td>MEDIUM</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>USB large file copy</strong></td><td>Endpoint DLP, EDR</td><td>High</td><td>HIGH</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Mass file download from SharePoint</strong></td><td>CASB, audit logs</td><td>Medium</td><td>MEDIUM</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Email with large/multiple attachments external</strong></td><td>Email DLP</td><td>Medium</td><td>MEDIUM</td></tr>
                     </tbody>
                 </table>
 
-                <h3>1.2 Data Classification Quick Reference</h3>
+                <h3>Context That Increases Severity</h3>
                 <table>
-                    <thead><tr><th>Data Type</th><th>Examples</th><th>Regulations</th><th>Notification Timeline</th></tr></thead>
+                    <thead><tr><th>Context</th><th>Why It Matters</th><th>Severity Increase</th></tr></thead>
                     <tbody>
-                        <tr><td>PII</td><td>SSN, addresses, DOB, driver's license</td><td>GDPR, CCPA, state laws</td><td>72 hours (GDPR)</td></tr>
-                        <tr><td>PHI</td><td>Medical records, diagnoses, prescriptions</td><td>HIPAA</td><td>60 days</td></tr>
-                        <tr><td>Financial</td><td>Credit cards, bank accounts, transactions</td><td>PCI-DSS, GLBA</td><td>Immediate (PCI)</td></tr>
-                        <tr><td>Trade Secrets</td><td>Source code, formulas, designs</td><td>Civil liability, DTSA</td><td>As required by law</td></tr>
-                        <tr><td>Customer Data</td><td>Contracts, communications, lists</td><td>Contractual obligations</td><td>Per contract terms</td></tr>
-                        <tr><td>Employee Data</td><td>HR records, performance, salary</td><td>Employment laws</td><td>Varies by jurisdiction</td></tr>
-                        <tr><td>Classified/Gov</td><td>CUI, ITAR, classified</td><td>NIST 800-171, ITAR</td><td>72 hours (DFARS)</td></tr>
+                        <tr><td>User gave notice / departing</td><td>High likelihood of intentional theft</td><td>+2 levels</td></tr>
+                        <tr><td>Known compromised account</td><td>Attacker completing their mission</td><td>+2 levels</td></tr>
+                        <tr><td>After hours / weekend</td><td>Avoiding detection</td><td>+1 level</td></tr>
+                        <tr><td>VPN + external transfer</td><td>Knows they're being watched</td><td>+1 level</td></tr>
+                        <tr><td>Encrypted archive created first</td><td>Intentionally evading DLP</td><td>+2 levels</td></tr>
+                        <tr><td>Destination is competitor</td><td>Corporate espionage</td><td>+2 levels</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="step2">Step 2: Network-Based Exfiltration Analysis (30 min)</h2>
+                <!-- DECISION FRAMEWORK -->
+                <h2 id="decisions"><i class="fas fa-sitemap"></i> Investigation Decision Framework</h2>
 
-                <h3>2.1 Large Data Transfer Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Large outbound transfers by device (24h)</span>
-DeviceNetworkEvents
-| where TimeGenerated > ago(24h)
-| where RemoteIPType == "Public"
-| summarize 
-    TotalBytesSent = sum(SentBytes),
-    TotalBytesReceived = sum(ReceivedBytes),
-    Connections = count(),
-    UniqueDestinations = dcount(RemoteIP),
-    TopDestinations = make_set(RemoteIP, 5)
-    by DeviceName, InitiatingProcessAccountName
-| extend SentGB = round(TotalBytesSent / 1073741824.0, 2)
-| extend UploadRatio = round(todouble(TotalBytesSent) / 
-    todouble(TotalBytesReceived), 2)
-| where SentGB > 0.5 // More than 500 MB uploaded
-| order by TotalBytesSent desc
-
-<span style="color: #6aa3f7;">// KQL - Transfers to specific suspicious destination</span>
-let suspiciousIP = "DESTINATION_IP";
-DeviceNetworkEvents
-| where TimeGenerated > ago(7d)
-| where RemoteIP == suspiciousIP
-| summarize 
-    BytesSent = sum(SentBytes),
-    BytesReceived = sum(ReceivedBytes),
-    Connections = count(),
-    Devices = dcount(DeviceName),
-    DeviceList = make_set(DeviceName, 10),
-    ProcessList = make_set(InitiatingProcessFileName, 5)
-| extend SentMB = round(BytesSent / 1048576.0, 2)
-
-<span style="color: #6aa3f7;">// KQL - Unusual upload ratio (strong exfil indicator)</span>
-DeviceNetworkEvents
-| where TimeGenerated > ago(24h)
-| where RemoteIPType == "Public"
-| summarize Sent = sum(SentBytes), Received = sum(ReceivedBytes) 
-    by DeviceName, bin(TimeGenerated, 1h)
-| where Sent > 0 and Received > 0
-| extend UploadRatio = todouble(Sent) / todouble(Received)
-| where UploadRatio > 10 // 10x more upload than download
-| project TimeGenerated, DeviceName, SentMB = round(Sent/1048576.0, 2), 
-    UploadRatio
-| order by UploadRatio desc
-
-<span style="color: #6aa3f7;">// KQL - After-hours large transfers</span>
-DeviceNetworkEvents
-| where TimeGenerated > ago(7d)
-| where RemoteIPType == "Public"
-| extend Hour = hourofday(TimeGenerated)
-| extend DayOfWeek = dayofweek(TimeGenerated)
-| where Hour < 6 or Hour > 22 or DayOfWeek in (0d, 6d)
-| summarize BytesSent = sum(SentBytes) by DeviceName, 
-    InitiatingProcessAccountName
-| where BytesSent > 104857600 // 100 MB
-| order by BytesSent desc
-
-<span style="color: #6aa3f7;">// SPL - Large outbound data transfers</span>
-index=firewall action=allowed direction=outbound
-| stats sum(bytes_out) as total_bytes, dc(dest_ip) as unique_dests 
-    by src_ip, src_user
-| where total_bytes > 104857600
-| eval MB = round(total_bytes/1048576, 2)
-| sort -total_bytes</pre>
+                <h3>Is This Malicious or Legitimate?</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-question-circle"></i> Key Decision Points</div>
+                    <table>
+                        <thead><tr><th>Question</th><th>Legitimate Signs</th><th>Suspicious Signs</th></tr></thead>
+                        <tbody>
+                            <tr><td>Does their job require this?</td><td>Sales sharing proposals, marketing sending assets</td><td>Engineer sending code to personal email</td></tr>
+                            <tr><td>Is destination appropriate?</td><td>Known partner, approved cloud service</td><td>Personal email, unknown cloud, competitor</td></tr>
+                            <tr><td>Is volume normal?</td><td>Similar to historical pattern</td><td>10x normal volume, first time ever</td></tr>
+                            <tr><td>Is timing normal?</td><td>Business hours, deadline-related</td><td>Night before resignation, weekend</td></tr>
+                            <tr><td>Did they try to hide it?</td><td>Normal transfer method</td><td>Encrypted, renamed files, split archives</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h3>2.2 DNS Exfiltration Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - DNS tunneling indicators</span>
-DnsEvents
-| where TimeGenerated > ago(24h)
-| extend SubdomainLength = strlen(tostring(split(Name, ".")[0]))
-| extend TotalLength = strlen(Name)
-| extend BaseDomain = strcat(split(Name, ".")[-2], ".", split(Name, ".")[-1])
-| where SubdomainLength > 50 or TotalLength > 100
-| summarize 
-    QueryCount = count(),
-    AvgSubdomainLength = round(avg(SubdomainLength), 1),
-    MaxSubdomainLength = max(SubdomainLength),
-    UniqueSubdomains = dcount(Name)
-    by ClientIP, BaseDomain
-| where QueryCount > 100 or AvgSubdomainLength > 40
-| extend RiskScore = QueryCount * AvgSubdomainLength / 100
-| order by RiskScore desc
+                <h3>Severity Assessment</h3>
+                <table>
+                    <thead><tr><th>Factor</th><th>Low</th><th>Medium</th><th>High</th><th>Critical</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Data type</strong></td><td>Public info</td><td>Internal docs</td><td>Confidential</td><td>PII/PHI/regulated</td></tr>
+                        <tr><td><strong>Volume</strong></td><td><10 MB</td><td>10-100 MB</td><td>100MB-1GB</td><td>>1 GB</td></tr>
+                        <tr><td><strong>Destination</strong></td><td>Approved cloud</td><td>Personal cloud</td><td>Unknown external</td><td>Attacker C2, competitor</td></tr>
+                        <tr><td><strong>User context</strong></td><td>Normal workflow</td><td>Unusual but possible</td><td>Departing employee</td><td>Compromised account</td></tr>
+                        <tr><td><strong>Evasion</strong></td><td>None</td><td>After hours</td><td>Encrypted archive</td><td>DNS tunnel, steganography</td></tr>
+                    </tbody>
+                </table>
 
-<span style="color: #6aa3f7;">// KQL - TXT record abuse (data in responses)</span>
-DnsEvents
-| where TimeGenerated > ago(24h)
-| where QueryType == "TXT"
-| extend BaseDomain = strcat(split(Name, ".")[-2], ".", split(Name, ".")[-1])
-| summarize Queries = count(), UniqueQueries = dcount(Name) 
-    by ClientIP, BaseDomain
-| where Queries > 50
-| order by Queries desc
+                <!-- HOW TO INVESTIGATE -->
+                <h2 id="how-to"><i class="fas fa-search"></i> How to Investigate</h2>
 
-<span style="color: #6aa3f7;">// KQL - High entropy subdomains (encoded data)</span>
-DnsEvents
-| extend Subdomain = tostring(split(Name, ".")[0])
-| where strlen(Subdomain) > 20
-| extend HasNumbers = Subdomain matches regex "[0-9]"
-| extend HasMixedCase = Subdomain matches regex "[A-Z]" and 
-    Subdomain matches regex "[a-z]"
-| where HasNumbers and strlen(Subdomain) > 30
-| project TimeGenerated, ClientIP, Name, Subdomain</pre>
-                </div>
-
-                <h2 id="step3">Step 3: Cloud Storage Exfiltration (30 min)</h2>
-
-                <h3>3.1 Uploads to Cloud Services</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Uploads to personal cloud storage</span>
-let personalCloudDomains = dynamic([
-    "dropbox.com", "drive.google.com", "onedrive.live.com",
-    "box.com", "mega.nz", "wetransfer.com", "sendspace.com",
-    "mediafire.com", "file.io", "anonfiles.com", "gofile.io",
-    "transfer.sh", "filemail.com", "hightail.com"
-]);
-DeviceNetworkEvents
-| where TimeGenerated > ago(7d)
-| where RemoteUrl has_any (personalCloudDomains)
-| where SentBytes > 1048576 // 1 MB
-| summarize 
-    TotalSent = sum(SentBytes),
-    Connections = count(),
-    FirstUpload = min(TimeGenerated),
-    LastUpload = max(TimeGenerated)
-    by DeviceName, RemoteUrl, InitiatingProcessFileName,
-    InitiatingProcessAccountName
-| extend SentMB = round(TotalSent / 1048576.0, 2)
-| order by TotalSent desc
-
-<span style="color: #6aa3f7;">// KQL - Cloud sync tool execution</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where FileName in~ (
-    "rclone.exe", "megasync.exe", "dropbox.exe",
-    "googledrivesync.exe", "onedrive.exe", "boxsync.exe",
-    "seafile.exe", "syncthing.exe", "restic.exe"
-)
-| where ProcessCommandLine has_any ("copy", "sync", "upload", 
-    "move", "push", "backup")
-| project TimeGenerated, DeviceName, FileName, ProcessCommandLine,
-    AccountName, InitiatingProcessFileName
-
-<span style="color: #6aa3f7;">// KQL - Rclone specifically (common exfil tool)</span>
-DeviceProcessEvents
-| where FileName =~ "rclone.exe"
-| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
-| extend RemoteType = extract("([a-zA-Z0-9]+):", 1, ProcessCommandLine)
-
-<span style="color: #6aa3f7;">// SPL - Cloud storage uploads</span>
-index=proxy category IN ("Cloud Storage", "File Sharing")
-cs_method=POST bytes_out > 1048576
-| stats sum(bytes_out) as total_upload, count as requests 
-    by src_ip, cs_host, src_user
-| eval MB = round(total_upload/1048576, 2)
-| sort -total_upload</pre>
-                </div>
-
-                <h3>3.2 Code Repository Exfiltration</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Git push operations</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where FileName =~ "git.exe"
-| where ProcessCommandLine has "push"
-| project TimeGenerated, DeviceName, ProcessCommandLine, 
-    AccountName, InitiatingProcessFileName,
-    FolderPath = InitiatingProcessFolderPath
-
-<span style="color: #6aa3f7;">// KQL - Traffic to code repositories</span>
-DeviceNetworkEvents
-| where TimeGenerated > ago(7d)
-| where RemoteUrl has_any ("github.com", "gitlab.com", 
-    "bitbucket.org", "dev.azure.com", "codecommit", "sr.ht")
-| where SentBytes > 1048576 // 1 MB
-| summarize 
-    TotalSent = sum(SentBytes),
-    Connections = count()
-    by DeviceName, RemoteUrl, InitiatingProcessAccountName
-| extend SentMB = round(TotalSent / 1048576.0, 2)
-| order by TotalSent desc
-
-<span style="color: #6aa3f7;">// KQL - Repository clones/pushes to personal accounts</span>
-DeviceProcessEvents
-| where FileName =~ "git.exe"
-| where ProcessCommandLine has_any ("clone", "push", "remote add")
-| extend RepoURL = extract("(https?://[^ ]+|git@[^ ]+)", 1, ProcessCommandLine)
-| project TimeGenerated, DeviceName, ProcessCommandLine, RepoURL, AccountName</pre>
-                </div>
-
-                <h2 id="step4">Step 4: Email-Based Exfiltration (20 min)</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Large attachments to external recipients</span>
-let internalDomain = "@company.com";
-EmailEvents
-| where TimeGenerated > ago(7d)
-| where EmailDirection == "Outbound"
-| where RecipientEmailAddress !endswith internalDomain
-| join kind=inner (
-    EmailAttachmentInfo
-    | where TimeGenerated > ago(7d)
-) on NetworkMessageId
-| where FileSize > 5242880 // 5 MB
-| project TimeGenerated, SenderFromAddress, RecipientEmailAddress,
-    Subject, FileName, FileSizeMB = round(FileSize / 1048576.0, 2),
-    FileType
-| order by FileSizeMB desc
-
-<span style="color: #6aa3f7;">// KQL - Sensitive file types to external</span>
-let sensitiveExtensions = dynamic([
-    ".sql", ".csv", ".xlsx", ".mdb", ".bak", ".zip", ".7z", 
-    ".rar", ".tar.gz", ".pst", ".db", ".sqlite", ".accdb",
-    ".dmp", ".vmdk", ".vhdx", ".pfx", ".key", ".pem"
-]);
-EmailAttachmentInfo
-| where TimeGenerated > ago(7d)
-| where FileName has_any (sensitiveExtensions)
-| join kind=inner (
-    EmailEvents
-    | where EmailDirection == "Outbound"
-    | where RecipientEmailAddress !endswith "@company.com"
-) on NetworkMessageId
-| project TimeGenerated, SenderFromAddress, RecipientEmailAddress,
-    FileName, FileSize, Subject
-
-<span style="color: #6aa3f7;">// KQL - Emails to personal accounts</span>
-let personalDomains = dynamic([
-    "gmail.com", "yahoo.com", "hotmail.com", "outlook.com",
-    "icloud.com", "protonmail.com", "aol.com", "mail.com"
-]);
-EmailEvents
-| where TimeGenerated > ago(30d)
-| where EmailDirection == "Outbound"
-| extend RecipientDomain = tostring(split(RecipientEmailAddress, "@")[1])
-| where RecipientDomain in (personalDomains)
-| summarize 
-    EmailCount = count(),
-    HasAttachments = countif(AttachmentCount > 0)
-    by SenderFromAddress, RecipientDomain
-| where EmailCount > 10 or HasAttachments > 5
-| order by HasAttachments desc
-
-<span style="color: #6aa3f7;">// KQL - Bulk email forwarding</span>
-CloudAppEvents
-| where ActionType in ("Set-Mailbox", "New-InboxRule")
-| where RawEventData has_any ("ForwardTo", "RedirectTo", 
-    "ForwardingSmtpAddress")
-| project TimeGenerated, AccountDisplayName, ActionType, RawEventData</pre>
-                </div>
-
-                <h2 id="step5">Step 5: Physical Media Exfiltration (15 min)</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - USB device connections</span>
-DeviceEvents
-| where TimeGenerated > ago(7d)
-| where ActionType == "PnpDeviceConnected"
-| where DeviceDescription has_any ("USB", "Removable", 
-    "Mass Storage", "Flash", "External")
-| project TimeGenerated, DeviceName, DeviceDescription,
-    DeviceId, AccountName
-| summarize 
-    Connections = count(),
-    FirstSeen = min(TimeGenerated),
-    LastSeen = max(TimeGenerated)
-    by DeviceName, DeviceDescription, AccountName
-| order by Connections desc
-
-<span style="color: #6aa3f7;">// KQL - Files written to removable drives</span>
+                <h3>Step 1: Identify What Data Was Transferred</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Files accessed before large transfer</span>
 DeviceFileEvents
-| where TimeGenerated > ago(7d)
-| where ActionType in ("FileCreated", "FileModified")
-| where FolderPath matches regex @"^[D-Z]:\\" // Non-C: drives
-| where FolderPath !has "\\Windows\\" and FolderPath !has "\\Program Files"
-| summarize 
-    FileCount = count(),
-    TotalSize = sum(FileSize),
-    FileTypes = make_set(extract(@"\.([^.]+)$", 1, FileName), 10),
-    SampleFiles = make_set(FileName, 5)
-    by DeviceName, InitiatingProcessAccountName,
-    DriveLetter = tostring(split(FolderPath, "\\")[0])
-| where FileCount > 10 or TotalSize > 52428800 // 50 MB
-| extend TotalMB = round(TotalSize / 1048576.0, 2)
-| order by TotalSize desc
-
-<span style="color: #6aa3f7;">// KQL - Archive creation before USB copy</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where FileName in~ ("7z.exe", "winrar.exe", "zip.exe", 
-    "tar.exe", "rar.exe")
-| where ProcessCommandLine has_any ("a ", "-a", "create", "add")
-| project TimeGenerated, DeviceName, ProcessCommandLine, 
-    AccountName, ArchivePath = extract(@"([A-Za-z]:\\[^ ]+\.(zip|7z|rar|tar))", 
-    1, ProcessCommandLine)
-
-<span style="color: #6aa3f7;">// SPL - USB file copies</span>
-index=endpoint sourcetype=sysmon EventCode=11
-| where file_path match "^[D-Z]:\\\\"
-| stats count as files, sum(file_size) as total_bytes 
-    by host, user, file_path
-| where total_bytes > 52428800</pre>
-                </div>
-
-                <h2 id="step6">Step 6: Identify What Was Taken (30 min)</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Files accessed by suspected user before exfil</span>
-let suspectUser = "username";
-let suspectDevice = "DEVICENAME";
-let exfilTime = datetime(2025-01-01T12:00:00Z);
-let lookbackHours = 24;
-DeviceFileEvents
-| where TimeGenerated between ((exfilTime - lookbackHours*1h) .. exfilTime)
-| where DeviceName =~ suspectDevice 
-    or InitiatingProcessAccountName =~ suspectUser
-| where ActionType in ("FileRead", "FileAccessed", "FileCopied")
-| where FolderPath has_any (
-    "confidential", "restricted", "sensitive", "secret",
-    "HR", "Finance", "Legal", "Contracts", "M&A",
-    "Customer", "Payroll", "Salary", "Source"
-)
-| project TimeGenerated, FileName, FolderPath, ActionType, FileSize
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// KQL - Staging activity (archive creation)</span>
-DeviceFileEvents
-| where TimeGenerated > ago(7d)
-| where ActionType == "FileCreated"
-| where FileName endswith_any (".zip", ".7z", ".rar", ".tar", 
-    ".gz", ".tar.gz", ".tgz")
-| where FileSize > 52428800 // 50 MB
-| project TimeGenerated, DeviceName, FileName, FolderPath,
-    FileSizeMB = round(FileSize / 1048576.0, 2),
-    InitiatingProcessFileName, InitiatingProcessAccountName
+| where Timestamp between (datetime("transfer-time-minus-1h") .. datetime("transfer-time"))
+| where DeviceName == "USER-DEVICE"
+| where ActionType in ("FileRead", "FileCopied")
+| project Timestamp, FileName, FolderPath, FileSize
 | order by FileSize desc
 
-<span style="color: #6aa3f7;">// KQL - Database export indicators</span>
+<span style="color: #6aa3f7;">// KQL - Archive creation activity</span>
 DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where FileName in~ ("sqlcmd.exe", "bcp.exe", "mysqldump.exe",
-    "pg_dump.exe", "mongodump.exe", "expdp.exe")
-| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+| where Timestamp > ago(24h)
+| where DeviceName == "USER-DEVICE"
+| where FileName in~ ("7z.exe", "winrar.exe", "zip.exe", "tar.exe") 
+    or ProcessCommandLine has_any (".zip", ".rar", ".7z", "Compress-Archive")
+| project Timestamp, ProcessCommandLine, AccountName
 
-<span style="color: #6aa3f7;">// KQL - File compression before transfer</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(24h)
-| where FileName in~ ("7z.exe", "winrar.exe", "zip.exe", "tar.exe")
-| extend SourcePath = extract(@"([A-Za-z]:\\[^ ""]+)", 1, ProcessCommandLine)
-| extend OutputFile = extract(@"-o([^ ]+)|([^ ]+\.(zip|7z|rar|tar))", 
-    1, ProcessCommandLine)
-| project TimeGenerated, DeviceName, SourcePath, OutputFile, 
-    ProcessCommandLine, AccountName</pre>
+<span style="color: #6aa3f7;">// KQL - Cloud upload activity</span>
+CloudAppEvents
+| where Timestamp > ago(24h)
+| where AccountId == "user@company.com"
+| where ActionType in ("FileUploaded", "FileShared")
+| project Timestamp, Application, ActionType, ObjectName, ObjectType
+| order by Timestamp desc
+</pre>
                 </div>
 
-                <h2 id="containment">Containment Actions</h2>
+                <h3>Step 2: Determine Destination and Method</h3>
                 <table>
-                    <thead><tr><th>Priority</th><th>Action</th><th>Method</th><th>Verification</th></tr></thead>
+                    <thead><tr><th>Exfil Method</th><th>Where to Look</th><th>What to Look For</th></tr></thead>
                     <tbody>
-                        <tr><td>1</td><td>Block active exfiltration destination</td><td>Firewall rule, proxy block</td><td>Verify connection blocked</td></tr>
-                        <tr><td>2</td><td>Network isolate source system</td><td>EDR isolation, switch port</td><td>Verify no connectivity</td></tr>
-                        <tr><td>3</td><td>Disable/suspend user account</td><td>AD account disable</td><td>Verify auth fails</td></tr>
-                        <tr><td>4</td><td>Block USB ports</td><td>GPO, EDR policy</td><td>Test USB blocked</td></tr>
-                        <tr><td>5</td><td>Preserve evidence</td><td>Disk image, log export</td><td>Hash verification</td></tr>
-                        <tr><td>6</td><td>Revoke cloud access</td><td>Disable OAuth, revoke sessions</td><td>Verify access denied</td></tr>
-                        <tr><td>7</td><td>Block cloud storage domains</td><td>Proxy/DNS block</td><td>Test upload fails</td></tr>
-                        <tr><td>8</td><td>Email hold/block</td><td>Transport rule, litigation hold</td><td>Verify block active</td></tr>
+                        <tr><td><strong>Cloud storage</strong></td><td>CASB, proxy logs</td><td>Dropbox, Google Drive, Box, personal OneDrive</td></tr>
+                        <tr><td><strong>Email</strong></td><td>Email DLP, mail trace</td><td>Large attachments, external recipients</td></tr>
+                        <tr><td><strong>USB</strong></td><td>Endpoint DLP, EDR</td><td>File writes to removable media</td></tr>
+                        <tr><td><strong>Web upload</strong></td><td>Proxy, firewall</td><td>HTTP POST to file sharing sites</td></tr>
+                        <tr><td><strong>FTP/SFTP</strong></td><td>Firewall, NDR</td><td>Port 21/22 to external IPs</td></tr>
+                        <tr><td><strong>DNS tunnel</strong></td><td>DNS logs, NDR</td><td>Long DNS queries, high query volume</td></tr>
+                        <tr><td><strong>Cloud sync</strong></td><td>Endpoint agent, CASB</td><td>Personal cloud sync clients</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="escalation">Escalation Criteria</h2>
-                <div class="info-box danger">
-                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li>Regulated data involved (PII, PHI, PCI, classified)</li>
-                        <li>Source code or trade secrets confirmed stolen</li>
-                        <li>Customer or partner data exfiltrated</li>
-                        <li>Large volume (>1GB) successfully transferred</li>
-                        <li>Ongoing active exfiltration detected</li>
-                        <li>Nation-state or competitor involvement suspected</li>
-                        <li>Multiple systems or users involved</li>
-                        <li>Executive or privileged account involved</li>
+                <h3>Step 3: Assess Data Sensitivity</h3>
+                <table>
+                    <thead><tr><th>Finding</th><th>Sensitivity</th><th>Action Required</th></tr></thead>
+                    <tbody>
+                        <tr><td>Marketing materials, public docs</td><td style="color: #3fb950;">Low</td><td>Document, may not require escalation</td></tr>
+                        <tr><td>Internal procedures, non-sensitive</td><td style="color: #d29922;">Medium</td><td>Investigate intent, talk to employee</td></tr>
+                        <tr><td>Customer lists, financial data</td><td style="color: #f0883e;">High</td><td>Escalate to management, preserve evidence</td></tr>
+                        <tr><td>PII, PHI, payment data</td><td style="color: #f85149;">Critical</td><td>Immediate escalation, legal involved, breach assessment</td></tr>
+                        <tr><td>Source code, trade secrets</td><td style="color: #f85149;">Critical</td><td>Legal hold, possible law enforcement</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- WHAT IF SCENARIOS -->
+                <h2 id="what-if"><i class="fas fa-random"></i> What If Scenarios</h2>
+
+                <table>
+                    <thead><tr><th>What If...</th><th>Then...</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Data was encrypted before transfer?</strong></td><td>Can't determine content. Assume worst case based on source location. Interview user.</td><td>Encryption is deliberate evasion - treat as high severity</td></tr>
+                        <tr><td><strong>Destination IP is untraceable (TOR)?</strong></td><td>This is confirmed malicious. No legitimate business use for TOR exfil.</td><td>TOR = intentional anonymization</td></tr>
+                        <tr><td><strong>User claims they "always do this"?</strong></td><td>Verify with logs. If true, it's a policy problem. If false, it's a lie about theft.</td><td>Historical pattern is verifiable</td></tr>
+                        <tr><td><strong>This is a departing employee?</strong></td><td>High probability of intentional theft. Preserve all evidence. Legal/HR involvement.</td><td>Departing employees are highest insider threat risk</td></tr>
+                        <tr><td><strong>Data already left and we can't recover it?</strong></td><td>Focus shifts to: What was taken? Who needs to be notified? How do we prevent next time?</td><td>Can't un-ring the bell, but can manage aftermath</td></tr>
+                        <tr><td><strong>This is an attacker, not insider?</strong></td><td>This is end-stage of compromise. Find entry point, identify all stolen data, full IR engagement.</td><td>Attacker exfil means significant prior compromise</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- CONTAINMENT -->
+                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h2>
+
+                <h3>Immediate Actions</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>How</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Active exfil in progress</strong></td><td>Block immediately</td><td>Isolate endpoint, block destination IP/domain, disable account</td></tr>
+                        <tr><td><strong>Departing employee suspected</strong></td><td>Preserve evidence, legal hold</td><td>Image device, preserve cloud data, don't alert employee yet</td></tr>
+                        <tr><td><strong>Compromised account exfil</strong></td><td>Stop attacker access</td><td>Disable account, revoke sessions, isolate systems</td></tr>
+                        <tr><td><strong>Exfil completed (historical)</strong></td><td>Evidence preservation</td><td>Forensic image, log preservation, impact assessment</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Do NOT Do</h3>
+                <div class="info-box warning">
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li><strong>Don't confront employee without HR/Legal</strong> - Could compromise investigation or create liability</li>
+                        <li><strong>Don't let employee know they're being investigated</strong> - They may destroy evidence</li>
+                        <li><strong>Don't assume only one transfer occurred</strong> - Look for pattern of behavior</li>
+                        <li><strong>Don't forget personal devices</strong> - May have synced/transferred data there too</li>
                     </ul>
                 </div>
 
-                <h2 id="notification">Breach Notification Checklist</h2>
+                <!-- ESCALATION -->
+                <h2 id="escalation"><i class="fas fa-arrow-up"></i> Escalation Criteria</h2>
+
+                <div class="info-box danger">
+                    <div class="info-box-title">Escalate Immediately When:</div>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li>PII/PHI/regulated data confirmed exfiltrated</li>
+                        <li>Source code or trade secrets transferred</li>
+                        <li>Executive data accessed/transferred</li>
+                        <li>Destination is known competitor</li>
+                        <li>Volume exceeds 1GB</li>
+                        <li>Evidence of deliberate evasion (encryption, DNS tunnel)</li>
+                        <li>Attacker-controlled exfiltration (not insider)</li>
+                    </ul>
+                </div>
+
+                <h3>Who to Notify</h3>
                 <table>
-                    <thead><tr><th>Regulation</th><th>Timeline</th><th>Authority</th><th>Requirements</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Notify</th></tr></thead>
                     <tbody>
-                        <tr><td>GDPR</td><td>72 hours</td><td>DPA</td><td>Nature, categories, mitigation</td></tr>
-                        <tr><td>CCPA</td><td>"Most expedient"</td><td>CA AG</td><td>Categories, rights notice</td></tr>
-                        <tr><td>HIPAA</td><td>60 days</td><td>HHS OCR</td><td>Detailed breach report</td></tr>
-                        <tr><td>PCI-DSS</td><td>Immediate</td><td>Card brands</td><td>Forensic investigation</td></tr>
-                        <tr><td>SEC (public co.)</td><td>4 business days</td><td>SEC</td><td>Form 8-K filing</td></tr>
-                        <tr><td>State laws</td><td>Varies (30-90 days)</td><td>State AG</td><td>Varies by state</td></tr>
+                        <tr><td>Any confirmed exfil</td><td>Security leadership</td></tr>
+                        <tr><td>Insider threat suspected</td><td>HR, Legal</td></tr>
+                        <tr><td>Regulated data (PII/PHI)</td><td>Legal, Privacy Officer, Compliance</td></tr>
+                        <tr><td>Source code/IP theft</td><td>Legal, Executive leadership</td></tr>
+                        <tr><td>Attacker exfil</td><td>Full IR team, possibly law enforcement</td></tr>
                     </tbody>
                 </table>
 
@@ -497,33 +244,3 @@ DeviceProcessEvents
     <script src="../../../js/main.js"></script>
 </body>
 </html>
-
-                <h2 id="initial-triage">Initial Triage - First 10 Minutes</h2>
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-clock"></i> Time-Sensitive Assessment</div>
-                    <p style="margin: 0.3rem 0;">Data exfiltration may be ongoing. Quick triage helps determine if immediate containment is needed.</p>
-                </div>
-
-                <h3>Quick Questions to Answer</h3>
-                <table>
-                    <thead><tr><th>Question</th><th>If Yes</th><th>If No/Unknown</th></tr></thead>
-                    <tbody>
-                        <tr><td>Is exfiltration currently active?</td><td>Contain immediately</td><td>Investigate before acting</td></tr>
-                        <tr><td>Is sensitive/regulated data involved?</td><td>Legal notification may be required</td><td>Still investigate, lower urgency</td></tr>
-                        <tr><td>Is this a known user or external attacker?</td><td>Different response paths</td><td>Determine first</td></tr>
-                        <tr><td>Is the volume significant (>100MB, >1000 files)?</td><td>High impact, escalate</td><td>May be normal activity</td></tr>
-                        <tr><td>Is destination external/personal?</td><td>Likely intentional</td><td>Could be internal workflow</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>First Steps Checklist</h3>
-                <ul>
-                    <li>☐ Identify the data source (what system/application)</li>
-                    <li>☐ Identify the destination (where is data going)</li>
-                    <li>☐ Identify the user/account involved</li>
-                    <li>☐ Check if transfer is still in progress</li>
-                    <li>☐ Estimate volume of data involved</li>
-                    <li>☐ Check data classification (PII, PHI, financial, IP)</li>
-                    <li>☐ Determine if this is authorized business activity</li>
-                </ul>
-

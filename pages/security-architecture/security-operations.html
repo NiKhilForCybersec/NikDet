@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Operations Architecture | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Security Operations</span>
+            </div>
+
+            <h1>Security Operations Architecture</h1>
+            <p class="lead">Complete architecture for Security Operations Center including SIEM, SOAR, logging strategy, alert management, and monitoring across all security domains.</p>
+
+            <div class="content">
+                <h2 id="siem">SIEM Architecture</h2>
+
+                <h3>Log Source Priority Matrix</h3>
+                <table>
+                    <thead><tr><th>Priority</th><th>Log Source</th><th>Use Case</th><th>Retention</th><th>Volume</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>P1</strong></td><td>Identity (Entra ID, AD)</td><td>Authentication, privilege changes</td><td>1 year hot, 7 years archive</td><td>Medium</td></tr>
+                        <tr><td style="color: #f85149;"><strong>P1</strong></td><td>EDR (Defender, CrowdStrike)</td><td>Endpoint threats, process execution</td><td>1 year hot</td><td>High</td></tr>
+                        <tr><td style="color: #f85149;"><strong>P1</strong></td><td>Firewall/NGFW</td><td>Network threats, traffic analysis</td><td>90 days hot, 1 year archive</td><td>Very High</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>P2</strong></td><td>Email Security</td><td>Phishing, BEC, malware</td><td>1 year</td><td>Medium</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>P2</strong></td><td>Cloud (Azure, AWS, GCP)</td><td>Cloud security events</td><td>1 year</td><td>Medium-High</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>P2</strong></td><td>Proxy/Web Gateway</td><td>Web threats, data exfil</td><td>90 days hot</td><td>Very High</td></tr>
+                        <tr><td style="color: #d29922;"><strong>P3</strong></td><td>DNS</td><td>C2, tunneling, threat intel</td><td>90 days</td><td>Very High</td></tr>
+                        <tr><td style="color: #d29922;"><strong>P3</strong></td><td>VPN</td><td>Remote access monitoring</td><td>1 year</td><td>Low</td></tr>
+                        <tr><td style="color: #d29922;"><strong>P3</strong></td><td>DLP</td><td>Data loss events</td><td>1 year</td><td>Low-Medium</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>P4</strong></td><td>Windows Event Logs</td><td>Detailed host activity</td><td>90 days</td><td>Very High</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>P4</strong></td><td>Linux Syslog</td><td>Server activity</td><td>90 days</td><td>High</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>P4</strong></td><td>Database Audit</td><td>Data access monitoring</td><td>1 year</td><td>Medium</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>P4</strong></td><td>Application Logs</td><td>Application security events</td><td>90 days</td><td>Varies</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Microsoft Sentinel Data Connectors</h3>
+                <table>
+                    <thead><tr><th>Connector</th><th>Data Tables</th><th>Cost Tier</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Azure Active Directory</td><td>SigninLogs, AuditLogs, AADNonInteractiveUserSignInLogs</td><td>Free (basic)</td><td>Enable all log types</td></tr>
+                        <tr><td>Microsoft 365 Defender</td><td>DeviceEvents, DeviceProcessEvents, EmailEvents</td><td>Free (included)</td><td>Enable all advanced hunting tables</td></tr>
+                        <tr><td>Microsoft Defender for Cloud</td><td>SecurityAlert, SecurityRecommendation</td><td>Free</td><td>Enable bi-directional sync</td></tr>
+                        <tr><td>Azure Activity</td><td>AzureActivity</td><td>Free</td><td>All subscriptions</td></tr>
+                        <tr><td>Office 365</td><td>OfficeActivity</td><td>Free</td><td>Exchange, SharePoint, Teams</td></tr>
+                        <tr><td>Windows Security Events</td><td>SecurityEvent</td><td>Paid (GB)</td><td>Common or All events</td></tr>
+                        <tr><td>Syslog</td><td>Syslog</td><td>Paid (GB)</td><td>Via AMA or legacy agent</td></tr>
+                        <tr><td>CEF/Syslog (Firewalls)</td><td>CommonSecurityLog</td><td>Paid (GB)</td><td>Via log forwarder</td></tr>
+                        <tr><td>AWS CloudTrail</td><td>AWSCloudTrail</td><td>Paid (GB)</td><td>S3 bucket integration</td></tr>
+                        <tr><td>Threat Intelligence</td><td>ThreatIntelligenceIndicator</td><td>Free</td><td>TAXII feeds, MISP</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="alerts">Alert Framework</h2>
+
+                <h3>Alert Severity Mapping</h3>
+                <table>
+                    <thead><tr><th>Severity</th><th>Criteria</th><th>SLA (Triage)</th><th>SLA (Resolution)</th><th>Escalation</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>Critical</strong></td><td>Active breach, ransomware, C2, data exfil confirmed</td><td>15 minutes</td><td>4 hours</td><td>Immediate to L3 + management</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>High</strong></td><td>Malware executed, credential theft, privilege escalation</td><td>1 hour</td><td>8 hours</td><td>L2 within 30 min</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Medium</strong></td><td>Suspicious activity, policy violation, potential threat</td><td>4 hours</td><td>24 hours</td><td>L2 if unresolved 4 hrs</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Low</strong></td><td>Informational, blocked threats, minor policy</td><td>24 hours</td><td>72 hours</td><td>As needed</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Core Detection Rules by Category</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Rule Examples</th><th>Data Source</th><th>Severity</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Identity</strong></td><td>Brute force, impossible travel, MFA bypass, admin role assigned</td><td>Entra ID, AD</td><td>Medium-Critical</td></tr>
+                        <tr><td><strong>Endpoint</strong></td><td>Malware detection, LSASS access, encoded PowerShell, LOLBin abuse</td><td>EDR</td><td>Medium-Critical</td></tr>
+                        <tr><td><strong>Network</strong></td><td>C2 beaconing, lateral movement, port scanning, data exfil</td><td>Firewall, NDR</td><td>High-Critical</td></tr>
+                        <tr><td><strong>Email</strong></td><td>Phishing delivered, malware attachment, BEC attempt</td><td>Email security</td><td>Medium-High</td></tr>
+                        <tr><td><strong>Cloud</strong></td><td>Risky app consent, mass download, external sharing</td><td>CASB, Cloud logs</td><td>Medium-High</td></tr>
+                        <tr><td><strong>Data</strong></td><td>DLP violation, bulk data access, sensitive file external</td><td>DLP, CASB</td><td>Medium-High</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="soar">SOAR Automation</h2>
+
+                <h3>Automated Playbook Catalog</h3>
+                <table>
+                    <thead><tr><th>Playbook</th><th>Trigger</th><th>Automated Actions</th><th>Human Actions</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Phishing Response</strong></td><td>User reported phishing</td><td>Extract IOCs, check all mailboxes, block sender, purge if malicious</td><td>Confirm severity, user notification</td></tr>
+                        <tr><td><strong>Malware Containment</strong></td><td>Malware alert (high confidence)</td><td>Isolate endpoint, collect artifacts, check other endpoints</td><td>Verify isolation, determine scope</td></tr>
+                        <tr><td><strong>Account Compromise</strong></td><td>Impossible travel + risky sign-in</td><td>Disable user, revoke sessions, notify user manager</td><td>Investigation, credential reset</td></tr>
+                        <tr><td><strong>IOC Enrichment</strong></td><td>Any alert with IOC</td><td>Query VT, MISP, threat intel, geo lookup, WHOIS</td><td>Review enrichment</td></tr>
+                        <tr><td><strong>Ticket Creation</strong></td><td>Any medium+ alert</td><td>Create ticket, assign based on type, SLA timer</td><td>Triage, investigation</td></tr>
+                        <tr><td><strong>Alert Triage</strong></td><td>Low severity alerts</td><td>Auto-close known FPs, deduplicate, correlate</td><td>Review auto-closed weekly</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Logic App / SOAR Integration Points</h3>
+                <table>
+                    <thead><tr><th>Integration</th><th>Purpose</th><th>Actions Available</th></tr></thead>
+                    <tbody>
+                        <tr><td>Microsoft Sentinel</td><td>Alert source, incident management</td><td>Create/update incidents, run queries, add comments</td></tr>
+                        <tr><td>Defender for Endpoint</td><td>Endpoint response</td><td>Isolate device, run AV scan, collect investigation package</td></tr>
+                        <tr><td>Entra ID</td><td>Identity response</td><td>Disable user, revoke sessions, reset password</td></tr>
+                        <tr><td>Exchange Online</td><td>Email response</td><td>Delete email, block sender, search mailboxes</td></tr>
+                        <tr><td>ServiceNow/Jira</td><td>Ticketing</td><td>Create ticket, update, assign, close</td></tr>
+                        <tr><td>Teams/Slack</td><td>Notifications</td><td>Send alert, create channel, post update</td></tr>
+                        <tr><td>VirusTotal</td><td>IOC enrichment</td><td>Hash lookup, URL lookup, IP lookup</td></tr>
+                        <tr><td>MISP</td><td>Threat intel</td><td>Query indicators, add indicators</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dashboards">SOC Dashboards</h2>
+
+                <h3>Executive Dashboard Metrics</h3>
+                <table>
+                    <thead><tr><th>Metric</th><th>Target</th><th>Calculation</th><th>Frequency</th></tr></thead>
+                    <tbody>
+                        <tr><td>Mean Time to Detect (MTTD)</td><td><1 hour</td><td>Time from occurrence to alert</td><td>Weekly</td></tr>
+                        <tr><td>Mean Time to Respond (MTTR)</td><td><4 hours</td><td>Time from alert to containment</td><td>Weekly</td></tr>
+                        <tr><td>Alert Volume</td><td>Trending down</td><td>Total alerts by severity</td><td>Daily</td></tr>
+                        <tr><td>True Positive Rate</td><td>>70%</td><td>True positives / Total alerts</td><td>Weekly</td></tr>
+                        <tr><td>Incidents by Type</td><td>Context</td><td>Count by category</td><td>Weekly</td></tr>
+                        <tr><td>SLA Compliance</td><td>>95%</td><td>Alerts triaged within SLA</td><td>Weekly</td></tr>
+                        <tr><td>Coverage Score</td><td>>80%</td><td>Assets with logging/EDR</td><td>Monthly</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Operational Dashboard Widgets</h3>
+                <table>
+                    <thead><tr><th>Widget</th><th>Purpose</th><th>Data Source</th></tr></thead>
+                    <tbody>
+                        <tr><td>Open Incidents Queue</td><td>Current workload</td><td>SIEM/SOAR</td></tr>
+                        <tr><td>Alerts by Source (24h)</td><td>Volume monitoring</td><td>SIEM</td></tr>
+                        <tr><td>Top Targeted Users</td><td>Risk identification</td><td>Identity logs</td></tr>
+                        <tr><td>Top Attacked Endpoints</td><td>Risk identification</td><td>EDR</td></tr>
+                        <tr><td>Geographic Anomalies Map</td><td>Unusual locations</td><td>Sign-in logs</td></tr>
+                        <tr><td>Threat Intel Matches</td><td>IOC hits</td><td>TI feeds</td></tr>
+                        <tr><td>Failed Logins Trend</td><td>Brute force detection</td><td>Identity logs</td></tr>
+                        <tr><td>Malware Detections</td><td>Endpoint health</td><td>EDR/AV</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="oncall">On-Call & Escalation</h2>
+
+                <h3>Escalation Matrix</h3>
+                <table>
+                    <thead><tr><th>Level</th><th>Role</th><th>Responsibilities</th><th>Contact Method</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>L1</strong></td><td>SOC Analyst</td><td>Initial triage, known procedures, escalation</td><td>SOC queue, phone</td></tr>
+                        <tr><td><strong>L2</strong></td><td>Senior Analyst</td><td>Complex investigations, incident handling</td><td>Direct page, Teams</td></tr>
+                        <tr><td><strong>L3</strong></td><td>Incident Responder / Engineer</td><td>Major incidents, forensics, advanced threats</td><td>PagerDuty, phone</td></tr>
+                        <tr><td><strong>Management</strong></td><td>SOC Manager</td><td>Resource allocation, exec communication</td><td>Phone, SMS</td></tr>
+                        <tr><td><strong>CISO</strong></td><td>CISO / Security Director</td><td>Critical incidents, business decisions</td><td>Phone</td></tr>
+                        <tr><td><strong>External</strong></td><td>IR Retainer (if contracted)</td><td>Major breaches, specialized expertise</td><td>Hotline</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

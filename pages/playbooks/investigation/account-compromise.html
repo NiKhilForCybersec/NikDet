@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Compromise Investigation Playbook | SOC Compendium</title>
+    <title>Account Compromise Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -19,813 +19,284 @@
                 <span>Account Compromise</span>
             </div>
 
-            <div class="playbook-header">
-                <div class="playbook-id">PB-INV-003</div>
-                <h1>Account Compromise Investigation Playbook</h1>
-                <p class="lead">Complete investigation procedure for suspected or confirmed account compromise. Covers identity-based attacks, credential theft, session hijacking, and unauthorized access across cloud and on-premises environments.</p>
-                <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">Critical</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2 / L3</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">60-180 min</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Last Updated</span><span class="playbook-meta-value">2025-01-02</span></div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
-                    <span class="mitre-tag">T1078</span>
-                    <span class="mitre-tag">T1110</span>
-                    <span class="mitre-tag">T1539</span>
-                    <span class="mitre-tag">T1550</span>
-                    <span class="mitre-tag">T1556</span>
-                    <span class="mitre-tag">T1528</span>
-                    <span class="mitre-tag">T1606</span>
-                    <span class="mitre-tag">T1621</span>
-                </div>
-            </div>
+            <h1><i class="fas fa-user-lock"></i> Account Compromise Investigation</h1>
+            <p class="lead">Complete investigation workflow when an account is suspected or confirmed compromised.</p>
 
             <div class="content">
-                <h2 id="overview">Overview</h2>
-                <p>Account compromise is one of the most damaging attack vectors, providing attackers with legitimate credentials to move laterally, access sensitive data, and maintain persistence. This playbook provides a systematic approach to investigating compromised accounts in hybrid environments.</p>
-
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-info-circle"></i> What This Playbook Covers</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li>Cloud identity compromise (Azure AD/Entra ID, AWS IAM, GCP)</li>
-                        <li>On-premises Active Directory compromise</li>
-                        <li>Service account compromise</li>
-                        <li>Privileged account compromise</li>
-                        <li>Session hijacking and token theft</li>
-                        <li>OAuth/consent phishing</li>
-                        <li>MFA bypass attacks</li>
-                        <li>Password spray and credential stuffing</li>
-                        <li>Adversary-in-the-Middle (AiTM) attacks</li>
-                    </ul>
-                </div>
-
-                <h3>Investigation Objectives</h3>
-                <ol>
-                    <li><strong>Confirm Compromise</strong> - Is this account actually compromised or false positive?</li>
-                    <li><strong>Determine Entry Point</strong> - How were credentials obtained?</li>
-                    <li><strong>Assess Scope</strong> - What did the attacker access? Other accounts compromised?</li>
-                    <li><strong>Identify Persistence</strong> - Did attacker establish backdoor access?</li>
-                    <li><strong>Evaluate Data Impact</strong> - Was sensitive data accessed or exfiltrated?</li>
-                    <li><strong>Enable Recovery</strong> - Secure the account and prevent re-compromise</li>
-                    <li><strong>Extract IOCs</strong> - IPs, user agents, OAuth apps for blocking</li>
-                </ol>
-
-                <h2 id="when-to-use">When to Use This Playbook</h2>
-                <table>
-                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th></tr></thead>
-                    <tbody>
-                        <tr><td>Impossible travel alert</td><td>Azure AD Identity Protection</td><td>High</td></tr>
-                        <tr><td>Unfamiliar sign-in properties</td><td>Azure AD Identity Protection</td><td>Medium</td></tr>
-                        <tr><td>User reports not recognizing sign-ins</td><td>User Report</td><td>High</td></tr>
-                        <tr><td>Password spray detected</td><td>SIEM/Identity Protection</td><td>High</td></tr>
-                        <tr><td>Anomalous token usage</td><td>MCAS/Defender for Cloud Apps</td><td>High</td></tr>
-                        <tr><td>Suspicious inbox rule created</td><td>SIEM/Exchange</td><td>High</td></tr>
-                        <tr><td>OAuth app consent from suspicious app</td><td>Azure AD/SIEM</td><td>High</td></tr>
-                        <tr><td>MFA fatigue attack (multiple MFA prompts)</td><td>Azure AD/SIEM</td><td>Critical</td></tr>
-                        <tr><td>Sign-in from known malicious IP</td><td>Threat Intel/SIEM</td><td>High</td></tr>
-                        <tr><td>Privileged role assigned unexpectedly</td><td>Azure AD Audit</td><td>Critical</td></tr>
-                        <tr><td>Service principal credentials added</td><td>Azure AD Audit</td><td>Critical</td></tr>
-                        <tr><td>Legacy authentication from unusual location</td><td>SIEM</td><td>Medium</td></tr>
-                        <tr><td>AiTM phishing campaign detected</td><td>Email Security/TI</td><td>Critical</td></tr>
-                    </tbody>
-                </table>
-
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Do NOT Use This Playbook For</div>
-                    <ul style="margin: 0.3rem 0 0 1rem;">
-                        <li><strong>Legitimate travel</strong> - User confirms they were actually traveling</li>
-                        <li><strong>VPN usage</strong> - User using corporate or personal VPN</li>
-                        <li><strong>Shared accounts</strong> - Known shared account with expected multi-location access</li>
-                        <li><strong>Service accounts with expected behavior</strong> - Automated processes from multiple locations</li>
-                    </ul>
-                </div>
+                <!-- WHY THIS MATTERS -->
+                <h2 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h2>
 
                 <div class="info-box danger">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> STOP - Escalate Immediately If</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li>✅ Global Admin or Privileged Role Administrator compromised</li>
-                        <li>✅ Domain Admin or Enterprise Admin compromised</li>
-                        <li>✅ Service account with broad permissions compromised</li>
-                        <li>✅ Multiple executives compromised simultaneously</li>
-                        <li>✅ Evidence of data exfiltration (large downloads, forwarding rules)</li>
-                        <li>✅ Attacker has modified authentication infrastructure</li>
-                        <li>✅ New federation trust or external identity provider added</li>
-                        <li>✅ Conditional Access policies modified or disabled</li>
-                    </ul>
-                    <p style="margin-top: 0.75rem;"><strong>Escalation Path:</strong> SOC Lead → IR Team → CISO → Legal (if data breach)</p>
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> What Attackers Do With Compromised Accounts</div>
+                    <table>
+                        <thead><tr><th>Action</th><th>Timeframe</th><th>Business Impact</th></tr></thead>
+                        <tbody>
+                            <tr><td>Read emails, gather intelligence</td><td>Minutes to hours</td><td>Confidential information exposed</td></tr>
+                            <tr><td>Set up persistence (inbox rules, OAuth apps)</td><td>Within first hour</td><td>Maintained access even after password reset</td></tr>
+                            <tr><td>Send internal phishing</td><td>Hours</td><td>More accounts compromised</td></tr>
+                            <tr><td>Send BEC emails (wire fraud)</td><td>Hours to days</td><td>Financial loss ($125K average BEC)</td></tr>
+                            <tr><td>Access connected systems (SSO)</td><td>Immediately</td><td>Lateral movement to other apps</td></tr>
+                            <tr><td>Exfiltrate data</td><td>Hours to days</td><td>Data breach, regulatory penalties</td></tr>
+                            <tr><td>Sell access to other criminals</td><td>Days to weeks</td><td>Ransomware, persistent threat</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 0.5rem;"><strong>Key Insight:</strong> Attackers work fast. Every hour of delay increases damage exponentially.</p>
                 </div>
 
-                <h2 id="prerequisites">Prerequisites</h2>
-                
-                <h3>Required Access</h3>
+                <h3>Why Speed Matters</h3>
                 <table>
-                    <thead><tr><th>System</th><th>Access Level</th><th>Purpose</th></tr></thead>
+                    <thead><tr><th>Response Time</th><th>Likely Attacker Progress</th><th>Containment Difficulty</th></tr></thead>
                     <tbody>
-                        <tr><td>Azure AD / Entra ID</td><td>Security Reader, Authentication Admin</td><td>Sign-in logs, user details, revoke sessions</td></tr>
-                        <tr><td>Microsoft 365 Admin Center</td><td>Security Reader</td><td>User activity, audit logs</td></tr>
-                        <tr><td>Microsoft Defender for Cloud Apps</td><td>Analyst</td><td>Cloud app activity, OAuth apps</td></tr>
-                        <tr><td>Microsoft Sentinel / Splunk</td><td>Analyst</td><td>Log correlation, hunting</td></tr>
-                        <tr><td>Exchange Online Admin</td><td>Security Reader</td><td>Mailbox rules, message trace</td></tr>
-                        <tr><td>Active Directory</td><td>Read access</td><td>Group membership, account properties</td></tr>
-                        <tr><td>AWS IAM / CloudTrail</td><td>Security Audit</td><td>AWS account activity (if applicable)</td></tr>
-                        <tr><td>EDR (Defender/CrowdStrike)</td><td>Analyst</td><td>Endpoint activity correlation</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>< 1 hour</strong></td><td>Initial access, reconnaissance</td><td>Easy - reset credentials, minimal cleanup</td></tr>
+                        <tr><td style="color: #d29922;"><strong>1-4 hours</strong></td><td>Persistence established, some data access</td><td>Moderate - need to find and remove persistence</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>4-24 hours</strong></td><td>Internal phishing sent, data exfiltrated</td><td>Difficult - multiple users may be compromised</td></tr>
+                        <tr><td style="color: #f85149;"><strong>> 24 hours</strong></td><td>Full access, BEC attempted, access sold</td><td>Very difficult - assume worst case</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Required Log Sources</h3>
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-database"></i> Microsoft 365 / Sentinel Tables</div>
-                    <ul style="margin: 0.3rem 0 0 1rem; font-family: var(--font-mono); font-size: 0.85rem;">
-                        <li><code>SigninLogs</code> - Interactive sign-ins with full details</li>
-                        <li><code>AADNonInteractiveUserSignInLogs</code> - Token refreshes, background auth</li>
-                        <li><code>AADServicePrincipalSignInLogs</code> - Service principal authentication</li>
-                        <li><code>AADManagedIdentitySignInLogs</code> - Managed identity auth</li>
-                        <li><code>AuditLogs</code> - Directory changes, role assignments</li>
-                        <li><code>OfficeActivity</code> - O365 activity (files, SharePoint, etc.)</li>
-                        <li><code>CloudAppEvents</code> - Defender for Cloud Apps activity</li>
-                        <li><code>EmailEvents</code> - Email activity</li>
-                        <li><code>IdentityInfo</code> - User identity details</li>
-                        <li><code>BehaviorAnalytics</code> - UEBA anomalies</li>
-                        <li><code>AADRiskyUsers</code> - Identity Protection risk data</li>
-                    </ul>
-                </div>
+                <!-- WHEN TO USE -->
+                <h2 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h2>
 
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-database"></i> Splunk Sourcetypes</div>
-                    <ul style="margin: 0.3rem 0 0 1rem; font-family: var(--font-mono); font-size: 0.85rem;">
-                        <li><code>ms:aad:signin</code> - Azure AD sign-in events</li>
-                        <li><code>ms:aad:audit</code> - Azure AD audit events</li>
-                        <li><code>ms:o365:management</code> - O365 management activity</li>
-                        <li><code>aws:cloudtrail</code> - AWS CloudTrail logs</li>
-                        <li><code>WinEventLog:Security</code> - Windows Security events (4624, 4625, 4648, 4672, 4776)</li>
-                    </ul>
-                </div>
-
-                <h3>Analysis Tools</h3>
+                <h3>Triggers - Start This Investigation When:</h3>
                 <table>
-                    <thead><tr><th>Tool</th><th>Purpose</th><th>URL/Access</th></tr></thead>
+                    <thead><tr><th>Trigger</th><th>Confidence Level</th><th>Priority</th><th>First Action</th></tr></thead>
                     <tbody>
-                        <tr><td>Azure AD Sign-in Logs</td><td>Detailed authentication analysis</td><td>portal.azure.com</td></tr>
-                        <tr><td>Microsoft Secure Score</td><td>Identity security posture</td><td>security.microsoft.com</td></tr>
-                        <tr><td>IPInfo.io</td><td>IP geolocation and ASN lookup</td><td>ipinfo.io</td></tr>
-                        <tr><td>AbuseIPDB</td><td>IP reputation check</td><td>abuseipdb.com</td></tr>
-                        <tr><td>GreyNoise</td><td>Internet scanner identification</td><td>greynoise.io</td></tr>
-                        <tr><td>User Agent Parser</td><td>Parse and analyze user agents</td><td>useragentstring.com</td></tr>
-                        <tr><td>TokenTactics</td><td>Token analysis (if recovered)</td><td>GitHub</td></tr>
-                        <tr><td>AADInternals</td><td>Azure AD forensics</td><td>GitHub</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Impossible travel alert</strong></td><td>High (if locations are truly impossible)</td><td>HIGH</td><td>Verify with user, suspend if unreachable</td></tr>
+                        <tr><td style="color: #f85149;"><strong>User reports they didn't send emails</strong></td><td>Very High</td><td>CRITICAL</td><td>Suspend account immediately</td></tr>
+                        <tr><td style="color: #f85149;"><strong>MFA fatigue attack detected</strong></td><td>High</td><td>HIGH</td><td>Suspend account, contact user</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Sign-in from anonymizer/TOR</strong></td><td>Medium-High</td><td>HIGH</td><td>Verify with user</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>New inbox rule forwarding external</strong></td><td>High</td><td>HIGH</td><td>Suspend account, remove rule</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Sign-in from new country</strong></td><td>Medium</td><td>MEDIUM</td><td>Verify - could be travel</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Legacy auth success</strong></td><td>Medium</td><td>MEDIUM</td><td>Investigate source, may be legitimate app</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="step1">Step 1: Initial Triage (10 Minutes)</h2>
-                <p>Quickly assess the alert to determine if this is a true compromise requiring immediate action.</p>
+                <h3>When NOT to Use This Playbook</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Use Instead</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr><td>Initial phishing still being investigated</td><td><a href="phishing.html">Phishing Playbook</a></td><td>Determine if compromise occurred first</td></tr>
+                        <tr><td>Service account compromise</td><td>Service Account Incident Playbook</td><td>Different investigation approach, may affect systems</td></tr>
+                        <tr><td>Admin account compromise</td><td>Privileged Account Compromise Playbook</td><td>Higher severity, different scope</td></tr>
+                        <tr><td>Known false positive pattern</td><td>Document and tune alert</td><td>Don't waste time on known FPs</td></tr>
+                    </tbody>
+                </table>
 
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Gather Alert Context</div>
-                            <table>
-                                <thead><tr><th>Field</th><th>Where to Find</th><th>Why It Matters</th></tr></thead>
-                                <tbody>
-                                    <tr><td><strong>Username/UPN</strong></td><td>Alert</td><td>Identity under investigation</td></tr>
-                                    <tr><td><strong>Alert Type</strong></td><td>Alert</td><td>Nature of suspicious activity</td></tr>
-                                    <tr><td><strong>Source IP</strong></td><td>Alert/Sign-in logs</td><td>Attacker location indicator</td></tr>
-                                    <tr><td><strong>Location</strong></td><td>Sign-in logs</td><td>Geographic anomaly check</td></tr>
-                                    <tr><td><strong>User Agent</strong></td><td>Sign-in logs</td><td>Device/browser fingerprint</td></tr>
-                                    <tr><td><strong>Sign-in Time</strong></td><td>Alert</td><td>Timeline anchor</td></tr>
-                                    <tr><td><strong>Application</strong></td><td>Sign-in logs</td><td>What was accessed</td></tr>
-                                    <tr><td><strong>Auth Method</strong></td><td>Sign-in logs</td><td>MFA status</td></tr>
-                                    <tr><td><strong>Risk Level</strong></td><td>Identity Protection</td><td>Microsoft's risk assessment</td></tr>
-                                    <tr><td><strong>User's Role</strong></td><td>Azure AD</td><td>Privilege level at risk</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <!-- DECISION FRAMEWORK -->
+                <h2 id="decisions"><i class="fas fa-sitemap"></i> Investigation Decision Framework</h2>
 
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check User's Normal Behavior</div>
-                            <div class="step-description">Compare suspicious activity to user's baseline:</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - User's typical sign-in locations (last 30 days)</span>
-let targetUser = "user@domain.com";
-SigninLogs
-| where TimeGenerated > ago(30d)
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0 // Successful only
-| summarize SignInCount=count(), 
-    FirstSeen=min(TimeGenerated),
-    LastSeen=max(TimeGenerated)
-    by Location, IPAddress
-| order by SignInCount desc
-
-<span style="color: #6aa3f7;">// KQL - User's typical devices and browsers</span>
-SigninLogs
-| where TimeGenerated > ago(30d)
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| extend DeviceOS = tostring(DeviceDetail.operatingSystem)
-| extend Browser = tostring(DeviceDetail.browser)
-| summarize Count=count() by DeviceOS, Browser
-| order by Count desc
-
-<span style="color: #6aa3f7;">// KQL - User's typical applications</span>
-SigninLogs
-| where TimeGenerated > ago(30d)
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| summarize Count=count() by AppDisplayName
-| order by Count desc</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1.3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Verify with User (If Possible)</div>
-                            <div class="step-description">Contact user through verified channel (NOT email if account may be compromised):</div>
-                            <table>
-                                <thead><tr><th>Question</th><th>If Yes</th><th>If No</th></tr></thead>
-                                <tbody>
-                                    <tr><td>Were you traveling to [location]?</td><td>Likely legitimate</td><td>Likely compromised</td></tr>
-                                    <tr><td>Did you sign in at [time]?</td><td>Check for details</td><td>Confirm compromise</td></tr>
-                                    <tr><td>Did you use a VPN?</td><td>Check VPN provider location</td><td>Continue investigation</td></tr>
-                                    <tr><td>Did you receive any MFA prompts you didn't initiate?</td><td>MFA fatigue attack</td><td>Token theft possible</td></tr>
-                                    <tr><td>Did you click any links in emails recently?</td><td>Check for phishing</td><td>Other vector</td></tr>
-                                    <tr><td>Did you grant any app permissions?</td><td>Check OAuth apps</td><td>Other vector</td></tr>
-                                </tbody>
-                            </table>
-                            <div class="info-box warning">
-                                <div class="info-box-title"><i class="fas fa-phone"></i> Contact Methods (Safest to Least Safe)</div>
-                                <ol style="margin: 0.3rem 0 0 1rem;">
-                                    <li>Phone call to verified number (from HR system)</li>
-                                    <li>Teams/Slack message (if account appears uncompromised)</li>
-                                    <li>Manager verification</li>
-                                    <li>In-person (if available)</li>
-                                </ol>
-                                <p style="margin-top: 0.5rem;"><strong>⚠️ DO NOT</strong> use the potentially compromised email account to contact the user!</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1.4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Initial Risk Classification</div>
-                            <table>
-                                <thead><tr><th>Indicator</th><th>Risk Level</th><th>Action</th></tr></thead>
-                                <tbody>
-                                    <tr><td>Sign-in from TOR exit node</td><td>Critical</td><td>Immediate containment</td></tr>
-                                    <tr><td>Sign-in from known malicious IP</td><td>Critical</td><td>Immediate containment</td></tr>
-                                    <tr><td>Impossible travel (verified not VPN)</td><td>High</td><td>Containment after verification</td></tr>
-                                    <tr><td>Sign-in after MFA fatigue (many prompts)</td><td>Critical</td><td>Immediate containment</td></tr>
-                                    <tr><td>Legacy auth from unusual location</td><td>High</td><td>Block legacy auth, investigate</td></tr>
-                                    <tr><td>New country, user confirms not traveling</td><td>Critical</td><td>Immediate containment</td></tr>
-                                    <tr><td>Anomalous user agent</td><td>Medium</td><td>Continue investigation</td></tr>
-                                    <tr><td>Off-hours access from usual location</td><td>Low</td><td>Verify with user</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <h3>Initial Decision: Suspend or Investigate?</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-question-circle"></i> To Suspend or Not to Suspend</div>
+                    <table>
+                        <thead><tr><th>Suspend Immediately If:</th><th>Investigate First If:</th></tr></thead>
+                        <tbody>
+                            <tr><td>User confirms they didn't do it</td><td>User might be traveling (check with them)</td></tr>
+                            <tr><td>Active BEC/phishing being sent</td><td>New device could be legitimate (new phone)</td></tr>
+                            <tr><td>Impossible travel is truly impossible</td><td>VPN could explain unusual location</td></tr>
+                            <tr><td>Multiple high-confidence alerts</td><td>Single low-confidence alert</td></tr>
+                            <tr><td>User unreachable for verification</td><td>User confirms activity is theirs</td></tr>
+                            <tr><td>Critical/executive user</td><td>Standard user with ambiguous alert</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 0.5rem;"><strong>When in doubt:</strong> Suspend first, investigate second. A brief disruption is better than a breach.</p>
                 </div>
 
-                <h2 id="step2">Step 2: Sign-In Analysis (20 Minutes)</h2>
-                <p>Deep dive into authentication events to understand the full scope of the compromise.</p>
+                <h3>Compromise Confirmation Matrix</h3>
+                <table>
+                    <thead><tr><th>Evidence</th><th>Alone = Compromised?</th><th>Combined With Others?</th></tr></thead>
+                    <tbody>
+                        <tr><td>New sign-in location</td><td style="color: #d29922;">Maybe (could be travel)</td><td style="color: #f85149;">Strong indicator</td></tr>
+                        <tr><td>New device</td><td style="color: #d29922;">Maybe (could be new phone)</td><td style="color: #f85149;">Strong indicator</td></tr>
+                        <tr><td>New inbox rule → external</td><td style="color: #f85149;">Yes, very suspicious</td><td style="color: #f85149;">Confirmed compromise</td></tr>
+                        <tr><td>OAuth app with mail access</td><td style="color: #f0883e;">Likely (unless known app)</td><td style="color: #f85149;">Confirmed compromise</td></tr>
+                        <tr><td>Sign-in from TOR/proxy</td><td style="color: #f0883e;">Likely</td><td style="color: #f85149;">Confirmed compromise</td></tr>
+                        <tr><td>User denies activity</td><td style="color: #f85149;">Yes, confirmed</td><td style="color: #f85149;">Confirmed compromise</td></tr>
+                        <tr><td>Emails sent user didn't write</td><td style="color: #f85149;">Yes, confirmed</td><td style="color: #f85149;">Confirmed compromise</td></tr>
+                    </tbody>
+                </table>
 
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Analyze All Recent Sign-Ins</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Comprehensive sign-in analysis</span>
-let targetUser = "user@domain.com";
-let investigationWindow = 7d; // Adjust as needed
-SigninLogs
-| where TimeGenerated > ago(investigationWindow)
-| where UserPrincipalName =~ targetUser
-| extend DeviceOS = tostring(DeviceDetail.operatingSystem)
-| extend Browser = tostring(DeviceDetail.browser)
-| extend DeviceTrust = tostring(DeviceDetail.trustType)
-| extend City = tostring(LocationDetails.city)
-| extend Country = tostring(LocationDetails.countryOrRegion)
-| project TimeGenerated, 
-    ResultType,
-    ResultDescription,
-    IPAddress,
-    Location,
-    City,
-    Country,
-    AppDisplayName,
-    ClientAppUsed,
-    DeviceOS,
-    Browser,
-    DeviceTrust,
-    ConditionalAccessStatus,
-    AuthenticationRequirement,
-    MfaDetail=tostring(MfaDetail.authMethod),
-    RiskLevelDuringSignIn,
-    RiskState,
-    CorrelationId
-| order by TimeGenerated desc</pre>
-                            </div>
-                        </div>
-                    </div>
+                <!-- HOW TO INVESTIGATE -->
+                <h2 id="how-to"><i class="fas fa-search"></i> How to Investigate</h2>
 
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Identify the Initial Compromise</div>
-                            <div class="step-description">Find the first suspicious sign-in to establish the compromise timeline:</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Find first sign-in from suspicious IPs</span>
-let targetUser = "user@domain.com";
-let suspiciousIPs = dynamic(["IP1", "IP2"]); // Add suspicious IPs
+                <h3>Step 1: Gather Sign-In Evidence</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Complete sign-in history for user</span>
 SigninLogs
-| where UserPrincipalName =~ targetUser
-| where IPAddress in (suspiciousIPs)
-| where ResultType == 0
-| summarize FirstCompromisedAccess=min(TimeGenerated),
-    AccessCount=count(),
-    AppsAccessed=make_set(AppDisplayName)
-| extend CompromiseDuration = now() - FirstCompromisedAccess
+| where TimeGenerated > ago(30d)
+| where UserPrincipalName == "user@company.com"
+| project TimeGenerated, IPAddress, Location, AppDisplayName, 
+    ClientAppUsed, DeviceDetail, ResultType, RiskLevelDuringSignIn,
+    MfaDetail, ConditionalAccessStatus
+| order by TimeGenerated desc
 
-<span style="color: #6aa3f7;">// KQL - Sign-ins just before compromise (find attack vector)</span>
-let targetUser = "user@domain.com";
-let compromiseTime = datetime(2025-01-02T12:00:00Z);
+<span style="color: #6aa3f7;">// KQL - Identify anomalous sign-ins (baseline comparison)</span>
+let user = "user@company.com";
+let baseline = SigninLogs
+    | where TimeGenerated between(ago(60d) .. ago(7d))
+    | where UserPrincipalName == user
+    | summarize NormalLocations = make_set(Location), NormalIPs = make_set(IPAddress);
 SigninLogs
-| where UserPrincipalName =~ targetUser
-| where TimeGenerated between ((compromiseTime - 1h) .. compromiseTime)
-| project TimeGenerated, IPAddress, Location, AppDisplayName,
-    ResultType, ResultDescription, UserAgent
-| order by TimeGenerated asc</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Analyze Authentication Methods</div>
-                            <div class="step-description">Understand how the attacker authenticated:</div>
-                            <table>
-                                <thead><tr><th>Auth Method</th><th>Attack Vector</th><th>Investigation Focus</th></tr></thead>
-                                <tbody>
-                                    <tr><td>Password only (no MFA)</td><td>Credential theft, password spray</td><td>Check for phishing, credential dumps</td></tr>
-                                    <tr><td>MFA - Phone call</td><td>SIM swap, call forwarding</td><td>Check phone number changes</td></tr>
-                                    <tr><td>MFA - SMS</td><td>SIM swap, SS7 attack</td><td>Check phone number changes</td></tr>
-                                    <tr><td>MFA - Push notification</td><td>MFA fatigue, social engineering</td><td>Check for repeated prompts</td></tr>
-                                    <tr><td>MFA - TOTP</td><td>Token theft, AiTM</td><td>Check for proxy indicators</td></tr>
-                                    <tr><td>FIDO2/Passkey</td><td>Token theft post-auth</td><td>Check for token replay</td></tr>
-                                    <tr><td>Primary Refresh Token</td><td>PRT theft from device</td><td>Check device compromise</td></tr>
-                                    <tr><td>No MFA required</td><td>Legacy auth, CA bypass</td><td>Check Conditional Access gaps</td></tr>
-                                </tbody>
-                            </table>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - MFA analysis for user</span>
-let targetUser = "user@domain.com";
-SigninLogs
-| where UserPrincipalName =~ targetUser
 | where TimeGenerated > ago(7d)
-| where ResultType == 0
-| extend MFAMethod = tostring(MfaDetail.authMethod)
-| extend MFAResult = tostring(MfaDetail.authDetail)
-| summarize Count=count() by MFAMethod, AuthenticationRequirement
-| order by Count desc
+| where UserPrincipalName == user
+| extend IsNewLocation = Location !in (toscalar(baseline | project NormalLocations))
+| extend IsNewIP = IPAddress !in (toscalar(baseline | project NormalIPs))
+| where IsNewLocation or IsNewIP
+| project TimeGenerated, IPAddress, Location, IsNewLocation, IsNewIP, AppDisplayName
 
-<span style="color: #6aa3f7;">// KQL - Find MFA fatigue attempts</span>
+<span style="color: #6aa3f7;">// KQL - Failed sign-ins followed by success (password spray/brute force)</span>
 SigninLogs
-| where UserPrincipalName =~ targetUser
-| where TimeGenerated > ago(24h)
-| where ResultType == 50074 // MFA required but not completed
-| summarize MFAPrompts=count() by bin(TimeGenerated, 5m), IPAddress
-| where MFAPrompts > 3 // Multiple prompts in short window
-| order by TimeGenerated desc</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check for AiTM/Proxy Indicators</div>
-                            <div class="step-description">Adversary-in-the-Middle attacks intercept credentials and tokens:</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Indicators of AiTM attack</span>
-let targetUser = "user@domain.com";
-SigninLogs
-| where UserPrincipalName =~ targetUser
 | where TimeGenerated > ago(7d)
-| where ResultType == 0
-| extend SessionId = tostring(AuthenticationDetails[0].authenticationStepResultDetail)
-| project TimeGenerated, IPAddress, Location, UserAgent,
-    SessionId, AuthenticationProcessingDetails
-| join kind=inner (
-    SigninLogs
-    | where UserPrincipalName =~ targetUser
-    | where TimeGenerated > ago(7d)
-    | where ResultType == 0
-    | project TimeGenerated, IPAddress, SessionId
-) on SessionId
-| where IPAddress != IPAddress1 // Same session, different IPs = proxy
-| project TimeGenerated, OriginalIP=IPAddress, ProxyIP=IPAddress1
-
-<span style="color: #6aa3f7;">// Check for known AiTM infrastructure user agents</span>
-SigninLogs
-| where UserPrincipalName =~ targetUser
-| where UserAgent has_any ("python", "curl", "Go-http-client", 
-    "axios", "node-fetch", "evilginx")
-| project TimeGenerated, IPAddress, UserAgent, AppDisplayName</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check Non-Interactive Sign-Ins</div>
-                            <div class="step-description">Token refreshes can reveal ongoing attacker access:</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Non-interactive sign-ins (token usage)</span>
-let targetUser = "user@domain.com";
-let suspiciousIPs = dynamic(["IP1", "IP2"]);
-AADNonInteractiveUserSignInLogs
-| where UserPrincipalName =~ targetUser
-| where TimeGenerated > ago(7d)
-| where IPAddress in (suspiciousIPs)
-| project TimeGenerated, IPAddress, AppDisplayName, 
-    ResourceDisplayName, ClientAppUsed
-| summarize TokenUsage=count(), 
-    Apps=make_set(AppDisplayName),
-    Resources=make_set(ResourceDisplayName)
-    by IPAddress, bin(TimeGenerated, 1h)
-| order by TimeGenerated desc</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <h2 id="step3">Step 3: Activity Analysis (30 Minutes)</h2>
-                <p>Determine what the attacker did after gaining access.</p>
-
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check Email Activity</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Check for malicious inbox rules</span>
-let targetUser = "user@domain.com";
-OfficeActivity
-| where UserId =~ targetUser
-| where Operation in ("New-InboxRule", "Set-InboxRule", "Enable-InboxRule")
-| project TimeGenerated, Operation, Parameters=tostring(Parameters),
-    ClientIP
-| extend RuleDetails = parse_json(Parameters)
-
-<span style="color: #6aa3f7;">// KQL - Check for email forwarding</span>
-OfficeActivity
-| where UserId =~ targetUser
-| where Operation == "Set-Mailbox"
-| where Parameters has "ForwardingSmtpAddress" or 
-    Parameters has "ForwardingAddress"
-| project TimeGenerated, Parameters, ClientIP
-
-<span style="color: #6aa3f7;">// KQL - Emails sent by compromised account</span>
-EmailEvents
-| where SenderFromAddress =~ targetUser
-| where TimeGenerated > ago(7d)
-| project TimeGenerated, Subject, RecipientEmailAddress,
-    SenderIPv4, EmailDirection
-| summarize EmailsSent=count(), 
-    Recipients=make_set(RecipientEmailAddress)
+| where UserPrincipalName == "user@company.com"
+| summarize 
+    FailedAttempts = countif(ResultType != 0),
+    SuccessfulAttempts = countif(ResultType == 0),
+    FirstFailed = minif(TimeGenerated, ResultType != 0),
+    FirstSuccess = minif(TimeGenerated, ResultType == 0)
     by bin(TimeGenerated, 1h)
-| order by TimeGenerated desc
+| where FailedAttempts > 5 and SuccessfulAttempts > 0
+</pre>
+                </div>
 
-<span style="color: #6aa3f7;">// KQL - Check for mass email access</span>
+                <h3>Step 2: Check for Persistence Mechanisms</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Inbox rules created (persistence)</span>
 CloudAppEvents
-| where AccountId =~ targetUser
-| where ActionType == "MailItemsAccessed"
-| where TimeGenerated > ago(7d)
-| summarize ItemsAccessed=count() by bin(TimeGenerated, 1h), IPAddress
-| where ItemsAccessed > 100 // Unusual volume
-| order by TimeGenerated desc</pre>
-                            </div>
-                        </div>
-                    </div>
+| where Timestamp > ago(30d)
+| where AccountObjectId == "user-object-id"
+| where ActionType in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")
+| project Timestamp, ActionType, RawEventData
 
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check File Access (SharePoint/OneDrive)</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - File downloads by user</span>
-let targetUser = "user@domain.com";
-OfficeActivity
-| where UserId =~ targetUser
-| where Operation in ("FileDownloaded", "FileSyncDownloadedFull")
-| where TimeGenerated > ago(7d)
-| project TimeGenerated, Operation, SourceFileName, 
-    Site_Url, ClientIP
-| summarize FilesDownloaded=count(),
-    Files=make_set(SourceFileName)
-    by bin(TimeGenerated, 1h), ClientIP
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// KQL - Bulk file access (potential exfiltration)</span>
-OfficeActivity
-| where UserId =~ targetUser
-| where Operation in ("FileDownloaded", "FileAccessed", "FileModified")
-| where TimeGenerated > ago(7d)
-| summarize FileActions=count() by bin(TimeGenerated, 15m), ClientIP
-| where FileActions > 50 // High volume in short time
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// KQL - Sensitive file access</span>
-OfficeActivity
-| where UserId =~ targetUser
-| where Operation == "FileDownloaded"
-| where SourceFileName has_any ("confidential", "password", 
-    "secret", "financial", "salary", "ssn", "pii", "budget")
-| project TimeGenerated, SourceFileName, Site_Url, ClientIP</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3.3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check Azure AD/Entra ID Changes</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Directory changes by user</span>
-let targetUser = "user@domain.com";
+<span style="color: #6aa3f7;">// KQL - OAuth apps consented by user</span>
 AuditLogs
-| where InitiatedBy.user.userPrincipalName =~ targetUser
-| where TimeGenerated > ago(7d)
-| project TimeGenerated, OperationName, Result,
-    TargetResources, Category
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// KQL - Critical changes (privilege escalation, persistence)</span>
-AuditLogs
-| where InitiatedBy.user.userPrincipalName =~ targetUser
-| where OperationName in (
-    "Add member to role",
-    "Add owner to application", 
-    "Add owner to service principal",
-    "Add app role assignment to service principal",
-    "Add delegated permission grant",
-    "Consent to application",
-    "Add service principal credentials",
-    "Update application – Certificates and secrets management"
-)
-| project TimeGenerated, OperationName, 
-    Target=tostring(TargetResources[0].displayName),
-    Result
-
-<span style="color: #6aa3f7;">// KQL - OAuth app consents</span>
-AuditLogs
+| where TimeGenerated > ago(30d)
 | where OperationName == "Consent to application"
-| where InitiatedBy.user.userPrincipalName =~ targetUser
-| extend AppName = tostring(TargetResources[0].displayName)
-| extend Permissions = tostring(TargetResources[0].modifiedProperties)
-| project TimeGenerated, AppName, Permissions</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3.4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check for OAuth/Consent Grant Abuse</div>
-                            <div class="step-description">Attackers often register malicious OAuth apps for persistence:</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - All OAuth apps user consented to</span>
-let targetUser = "user@domain.com";
-AuditLogs
-| where OperationName == "Consent to application"
-| where InitiatedBy.user.userPrincipalName =~ targetUser
-| extend AppName = tostring(TargetResources[0].displayName)
-| extend AppId = tostring(TargetResources[0].id)
-| project TimeGenerated, AppName, AppId, Result
-
-<span style="color: #6aa3f7;">// KQL - Check for high-risk permissions</span>
-AuditLogs
-| where OperationName == "Consent to application"
-| where TargetResources[0].modifiedProperties has_any (
-    "Mail.Read", "Mail.ReadWrite", "Mail.Send",
-    "Files.Read.All", "Files.ReadWrite.All",
-    "User.Read.All", "Directory.Read.All",
-    "full_access_as_user"
-)
+| where InitiatedBy.user.userPrincipalName == "user@company.com"
 | project TimeGenerated, 
-    AppName=tostring(TargetResources[0].displayName),
-    Permissions=tostring(TargetResources[0].modifiedProperties),
-    User=tostring(InitiatedBy.user.userPrincipalName)</pre>
-                            </div>
-                            <div class="info-box warning">
-                                <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> High-Risk OAuth Permissions</div>
-                                <ul style="margin: 0.3rem 0 0 1rem;">
-                                    <li><code>Mail.ReadWrite</code> - Read and modify all mail</li>
-                                    <li><code>Mail.Send</code> - Send mail as user</li>
-                                    <li><code>Files.ReadWrite.All</code> - Access all files</li>
-                                    <li><code>Directory.ReadWrite.All</code> - Modify directory</li>
-                                    <li><code>Application.ReadWrite.All</code> - Modify apps</li>
-                                    <li><code>full_access_as_user</code> - Exchange full access</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+    AppName = TargetResources[0].displayName,
+    Permissions = TargetResources[0].modifiedProperties
+
+<span style="color: #6aa3f7;">// KQL - Email forwarding changes</span>
+CloudAppEvents
+| where Timestamp > ago(30d)
+| where AccountObjectId == "user-object-id"
+| where ActionType in ("Set-Mailbox", "Set-MailboxJunkEmailConfiguration")
+| where RawEventData has "Forward"
+| project Timestamp, ActionType, RawEventData
+
+<span style="color: #6aa3f7;">// KQL - MFA registration changes</span>
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where TargetResources[0].userPrincipalName == "user@company.com"
+| where OperationName has_any ("User registered security info", "User deleted security info", "Admin registered security info")
+| project TimeGenerated, OperationName, InitiatedBy
+</pre>
                 </div>
 
-                <h2 id="step4">Step 4: Scope Assessment (15 Minutes)</h2>
-                <p>Determine if other accounts or systems were affected.</p>
-
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check for Lateral Movement to Other Accounts</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Other accounts from same attacker IP</span>
-let attackerIPs = dynamic(["IP1", "IP2"]);
-SigninLogs
-| where TimeGenerated > ago(7d)
-| where IPAddress in (attackerIPs)
-| where ResultType == 0
-| summarize Users=make_set(UserPrincipalName),
-    UserCount=dcount(UserPrincipalName),
-    SignInCount=count()
-    by IPAddress
-| where UserCount > 1 // Multiple accounts from same IP
-
-<span style="color: #6aa3f7;">// KQL - Check for password spray across org</span>
-SigninLogs
-| where TimeGenerated > ago(24h)
-| where ResultType in (50126, 50053, 50055) // Invalid password codes
-| summarize FailedAttempts=count(),
-    UsersTargeted=dcount(UserPrincipalName),
-    Users=make_set(UserPrincipalName, 20)
-    by IPAddress
-| where UsersTargeted > 10 // Many users targeted
-| order by UsersTargeted desc</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check for Internal Phishing</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Emails sent from compromised account</span>
-let targetUser = "user@domain.com";
-let compromiseTime = datetime(2025-01-02T12:00:00Z);
-EmailEvents
-| where TimeGenerated > compromiseTime
-| where SenderFromAddress =~ targetUser
-| where EmailDirection == "Outbound"
-| project TimeGenerated, Subject, RecipientEmailAddress,
-    UrlCount, AttachmentCount
-| summarize EmailCount=count(),
-    Recipients=make_set(RecipientEmailAddress, 50),
-    Subjects=make_set(Subject, 20)
-
-<span style="color: #6aa3f7;">// KQL - Check if recipients clicked links in these emails</span>
-let compromisedSender = "user@domain.com";
-UrlClickEvents
-| where TimeGenerated > ago(7d)
-| where NetworkMessageId in (
-    EmailEvents
-    | where SenderFromAddress =~ compromisedSender
-    | project NetworkMessageId
-)
-| project TimeGenerated, AccountUpn, Url, ActionType, UrlChain</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <h2 id="step5">Step 5: Containment (Immediate)</h2>
-                <p>Once compromise is confirmed, take immediate containment actions.</p>
-
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Revoke Sessions and Reset Credentials</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># PowerShell - Revoke all refresh tokens</span>
-Connect-MgGraph -Scopes "User.ReadWrite.All"
-Revoke-MgUserSignInSession -UserId "user@domain.com"
-
-<span style="color: #6aa3f7;"># PowerShell - Force password reset</span>
-$newPassword = [System.Web.Security.Membership]::GeneratePassword(16, 4)
-Update-MgUser -UserId "user@domain.com" `
-    -PasswordProfile @{
-        Password = $newPassword
-        ForceChangePasswordNextSignIn = $true
-    }
-
-<span style="color: #6aa3f7;"># PowerShell - Disable account (if severe)</span>
-Update-MgUser -UserId "user@domain.com" -AccountEnabled:$false
-
-<span style="color: #6aa3f7;"># Azure Portal steps:</span>
-# 1. Azure AD > Users > Select user > Revoke sessions
-# 2. Reset password
-# 3. Require MFA re-registration if MFA compromised</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Remove Malicious Persistence</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># PowerShell - Remove malicious inbox rules</span>
-Connect-ExchangeOnline
-Get-InboxRule -Mailbox "user@domain.com" | 
-    Where-Object {$_.ForwardTo -or $_.ForwardAsAttachmentTo -or 
-        $_.RedirectTo -or $_.DeleteMessage} |
-    Remove-InboxRule -Confirm:$false
-
-<span style="color: #6aa3f7;"># PowerShell - Remove email forwarding</span>
-Set-Mailbox -Identity "user@domain.com" `
-    -ForwardingSmtpAddress $null `
-    -ForwardingAddress $null `
-    -DeliverToMailboxAndForward $false
-
-<span style="color: #6aa3f7;"># PowerShell - Revoke OAuth app consents</span>
-# In Azure AD > Enterprise applications > 
-# Find app > Properties > Delete
-
-<span style="color: #6aa3f7;"># PowerShell - Remove MFA methods if compromised</span>
-# Azure AD > Users > User > Authentication methods > 
-# Remove suspicious methods</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5.3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Block Attacker Infrastructure</div>
-                            <ul>
-                                <li><strong>IPs:</strong> Block in Conditional Access named locations, firewall</li>
-                                <li><strong>Domains:</strong> Block in email gateway, web proxy</li>
-                                <li><strong>OAuth Apps:</strong> Block app IDs in Azure AD</li>
-                                <li><strong>User Agents:</strong> Block in Conditional Access (if distinctive)</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <h2 id="escalation">Escalation Criteria</h2>
+                <h3>Step 3: Determine What the Attacker Accessed</h3>
                 <table>
-                    <thead><tr><th>Condition</th><th>Escalation Level</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Check</th><th>How</th><th>What to Look For</th></tr></thead>
                     <tbody>
-                        <tr><td>Global Admin compromised</td><td>Critical - Executive + IR</td><td>Assume full tenant compromise</td></tr>
-                        <tr><td>Multiple accounts compromised</td><td>High - IR Team</td><td>Coordinated investigation</td></tr>
-                        <tr><td>Data exfiltration confirmed</td><td>Critical - Legal + IR</td><td>Breach notification process</td></tr>
-                        <tr><td>Federation/IdP modified</td><td>Critical - IR Team</td><td>Assume persistence established</td></tr>
-                        <tr><td>BEC wire fraud attempted</td><td>Critical - Legal + Finance</td><td>Bank notification, fraud investigation</td></tr>
-                        <tr><td>Internal phishing campaign</td><td>High - IR Team</td><td>Mass notification, scope assessment</td></tr>
+                        <tr><td>Emails read</td><td>Message trace, audit logs</td><td>Sensitive emails accessed, search queries</td></tr>
+                        <tr><td>Emails sent</td><td>Sent items, message trace</td><td>Phishing to internal, BEC to external</td></tr>
+                        <tr><td>Files accessed</td><td>SharePoint/OneDrive audit</td><td>Sensitive files viewed/downloaded</td></tr>
+                        <tr><td>Applications accessed</td><td>Sign-in logs by app</td><td>Which SSO apps did attacker access?</td></tr>
+                        <tr><td>Teams/chat</td><td>Teams audit logs</td><td>Messages sent, files shared</td></tr>
+                        <tr><td>Password changes</td><td>Audit logs</td><td>Did attacker change password or add MFA?</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="documentation">Documentation Requirements</h2>
-                <ul>
-                    <li>Initial alert and triage findings</li>
-                    <li>User verification results</li>
-                    <li>All suspicious sign-in events with timestamps</li>
-                    <li>Attack vector determination</li>
-                    <li>Complete activity timeline</li>
-                    <li>Data accessed or exfiltrated</li>
-                    <li>Persistence mechanisms found and removed</li>
-                    <li>Other affected accounts</li>
-                    <li>IOCs (IPs, user agents, OAuth app IDs)</li>
-                    <li>Containment actions taken</li>
-                    <li>Recovery steps completed</li>
-                    <li>Recommendations for prevention</li>
-                </ul>
+                <!-- WHAT IF SCENARIOS -->
+                <h2 id="what-if"><i class="fas fa-random"></i> What If Scenarios</h2>
 
-                <h2 id="prevention">Prevention Recommendations</h2>
                 <table>
-                    <thead><tr><th>Control</th><th>Description</th><th>Priority</th></tr></thead>
+                    <thead><tr><th>What If...</th><th>Then...</th><th>Rationale</th></tr></thead>
                     <tbody>
-                        <tr><td>Phishing-resistant MFA</td><td>FIDO2 keys, Windows Hello, Passkeys</td><td>Critical</td></tr>
-                        <tr><td>Conditional Access</td><td>Block legacy auth, require compliant devices</td><td>Critical</td></tr>
-                        <tr><td>Continuous Access Evaluation</td><td>Real-time token revocation</td><td>High</td></tr>
-                        <tr><td>App consent workflow</td><td>Admin approval for OAuth apps</td><td>High</td></tr>
-                        <tr><td>Identity Protection</td><td>Risk-based Conditional Access</td><td>High</td></tr>
-                        <tr><td>Privileged Identity Management</td><td>Just-in-time admin access</td><td>High</td></tr>
-                        <tr><td>Security awareness training</td><td>Phishing simulation, MFA fatigue</td><td>Medium</td></tr>
+                        <tr><td><strong>User has MFA and attacker still got in?</strong></td><td>Check for: AiTM phishing (session token theft), OAuth app consent, MFA fatigue, SIM swap</td><td>MFA isn't foolproof - attackers have methods to bypass</td></tr>
+                        <tr><td><strong>I reset the password but attacks continue?</strong></td><td>Look for persistence: OAuth apps, refresh tokens, inbox rules. Revoke ALL sessions, not just password.</td><td>Password reset alone doesn't revoke active sessions or OAuth</td></tr>
+                        <tr><td><strong>User is traveling and sign-in is legitimate?</strong></td><td>Document as false positive, but still verify no other indicators. Ask about new devices.</td><td>Legitimate travel is common, but verify it's really them</td></tr>
+                        <tr><td><strong>Attacker set up email forwarding to external?</strong></td><td>Remove forwarding, but assume ALL emails have been exfiltrated. Check for sensitive content, notify if PII.</td><td>Forwarding copies emails in real-time - damage is done</td></tr>
+                        <tr><td><strong>User's account sent phishing to 100 internal users?</strong></td><td>This is now a major incident. Purge emails, identify who clicked, assume multiple compromises.</td><td>Internal phishing has high success rate due to trust</td></tr>
+                        <tr><td><strong>Attacker accessed HR/Finance systems via SSO?</strong></td><td>Scope expands significantly. Check audit logs in those systems. Notify data owners.</td><td>SSO means one compromise = access to many systems</td></tr>
                     </tbody>
                 </table>
+
+                <!-- CONTAINMENT -->
+                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h2>
+
+                <h3>Immediate Containment Checklist</h3>
+                <table>
+                    <thead><tr><th>Action</th><th>Command/Steps</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1. Revoke all sessions</strong></td>
+                            <td>Entra ID > User > Revoke sessions<br><code>Revoke-AzureADUserAllRefreshToken</code></td>
+                            <td>Kicks attacker out immediately</td>
+                        </tr>
+                        <tr>
+                            <td><strong>2. Reset password</strong></td>
+                            <td>Entra ID > User > Reset password<br>Generate random password</td>
+                            <td>Prevents re-authentication</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3. Disable account (if severe)</strong></td>
+                            <td>Entra ID > User > Block sign-in</td>
+                            <td>Complete lockout while investigating</td>
+                        </tr>
+                        <tr>
+                            <td><strong>4. Remove inbox rules</strong></td>
+                            <td><code>Get-InboxRule -Mailbox user | Remove-InboxRule</code></td>
+                            <td>Removes persistence mechanism</td>
+                        </tr>
+                        <tr>
+                            <td><strong>5. Remove email forwarding</strong></td>
+                            <td><code>Set-Mailbox user -ForwardingAddress $null</code></td>
+                            <td>Stops data exfiltration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>6. Revoke OAuth apps</strong></td>
+                            <td>Entra ID > User > Applications > Revoke suspicious apps</td>
+                            <td>Removes attacker's persistent access</td></tr>
+                        <tr>
+                            <td><strong>7. Re-register MFA</strong></td>
+                            <td>Delete existing methods, have user re-enroll</td>
+                            <td>Attacker may have registered their device</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- FALSE POSITIVES -->
+                <h2 id="false-positives"><i class="fas fa-check-circle"></i> False Positive Identification</h2>
+
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Common False Positive</th><th>How to Verify</th></tr></thead>
+                    <tbody>
+                        <tr><td>New location sign-in</td><td>User traveling for work/vacation</td><td>Ask user, check calendar for travel</td></tr>
+                        <tr><td>New device</td><td>User got new phone/laptop</td><td>Ask user, check IT asset records</td></tr>
+                        <tr><td>VPN/proxy detected</td><td>User using corporate VPN</td><td>Check if IP belongs to corporate VPN range</td></tr>
+                        <tr><td>Legacy auth</td><td>Old email app, scanner, printer</td><td>Check app name, verify with user</td></tr>
+                        <tr><td>Impossible travel</td><td>VPN makes location look wrong</td><td>Check if same session, VPN usage</td></tr>
+                        <tr><td>After-hours activity</td><td>User working late, different timezone</td><td>Verify with user, check if consistent pattern</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- ESCALATION -->
+                <h2 id="escalation"><i class="fas fa-arrow-up"></i> Escalation Criteria</h2>
+
+                <div class="info-box danger">
+                    <div class="info-box-title">Escalate Immediately When:</div>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li>Executive or privileged account compromised</li>
+                        <li>BEC emails sent (financial fraud attempted)</li>
+                        <li>Internal phishing campaign launched</li>
+                        <li>Multiple accounts compromised from same attack</li>
+                        <li>Evidence of data exfiltration</li>
+                        <li>Attacker accessed sensitive systems (HR, Finance, Source code)</li>
+                        <li>Unable to remove attacker access</li>
+                    </ul>
+                </div>
 
             </div>
         </div>

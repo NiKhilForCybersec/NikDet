@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIEM & Security Monitoring | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>SIEM & Monitoring</span>
+            </div>
+
+            <h1>SIEM & Security Monitoring Configuration</h1>
+            <p class="lead">Complete guide to SIEM architecture, log collection, use case development, alert tuning, and security monitoring operations.</p>
+
+            <div class="content">
+                <h2 id="log-sources">Critical Log Sources</h2>
+
+                <h3>Log Source Priority Matrix</h3>
+                <table>
+                    <thead><tr><th>Priority</th><th>Log Source</th><th>Key Events</th><th>Retention</th><th>Volume</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>P1</strong></td><td>EDR (Defender/CrowdStrike)</td><td>Process, network, file, alerts</td><td>90 days hot</td><td>High</td></tr>
+                        <tr><td style="color: #f85149;"><strong>P1</strong></td><td>Identity (Entra ID/AD)</td><td>Auth, admin changes, risky sign-ins</td><td>1 year</td><td>Medium</td></tr>
+                        <tr><td style="color: #f85149;"><strong>P1</strong></td><td>Firewall/NGFW</td><td>Allow/deny, IPS alerts</td><td>90 days</td><td>Very High</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>P2</strong></td><td>Email Security</td><td>Phishing, malware, delivery</td><td>90 days</td><td>High</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>P2</strong></td><td>Cloud (M365/Azure/AWS)</td><td>Admin, data access, config</td><td>1 year</td><td>Medium</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>P2</strong></td><td>DNS</td><td>Queries, responses</td><td>30 days</td><td>Very High</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>P2</strong></td><td>Web Proxy</td><td>URLs, categories, blocks</td><td>90 days</td><td>Very High</td></tr>
+                        <tr><td style="color: #d29922;"><strong>P3</strong></td><td>VPN</td><td>Connect, disconnect, failures</td><td>90 days</td><td>Low</td></tr>
+                        <tr><td style="color: #d29922;"><strong>P3</strong></td><td>DLP</td><td>Policy matches, blocks</td><td>1 year</td><td>Low</td></tr>
+                        <tr><td style="color: #d29922;"><strong>P3</strong></td><td>Database</td><td>Admin, queries, errors</td><td>90 days</td><td>Medium</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>P4</strong></td><td>Application Logs</td><td>Auth, errors, transactions</td><td>90 days</td><td>Varies</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>P4</strong></td><td>Physical Security</td><td>Badge access, cameras</td><td>90 days</td><td>Low</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Windows Event Log Collection</h3>
+                <table>
+                    <thead><tr><th>Log</th><th>Event IDs</th><th>Purpose</th><th>Volume Impact</th></tr></thead>
+                    <tbody>
+                        <tr><td>Security</td><td>4624, 4625, 4634, 4648, 4672</td><td>Authentication</td><td>Medium</td></tr>
+                        <tr><td>Security</td><td>4688 (with cmdline)</td><td>Process creation</td><td>High</td></tr>
+                        <tr><td>Security</td><td>4698-4702</td><td>Scheduled tasks</td><td>Low</td></tr>
+                        <tr><td>Security</td><td>4720-4740</td><td>Account management</td><td>Low</td></tr>
+                        <tr><td>Security</td><td>4768, 4769, 4771, 4776</td><td>Kerberos/NTLM</td><td>Medium</td></tr>
+                        <tr><td>Security</td><td>5140, 5145</td><td>File share access</td><td>High</td></tr>
+                        <tr><td>System</td><td>7045</td><td>Service installation</td><td>Low</td></tr>
+                        <tr><td>PowerShell</td><td>4103, 4104</td><td>Script block logging</td><td>Medium</td></tr>
+                        <tr><td>Sysmon</td><td>1, 3, 7, 8, 10, 11, 12, 13, 22</td><td>Advanced endpoint</td><td>High</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="use-cases">Detection Use Cases</h2>
+
+                <h3>Use Case Framework</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Use Cases</th><th>Data Sources</th><th>MITRE Mapping</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Initial Access</strong></td><td>Phishing, external RDP, valid accounts abuse</td><td>Email, firewall, auth logs</td><td>T1566, T1133, T1078</td></tr>
+                        <tr><td><strong>Execution</strong></td><td>PowerShell, WMI, scheduled tasks, macros</td><td>EDR, Sysmon, event logs</td><td>T1059, T1047, T1053</td></tr>
+                        <tr><td><strong>Persistence</strong></td><td>Registry run keys, services, scheduled tasks</td><td>EDR, Sysmon, event logs</td><td>T1547, T1543, T1053</td></tr>
+                        <tr><td><strong>Privilege Escalation</strong></td><td>Token manipulation, UAC bypass, sudo abuse</td><td>EDR, event logs</td><td>T1134, T1548</td></tr>
+                        <tr><td><strong>Defense Evasion</strong></td><td>Log clearing, disabling security, timestomping</td><td>EDR, event logs, Sysmon</td><td>T1070, T1562, T1070.006</td></tr>
+                        <tr><td><strong>Credential Access</strong></td><td>LSASS dump, Kerberoasting, credential files</td><td>EDR, Sysmon, DC logs</td><td>T1003, T1558, T1552</td></tr>
+                        <tr><td><strong>Discovery</strong></td><td>AD enumeration, network scanning</td><td>EDR, DNS, DC logs</td><td>T1087, T1046, T1018</td></tr>
+                        <tr><td><strong>Lateral Movement</strong></td><td>RDP, SMB, WinRM, pass-the-hash</td><td>Auth logs, firewall, EDR</td><td>T1021, T1550</td></tr>
+                        <tr><td><strong>Collection</strong></td><td>Archive creation, clipboard, screen capture</td><td>EDR, DLP</td><td>T1560, T1115, T1113</td></tr>
+                        <tr><td><strong>Exfiltration</strong></td><td>Cloud upload, DNS tunnel, HTTP POST</td><td>Proxy, DNS, DLP, CASB</td><td>T1567, T1048, T1041</td></tr>
+                        <tr><td><strong>Impact</strong></td><td>Ransomware, data destruction, defacement</td><td>EDR, file integrity</td><td>T1486, T1485, T1491</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>High-Value Detection Rules</h3>
+                <table>
+                    <thead><tr><th>Rule Name</th><th>Logic</th><th>Severity</th><th>FP Rate</th></tr></thead>
+                    <tbody>
+                        <tr><td>LSASS memory access</td><td>Process access to lsass.exe from non-system</td><td>Critical</td><td>Low</td></tr>
+                        <tr><td>Encoded PowerShell</td><td>powershell.exe with -enc or -encoded</td><td>High</td><td>Medium</td></tr>
+                        <tr><td>DCSync attack</td><td>Replication request from non-DC</td><td>Critical</td><td>Very Low</td></tr>
+                        <tr><td>Golden ticket</td><td>TGT with suspicious lifetime/encryption</td><td>Critical</td><td>Very Low</td></tr>
+                        <tr><td>Security log cleared</td><td>Event 1102 on any system</td><td>High</td><td>Very Low</td></tr>
+                        <tr><td>New service with suspicious path</td><td>Event 7045 with temp/user path</td><td>High</td><td>Low</td></tr>
+                        <tr><td>Mass file encryption</td><td>>100 files modified in 1 minute</td><td>Critical</td><td>Low</td></tr>
+                        <tr><td>Brute force</td><td>>10 failed logins in 5 minutes</td><td>Medium</td><td>Medium</td></tr>
+                        <tr><td>Impossible travel</td><td>Logins from distant locations <2 hours</td><td>High</td><td>Medium</td></tr>
+                        <tr><td>Data exfil volume</td><td>>500MB upload to external in 1 hour</td><td>High</td><td>Medium</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="alert-management">Alert Management</h2>
+
+                <h3>Alert Severity Classification</h3>
+                <table>
+                    <thead><tr><th>Severity</th><th>Criteria</th><th>SLA</th><th>Notification</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>Critical</strong></td><td>Active breach, ransomware, data exfil confirmed</td><td>15 minutes</td><td>SOC + Manager + CISO</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>High</strong></td><td>Confirmed compromise, credential theft, C2</td><td>1 hour</td><td>SOC + Manager</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Medium</strong></td><td>Suspicious activity, policy violation</td><td>4 hours</td><td>SOC</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Low</strong></td><td>Informational, minor policy, blocked threats</td><td>24 hours</td><td>Queue</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Alert Tuning Process</h3>
+                <table>
+                    <thead><tr><th>Phase</th><th>Actions</th><th>Duration</th><th>Outcome</th></tr></thead>
+                    <tbody>
+                        <tr><td>1. Deploy</td><td>Enable rule in audit/report mode</td><td>1-2 weeks</td><td>Baseline volume</td></tr>
+                        <tr><td>2. Analyze</td><td>Review all alerts, identify FP patterns</td><td>1-2 weeks</td><td>FP categories</td></tr>
+                        <tr><td>3. Tune</td><td>Add exclusions for known FPs</td><td>1 week</td><td>Reduced FPs</td></tr>
+                        <tr><td>4. Validate</td><td>Test with red team/simulation</td><td>1 week</td><td>Verify detection</td></tr>
+                        <tr><td>5. Production</td><td>Enable blocking/alerting</td><td>Ongoing</td><td>Active detection</td></tr>
+                        <tr><td>6. Maintain</td><td>Regular review, adjust for changes</td><td>Monthly</td><td>Continued efficacy</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="metrics">SOC Metrics</h2>
+
+                <h3>Key Performance Indicators</h3>
+                <table>
+                    <thead><tr><th>Metric</th><th>Definition</th><th>Target</th><th>Measurement</th></tr></thead>
+                    <tbody>
+                        <tr><td>MTTD (Mean Time to Detect)</td><td>Time from compromise to detection</td><td><24 hours</td><td>Incident timestamps</td></tr>
+                        <tr><td>MTTR (Mean Time to Respond)</td><td>Time from alert to containment</td><td><4 hours (critical)</td><td>Ticket timestamps</td></tr>
+                        <tr><td>MTTC (Mean Time to Contain)</td><td>Time from detection to isolation</td><td><1 hour (critical)</td><td>Containment logs</td></tr>
+                        <tr><td>Alert Volume</td><td>Total alerts per day</td><td>Manageable for team size</td><td>SIEM metrics</td></tr>
+                        <tr><td>True Positive Rate</td><td>% of alerts that are real threats</td><td>>30%</td><td>Alert disposition</td></tr>
+                        <tr><td>False Positive Rate</td><td>% of alerts that are benign</td><td><50%</td><td>Alert disposition</td></tr>
+                        <tr><td>Alert Fatigue Index</td><td>Unreviewed alerts / Total alerts</td><td><10%</td><td>Queue metrics</td></tr>
+                        <tr><td>Coverage</td><td>MITRE techniques with detection</td><td>>60%</td><td>Coverage mapping</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="architecture">SIEM Architecture</h2>
+
+                <h3>Microsoft Sentinel Architecture</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Purpose</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Log Analytics Workspace</td><td>Data storage and query</td><td>Dedicated workspace per environment</td></tr>
+                        <tr><td>Data Connectors</td><td>Log ingestion</td><td>Native for M365/Azure, CEF/Syslog for others</td></tr>
+                        <tr><td>Analytics Rules</td><td>Detection logic</td><td>Scheduled (KQL), NRT, Fusion, Anomaly</td></tr>
+                        <tr><td>Workbooks</td><td>Visualization</td><td>Custom dashboards per use case</td></tr>
+                        <tr><td>Playbooks</td><td>Automation (SOAR)</td><td>Logic Apps for response actions</td></tr>
+                        <tr><td>Watchlists</td><td>Reference data</td><td>IOCs, VIP users, critical assets</td></tr>
+                        <tr><td>Threat Intelligence</td><td>IOC matching</td><td>TI connectors, TAXII feeds</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Data Retention Strategy</h3>
+                <table>
+                    <thead><tr><th>Data Type</th><th>Hot Storage</th><th>Archive</th><th>Total Retention</th></tr></thead>
+                    <tbody>
+                        <tr><td>Security alerts</td><td>90 days</td><td>7 years</td><td>7 years</td></tr>
+                        <tr><td>Authentication logs</td><td>90 days</td><td>1 year</td><td>1 year</td></tr>
+                        <tr><td>Firewall logs</td><td>30 days</td><td>90 days</td><td>90 days</td></tr>
+                        <tr><td>DNS logs</td><td>14 days</td><td>30 days</td><td>30 days</td></tr>
+                        <tr><td>EDR telemetry</td><td>30 days</td><td>90 days</td><td>90 days</td></tr>
+                        <tr><td>Cloud audit logs</td><td>90 days</td><td>1 year</td><td>1 year</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

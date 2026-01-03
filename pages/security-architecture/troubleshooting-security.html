@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Troubleshooting Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Troubleshooting</span>
+            </div>
+
+            <h1>Security Troubleshooting Guide</h1>
+            <p class="lead">Common issues, diagnostic steps, and solutions for security controls. When things don't work as expected.</p>
+
+            <div class="content">
+                <h2 id="identity">Identity & Authentication Issues</h2>
+
+                <h3>MFA Problems</h3>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Causes</th><th>Diagnostic Steps</th><th>Solutions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>User can't complete MFA</td>
+                            <td>• App not installed<br>• Time sync issue<br>• Account not registered<br>• Device changed</td>
+                            <td>1. Check user's registered methods in Entra ID<br>2. Verify Authenticator app is current<br>3. Check device time accuracy</td>
+                            <td>• Re-register MFA method<br>• Sync device time<br>• Use temporary access pass for recovery</td>
+                        </tr>
+                        <tr>
+                            <td>MFA not prompted when expected</td>
+                            <td>• CA policy not applying<br>• Session already satisfied MFA<br>• User excluded</td>
+                            <td>1. Check Sign-in logs, CA evaluation<br>2. Verify policy is enabled (not Report-only)<br>3. Check user group membership</td>
+                            <td>• Fix CA policy conditions<br>• Remove from exclusion groups<br>• Clear browser sessions</td>
+                        </tr>
+                        <tr>
+                            <td>MFA fatigue (too many prompts)</td>
+                            <td>• Sign-in frequency too short<br>• No persistent sessions<br>• Multiple apps triggering separately</td>
+                            <td>1. Review CA session controls<br>2. Check if SSO is working<br>3. Look for token refresh issues</td>
+                            <td>• Extend sign-in frequency for compliant devices<br>• Enable persistent browser sessions<br>• Ensure SSO configured properly</td>
+                        </tr>
+                        <tr>
+                            <td>Authenticator push not received</td>
+                            <td>• Phone notifications disabled<br>• Network issues<br>• App needs update</td>
+                            <td>1. Check phone notification settings<br>2. Verify internet connectivity<br>3. Check Authenticator app version</td>
+                            <td>• Enable notifications for Authenticator<br>• Update app<br>• Try OTP code instead of push</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Conditional Access Issues</h3>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Causes</th><th>Diagnostic Steps</th><th>Solutions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>User blocked unexpectedly</td>
+                            <td>• New CA policy<br>• Device compliance issue<br>• Location not trusted<br>• Risk detected</td>
+                            <td>1. Sign-in logs > Failed sign-in > CA tab<br>2. What If tool with user<br>3. Check device compliance in Intune</td>
+                            <td>• Fix device compliance<br>• Add to trusted location if legitimate<br>• Investigate risk signal</td>
+                        </tr>
+                        <tr>
+                            <td>Policy not blocking as expected</td>
+                            <td>• Policy in Report-only mode<br>• User not in target group<br>• Conditions not matching</td>
+                            <td>1. Verify policy state is "On"<br>2. Check user group membership<br>3. Use What If to simulate</td>
+                            <td>• Change from Report-only to On<br>• Add user to target group<br>• Adjust conditions</td>
+                        </tr>
+                        <tr>
+                            <td>Multiple policies conflicting</td>
+                            <td>• Overlapping policies with different grants<br>• Deny and allow for same user/app</td>
+                            <td>1. List all policies applying to user/app<br>2. Understand policy precedence (most restrictive wins)</td>
+                            <td>• Consolidate overlapping policies<br>• Use consistent naming<br>• Document policy matrix</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 id="endpoint">Endpoint Security Issues</h2>
+
+                <h3>EDR Problems</h3>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Causes</th><th>Diagnostic Steps</th><th>Solutions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Device not showing in console</td>
+                            <td>• Onboarding failed<br>• Network connectivity<br>• License issue<br>• Sensor not running</td>
+                            <td>1. Check onboarding status on device<br>2. Verify service is running<br>3. Check network connectivity to cloud<br>4. Verify license assignment</td>
+                            <td>• Re-run onboarding script<br>• Fix network connectivity<br>• Assign license<br>• Restart sensor service</td>
+                        </tr>
+                        <tr>
+                            <td>False positive blocking legitimate software</td>
+                            <td>• Behavior matches threat pattern<br>• Unknown/unsigned software<br>• Overly aggressive policies</td>
+                            <td>1. Review detection details<br>2. Check software signing<br>3. Analyze behavior triggering detection</td>
+                            <td>• Add indicator exception<br>• Create custom detection exclusion<br>• Submit for analysis if truly FP</td>
+                        </tr>
+                        <tr>
+                            <td>High CPU/memory usage from agent</td>
+                            <td>• Full scan running<br>• Many files changing<br>• Agent version issue</td>
+                            <td>1. Check if scan in progress<br>2. Monitor file I/O patterns<br>3. Check agent version</td>
+                            <td>• Schedule scans off-hours<br>• Exclude high-churn directories<br>• Update agent</td>
+                        </tr>
+                        <tr>
+                            <td>Alerts not generating</td>
+                            <td>• Detection rules disabled<br>• Network filtering<br>• Sensor communication issue</td>
+                            <td>1. Verify detection rules enabled<br>2. Run test detection<br>3. Check sensor health</td>
+                            <td>• Enable relevant detection rules<br>• Fix network connectivity<br>• Restart sensor</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Encryption Issues</h3>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Causes</th><th>Diagnostic Steps</th><th>Solutions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>BitLocker won't enable</td>
+                            <td>• No TPM<br>• TPM not ready<br>• GPO conflict<br>• Disk not compatible</td>
+                            <td>1. tpm.msc - check TPM status<br>2. manage-bde -status<br>3. Review GPO settings<br>4. Check disk partitioning</td>
+                            <td>• Enable TPM in BIOS<br>• Initialize TPM<br>• Fix GPO conflicts<br>• Use password protector if no TPM</td>
+                        </tr>
+                        <tr>
+                            <td>Recovery key requested unexpectedly</td>
+                            <td>• BIOS update<br>• Hardware change<br>• Secure boot issue<br>• TPM cleared</td>
+                            <td>1. Check recent hardware/firmware changes<br>2. Verify secure boot state<br>3. Check event logs</td>
+                            <td>• Retrieve key from Intune/AD<br>• Re-enable BitLocker after changes<br>• Educate users on expected prompts</td>
+                        </tr>
+                        <tr>
+                            <td>Can't recover encrypted device</td>
+                            <td>• Recovery key not escrowed<br>• Wrong key ID<br>• Key not found</td>
+                            <td>1. Get key ID from recovery screen<br>2. Search in Intune, Entra ID, AD<br>3. Check if user has personal backup</td>
+                            <td>• Search all key escrow locations<br>• Contact user for personal backup<br>• Accept data loss if key truly lost</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 id="network">Network Security Issues</h2>
+
+                <h3>Firewall/Connectivity Problems</h3>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Causes</th><th>Diagnostic Steps</th><th>Solutions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Application can't connect after firewall change</td>
+                            <td>• Rule not created correctly<br>• Wrong port/protocol<br>• Source/dest reversed<br>• Rule order issue</td>
+                            <td>1. Verify rule exists and is enabled<br>2. Check traffic logs for drops<br>3. Test connectivity with telnet/nc<br>4. Verify rule order (first match wins)</td>
+                            <td>• Correct rule parameters<br>• Move rule to correct position<br>• Add missing rule</td>
+                        </tr>
+                        <tr>
+                            <td>TLS inspection breaking applications</td>
+                            <td>• Certificate pinning<br>• Incomplete trust chain<br>• Incompatible cipher</td>
+                            <td>1. Check if app uses cert pinning<br>2. Verify CA cert deployed<br>3. Check cipher compatibility</td>
+                            <td>• Exclude app from TLS inspection<br>• Deploy CA cert properly<br>• Adjust cipher settings</td>
+                        </tr>
+                        <tr>
+                            <td>IPS blocking legitimate traffic</td>
+                            <td>• Signature too broad<br>• Application looks like attack<br>• False positive pattern</td>
+                            <td>1. Find specific signature triggering<br>2. Analyze traffic pattern<br>3. Compare to signature description</td>
+                            <td>• Create exception for traffic<br>• Disable overly broad signature<br>• Report FP to vendor</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dlp-issues">DLP Issues</h2>
+
+                <h3>DLP Troubleshooting</h3>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Causes</th><th>Diagnostic Steps</th><th>Solutions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>DLP not detecting sensitive data</td>
+                            <td>• Pattern not matching<br>• Confidence threshold too high<br>• Location not covered<br>• Encrypted content</td>
+                            <td>1. Test with known sensitive content<br>2. Check policy locations<br>3. Verify pattern/keyword configuration<br>4. Check if content is encrypted</td>
+                            <td>• Adjust confidence levels<br>• Add missing locations<br>• Refine patterns<br>• Accept encrypted content gap</td>
+                        </tr>
+                        <tr>
+                            <td>Too many false positives</td>
+                            <td>• Pattern too broad<br>• Missing context keywords<br>• Legitimate business process</td>
+                            <td>1. Analyze FP patterns<br>2. Identify common FP sources<br>3. Review pattern logic</td>
+                            <td>• Add context requirements<br>• Create business process exceptions<br>• Increase instance count threshold</td>
+                        </tr>
+                        <tr>
+                            <td>Endpoint DLP not blocking</td>
+                            <td>• Policy not synced<br>• Agent issue<br>• App not covered<br>• Policy in audit mode</td>
+                            <td>1. Check endpoint DLP status<br>2. Verify policy sync<br>3. Check if app is in scope<br>4. Verify policy is in block mode</td>
+                            <td>• Force policy sync<br>• Restart DLP service<br>• Add app to coverage<br>• Change to block mode</td>
+                        </tr>
+                        <tr>
+                            <td>Users can override without justification</td>
+                            <td>• Override without justification enabled<br>• Policy misconfigured</td>
+                            <td>1. Review policy actions configuration<br>2. Check override settings</td>
+                            <td>• Require justification for override<br>• Consider block without override for highest sensitivity</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 id="siem-issues">SIEM/Monitoring Issues</h2>
+
+                <h3>Log Collection Problems</h3>
+                <table>
+                    <thead><tr><th>Symptom</th><th>Possible Causes</th><th>Diagnostic Steps</th><th>Solutions</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Logs not appearing in SIEM</td>
+                            <td>• Connector not configured<br>• Network connectivity<br>• Permission issue<br>• Log source not generating</td>
+                            <td>1. Verify connector status<br>2. Check network path to SIEM<br>3. Verify API permissions<br>4. Confirm logs exist at source</td>
+                            <td>• Configure/fix connector<br>• Allow required ports<br>• Grant required permissions<br>• Enable logging at source</td>
+                        </tr>
+                        <tr>
+                            <td>Log delay/latency</td>
+                            <td>• High volume<br>• Connector performance<br>• Network bandwidth<br>• Processing queue</td>
+                            <td>1. Check ingestion metrics<br>2. Monitor connector health<br>3. Review network performance<br>4. Check processing backlog</td>
+                            <td>• Scale ingestion capacity<br>• Optimize connector<br>• Increase bandwidth<br>• Add processing nodes</td>
+                        </tr>
+                        <tr>
+                            <td>Detection rule not firing</td>
+                            <td>• Rule disabled<br>• Query error<br>• No matching data<br>• Wrong time window</td>
+                            <td>1. Verify rule is enabled<br>2. Run query manually<br>3. Check for data in time range<br>4. Review rule logic</td>
+                            <td>• Enable rule<br>• Fix query syntax<br>• Verify data source<br>• Adjust time window</td>
+                        </tr>
+                        <tr>
+                            <td>Alert fatigue (too many alerts)</td>
+                            <td>• Thresholds too low<br>• Missing exclusions<br>• Too broad rules</td>
+                            <td>1. Analyze alert patterns<br>2. Calculate FP rate<br>3. Identify common FP sources</td>
+                            <td>• Raise thresholds<br>• Add exclusions<br>• Make rules more specific<br>• Consolidate related alerts</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2 id="general">General Troubleshooting Approach</h2>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-search"></i> Universal Troubleshooting Steps</div>
+                    <table>
+                        <thead><tr><th>Step</th><th>Action</th><th>Questions to Ask</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>1. Define the problem</strong></td><td>Get specific details about what's not working</td><td>What exactly is happening? What should happen? When did it start? What changed?</td></tr>
+                            <tr><td><strong>2. Reproduce</strong></td><td>Can you make it happen consistently?</td><td>Does it happen every time? Specific users/systems? Specific times?</td></tr>
+                            <tr><td><strong>3. Check logs</strong></td><td>Find relevant log entries</td><td>What do logs show at time of issue? Any errors? What's the full error message?</td></tr>
+                            <tr><td><strong>4. Isolate variables</strong></td><td>Narrow down the cause</td><td>Does it work for other users? Other systems? Other networks? Other applications?</td></tr>
+                            <tr><td><strong>5. Test hypothesis</strong></td><td>Make one change at a time</td><td>If I change X, does the problem go away? Does it come back when I revert?</td></tr>
+                            <tr><td><strong>6. Document</strong></td><td>Record what you found</td><td>What was the root cause? What fixed it? How do we prevent it?</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

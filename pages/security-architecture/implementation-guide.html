@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Implementation Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Implementation Guide</span>
+            </div>
+
+            <h1>Security Implementation Step-by-Step</h1>
+            <p class="lead">Practical implementation guides with prerequisites, step-by-step instructions, validation steps, common mistakes, and troubleshooting for major security controls.</p>
+
+            <div class="content">
+                <h2 id="ca-implementation">Implementing Conditional Access</h2>
+
+                <h3>Prerequisites Checklist</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-clipboard-check"></i> Before You Start</div>
+                    <table>
+                        <thead><tr><th>Requirement</th><th>Why Needed</th><th>How to Check</th></tr></thead>
+                        <tbody>
+                            <tr><td>Entra ID P1 or P2 license</td><td>Conditional Access requires premium</td><td>Azure Portal > Entra ID > Licenses</td></tr>
+                            <tr><td>Break-glass accounts created</td><td>If CA locks everyone out, you need emergency access</td><td>Verify 2 cloud-only accounts exist, excluded from all CA</td></tr>
+                            <tr><td>MFA registered for all users</td><td>CA policies requiring MFA will block users without it</td><td>Entra ID > Security > Authentication methods > User registration</td></tr>
+                            <tr><td>Named locations configured</td><td>Many policies reference trusted networks</td><td>Entra ID > Security > Conditional Access > Named locations</td></tr>
+                            <tr><td>User groups for targeting</td><td>Policies should target groups, not individual users</td><td>Create pilot, standard, executive, admin groups</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Step-by-Step: Block Legacy Authentication</h3>
+                <table>
+                    <thead><tr><th>Step</th><th>Action</th><th>Details</th><th>Validation</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>Analyze current legacy auth usage</td><td>Entra ID > Sign-in logs > Filter: Client app = Other clients, Exchange ActiveSync</td><td>Document users/apps using legacy auth</td></tr>
+                        <tr><td>2</td><td>Migrate users off legacy auth</td><td>Update Outlook to modern auth, migrate apps to OAuth</td><td>Re-check sign-in logs, usage should decrease</td></tr>
+                        <tr><td>3</td><td>Create CA policy in Report-only</td><td>Name: CA001-Block-Legacy-Auth, Users: All, Cloud apps: All, Conditions: Client apps = Other/EAS, Grant: Block</td><td>Policy shows "Report-only" status</td></tr>
+                        <tr><td>4</td><td>Monitor Report-only impact</td><td>CA > Insights and reporting > Review "What If" for affected users</td><td>Understand who would be blocked</td></tr>
+                        <tr><td>5</td><td>Communicate to affected users</td><td>Send notification about upcoming change, provide migration steps</td><td>Users acknowledge and migrate</td></tr>
+                        <tr><td>6</td><td>Enable policy (On)</td><td>Edit policy > Enable policy: On</td><td>Sign-in logs show blocks</td></tr>
+                        <tr><td>7</td><td>Handle exceptions</td><td>Create exclusion group for temporary exceptions with expiration dates</td><td>Track and follow up on exceptions</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Common Mistakes & How to Avoid</h3>
+                <table>
+                    <thead><tr><th>Mistake</th><th>Consequence</th><th>Prevention</th></tr></thead>
+                    <tbody>
+                        <tr><td>Not excluding break-glass accounts</td><td>If policy misconfigured, no one can fix it</td><td>Always exclude break-glass group from ALL blocking policies</td></tr>
+                        <tr><td>Targeting "All users" immediately</td><td>Business disruption, user lockouts</td><td>Start with pilot group, expand gradually</td></tr>
+                        <tr><td>Skipping Report-only mode</td><td>Can't see impact before enabling</td><td>Run every new policy in Report-only for 1-2 weeks minimum</td></tr>
+                        <tr><td>Too many exclusions</td><td>Policies become ineffective</td><td>Track all exclusions, require justification, set expiration</td></tr>
+                        <tr><td>Not testing with "What If"</td><td>Unexpected blocks for legitimate users</td><td>Use What If tool to simulate before enabling</td></tr>
+                        <tr><td>Conflicting policies</td><td>Unpredictable behavior</td><td>Document all policies, avoid overlapping scopes, use naming conventions</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Troubleshooting Conditional Access</h3>
+                <table>
+                    <thead><tr><th>Issue</th><th>Diagnosis Steps</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>User can't sign in after CA enabled</td><td>1. Check Sign-in logs for user 2. Look at "Conditional Access" tab 3. See which policy blocked</td><td>Add user to exclusion group temporarily, investigate why they don't meet conditions</td></tr>
+                        <tr><td>Policy not applying</td><td>1. Verify policy is "On" not "Report-only" 2. Check user is in target group 3. Check conditions match</td><td>Use "What If" to simulate, verify all conditions</td></tr>
+                        <tr><td>MFA prompt every time</td><td>Check if "Sign-in frequency" is set too low or "Persistent browser session" is disabled</td><td>Adjust session controls, consider device compliance for reduced prompts</td></tr>
+                        <tr><td>App not working after CA</td><td>Check if app supports modern auth, check app's Conditional Access support</td><td>Some apps need specific CA configuration, check vendor documentation</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dlp-implementation">Implementing DLP</h2>
+
+                <h3>DLP Rollout Phases</h3>
+                <table>
+                    <thead><tr><th>Phase</th><th>Duration</th><th>Actions</th><th>Success Criteria</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #3fb950;"><strong>Phase 1: Discovery</strong></td><td>2-4 weeks</td><td>Enable audit-only policies for common sensitive types (SSN, credit cards). No user notifications.</td><td>Understand data patterns, identify high-risk users/locations</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Phase 2: Education</strong></td><td>2 weeks</td><td>Enable user notifications (tips/warnings). Train users on data handling. Refine patterns based on FPs.</td><td>Users aware of DLP, FP rate <30%</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Phase 3: Warn</strong></td><td>2-4 weeks</td><td>Enable "warn with override" for medium-sensitivity. Users can proceed with justification.</td><td>Override rate <20%, justifications reasonable</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Phase 4: Block</strong></td><td>Ongoing</td><td>Enable blocking for highest-sensitivity data. Maintain warn for medium. Continue audit for low.</td><td>No business disruption, incidents decrease</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Step-by-Step: Create SSN Protection Policy</h3>
+                <table>
+                    <thead><tr><th>Step</th><th>Action</th><th>Configuration</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>Go to Purview compliance portal</td><td>compliance.microsoft.com > Data loss prevention > Policies</td><td>Central DLP management</td></tr>
+                        <tr><td>2</td><td>Create new policy</td><td>Click "Create policy" > Custom policy</td><td>Full control over settings</td></tr>
+                        <tr><td>3</td><td>Name the policy</td><td>"DLP-002-Block-SSN-External" - Use consistent naming</td><td>Easy identification and management</td></tr>
+                        <tr><td>4</td><td>Select locations</td><td>Exchange, SharePoint, OneDrive, Teams, Endpoints</td><td>Cover all exfiltration paths</td></tr>
+                        <tr><td>5</td><td>Define content conditions</td><td>Content contains: U.S. SSN, Instance count: 1 or more</td><td>Catch even single SSN exposure</td></tr>
+                        <tr><td>6</td><td>Add context conditions</td><td>Content is shared with: People outside my organization</td><td>Allow internal, block external</td></tr>
+                        <tr><td>7</td><td>Configure actions (Phase 1)</td><td>Generate incident report: Yes, Notify user: No, Block: No</td><td>Audit mode first</td></tr>
+                        <tr><td>8</td><td>Test the policy</td><td>Send test email with fake SSN to external address</td><td>Verify detection works</td></tr>
+                        <tr><td>9</td><td>Review incidents</td><td>Check DLP reports after 1-2 weeks</td><td>Identify FPs and tune</td></tr>
+                        <tr><td>10</td><td>Enable blocking</td><td>Edit policy: Block content, Notify user with policy tip</td><td>Active protection</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>DLP False Positive Handling</h3>
+                <table>
+                    <thead><tr><th>FP Type</th><th>Example</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>Legitimate business process</td><td>HR sending W-2 to payroll vendor</td><td>Create exception for specific sender/recipient pair with documentation</td></tr>
+                        <tr><td>Test/sample data</td><td>Training documents with example SSNs</td><td>Use clearly fake numbers (000-00-0000), or exclude specific document libraries</td></tr>
+                        <tr><td>Pattern match on non-sensitive data</td><td>Part numbers that look like SSNs</td><td>Add negative keywords (part#, SKU, order) to exclude</td></tr>
+                        <tr><td>Specific application</td><td>Line-of-business app that handles SSNs legitimately</td><td>Exclude specific application or URL</td></tr>
+                        <tr><td>Encrypted files</td><td>Password-protected ZIP flagged but can't be scanned</td><td>Block password-protected files to external, or accept gap</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="siem-implementation">Implementing SIEM Detection Rules</h2>
+
+                <h3>Detection Rule Development Process</h3>
+                <table>
+                    <thead><tr><th>Step</th><th>Action</th><th>Details</th><th>Output</th></tr></thead>
+                    <tbody>
+                        <tr><td>1</td><td>Identify use case</td><td>What attack/behavior are you detecting? Reference MITRE ATT&CK.</td><td>Use case document with technique ID</td></tr>
+                        <tr><td>2</td><td>Determine data sources</td><td>What logs contain evidence of this attack? Do you have those logs?</td><td>List of required data sources</td></tr>
+                        <tr><td>3</td><td>Research attack patterns</td><td>How does the attack appear in logs? Use threat intel, red team reports.</td><td>Specific indicators and patterns</td></tr>
+                        <tr><td>4</td><td>Write initial query</td><td>Create query that matches the attack pattern</td><td>Draft KQL/SPL query</td></tr>
+                        <tr><td>5</td><td>Test against historical data</td><td>Run query against 30+ days of logs</td><td>List of matches to review</td></tr>
+                        <tr><td>6</td><td>Analyze matches</td><td>Are matches true positives or false positives?</td><td>FP/TP breakdown</td></tr>
+                        <tr><td>7</td><td>Tune query</td><td>Add exclusions for known FPs, adjust thresholds</td><td>Refined query</td></tr>
+                        <tr><td>8</td><td>Validate with red team</td><td>Have red team execute the attack, verify detection</td><td>Confirmed true positive detection</td></tr>
+                        <tr><td>9</td><td>Document and deploy</td><td>Create detection documentation, enable rule</td><td>Production detection rule</td></tr>
+                        <tr><td>10</td><td>Monitor and maintain</td><td>Review alerts weekly, tune as needed</td><td>Ongoing maintenance</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Rule Quality Checklist</h3>
+                <div class="info-box success">
+                    <div class="info-box-title"><i class="fas fa-check-circle"></i> Before Deploying Any Detection Rule</div>
+                    <table>
+                        <thead><tr><th>Check</th><th>Question</th><th>If No</th></tr></thead>
+                        <tbody>
+                            <tr><td>✓ Data availability</td><td>Do we have the required log sources?</td><td>Enable logging or accept coverage gap</td></tr>
+                            <tr><td>✓ FP rate acceptable</td><td>Is FP rate <50% (ideally <20%)?</td><td>Add exclusions or adjust thresholds</td></tr>
+                            <tr><td>✓ Detection validated</td><td>Has red team confirmed it detects the attack?</td><td>Test before deploying</td></tr>
+                            <tr><td>✓ Response defined</td><td>Does analyst know what to do when this fires?</td><td>Create response procedure</td></tr>
+                            <tr><td>✓ Severity appropriate</td><td>Is severity set correctly for alert priority?</td><td>Adjust to avoid alert fatigue</td></tr>
+                            <tr><td>✓ Documentation complete</td><td>Is detection documented with investigation steps?</td><td>Complete documentation</td></tr>
+                            <tr><td>✓ Owner assigned</td><td>Who maintains this rule?</td><td>Assign owner</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 id="patching">Implementing Patch Management</h2>
+
+                <h3>Patch Deployment Ring Strategy</h3>
+                <table>
+                    <thead><tr><th>Ring</th><th>Who</th><th>Delay</th><th>Purpose</th><th>Action if Issues</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #3fb950;"><strong>Ring 0</strong></td><td>IT security/test devices (5-10)</td><td>0 days</td><td>Immediate testing</td><td>Document issues, fix before Ring 1</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Ring 1</strong></td><td>IT staff + volunteers (~50)</td><td>2-3 days</td><td>Broader validation</td><td>Pause if >5% issues, investigate</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Ring 2</strong></td><td>Non-critical departments (~500)</td><td>7 days</td><td>Production pilot</td><td>Pause if critical issues, rollback option</td></tr>
+                        <tr><td><strong>Ring 3</strong></td><td>General population</td><td>14 days</td><td>Full deployment</td><td>Monitor, address issues ad-hoc</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Ring 4</strong></td><td>Critical systems, servers</td><td>21 days</td><td>Maximum validation</td><td>Change approval required</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Critical Patch Emergency Process</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-bolt"></i> When to Skip Normal Rings</div>
+                    <table>
+                        <thead><tr><th>Condition</th><th>Action</th><th>Timeline</th></tr></thead>
+                        <tbody>
+                            <tr><td>Actively exploited in the wild + affects us</td><td>Emergency patch all rings</td><td>24-72 hours</td></tr>
+                            <tr><td>Critical CVSS (9.0+) + remotely exploitable + no workaround</td><td>Accelerated deployment, skip Ring 2-3 delays</td><td>72 hours - 1 week</td></tr>
+                            <tr><td>Critical CVSS + workaround available</td><td>Apply workaround immediately, normal patch schedule</td><td>Workaround: 24 hrs, Patch: standard</td></tr>
+                            <tr><td>Vendor recommends immediate action</td><td>Follow vendor guidance, accelerate as needed</td><td>Per vendor recommendation</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Patch Troubleshooting</h3>
+                <table>
+                    <thead><tr><th>Issue</th><th>Diagnosis</th><th>Resolution</th></tr></thead>
+                    <tbody>
+                        <tr><td>Patch fails to install</td><td>Check Windows Update logs, prerequisite patches, disk space</td><td>Install prerequisites, free space, try manual install</td></tr>
+                        <tr><td>Application breaks after patch</td><td>Check vendor compatibility notices, test in isolation</td><td>Rollback if critical, wait for app update, create exception</td></tr>
+                        <tr><td>Device not receiving patches</td><td>Check WSUS/Intune connectivity, group membership, compliance status</td><td>Fix connectivity, reassign to correct group</td></tr>
+                        <tr><td>Patch causes performance issues</td><td>Monitor before/after metrics, check known issues</td><td>Report to vendor, rollback if severe, wait for fix</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Decisions Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Security Decisions Guide</span>
+            </div>
+
+            <h1>Security Controls Decision Guide</h1>
+            <p class="lead">When to implement what, why it matters, common questions answered, and decision frameworks for every major security control.</p>
+
+            <div class="content">
+                <h2 id="mfa">Multi-Factor Authentication (MFA)</h2>
+
+                <h3>Should I Implement MFA?</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th><th>Explanation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Do I need MFA?</strong></td><td style="color: #3fb950;">YES, Always</td><td>Passwords alone are compromised constantly via phishing, breaches, and guessing. MFA stops 99.9% of account compromise attacks.</td></tr>
+                        <tr><td><strong>Is MFA enough by itself?</strong></td><td style="color: #d29922;">No, but critical</td><td>MFA is essential but not complete protection. You still need monitoring, conditional access, and endpoint security.</td></tr>
+                        <tr><td><strong>Will users complain?</strong></td><td style="color: #d29922;">Initially, yes</td><td>Users adapt within 2-4 weeks. Modern authenticator apps with push notifications are low-friction. The alternative (breach) is far worse.</td></tr>
+                        <tr><td><strong>What about service accounts?</strong></td><td style="color: #f0883e;">Different approach</td><td>Service accounts can't do interactive MFA. Use managed identities, certificates, or vault-stored credentials with strict IP restrictions instead.</td></tr>
+                        <tr><td><strong>Can attackers bypass MFA?</strong></td><td style="color: #d29922;">Sometimes</td><td>MFA fatigue attacks, SIM swapping, and real-time phishing proxies exist. Use phishing-resistant MFA (FIDO2) for high-value accounts.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>MFA Method Selection Decision Tree</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-sitemap"></i> Which MFA Method Should I Use?</div>
+                    <div style="font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;">
+                        <p style="margin: 0.5rem 0;"><strong>START:</strong> Is this for privileged/admin accounts?</p>
+                        <p style="margin: 0 0 0 1rem;">├─ <span style="color: #3fb950;">YES</span> → Use <strong>FIDO2 security keys</strong> (phishing-resistant, hardware-bound)</p>
+                        <p style="margin: 0 0 0 1rem;">└─ <span style="color: #f0883e;">NO</span> → Is this for Windows devices with TPM?</p>
+                        <p style="margin: 0 0 0 2rem;">├─ <span style="color: #3fb950;">YES</span> → Use <strong>Windows Hello for Business</strong> (phishing-resistant, seamless)</p>
+                        <p style="margin: 0 0 0 2rem;">└─ <span style="color: #f0883e;">NO</span> → Can users install apps on their phones?</p>
+                        <p style="margin: 0 0 0 3rem;">├─ <span style="color: #3fb950;">YES</span> → Use <strong>Microsoft Authenticator</strong> with number matching</p>
+                        <p style="margin: 0 0 0 3rem;">└─ <span style="color: #f0883e;">NO</span> → Are these external users/guests?</p>
+                        <p style="margin: 0 0 0 4rem;">├─ <span style="color: #3fb950;">YES</span> → Use <strong>Email OTP</strong> or <strong>SMS</strong> (better than nothing)</p>
+                        <p style="margin: 0 0 0 4rem;">└─ <span style="color: #f0883e;">NO</span> → Use <strong>Hardware OATH tokens</strong> (for special cases)</p>
+                    </div>
+                </div>
+
+                <h3>Common MFA Questions</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Why not SMS for everyone?</strong></td><td>SMS can be intercepted via SIM swapping, SS7 attacks, or social engineering the carrier. It's the weakest MFA method. Use only as last resort.</td></tr>
+                        <tr><td><strong>Why is FIDO2 better?</strong></td><td>FIDO2 is cryptographically bound to the legitimate site. Even if a user clicks a phishing link, the key won't authenticate to the fake site. It's impossible to phish.</td></tr>
+                        <tr><td><strong>What's MFA fatigue?</strong></td><td>Attackers spam MFA push notifications hoping the user accidentally approves. Mitigate with number matching (user must type a number shown on screen).</td></tr>
+                        <tr><td><strong>Should I exclude anyone from MFA?</strong></td><td>Only break-glass emergency accounts. Everyone else, including executives, must use MFA. Executives are actually higher targets.</td></tr>
+                        <tr><td><strong>What if someone loses their phone?</strong></td><td>Have backup methods registered (security key, backup codes). Use self-service password reset with identity verification. IT helpdesk as last resort with strong verification.</td></tr>
+                        <tr><td><strong>How often should MFA be required?</strong></td><td>Every sign-in for sensitive apps. Can reduce frequency for low-risk apps from compliant devices. Never set "remember MFA" longer than 30 days.</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="encryption">Encryption</h2>
+
+                <h3>Encryption Decision Matrix</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Encrypt?</th><th>Why / Why Not</th><th>How</th></tr></thead>
+                    <tbody>
+                        <tr><td>Laptop hard drives</td><td style="color: #3fb950;"><strong>YES</strong></td><td>Laptops get lost/stolen constantly. Without encryption, all data is exposed. It's also often a compliance requirement.</td><td>BitLocker (Windows), FileVault (Mac), LUKS (Linux). Use TPM for key storage.</td></tr>
+                        <tr><td>Database at rest</td><td style="color: #3fb950;"><strong>YES</strong></td><td>Protects against stolen backups, decommissioned disks, and unauthorized file access.</td><td>TDE (Transparent Data Encryption) for SQL, or storage-level encryption.</td></tr>
+                        <tr><td>Internal network traffic</td><td style="color: #d29922;"><strong>It depends</strong></td><td>Traditional "internal = trusted" is outdated (Zero Trust). Encrypt sensitive internal traffic, especially between zones.</td><td>TLS for apps, IPsec for network-to-network, mTLS for microservices.</td></tr>
+                        <tr><td>Backups</td><td style="color: #3fb950;"><strong>YES</strong></td><td>Backups often have weaker access controls and are stored longer. Unencrypted backups are a major breach vector.</td><td>Backup software encryption + separate key management (not stored with backups).</td></tr>
+                        <tr><td>Email internal</td><td style="color: #d29922;"><strong>Usually no</strong></td><td>Most internal email doesn't need encryption. It adds complexity and breaks features like search and DLP scanning.</td><td>Only encrypt specific sensitive emails using S/MIME or sensitivity labels.</td></tr>
+                        <tr><td>Email to external with PII</td><td style="color: #3fb950;"><strong>YES</strong></td><td>Email passes through multiple servers you don't control. PII exposure creates compliance and legal risk.</td><td>Microsoft Message Encryption, Virtru, or portal-based encryption.</td></tr>
+                        <tr><td>Cloud storage (M365, etc.)</td><td style="color: #d29922;"><strong>Provider encrypts</strong></td><td>Microsoft/Google already encrypt at rest. Additional encryption needed only for highest sensitivity data or regulatory requirements.</td><td>Sensitivity labels with encryption, or BYOK/HYOK for keys you control.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Common Encryption Questions</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Does HTTPS mean my data is safe?</strong></td><td>HTTPS encrypts data in transit between browser and server. It does NOT protect data at rest, on the server, or from the server itself being compromised.</td></tr>
+                        <tr><td><strong>If I encrypt everything, am I secure?</strong></td><td>No. Encryption protects confidentiality, not integrity or availability. Ransomware encrypts your data against you. You still need access controls, monitoring, backups.</td></tr>
+                        <tr><td><strong>TLS 1.2 or TLS 1.3?</strong></td><td>TLS 1.3 is faster and more secure. Use 1.3 where possible. TLS 1.2 is acceptable minimum. Disable TLS 1.0 and 1.1 (vulnerable).</td></tr>
+                        <tr><td><strong>What about key management?</strong></td><td>Keys are the critical part. Store in HSM or cloud key vault (Azure Key Vault, AWS KMS). Never store keys with encrypted data. Have key rotation and backup procedures.</td></tr>
+                        <tr><td><strong>Does encryption slow things down?</strong></td><td>Modern CPUs have AES acceleration. Encryption overhead is typically <5%. The security benefit far outweighs the minimal performance impact.</td></tr>
+                        <tr><td><strong>Can encrypted data be searched?</strong></td><td>Traditional encryption: No, you must decrypt first. This is why email encryption can break search. Searchable encryption exists but is complex and limited.</td></tr>
+                        <tr><td><strong>What's the difference between CMK and BYOK?</strong></td><td>CMK (Customer Managed Key): You control the key but it's stored in provider's key vault. BYOK (Bring Your Own Key): You generate and can escrow the key externally. BYOK gives more control but more responsibility.</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="network-seg">Network Segmentation</h2>
+
+                <h3>Do I Need Network Segmentation?</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th><th>Explanation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Is flat network okay?</strong></td><td style="color: #f85149;">NO</td><td>A flat network means one compromised device can reach everything. Attackers move laterally freely. Ransomware spreads instantly to all systems.</td></tr>
+                        <tr><td><strong>Can't my firewall protect me?</strong></td><td style="color: #d29922;">Only at the edge</td><td>Perimeter firewalls only see traffic entering/leaving the network. They're blind to east-west (internal) traffic where most attacks happen.</td></tr>
+                        <tr><td><strong>Is VLAN segmentation enough?</strong></td><td style="color: #d29922;">It helps</td><td>VLANs provide layer 2 separation but attackers can still route between VLANs unless you add firewall rules between them. VLANs alone are not security controls.</td></tr>
+                        <tr><td><strong>Do I need microsegmentation?</strong></td><td style="color: #d29922;">For critical assets</td><td>Microsegmentation (per-workload firewalls) is ideal for data centers and critical systems. It's overkill for general corporate networks. Start with zone-based segmentation.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Segmentation Decision Framework</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-project-diagram"></i> What Should Be Segmented?</div>
+                    <table>
+                        <thead><tr><th>System/Zone</th><th>Segment?</th><th>Reason</th><th>From What?</th></tr></thead>
+                        <tbody>
+                            <tr><td>Domain Controllers</td><td style="color: #3fb950;"><strong>ALWAYS</strong></td><td>Keys to the kingdom. If DC is compromised, everything is compromised.</td><td>Everything except admin workstations</td></tr>
+                            <tr><td>Database servers</td><td style="color: #3fb950;"><strong>YES</strong></td><td>Hold sensitive data. Should only be accessible from application tier.</td><td>Direct user access, internet</td></tr>
+                            <tr><td>OT/ICS systems</td><td style="color: #3fb950;"><strong>ALWAYS</strong></td><td>Safety critical. Different security requirements than IT.</td><td>IT network (use DMZ or data diode)</td></tr>
+                            <tr><td>Payment systems (PCI)</td><td style="color: #3fb950;"><strong>REQUIRED</strong></td><td>PCI-DSS requirement. Cardholder data must be isolated.</td><td>Everything outside CDE</td></tr>
+                            <tr><td>Guest WiFi</td><td style="color: #3fb950;"><strong>ALWAYS</strong></td><td>Untrusted devices. Should only reach internet.</td><td>All internal networks</td></tr>
+                            <tr><td>IoT devices</td><td style="color: #3fb950;"><strong>YES</strong></td><td>Often insecure, rarely patched. Can be compromised easily.</td><td>Corporate network, sensitive systems</td></tr>
+                            <tr><td>Development environment</td><td style="color: #d29922;"><strong>Recommended</strong></td><td>Developers often need elevated access. Contains unfinished code.</td><td>Production environment</td></tr>
+                            <tr><td>User workstations</td><td style="color: #d29922;"><strong>From servers</strong></td><td>Workstations are initial compromise point. Limit what they can reach.</td><td>Direct server access, admin interfaces</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Common Segmentation Questions</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Won't segmentation break things?</strong></td><td>Yes, initially. That's why you implement in phases: 1) Monitor mode first to see traffic patterns, 2) Create rules based on legitimate traffic, 3) Enable blocking, 4) Handle exceptions as they arise.</td></tr>
+                        <tr><td><strong>How do I know what traffic is legitimate?</strong></td><td>Use network monitoring tools to baseline traffic for 2-4 weeks. Work with application owners. Document all approved flows. Unknown traffic should be investigated, not just allowed.</td></tr>
+                        <tr><td><strong>What about cloud workloads?</strong></td><td>Use cloud-native security groups (AWS SGs, Azure NSGs). Apply same principles: default deny, explicit allow only required traffic, different rules per tier.</td></tr>
+                        <tr><td><strong>Is Zero Trust the same as segmentation?</strong></td><td>Zero Trust includes segmentation but goes further. ZT assumes breach, verifies every access request based on identity + device + context. Segmentation is one component of ZT.</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dlp">Data Loss Prevention (DLP)</h2>
+
+                <h3>DLP Implementation Decisions</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th><th>Explanation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Should I start with blocking or monitoring?</strong></td><td style="color: #3fb950;"><strong>MONITORING</strong></td><td>Always start with audit/monitor mode. Blocking without understanding your data flows will disrupt business and create DLP fatigue.</td></tr>
+                        <tr><td><strong>How long to monitor before blocking?</strong></td><td>2-4 weeks minimum</td><td>Need enough time to see all business processes, monthly activities, edge cases. Review every alert to understand false positive patterns.</td></tr>
+                        <tr><td><strong>Should I block or warn?</strong></td><td style="color: #d29922;"><strong>Depends on data</strong></td><td>Block for high-sensitivity (SSN, credit cards, credentials). Warn for medium sensitivity (allows override with justification). Audit-only for general monitoring.</td></tr>
+                        <tr><td><strong>Will DLP stop all data theft?</strong></td><td style="color: #f0883e;">NO</td><td>Determined insiders can find ways around DLP (photos of screen, retyping, encrypted containers). DLP stops accidental exposure and opportunistic theft.</td></tr>
+                        <tr><td><strong>Do I need endpoint DLP?</strong></td><td style="color: #3fb950;"><strong>YES</strong></td><td>Network/cloud DLP misses USB, printing, local saves. Endpoint DLP covers the last mile where data actually leaves.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>DLP Rule Design Framework</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> DLP Rule Best Practices</div>
+                    <table>
+                        <thead><tr><th>Do</th><th>Don't</th><th>Why</th></tr></thead>
+                        <tbody>
+                            <tr><td>Start with specific, high-confidence patterns (SSN, credit cards)</td><td>Try to catch everything at once</td><td>High-confidence rules have low false positives, build trust in the system</td></tr>
+                            <tr><td>Use context (keywords + patterns together)</td><td>Match patterns alone</td><td>"123-45-6789" could be SSN or phone number. "SSN: 123-45-6789" is clearly sensitive</td></tr>
+                            <tr><td>Create business process exceptions</td><td>Ignore all false positives</td><td>Legitimate FPs (HR sending SSN to payroll) need documented exceptions, not disabled rules</td></tr>
+                            <tr><td>Require justification for overrides</td><td>Allow silent overrides</td><td>Override justifications create audit trail and deter abuse</td></tr>
+                            <tr><td>Review and tune weekly initially</td><td>Set and forget</td><td>Business processes change. False positives cause alert fatigue. Rules need maintenance.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Common DLP Questions</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>What about encrypted files?</strong></td><td>DLP can't inspect encrypted content. Options: 1) Block encrypted attachments to external, 2) Use endpoint DLP that sees before encryption, 3) Accept the gap and monitor for anomalies.</td></tr>
+                        <tr><td><strong>Should I inspect HTTPS?</strong></td><td>For DLP to see cloud uploads, you need TLS inspection. This requires deploying certificates to endpoints and has privacy implications. Many organizations inspect with exclusions for banking/healthcare sites.</td></tr>
+                        <tr><td><strong>How do I handle departing employees?</strong></td><td>Enable enhanced monitoring for departing users (often a DLP policy group). Alert on any sensitive data movement in their last 30 days. Work with HR for coordinated offboarding.</td></tr>
+                        <tr><td><strong>What's the biggest DLP mistake?</strong></td><td>Blocking too aggressively too early. This causes business disruption, users finding workarounds, and eventually DLP being disabled. Start with detection, build accurate rules, then gradually enable prevention.</td></tr>
+                        <tr><td><strong>Do I need to classify all data first?</strong></td><td>Ideal but not required. You can start with auto-classification (pattern matching) and content inspection. Manual classification can run in parallel or come later.</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="edr">Endpoint Detection & Response (EDR)</h2>
+
+                <h3>EDR Decisions</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Answer</th><th>Explanation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Is antivirus enough?</strong></td><td style="color: #f85149;">NO</td><td>Traditional AV only catches known malware by signature. Modern attacks use fileless malware, living-off-the-land, and zero-days. EDR detects behaviors, not just signatures.</td></tr>
+                        <tr><td><strong>EDR or XDR?</strong></td><td style="color: #d29922;">Depends</td><td>EDR = endpoint only. XDR = correlates endpoint + network + cloud + email. If you have good SIEM integration, EDR is fine. XDR simplifies correlation for smaller teams.</td></tr>
+                        <tr><td><strong>Should I enable automated response?</strong></td><td style="color: #3fb950;"><strong>YES, for high confidence</strong></td><td>Auto-isolate for confirmed ransomware. Auto-block for known malware. Manual review for suspicious activities to avoid disrupting legitimate work.</td></tr>
+                        <tr><td><strong>What about servers?</strong></td><td style="color: #3fb950;"><strong>YES</strong></td><td>Servers are high-value targets. Same EDR or server-specific agent. May need different policies (servers have different baseline behavior).</td></tr>
+                        <tr><td><strong>What about Linux/Mac?</strong></td><td style="color: #3fb950;"><strong>YES</strong></td><td>Attackers target all platforms. Ensure your EDR has full coverage. Some vendors have weaker non-Windows support.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>EDR Alert Triage Framework</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-filter"></i> How to Triage EDR Alerts</div>
+                    <div style="font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.8;">
+                        <p style="margin: 0.5rem 0;"><strong>Question 1:</strong> Is this a known false positive pattern?</p>
+                        <p style="margin: 0 0 0 1rem;">├─ <span style="color: #3fb950;">YES</span> → Document, add to exclusion list if recurrent, close as FP</p>
+                        <p style="margin: 0 0 0 1rem;">└─ <span style="color: #f0883e;">NO</span> → Continue investigation</p>
+                        <p style="margin: 0.5rem 0;"><strong>Question 2:</strong> Was the activity blocked/prevented?</p>
+                        <p style="margin: 0 0 0 1rem;">├─ <span style="color: #3fb950;">YES</span> → Still investigate source, but lower urgency</p>
+                        <p style="margin: 0 0 0 1rem;">└─ <span style="color: #f0883e;">NO (executed)</span> → Higher urgency, may need containment</p>
+                        <p style="margin: 0.5rem 0;"><strong>Question 3:</strong> Is the user/system high-value target?</p>
+                        <p style="margin: 0 0 0 1rem;">├─ <span style="color: #3fb950;">YES (exec, admin, finance)</span> → Escalate priority</p>
+                        <p style="margin: 0 0 0 1rem;">└─ <span style="color: #f0883e;">NO</span> → Standard priority</p>
+                        <p style="margin: 0.5rem 0;"><strong>Question 4:</strong> Is there follow-on activity?</p>
+                        <p style="margin: 0 0 0 1rem;">├─ <span style="color: #f85149;">YES (persistence, lateral movement)</span> → Active incident, escalate immediately</p>
+                        <p style="margin: 0 0 0 1rem;">└─ <span style="color: #3fb950;">NO (isolated event)</span> → Investigate but may be contained</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

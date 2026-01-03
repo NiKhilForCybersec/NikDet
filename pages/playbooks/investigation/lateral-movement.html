@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lateral Movement Investigation Playbook | SOC Compendium</title>
+    <title>Lateral Movement Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -19,556 +19,238 @@
                 <span>Lateral Movement</span>
             </div>
 
-            <div class="playbook-header">
-                <div class="playbook-id">PB-INV-005</div>
-                <h1>Lateral Movement Investigation Playbook</h1>
-                <p class="lead">Investigation procedure for detecting and tracking adversary movement through the network. Covers RDP, SMB, WMI, PsExec, SSH, and other remote access techniques used to expand access after initial compromise.</p>
-                <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2 / L3</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">60-120 min</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Last Updated</span><span class="playbook-meta-value">2025-01-02</span></div>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
-                    <span class="mitre-tag">T1021</span>
-                    <span class="mitre-tag">T1021.001</span>
-                    <span class="mitre-tag">T1021.002</span>
-                    <span class="mitre-tag">T1021.003</span>
-                    <span class="mitre-tag">T1021.004</span>
-                    <span class="mitre-tag">T1021.006</span>
-                    <span class="mitre-tag">T1047</span>
-                    <span class="mitre-tag">T1570</span>
-                    <span class="mitre-tag">T1550</span>
-                </div>
-            </div>
+            <h1><i class="fas fa-project-diagram"></i> Lateral Movement Investigation</h1>
+            <p class="lead">Investigating unauthorized movement between systems - a critical indicator of active intrusion.</p>
 
             <div class="content">
-                <h2 id="overview">Overview</h2>
-                <p>Lateral movement is a critical phase in most sophisticated attacks. After gaining initial access, adversaries need to move through the network to reach their objectives - whether that's a domain controller, database server, or executive workstation. Detecting and containing lateral movement early can prevent a small compromise from becoming a major breach.</p>
+                <!-- WHY THIS MATTERS -->
+                <h2 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h2>
 
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-info-circle"></i> What This Playbook Covers</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li>Remote Desktop Protocol (RDP) abuse</li>
-                        <li>SMB/Windows Admin Shares</li>
-                        <li>PsExec and similar remote execution tools</li>
-                        <li>Windows Management Instrumentation (WMI)</li>
-                        <li>Windows Remote Management (WinRM)</li>
-                        <li>SSH lateral movement</li>
-                        <li>Pass-the-Hash / Pass-the-Ticket</li>
-                        <li>DCOM-based lateral movement</li>
-                        <li>Internal spearphishing from compromised accounts</li>
-                    </ul>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> Lateral Movement = Active Attacker</div>
+                    <p style="margin: 0.5rem 0;">Lateral movement means an attacker has moved past initial access and is actively exploring your network. This is one of the most critical alerts you can receive.</p>
+                    <table>
+                        <thead><tr><th>What It Means</th><th>Why It's Serious</th></tr></thead>
+                        <tbody>
+                            <tr><td>Attacker has valid credentials</td><td>Initial compromise already succeeded</td></tr>
+                            <tr><td>They're looking for valuable targets</td><td>Data, DCs, critical systems at risk</td></tr>
+                            <tr><td>They can expand access quickly</td><td>Minutes to hours from one system to many</td></tr>
+                            <tr><td>They may already have what they need</td><td>Ransomware or exfil may be imminent</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h3>Investigation Objectives</h3>
-                <ol>
-                    <li><strong>Confirm Lateral Movement</strong> - Is this legitimate admin activity or adversary?</li>
-                    <li><strong>Identify Source</strong> - Which system initiated the movement?</li>
-                    <li><strong>Track Movement Path</strong> - Map all systems accessed</li>
-                    <li><strong>Determine Credentials Used</strong> - Which accounts were leveraged?</li>
-                    <li><strong>Assess Impact</strong> - What was accessed or modified on target systems?</li>
-                    <li><strong>Find Patient Zero</strong> - Trace back to initial compromise</li>
-                    <li><strong>Scope Full Compromise</strong> - Identify all affected systems and accounts</li>
-                </ol>
-
-                <h2 id="when-to-use">When to Use This Playbook</h2>
+                <h3>Attack Chain Context</h3>
                 <table>
-                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th></tr></thead>
+                    <thead><tr><th>Stage</th><th>What Happened</th><th>What's Next If You Don't Stop It</th></tr></thead>
                     <tbody>
-                        <tr><td>RDP from unexpected source</td><td>SIEM/EDR</td><td>High</td></tr>
-                        <tr><td>PsExec execution detected</td><td>EDR</td><td>High</td></tr>
-                        <tr><td>WMI remote process creation</td><td>EDR/SIEM</td><td>High</td></tr>
-                        <tr><td>Service installed remotely</td><td>Windows Events</td><td>High</td></tr>
-                        <tr><td>Admin share access from workstation</td><td>SIEM</td><td>Medium-High</td></tr>
-                        <tr><td>Pass-the-Hash detection</td><td>EDR/SIEM</td><td>Critical</td></tr>
-                        <tr><td>Unusual authentication patterns</td><td>SIEM/UEBA</td><td>Medium</td></tr>
-                        <tr><td>Network scanning from endpoint</td><td>EDR/Network</td><td>High</td></tr>
-                        <tr><td>Scheduled task created remotely</td><td>EDR/SIEM</td><td>High</td></tr>
-                        <tr><td>DCOM/MMC lateral movement</td><td>EDR</td><td>High</td></tr>
+                        <tr><td style="color: #3fb950;">Initial Access</td><td>Phishing, exploit, stolen creds</td><td>→</td></tr>
+                        <tr><td style="color: #3fb950;">Execution</td><td>Malware ran, shell obtained</td><td>→</td></tr>
+                        <tr><td style="color: #d29922;">Persistence</td><td>Backdoor installed</td><td>→</td></tr>
+                        <tr><td style="color: #f0883e;">Discovery</td><td>Network enumeration</td><td>→</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Lateral Movement ← YOU ARE HERE</strong></td><td>Moving to other systems</td><td>→</td></tr>
+                        <tr><td style="color: #f85149;">Privilege Escalation</td><td>Getting domain admin</td><td>→</td></tr>
+                        <tr><td style="color: #f85149;">Exfil/Impact</td><td>Data theft, ransomware</td><td>GAME OVER</td></tr>
                     </tbody>
                 </table>
 
+                <!-- WHEN TO USE -->
+                <h2 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h2>
+
+                <h3>Lateral Movement Indicators</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Detection Source</th><th>Confidence</th><th>Urgency</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>PsExec to multiple systems</strong></td><td>EDR, Event 7045</td><td>High</td><td>CRITICAL</td></tr>
+                        <tr><td style="color: #f85149;"><strong>WMI remote execution</strong></td><td>EDR, Sysmon 1</td><td>High</td><td>CRITICAL</td></tr>
+                        <tr><td style="color: #f85149;"><strong>RDP from workstation to workstation</strong></td><td>Event 4624 Type 10</td><td>High</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f85149;"><strong>SMB + credential use anomaly</strong></td><td>EDR, Event 4624 Type 3</td><td>Medium-High</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>WinRM remote commands</strong></td><td>Event 4624, PowerShell logs</td><td>Medium</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Pass-the-Hash/Pass-the-Ticket</strong></td><td>EDR, DC logs</td><td>High</td><td>CRITICAL</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Admin share access (C$, ADMIN$)</strong></td><td>Event 5140</td><td>Medium</td><td>MEDIUM</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>When NOT to Use This Playbook</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>More Likely</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>IT admin using PsExec for management</td><td>Legitimate administration</td><td>Verify with IT, document as FP if confirmed</td></tr>
+                        <tr><td>SCCM/Intune pushing software</td><td>Normal IT operations</td><td>Verify source is management server</td></tr>
+                        <tr><td>RDP from jump server to servers</td><td>Normal admin workflow</td><td>Verify user and source are authorized</td></tr>
+                        <tr><td>Scheduled vulnerability scan</td><td>Security operations</td><td>Check with vuln management team</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- DECISION FRAMEWORK -->
+                <h2 id="decisions"><i class="fas fa-sitemap"></i> Investigation Decision Framework</h2>
+
+                <h3>Is This Legitimate or Malicious?</h3>
                 <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> False Positive Considerations</div>
-                    <ul style="margin: 0.3rem 0 0 1rem;">
-                        <li><strong>IT Admin activity</strong> - Legitimate remote administration</li>
-                        <li><strong>SCCM/Intune</strong> - Software deployment and management</li>
-                        <li><strong>Vulnerability scanners</strong> - Credentialed scanning</li>
-                        <li><strong>Backup software</strong> - Agent-based backup operations</li>
-                        <li><strong>Monitoring tools</strong> - Performance monitoring agents</li>
-                    </ul>
+                    <div class="info-box-title"><i class="fas fa-question-circle"></i> Decision Criteria</div>
+                    <table>
+                        <thead><tr><th>Question</th><th>Legitimate Signs</th><th>Suspicious Signs</th></tr></thead>
+                        <tbody>
+                            <tr><td>Who is the user?</td><td>IT admin, help desk with ticket</td><td>Standard user, unknown account</td></tr>
+                            <tr><td>What is the source system?</td><td>Jump server, management system</td><td>Random workstation, compromised system</td></tr>
+                            <tr><td>What is the target?</td><td>Server they manage, authorized system</td><td>DC, finance server, systems they don't manage</td></tr>
+                            <tr><td>What time is it?</td><td>Business hours</td><td>3 AM, weekend</td></tr>
+                            <tr><td>Is there a change ticket?</td><td>Yes, documented work</td><td>No explanation</td></tr>
+                            <tr><td>What tool is being used?</td><td>Standard admin tools</td><td>Encoded PowerShell, unusual binaries</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h2 id="prerequisites">Prerequisites</h2>
-                
-                <h3>Required Access</h3>
+                <h3>Severity Assessment</h3>
                 <table>
-                    <thead><tr><th>System</th><th>Access Level</th><th>Purpose</th></tr></thead>
+                    <thead><tr><th>Factor</th><th>Low</th><th>Medium</th><th>High</th><th>Critical</th></tr></thead>
                     <tbody>
-                        <tr><td>SIEM (Sentinel/Splunk)</td><td>Analyst</td><td>Log correlation, timeline analysis</td></tr>
-                        <tr><td>EDR Console</td><td>Analyst</td><td>Process trees, network connections</td></tr>
-                        <tr><td>Active Directory</td><td>Read</td><td>Account context, group membership</td></tr>
-                        <tr><td>Domain Controllers</td><td>Log access</td><td>Authentication events</td></tr>
-                        <tr><td>Network monitoring</td><td>Analyst</td><td>Traffic analysis</td></tr>
+                        <tr><td><strong>Source</strong></td><td>Known admin system</td><td>Workstation</td><td>Unknown system</td><td>Previously compromised</td></tr>
+                        <tr><td><strong>Target</strong></td><td>Test system</td><td>Production server</td><td>Multiple servers</td><td>Domain controller</td></tr>
+                        <tr><td><strong>Account</strong></td><td>IT admin (expected)</td><td>IT admin (unexpected)</td><td>Privileged svc account</td><td>Domain Admin</td></tr>
+                        <tr><td><strong>Method</strong></td><td>RDP with MFA</td><td>SMB/RDP no MFA</td><td>PsExec/WMI</td><td>Pass-the-Hash</td></tr>
+                        <tr><td><strong>Pattern</strong></td><td>Single system</td><td>2-3 systems</td><td>Multiple systems</td><td>Scanning pattern</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Critical Log Sources</h3>
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-database"></i> Windows Security Events</div>
-                    <ul style="margin: 0.3rem 0 0 1rem; font-family: var(--font-mono); font-size: 0.85rem;">
-                        <li><code>4624</code> - Successful logon (Type 3=Network, Type 10=RDP)</li>
-                        <li><code>4625</code> - Failed logon</li>
-                        <li><code>4648</code> - Explicit credential logon (RunAs, PsExec)</li>
-                        <li><code>4672</code> - Special privileges assigned (admin logon)</li>
-                        <li><code>4776</code> - NTLM authentication (DC)</li>
-                        <li><code>4768</code> - Kerberos TGT requested (DC)</li>
-                        <li><code>4769</code> - Kerberos service ticket requested (DC)</li>
-                        <li><code>5140</code> - Network share accessed</li>
-                        <li><code>5145</code> - Network share object access</li>
-                        <li><code>7045</code> - Service installed (System log)</li>
-                    </ul>
-                </div>
+                <!-- HOW TO INVESTIGATE -->
+                <h2 id="how-to"><i class="fas fa-search"></i> How to Investigate</h2>
 
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-database"></i> Sentinel/Defender Tables</div>
-                    <ul style="margin: 0.3rem 0 0 1rem; font-family: var(--font-mono); font-size: 0.85rem;">
-                        <li><code>DeviceLogonEvents</code> - Logon events from EDR</li>
-                        <li><code>DeviceNetworkEvents</code> - Network connections</li>
-                        <li><code>DeviceProcessEvents</code> - Process execution</li>
-                        <li><code>SecurityEvent</code> - Windows Security events</li>
-                        <li><code>IdentityLogonEvents</code> - Identity-based logons</li>
-                    </ul>
-                </div>
+                <h3>Step 1: Identify the Source (Patient Zero)</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Track lateral movement source</span>
+DeviceLogonEvents
+| where Timestamp > ago(24h)
+| where LogonType in ("RemoteInteractive", "Network", "NetworkCleartext")
+| where DeviceName == "TARGET-SYSTEM"
+| project Timestamp, AccountName, AccountDomain, LogonType, 
+    RemoteIP, RemoteDeviceName, Protocol
+| order by Timestamp asc
 
-                <h2 id="step1">Step 1: Initial Alert Triage (10 Minutes)</h2>
-                
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Gather Alert Context</div>
-                            <table>
-                                <thead><tr><th>Field</th><th>Purpose</th><th>Red Flag</th></tr></thead>
-                                <tbody>
-                                    <tr><td><strong>Source System</strong></td><td>Where movement originated</td><td>Workstation → Server</td></tr>
-                                    <tr><td><strong>Destination System</strong></td><td>Target of movement</td><td>DC, database, file server</td></tr>
-                                    <tr><td><strong>Account Used</strong></td><td>Identity leveraged</td><td>Admin account from user workstation</td></tr>
-                                    <tr><td><strong>Protocol/Method</strong></td><td>How movement occurred</td><td>RDP, SMB, WMI, WinRM</td></tr>
-                                    <tr><td><strong>Time</strong></td><td>When it happened</td><td>Off-hours, weekend</td></tr>
-                                    <tr><td><strong>Process</strong></td><td>What initiated it</td><td>PsExec, wmic, PowerShell</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Legitimacy Check</div>
-                            <table>
-                                <thead><tr><th>Question</th><th>Legitimate</th><th>Suspicious</th></tr></thead>
-                                <tbody>
-                                    <tr><td>Is this user supposed to access this system?</td><td>Yes - IT admin</td><td>No - regular user</td></tr>
-                                    <tr><td>Is the source system expected?</td><td>Admin workstation/jump server</td><td>Random user workstation</td></tr>
-                                    <tr><td>Is this normal working hours?</td><td>Business hours</td><td>3 AM on weekend</td></tr>
-                                    <tr><td>Is there a change ticket?</td><td>Documented change</td><td>No record</td></tr>
-                                    <tr><td>Is the tool/protocol standard?</td><td>Approved admin tools</td><td>PsExec, Mimikatz</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1.3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Quick Risk Assessment</div>
-                            <div class="info-box danger">
-                                <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Escalate Immediately If:</div>
-                                <ul style="margin: 0.5rem 0 0 1rem;">
-                                    <li>Movement to Domain Controller</li>
-                                    <li>Movement using Domain Admin credentials</li>
-                                    <li>Evidence of Pass-the-Hash (NTLM from non-source)</li>
-                                    <li>Multiple destinations from single source</li>
-                                    <li>Credential dumping tools detected (Mimikatz)</li>
-                                    <li>Movement following initial access alert</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <h2 id="step2">Step 2: Analyze Movement Technique (20 Minutes)</h2>
-                
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">RDP Lateral Movement</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - RDP logons to target</span>
-let targetSystem = "SERVER01";
-SecurityEvent
-| where EventID == 4624
-| where LogonType == 10 // RDP
-| where Computer =~ targetSystem
-| project TimeGenerated, Account, IpAddress, 
-    LogonProcessName, WorkstationName
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// KQL - RDP sessions initiated from source</span>
-let sourceSystem = "WORKSTATION01";
-DeviceNetworkEvents
-| where DeviceName =~ sourceSystem
-| where RemotePort == 3389
-| project TimeGenerated, RemoteIP, RemoteUrl,
-    InitiatingProcessFileName, InitiatingProcessCommandLine
-
-<span style="color: #6aa3f7;">// KQL - RDP brute force attempts</span>
-SecurityEvent
-| where EventID == 4625
-| where LogonType == 10
-| summarize FailedAttempts=count(), 
-    Accounts=make_set(TargetUserName)
-    by IpAddress, Computer
-| where FailedAttempts > 5</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">SMB/Admin Share Movement</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Admin share access</span>
-SecurityEvent
-| where EventID == 5140 or EventID == 5145
-| where ShareName in ("\\\\*\\C$", "\\\\*\\ADMIN$", "\\\\*\\IPC$")
-| project TimeGenerated, Computer, Account, IpAddress,
-    ShareName, RelativeTargetName
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// KQL - Files copied to admin shares</span>
-DeviceFileEvents
-| where ActionType == "FileCreated"
-| where FolderPath matches regex @"\\\\[^\\]+\\[A-Z]\$"
-| project TimeGenerated, DeviceName, FolderPath, FileName,
-    InitiatingProcessFileName, InitiatingProcessAccountName
-
-<span style="color: #6aa3f7;">// KQL - SMB connections from workstation</span>
-let sourceSystem = "WORKSTATION01";
-DeviceNetworkEvents
-| where DeviceName =~ sourceSystem
-| where RemotePort == 445
-| where RemoteIPType == "Private"
-| summarize Connections=count(), 
-    Targets=make_set(RemoteIP)
-    by bin(TimeGenerated, 1h)
-| order by TimeGenerated desc</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">PsExec/Remote Service Movement</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - PsExec execution</span>
+<span style="color: #6aa3f7;">// KQL - PsExec/service installation tracking</span>
 DeviceProcessEvents
-| where FileName =~ "PsExec.exe" or FileName =~ "PsExec64.exe"
-| project TimeGenerated, DeviceName, ProcessCommandLine,
+| where Timestamp > ago(24h)
+| where FileName in~ ("psexec.exe", "psexesvc.exe") 
+    or ProcessCommandLine has_any ("psexec", "-s cmd", "/s cmd")
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, 
     AccountName, InitiatingProcessFileName
 
-<span style="color: #6aa3f7;">// KQL - PSEXESVC service installation (target side)</span>
-SecurityEvent
-| where EventID == 7045
-| where ServiceName has "PSEXE"
-| project TimeGenerated, Computer, ServiceName, 
-    ServiceFileName, Account
-
-<span style="color: #6aa3f7;">// KQL - Remote service installation</span>
-SecurityEvent
-| where EventID == 7045
-| project TimeGenerated, Computer, ServiceName,
-    ServiceFileName, ServiceType, Account
-| where ServiceFileName has_any ("cmd", "powershell", 
-    "\\\\", "temp", "appdata")
-
-<span style="color: #6aa3f7;">// KQL - Explicit credential usage (RunAs behavior)</span>
-SecurityEvent
-| where EventID == 4648
-| where TargetServerName != Computer
-| project TimeGenerated, Account, TargetUserName,
-    TargetServerName, ProcessName
-| order by TimeGenerated desc</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">WMI Remote Execution</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - WMIC remote execution</span>
+<span style="color: #6aa3f7;">// KQL - Remote WMI execution</span>
 DeviceProcessEvents
-| where FileName =~ "wmic.exe"
-| where ProcessCommandLine has "/node:"
-| project TimeGenerated, DeviceName, ProcessCommandLine,
-    AccountName, InitiatingProcessFileName
-
-<span style="color: #6aa3f7;">// KQL - WMI process creation on target</span>
-DeviceProcessEvents
+| where Timestamp > ago(24h)
 | where InitiatingProcessFileName =~ "WmiPrvSE.exe"
-| where InitiatingProcessParentFileName =~ "svchost.exe"
-| project TimeGenerated, DeviceName, FileName,
-    ProcessCommandLine, AccountName
-
-<span style="color: #6aa3f7;">// KQL - WMI network connections</span>
-DeviceNetworkEvents
-| where RemotePort in (135, 445, 5985, 5986)
-| where InitiatingProcessFileName in~ ("wmic.exe", "wmiprvse.exe",
-    "powershell.exe", "pwsh.exe")
-| project TimeGenerated, DeviceName, RemoteIP, RemotePort,
-    InitiatingProcessFileName</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2.5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">WinRM/PowerShell Remoting</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - PowerShell remoting commands</span>
-DeviceProcessEvents
-| where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any (
-    "Invoke-Command", "Enter-PSSession", "New-PSSession",
-    "-ComputerName", "Invoke-WmiMethod"
-)
-| project TimeGenerated, DeviceName, ProcessCommandLine,
-    AccountName
-
-<span style="color: #6aa3f7;">// KQL - WinRM connections</span>
-DeviceNetworkEvents
-| where RemotePort in (5985, 5986) // HTTP/HTTPS WinRM
-| project TimeGenerated, DeviceName, RemoteIP,
-    InitiatingProcessFileName, InitiatingProcessCommandLine
-
-<span style="color: #6aa3f7;">// KQL - WinRM process creation on target</span>
-DeviceProcessEvents
-| where InitiatingProcessFileName =~ "wsmprovhost.exe"
-| project TimeGenerated, DeviceName, FileName,
-    ProcessCommandLine, AccountName</pre>
-                            </div>
-                        </div>
-                    </div>
+| where FileName != "WmiPrvSE.exe"
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, AccountName
+</pre>
                 </div>
 
-                <h2 id="step3">Step 3: Track Full Movement Path (30 Minutes)</h2>
-                
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Map All Accessed Systems</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - All logons from compromised account</span>
-let compromisedAccount = "domain\\username";
-let startTime = ago(7d);
-SecurityEvent
-| where TimeGenerated > startTime
-| where EventID == 4624
-| where Account =~ compromisedAccount
-| where LogonType in (3, 10) // Network, RDP
-| summarize FirstLogon=min(TimeGenerated),
-    LastLogon=max(TimeGenerated),
-    LogonCount=count()
-    by Computer, IpAddress, LogonType
-| order by FirstLogon asc
+                <h3>Step 2: Map the Movement Path</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - All systems touched by suspicious account</span>
+let suspiciousAccount = "compromised-user";
+DeviceLogonEvents
+| where Timestamp > ago(7d)
+| where AccountName =~ suspiciousAccount
+| where LogonType in ("RemoteInteractive", "Network")
+| summarize 
+    FirstSeen = min(Timestamp),
+    LastSeen = max(Timestamp),
+    LogonCount = count()
+    by DeviceName, LogonType
+| order by FirstSeen asc
 
-<span style="color: #6aa3f7;">// KQL - Network connections from source system</span>
-let sourceSystem = "WORKSTATION01";
+<span style="color: #6aa3f7;">// KQL - Network connections from compromised system</span>
 DeviceNetworkEvents
-| where DeviceName =~ sourceSystem
-| where TimeGenerated > ago(7d)
-| where RemotePort in (135, 139, 445, 3389, 5985, 5986, 22)
-| where RemoteIPType == "Private"
-| summarize Connections=count(),
-    FirstSeen=min(TimeGenerated),
-    LastSeen=max(TimeGenerated),
-    Processes=make_set(InitiatingProcessFileName)
-    by RemoteIP
-| order by FirstSeen asc</pre>
-                            </div>
-                        </div>
-                    </div>
+| where Timestamp > ago(24h)
+| where DeviceName == "COMPROMISED-SYSTEM"
+| where RemotePort in (445, 135, 3389, 5985, 22, 23)
+| summarize Connections = count() by RemoteIP, RemotePort
+| order by Connections desc
 
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3.2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Build Movement Timeline</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Combined lateral movement timeline</span>
-let compromisedAccount = "domain\\username";
-let sourceIP = "10.0.0.50";
-// Network logons
-SecurityEvent
-| where EventID == 4624
-| where LogonType == 3
-| where IpAddress == sourceIP
-| extend MovementType = "Network Logon"
-| project TimeGenerated, MovementType, Source=IpAddress,
-    Target=Computer, Account
-| union (
-    // RDP logons
-    SecurityEvent
-    | where EventID == 4624
-    | where LogonType == 10
-    | where IpAddress == sourceIP
-    | extend MovementType = "RDP"
-    | project TimeGenerated, MovementType, Source=IpAddress,
-        Target=Computer, Account
-)
-| union (
-    // Service installations
-    SecurityEvent
-    | where EventID == 7045
-    | extend MovementType = "Service Install"
-    | project TimeGenerated, MovementType, Source="",
-        Target=Computer, Account=ServiceName
-)
-| order by TimeGenerated asc</pre>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3.3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Identify Credential Theft Techniques</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - LSASS access (credential dumping)</span>
-DeviceProcessEvents
-| where FileName != "lsass.exe"
-| where ProcessCommandLine has "lsass" or 
-    InitiatingProcessCommandLine has "lsass"
-| project TimeGenerated, DeviceName, FileName,
-    ProcessCommandLine, AccountName
-
-<span style="color: #6aa3f7;">// KQL - Mimikatz indicators</span>
-DeviceProcessEvents
-| where ProcessCommandLine has_any (
-    "sekurlsa", "lsadump", "kerberos::", "crypto::",
-    "privilege::debug", "token::elevate"
-)
-| project TimeGenerated, DeviceName, ProcessCommandLine,
-    AccountName
-
-<span style="color: #6aa3f7;">// KQL - Pass-the-Hash indicators</span>
-// NTLM authentication from system that shouldn't have password hash
-SecurityEvent
-| where EventID == 4624
-| where LogonType == 3
-| where AuthenticationPackageName == "NTLM"
-| where IpAddress != "127.0.0.1"
-| project TimeGenerated, Account, Computer, IpAddress,
-    LogonProcessName
-| join kind=leftouter (
-    // Find if this IP normally uses this account
-    SecurityEvent
-    | where EventID == 4624
-    | where TimeGenerated > ago(30d)
-    | summarize NormalLogons=count() by Account, IpAddress
-) on Account, IpAddress
-| where isempty(NormalLogons) or NormalLogons < 3</pre>
-                            </div>
-                        </div>
-                    </div>
+<span style="color: #6aa3f7;">// KQL - Visual timeline of movement</span>
+DeviceLogonEvents
+| where Timestamp > ago(24h)
+| where AccountName =~ "compromised-user"
+| where ActionType == "LogonSuccess"
+| project Timestamp, 
+    Movement = strcat(RemoteDeviceName, " → ", DeviceName),
+    LogonType, Protocol
+| order by Timestamp asc
+</pre>
                 </div>
 
-                <h2 id="step4">Step 4: Assess Impact on Each System (20 Minutes)</h2>
-                
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4.1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check Activity on Each Compromised System</div>
-                            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Process execution after lateral movement</span>
-let targetSystem = "SERVER01";
-let movementTime = datetime(2025-01-02T12:00:00Z);
-DeviceProcessEvents
-| where DeviceName =~ targetSystem
-| where TimeGenerated between (movementTime .. (movementTime + 2h))
-| project TimeGenerated, FileName, ProcessCommandLine,
-    AccountName, InitiatingProcessFileName
-| order by TimeGenerated asc
-
-<span style="color: #6aa3f7;">// KQL - File access after lateral movement</span>
-DeviceFileEvents
-| where DeviceName =~ targetSystem
-| where TimeGenerated between (movementTime .. (movementTime + 2h))
-| where ActionType in ("FileRead", "FileCreated", "FileModified")
-| project TimeGenerated, ActionType, FileName, FolderPath,
-    InitiatingProcessFileName
-| order by TimeGenerated asc
-
-<span style="color: #6aa3f7;">// KQL - Data staging/collection</span>
-DeviceProcessEvents
-| where DeviceName =~ targetSystem
-| where TimeGenerated > movementTime
-| where FileName in~ ("7z.exe", "rar.exe", "zip.exe", "tar.exe")
-    or ProcessCommandLine has_any ("Compress-Archive", 
-        "-Recurse", "copy /z")
-| project TimeGenerated, FileName, ProcessCommandLine</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <h2 id="containment">Containment Actions</h2>
+                <h3>Step 3: Determine What They Did on Each System</h3>
                 <table>
-                    <thead><tr><th>Scope</th><th>Action</th><th>Command/Process</th></tr></thead>
+                    <thead><tr><th>Check</th><th>Query/Tool</th><th>Looking For</th></tr></thead>
                     <tbody>
-                        <tr><td>Account</td><td>Disable compromised account</td><td><code>Disable-ADAccount</code></td></tr>
-                        <tr><td>Account</td><td>Reset password</td><td><code>Set-ADAccountPassword</code></td></tr>
-                        <tr><td>System</td><td>Network isolate source</td><td>EDR isolation</td></tr>
-                        <tr><td>System</td><td>Network isolate targets</td><td>EDR isolation</td></tr>
-                        <tr><td>Network</td><td>Block lateral movement ports</td><td>Firewall rules (445, 3389, 5985)</td></tr>
-                        <tr><td>Domain</td><td>Reset KRBTGT (if DA compromised)</td><td>Double KRBTGT reset</td></tr>
+                        <tr><td>Process execution</td><td>EDR timeline, Sysmon 1</td><td>Recon tools, malware, credential dumpers</td></tr>
+                        <tr><td>File access</td><td>EDR file events, Event 5145</td><td>Sensitive data access, tool staging</td></tr>
+                        <tr><td>Registry changes</td><td>Sysmon 12/13, EDR</td><td>Persistence mechanisms</td></tr>
+                        <tr><td>Scheduled tasks</td><td>Event 4698, Sysmon 1</td><td>Scheduled persistence or execution</td></tr>
+                        <tr><td>Service creation</td><td>Event 7045</td><td>New malicious services</td></tr>
+                        <tr><td>Credential access</td><td>EDR, Sysmon 10</td><td>LSASS access, SAM access</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="escalation">Escalation Criteria</h2>
+                <!-- WHAT IF SCENARIOS -->
+                <h2 id="what-if"><i class="fas fa-random"></i> What If Scenarios</h2>
+
                 <table>
-                    <thead><tr><th>Condition</th><th>Escalation Level</th><th>Action</th></tr></thead>
+                    <thead><tr><th>What If...</th><th>Then...</th><th>Rationale</th></tr></thead>
                     <tbody>
-                        <tr><td>Domain Controller accessed</td><td>Critical - IR Team</td><td>Assume domain compromise</td></tr>
-                        <tr><td>Domain Admin used</td><td>Critical - IR Team</td><td>KRBTGT reset planning</td></tr>
-                        <tr><td>Multiple systems accessed</td><td>High - L3</td><td>Full scope assessment</td></tr>
-                        <tr><td>Data staging observed</td><td>High - IR Team</td><td>Data loss assessment</td></tr>
-                        <tr><td>Credential dumping confirmed</td><td>Critical - IR Team</td><td>Mass password reset</td></tr>
+                        <tr><td><strong>Lateral movement is from IT admin during work hours?</strong></td><td>Still verify. Call them, check ticket system. If legitimate, document and tune detection.</td><td>Attackers steal IT credentials specifically to blend in</td></tr>
+                        <tr><td><strong>They already reached domain controller?</strong></td><td>Assume full domain compromise. Start planning AD recovery, KRBTGT reset, all credential reset.</td><td>DC access = attacker can create any credential</td></tr>
+                        <tr><td><strong>I can see them moving but can't identify source?</strong></td><td>Focus on blocking at known points. Segment network. They may be using covert channels.</td><td>Some advanced attackers use tunneling to hide source</td></tr>
+                        <tr><td><strong>Movement stopped before I could investigate?</strong></td><td>They may have achieved their goal. Check for exfil, persistence, any impact. Don't assume it's over.</td><td>Attackers stage then execute; quiet period may precede impact</td></tr>
+                        <tr><td><strong>Multiple accounts are doing lateral movement?</strong></td><td>Large-scale compromise. Multiple credentials stolen. Escalate immediately, consider network isolation.</td><td>Multiple accounts = advanced attacker with broad access</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="documentation">Documentation Requirements</h2>
-                <ul>
-                    <li>Initial alert and detection details</li>
-                    <li>Full movement path map (source → targets)</li>
-                    <li>Timeline of all lateral movement events</li>
-                    <li>Accounts and credentials used</li>
-                    <li>Techniques employed (RDP, SMB, WMI, etc.)</li>
-                    <li>Activity on each compromised system</li>
-                    <li>Data access and potential exfiltration</li>
-                    <li>Containment actions taken</li>
-                    <li>Indicators of compromise (IOCs)</li>
-                    <li>Root cause (initial access point)</li>
-                </ul>
+                <!-- CONTAINMENT -->
+                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h2>
+
+                <h3>Immediate Containment</h3>
+                <table>
+                    <thead><tr><th>Action</th><th>How</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Disable compromised account</strong></td><td>AD: Disable account, reset password</td><td>Stop attacker from using credentials</td></tr>
+                        <tr><td><strong>Isolate source system</strong></td><td>EDR isolation, disable network port</td><td>Stop attacker's platform for movement</td></tr>
+                        <tr><td><strong>Isolate target systems</strong></td><td>EDR isolation on confirmed compromised targets</td><td>Prevent further spread from new footholds</td></tr>
+                        <tr><td><strong>Block lateral movement ports</strong></td><td>Firewall: Block SMB (445), RPC (135), WinRM (5985) between workstations</td><td>Network-level containment</td></tr>
+                        <tr><td><strong>Force logoff</strong></td><td>Remote logoff of all sessions for account</td><td>Terminate active attacker sessions</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- FALSE POSITIVES -->
+                <h2 id="false-positives"><i class="fas fa-check-circle"></i> Legitimate Activity Patterns</h2>
+
+                <table>
+                    <thead><tr><th>Activity</th><th>Legitimate Pattern</th><th>Suspicious Pattern</th></tr></thead>
+                    <tbody>
+                        <tr><td>PsExec usage</td><td>From SCCM server, by SYSTEM or admin account, to managed servers</td><td>From workstation, by user account, to random systems</td></tr>
+                        <tr><td>RDP connections</td><td>From jump server, by admin, during business hours, to servers they manage</td><td>Workstation to workstation, after hours, scanning multiple systems</td></tr>
+                        <tr><td>Admin share access</td><td>From management tools, automated deployment</td><td>From user workstation, manual access to multiple systems</td></tr>
+                        <tr><td>Service account logons</td><td>Always from same servers, predictable pattern</td><td>New sources, new targets, new times</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- ESCALATION -->
+                <h2 id="escalation"><i class="fas fa-arrow-up"></i> Escalation Criteria</h2>
+
+                <div class="info-box danger">
+                    <div class="info-box-title">Immediate Escalation Required When:</div>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li>Domain controller accessed</li>
+                        <li>Pass-the-Hash or Pass-the-Ticket detected</li>
+                        <li>More than 3 systems compromised</li>
+                        <li>Domain Admin credentials used</li>
+                        <li>Unable to identify source of movement</li>
+                        <li>Critical systems (finance, HR, exec) accessed</li>
+                        <li>Evidence of credential dumping (Mimikatz, LSASS access)</li>
+                    </ul>
+                </div>
 
             </div>
         </div>
@@ -577,28 +259,3 @@ DeviceProcessEvents
     <script src="../../../js/main.js"></script>
 </body>
 </html>
-
-                <h2 id="what-to-look-for">What to Look For - Red Flags</h2>
-                <table>
-                    <thead><tr><th>Observation</th><th>Significance</th><th>Next Step</th></tr></thead>
-                    <tbody>
-                        <tr><td>Admin connecting to many systems rapidly</td><td>Automated lateral movement</td><td>Check tool used (PsExec, WMI)</td></tr>
-                        <tr><td>Service account doing interactive logins</td><td>Credential theft and reuse</td><td>Should never happen - investigate</td></tr>
-                        <tr><td>RDP from server to workstation</td><td>Unusual direction</td><td>Servers don't usually RDP out</td></tr>
-                        <tr><td>SMB connections to admin shares</td><td>C$, ADMIN$ access</td><td>Check for file drops, execution</td></tr>
-                        <tr><td>WMI/PowerShell remoting spike</td><td>Remote execution</td><td>Review commands executed</td></tr>
-                        <tr><td>Pass-the-hash patterns</td><td>NTLM hash reuse</td><td>Same hash, different hosts</td></tr>
-                        <tr><td>Kerberos ticket anomalies</td><td>Pass-the-ticket, Golden ticket</td><td>Check ticket lifetimes, encryption</td></tr>
-                        <tr><td>Workstation to workstation</td><td>Unusual peer connections</td><td>Workstations rarely connect directly</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Quick Verification Steps</h3>
-                <ul>
-                    <li><strong>Verify the user:</strong> Contact the account owner - did they do this?</li>
-                    <li><strong>Check the source:</strong> Is the originating system compromised?</li>
-                    <li><strong>Review the tool:</strong> What was used - legitimate admin tool or attacker tool?</li>
-                    <li><strong>Map the path:</strong> Where did they go from there? Trace the chain.</li>
-                    <li><strong>Assess the target:</strong> What's special about the target systems?</li>
-                </ul>
-

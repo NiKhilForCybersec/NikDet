@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Security | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Application Security</span>
+            </div>
+
+            <h1>Application Security Architecture</h1>
+            <p class="lead">Complete guide to securing applications throughout the SDLC including secure development, WAF, API security, and runtime protection.</p>
+
+            <div class="content">
+                <h2 id="sdlc">Secure SDLC</h2>
+
+                <h3>Security Activities by Phase</h3>
+                <table>
+                    <thead><tr><th>Phase</th><th>Security Activities</th><th>Tools</th><th>Gate Criteria</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Requirements</strong></td><td>Security requirements, threat modeling, abuse cases</td><td>STRIDE, PASTA, Threat Dragon</td><td>Security requirements documented</td></tr>
+                        <tr><td><strong>Design</strong></td><td>Secure architecture review, attack surface analysis</td><td>Architecture review checklist</td><td>Design approved by security</td></tr>
+                        <tr><td><strong>Development</strong></td><td>Secure coding, SAST, code review</td><td>SonarQube, Checkmarx, Semgrep</td><td>No critical/high SAST findings</td></tr>
+                        <tr><td><strong>Testing</strong></td><td>DAST, penetration testing, security testing</td><td>OWASP ZAP, Burp Suite</td><td>No critical findings, risks accepted</td></tr>
+                        <tr><td><strong>Deployment</strong></td><td>Secure configuration, secrets management</td><td>HashiCorp Vault, Azure Key Vault</td><td>Security checklist complete</td></tr>
+                        <tr><td><strong>Operations</strong></td><td>Monitoring, vulnerability management, patching</td><td>RASP, WAF, vulnerability scanner</td><td>Ongoing compliance</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>OWASP Top 10 Controls</h3>
+                <table>
+                    <thead><tr><th>Vulnerability</th><th>Description</th><th>Prevention</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>A01: Broken Access Control</strong></td><td>Unauthorized access to functions/data</td><td>RBAC, deny by default, access control testing</td><td>WAF, audit logging</td></tr>
+                        <tr><td><strong>A02: Cryptographic Failures</strong></td><td>Weak crypto, exposed sensitive data</td><td>TLS 1.2+, strong encryption, key management</td><td>Scanning, monitoring</td></tr>
+                        <tr><td><strong>A03: Injection</strong></td><td>SQL, NoSQL, OS, LDAP injection</td><td>Parameterized queries, input validation, ORM</td><td>WAF, RASP</td></tr>
+                        <tr><td><strong>A04: Insecure Design</strong></td><td>Design flaws, missing controls</td><td>Threat modeling, secure design patterns</td><td>Architecture review</td></tr>
+                        <tr><td><strong>A05: Security Misconfiguration</strong></td><td>Default configs, unnecessary features</td><td>Hardening, IaC security scanning</td><td>CSPM, config audit</td></tr>
+                        <tr><td><strong>A06: Vulnerable Components</strong></td><td>Outdated libraries, known CVEs</td><td>SCA, dependency updates, SBOM</td><td>SCA scanning</td></tr>
+                        <tr><td><strong>A07: Auth Failures</strong></td><td>Broken authentication</td><td>MFA, strong password policy, rate limiting</td><td>Login monitoring</td></tr>
+                        <tr><td><strong>A08: Software/Data Integrity</strong></td><td>Untrusted updates, CI/CD compromise</td><td>Signed updates, CI/CD security, integrity checks</td><td>Integrity monitoring</td></tr>
+                        <tr><td><strong>A09: Logging Failures</strong></td><td>Insufficient logging, no monitoring</td><td>Comprehensive logging, SIEM integration</td><td>Log review, alerting</td></tr>
+                        <tr><td><strong>A10: SSRF</strong></td><td>Server-side request forgery</td><td>Input validation, allowlists, network segmentation</td><td>WAF, RASP</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="waf">Web Application Firewall</h2>
+
+                <h3>WAF Rule Configuration</h3>
+                <table>
+                    <thead><tr><th>Rule Category</th><th>Default Action</th><th>Tuning Consideration</th></tr></thead>
+                    <tbody>
+                        <tr><td>SQL Injection</td><td>Block</td><td>May need exceptions for specific parameters</td></tr>
+                        <tr><td>Cross-Site Scripting (XSS)</td><td>Block</td><td>Rich text editors may trigger false positives</td></tr>
+                        <tr><td>Local File Inclusion</td><td>Block</td><td>Low false positive rate</td></tr>
+                        <tr><td>Remote Code Execution</td><td>Block</td><td>Critical - always block</td></tr>
+                        <tr><td>Protocol Violations</td><td>Block</td><td>May need tuning for legacy apps</td></tr>
+                        <tr><td>Scanner Detection</td><td>Block/Challenge</td><td>Block automated scanners</td></tr>
+                        <tr><td>Bot Detection</td><td>Challenge</td><td>Allow legitimate bots (Googlebot)</td></tr>
+                        <tr><td>Rate Limiting</td><td>Throttle/Block</td><td>Set appropriate thresholds per endpoint</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>WAF Deployment Modes</h3>
+                <table>
+                    <thead><tr><th>Mode</th><th>Description</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Detection Only</strong></td><td>Log but don't block</td><td>Initial deployment, tuning</td></tr>
+                        <tr><td><strong>Prevention</strong></td><td>Block malicious requests</td><td>Production after tuning</td></tr>
+                        <tr><td><strong>Learning Mode</strong></td><td>Build baseline of normal traffic</td><td>Application profiling</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="api">API Security</h2>
+
+                <h3>API Security Controls</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Implementation</th><th>Tools</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Authentication</strong></td><td>OAuth 2.0, API keys, JWT</td><td>Auth0, Okta, Azure AD</td></tr>
+                        <tr><td><strong>Authorization</strong></td><td>Scope-based access, RBAC</td><td>Policy engines, custom logic</td></tr>
+                        <tr><td><strong>Rate Limiting</strong></td><td>Per-client, per-endpoint limits</td><td>API Gateway, WAF</td></tr>
+                        <tr><td><strong>Input Validation</strong></td><td>Schema validation, sanitization</td><td>OpenAPI validation, custom</td></tr>
+                        <tr><td><strong>Encryption</strong></td><td>TLS 1.2+, sensitive field encryption</td><td>Certificate management</td></tr>
+                        <tr><td><strong>Logging</strong></td><td>Request/response logging (redacted)</td><td>API Gateway, SIEM</td></tr>
+                        <tr><td><strong>Versioning</strong></td><td>Deprecation policy, version sunset</td><td>API management</td></tr>
+                        <tr><td><strong>Discovery Prevention</strong></td><td>No enumeration, proper error messages</td><td>Custom implementation</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>OWASP API Security Top 10</h3>
+                <table>
+                    <thead><tr><th>Risk</th><th>Description</th><th>Mitigation</th></tr></thead>
+                    <tbody>
+                        <tr><td>API1: Broken Object Level Auth</td><td>Access other users' data via ID manipulation</td><td>Authorization checks on every request</td></tr>
+                        <tr><td>API2: Broken Authentication</td><td>Weak auth mechanisms</td><td>Strong auth, token security</td></tr>
+                        <tr><td>API3: Broken Object Property Auth</td><td>Mass assignment, excessive data exposure</td><td>Response filtering, explicit property mapping</td></tr>
+                        <tr><td>API4: Unrestricted Resource Consumption</td><td>No rate limiting, DoS</td><td>Rate limiting, quotas, pagination</td></tr>
+                        <tr><td>API5: Broken Function Level Auth</td><td>Access to admin functions</td><td>Function-level authorization</td></tr>
+                        <tr><td>API6: Unrestricted Access to Business Flows</td><td>Abuse of business logic</td><td>Business logic validation</td></tr>
+                        <tr><td>API7: SSRF</td><td>Server-side request forgery</td><td>Input validation, allowlists</td></tr>
+                        <tr><td>API8: Security Misconfiguration</td><td>Default configs, verbose errors</td><td>Hardening, error handling</td></tr>
+                        <tr><td>API9: Improper Inventory Management</td><td>Shadow APIs, outdated versions</td><td>API inventory, deprecation</td></tr>
+                        <tr><td>API10: Unsafe Consumption of APIs</td><td>Trusting third-party APIs</td><td>Validate all external data</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="secrets">Secrets Management</h2>
+
+                <h3>Secrets Management Architecture</h3>
+                <table>
+                    <thead><tr><th>Secret Type</th><th>Storage</th><th>Rotation</th><th>Access Control</th></tr></thead>
+                    <tbody>
+                        <tr><td>Database credentials</td><td>Vault/Key Vault</td><td>90 days or on-demand</td><td>Application identity only</td></tr>
+                        <tr><td>API keys</td><td>Vault/Key Vault</td><td>90 days</td><td>Service-specific</td></tr>
+                        <tr><td>Encryption keys</td><td>HSM/Key Vault</td><td>Annual (or per policy)</td><td>Strict, audited</td></tr>
+                        <tr><td>Service account passwords</td><td>PAM vault</td><td>30-90 days</td><td>Just-in-time checkout</td></tr>
+                        <tr><td>TLS certificates</td><td>Certificate store/Vault</td><td>Before expiry (auto-renew)</td><td>Application-specific</td></tr>
+                        <tr><td>SSH keys</td><td>Vault/ephemeral</td><td>Session-based preferred</td><td>User + approval</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Secrets Management Best Practices</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-key"></i> Key Principles</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Never in code:</strong> No hardcoded secrets in source code or config files</li>
+                        <li><strong>Environment separation:</strong> Different secrets per environment</li>
+                        <li><strong>Least privilege:</strong> Applications only access needed secrets</li>
+                        <li><strong>Audit all access:</strong> Log every secret retrieval</li>
+                        <li><strong>Automated rotation:</strong> Rotate secrets automatically where possible</li>
+                        <li><strong>Encryption at rest:</strong> All secrets encrypted in storage</li>
+                        <li><strong>Short-lived tokens:</strong> Prefer short-lived tokens over long-lived credentials</li>
+                    </ul>
+                </div>
+
+                <h2 id="container">Container Security</h2>
+
+                <h3>Container Security Controls</h3>
+                <table>
+                    <thead><tr><th>Layer</th><th>Control</th><th>Tools</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Image</strong></td><td>Base image scanning, minimal images, signed images</td><td>Trivy, Snyk, Docker Scout</td></tr>
+                        <tr><td><strong>Registry</strong></td><td>Private registry, access control, vulnerability scanning</td><td>Harbor, ACR, ECR</td></tr>
+                        <tr><td><strong>Build</strong></td><td>CI/CD scanning, SBOM generation, signing</td><td>Cosign, Syft, CI integration</td></tr>
+                        <tr><td><strong>Runtime</strong></td><td>Pod security, network policies, runtime monitoring</td><td>Falco, Sysdig, Aqua</td></tr>
+                        <tr><td><strong>Orchestrator</strong></td><td>RBAC, secrets management, admission control</td><td>OPA/Gatekeeper, Kyverno</td></tr>
+                        <tr><td><strong>Host</strong></td><td>CIS benchmarks, minimal OS, patching</td><td>kube-bench, host hardening</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Kubernetes Security Configuration</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Recommended Value</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>Pod Security Standards</td><td>Restricted (or Baseline minimum)</td><td>Prevent privileged containers</td></tr>
+                        <tr><td>Network Policies</td><td>Default deny, explicit allow</td><td>Microsegmentation</td></tr>
+                        <tr><td>RBAC</td><td>Least privilege, no cluster-admin for apps</td><td>Access control</td></tr>
+                        <tr><td>Secrets encryption</td><td>etcd encryption enabled</td><td>Secrets at rest protection</td></tr>
+                        <tr><td>Audit logging</td><td>Enabled, forwarded to SIEM</td><td>Visibility and forensics</td></tr>
+                        <tr><td>Image pull policy</td><td>Always (except for pinned digests)</td><td>Ensure latest scanned image</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

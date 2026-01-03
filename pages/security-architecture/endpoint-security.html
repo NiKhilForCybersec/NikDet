@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endpoint Security Configuration | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Endpoint Security</span>
+            </div>
+
+            <h1>Endpoint Security Configuration Guide</h1>
+            <p class="lead">Complete implementation guide for endpoint security including EDR, disk encryption, MDM/UEM, application control, and hardening for Windows, Mac, and Linux.</p>
+
+            <div class="content">
+                <h2 id="edr">EDR Configuration</h2>
+
+                <h3>Microsoft Defender for Endpoint Settings</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Recommended</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>Real-time protection</td><td>Enabled</td><td>Active malware blocking</td></tr>
+                        <tr><td>Cloud-delivered protection</td><td>Enabled - High</td><td>Latest threat intelligence</td></tr>
+                        <tr><td>Automatic sample submission</td><td>Send all samples automatically</td><td>Improve detection</td></tr>
+                        <tr><td>PUA protection</td><td>Block</td><td>Block potentially unwanted apps</td></tr>
+                        <tr><td>Tamper protection</td><td>Enabled</td><td>Prevent security disable</td></tr>
+                        <tr><td>Network protection</td><td>Block mode</td><td>Block malicious connections</td></tr>
+                        <tr><td>Controlled folder access</td><td>Enabled (audit first)</td><td>Ransomware protection</td></tr>
+                        <tr><td>Attack surface reduction</td><td>Block mode (audit first)</td><td>Reduce attack vectors</td></tr>
+                        <tr><td>SmartScreen</td><td>Block</td><td>Block malicious downloads</td></tr>
+                        <tr><td>Exploit protection</td><td>Enabled with defaults</td><td>Memory protection</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Attack Surface Reduction Rules</h3>
+                <table>
+                    <thead><tr><th>Rule</th><th>GUID</th><th>Mode</th><th>Impact</th></tr></thead>
+                    <tbody>
+                        <tr><td>Block Office macros from creating child processes</td><td>d4f940ab-401b-4efc-aadc-ad5f3c50688a</td><td>Block</td><td>Low FP</td></tr>
+                        <tr><td>Block Office apps from creating executable content</td><td>3b576869-a4ec-4529-8536-b80a7769e899</td><td>Block</td><td>Low FP</td></tr>
+                        <tr><td>Block Office apps from injecting code</td><td>75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84</td><td>Block</td><td>Low FP</td></tr>
+                        <tr><td>Block JavaScript/VBScript launching downloaded content</td><td>d3e037e1-3eb8-44c8-a917-57927947596d</td><td>Block</td><td>Medium FP</td></tr>
+                        <tr><td>Block execution of potentially obfuscated scripts</td><td>5beb7efe-fd9a-4556-801d-275e5ffc04cc</td><td>Audit</td><td>High FP</td></tr>
+                        <tr><td>Block credential stealing from LSASS</td><td>9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2</td><td>Block</td><td>Low FP</td></tr>
+                        <tr><td>Block executable content from email client</td><td>be9ba2d9-53ea-4cdc-84e5-9b1eeee46550</td><td>Block</td><td>Low FP</td></tr>
+                        <tr><td>Block untrusted/unsigned processes from USB</td><td>b2b3f03d-6a65-4f7b-a9c7-1c7ef74a9ba4</td><td>Block</td><td>Medium FP</td></tr>
+                        <tr><td>Use advanced ransomware protection</td><td>c1db55ab-c21a-4637-bb3f-a12568109d35</td><td>Block</td><td>Low FP</td></tr>
+                        <tr><td>Block process creations from PSExec/WMI</td><td>d1e49aac-8f56-4280-b9ba-993a6d77406c</td><td>Audit</td><td>High FP (IT tools)</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="encryption">Disk Encryption</h2>
+
+                <h3>BitLocker Configuration (Windows)</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Value</th><th>GPO/Intune Path</th></tr></thead>
+                    <tbody>
+                        <tr><td>Encryption method</td><td>XTS-AES 256-bit</td><td>Computer Config > Admin Templates > BitLocker</td></tr>
+                        <tr><td>OS drive authentication</td><td>TPM + PIN (or TPM only for silent)</td><td>OS Drive settings</td></tr>
+                        <tr><td>Recovery password</td><td>Require, backup to Entra ID</td><td>OS Drive settings</td></tr>
+                        <tr><td>Fixed drive encryption</td><td>Required, auto-encrypt</td><td>Fixed Drive settings</td></tr>
+                        <tr><td>Removable drive encryption</td><td>Required for write access</td><td>Removable Drive settings</td></tr>
+                        <tr><td>Pre-boot PIN</td><td>6 digits minimum</td><td>OS Drive settings</td></tr>
+                        <tr><td>Allow standard users to change PIN</td><td>Enabled</td><td>OS Drive settings</td></tr>
+                        <tr><td>Used space only encryption</td><td>New devices only</td><td>Faster initial encryption</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>FileVault Configuration (macOS)</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Value</th><th>Method</th></tr></thead>
+                    <tbody>
+                        <tr><td>FileVault state</td><td>Enabled, enforced</td><td>MDM configuration profile</td></tr>
+                        <tr><td>Recovery key escrow</td><td>To MDM (Intune/JAMF)</td><td>MDM configuration profile</td></tr>
+                        <tr><td>Defer enabling</td><td>Until user logout (optional)</td><td>MDM configuration profile</td></tr>
+                        <tr><td>Show recovery key</td><td>Disabled (escrowed only)</td><td>MDM configuration profile</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="hardening">OS Hardening</h2>
+
+                <h3>Windows Hardening (CIS Benchmark)</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Setting</th><th>Value</th><th>Impact</th></tr></thead>
+                    <tbody>
+                        <tr><td>Account</td><td>Guest account status</td><td>Disabled</td><td>None</td></tr>
+                        <tr><td>Account</td><td>Rename administrator account</td><td>Custom name</td><td>None</td></tr>
+                        <tr><td>Account</td><td>Account lockout threshold</td><td>5 invalid attempts</td><td>User lockout</td></tr>
+                        <tr><td>Audit</td><td>Audit policy for logon events</td><td>Success and Failure</td><td>None</td></tr>
+                        <tr><td>Audit</td><td>Audit policy for object access</td><td>Failure</td><td>None</td></tr>
+                        <tr><td>Network</td><td>SMB v1 client/server</td><td>Disabled</td><td>Legacy apps</td></tr>
+                        <tr><td>Network</td><td>LAN Manager authentication level</td><td>NTLMv2 only</td><td>Legacy apps</td></tr>
+                        <tr><td>Network</td><td>LDAP client signing</td><td>Require signing</td><td>None</td></tr>
+                        <tr><td>Security</td><td>UAC Admin Approval Mode</td><td>Enabled</td><td>None</td></tr>
+                        <tr><td>Security</td><td>UAC behavior for admins</td><td>Prompt for consent</td><td>User prompts</td></tr>
+                        <tr><td>Firewall</td><td>Windows Firewall state</td><td>On for all profiles</td><td>Network dependent</td></tr>
+                        <tr><td>Software</td><td>PowerShell script execution</td><td>AllSigned or RemoteSigned</td><td>Unsigned scripts fail</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>macOS Hardening</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Value</th><th>Method</th></tr></thead>
+                    <tbody>
+                        <tr><td>Gatekeeper</td><td>App Store and identified developers</td><td>MDM profile</td></tr>
+                        <tr><td>System Integrity Protection</td><td>Enabled (default)</td><td>Don't disable</td></tr>
+                        <tr><td>Firewall</td><td>Enabled, block incoming</td><td>MDM profile</td></tr>
+                        <tr><td>Automatic login</td><td>Disabled</td><td>MDM profile</td></tr>
+                        <tr><td>Screen saver password</td><td>Required immediately</td><td>MDM profile</td></tr>
+                        <tr><td>Remote login (SSH)</td><td>Disabled unless needed</td><td>MDM profile</td></tr>
+                        <tr><td>AirDrop</td><td>Contacts only or off</td><td>MDM profile</td></tr>
+                        <tr><td>Software updates</td><td>Automatic security updates</td><td>MDM profile</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="usb">USB and Removable Media Control</h2>
+
+                <h3>Device Control Policies</h3>
+                <table>
+                    <thead><tr><th>Device Type</th><th>Policy</th><th>Exceptions</th></tr></thead>
+                    <tbody>
+                        <tr><td>USB Storage</td><td>Block by default</td><td>Approved encrypted drives by hardware ID</td></tr>
+                        <tr><td>USB Keyboards/Mice</td><td>Allow</td><td>N/A</td></tr>
+                        <tr><td>USB Printers</td><td>Allow</td><td>N/A</td></tr>
+                        <tr><td>Bluetooth</td><td>Allow with restrictions</td><td>No file transfer</td></tr>
+                        <tr><td>CD/DVD</td><td>Read only</td><td>IT exemption for imaging</td></tr>
+                        <tr><td>Mobile phones (MTP)</td><td>Block file transfer</td><td>N/A</td></tr>
+                        <tr><td>Portable devices (WPD)</td><td>Block</td><td>Approved cameras</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="patch">Patch Management</h2>
+
+                <h3>Patching SLAs</h3>
+                <table>
+                    <thead><tr><th>Severity</th><th>CVSS Score</th><th>Patch Window</th><th>Target Compliance</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;">Critical</td><td>9.0-10.0</td><td>72 hours (actively exploited: 24hr)</td><td>95%</td></tr>
+                        <tr><td style="color: #f0883e;">High</td><td>7.0-8.9</td><td>7 days</td><td>95%</td></tr>
+                        <tr><td style="color: #d29922;">Medium</td><td>4.0-6.9</td><td>30 days</td><td>90%</td></tr>
+                        <tr><td style="color: #3fb950;">Low</td><td>0.1-3.9</td><td>90 days</td><td>80%</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Patch Deployment Rings</h3>
+                <table>
+                    <thead><tr><th>Ring</th><th>Scope</th><th>Delay</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>Ring 0 - Preview</td><td>IT test devices</td><td>0 days</td><td>Early testing</td></tr>
+                        <tr><td>Ring 1 - Pilot</td><td>IT + early adopters (~5%)</td><td>3 days</td><td>Broader validation</td></tr>
+                        <tr><td>Ring 2 - Fast</td><td>Non-critical users (~30%)</td><td>7 days</td><td>Production validation</td></tr>
+                        <tr><td>Ring 3 - Broad</td><td>Remaining users (~60%)</td><td>14 days</td><td>General deployment</td></tr>
+                        <tr><td>Ring 4 - Critical</td><td>Critical systems, servers</td><td>21 days</td><td>Stability priority</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="monitoring-endpoint">Endpoint Monitoring</h2>
+
+                <h3>Critical Endpoint Alerts</h3>
+                <table>
+                    <thead><tr><th>Alert</th><th>Severity</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Malware detected and blocked</td><td>Medium</td><td>Verify cleanup, check for spread</td></tr>
+                        <tr><td>Malware detected - action failed</td><td>Critical</td><td>Isolate, manual remediation</td></tr>
+                        <tr><td>Ransomware behavior detected</td><td>Critical</td><td>Isolate immediately, IR</td></tr>
+                        <tr><td>Credential theft tool detected</td><td>Critical</td><td>Isolate, credential reset</td></tr>
+                        <tr><td>EDR tamper attempt</td><td>High</td><td>Investigate, may be compromise</td></tr>
+                        <tr><td>Suspicious PowerShell</td><td>Medium-High</td><td>Investigate command, context</td></tr>
+                        <tr><td>Lateral movement detected</td><td>High</td><td>Isolate source, investigate</td></tr>
+                        <tr><td>C2 communication detected</td><td>Critical</td><td>Isolate, full IR</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Endpoint Security Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Devices without EDR sensor</span>
+DeviceInfo
+| where Timestamp > ago(7d)
+| summarize arg_max(Timestamp, *) by DeviceId
+| where OnboardingStatus != "Onboarded"
+| project DeviceName, OSPlatform, OnboardingStatus
+
+<span style="color: #6aa3f7;">// KQL - Unencrypted devices</span>
+DeviceTvmSecureConfigurationAssessment
+| where ConfigurationId == "scid-2000" // BitLocker
+| where IsCompliant == 0
+| project DeviceName, ConfigurationId, IsCompliant
+
+<span style="color: #6aa3f7;">// KQL - Devices missing critical patches</span>
+DeviceTvmSoftwareVulnerabilities
+| where VulnerabilitySeverityLevel == "Critical"
+| summarize CriticalVulns = count() by DeviceName
+| where CriticalVulns > 0
+| order by CriticalVulns desc
+
+<span style="color: #6aa3f7;">// KQL - ASR rule triggers</span>
+DeviceEvents
+| where ActionType startswith "Asr"
+| summarize Count = count() by ActionType, DeviceName
+| order by Count desc
+</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

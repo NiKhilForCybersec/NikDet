@@ -19,198 +19,204 @@
                 <span>MITRE ATT&CK</span>
             </div>
 
-            <h1>MITRE ATT&CK Framework</h1>
-            <p class="lead">The MITRE ATT&CK framework is the industry standard for understanding adversary behavior. Learn how to use it for threat detection, coverage assessment, threat intelligence, and SOC operations.</p>
+            <h1><i class="fas fa-chess"></i> MITRE ATT&CK Framework</h1>
+            <p class="lead">Understanding and applying the MITRE ATT&CK framework for detection, hunting, and security operations.</p>
 
             <div class="content">
-                <h2 id="overview">What is MITRE ATT&CK?</h2>
-                <p>MITRE ATT&CK (Adversarial Tactics, Techniques, and Common Knowledge) is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. It provides a common language for describing attacker behavior and helps organizations understand their defensive coverage.</p>
+                <!-- WHY ATT&CK MATTERS -->
+                <h2 id="why-attack"><i class="fas fa-question-circle"></i> Why MITRE ATT&CK Matters</h2>
 
                 <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Key Components</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li><strong>Tactics:</strong> The "why" - adversary's tactical goal (14 tactics)</li>
-                        <li><strong>Techniques:</strong> The "how" - methods to achieve goals (200+ techniques)</li>
-                        <li><strong>Sub-techniques:</strong> More specific implementations of techniques</li>
-                        <li><strong>Procedures:</strong> Specific implementations by threat actors</li>
-                        <li><strong>Mitigations:</strong> Security measures to prevent techniques</li>
-                        <li><strong>Data Sources:</strong> Logs and telemetry for detection</li>
-                    </ul>
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> ATT&CK is Your Common Language</div>
+                    <p style="margin: 0.5rem 0;">MITRE ATT&CK provides a standardized way to describe attacker behavior. Instead of vague descriptions like "advanced malware," you can say "T1059.001 PowerShell execution leading to T1003.001 LSASS memory credential dumping."</p>
                 </div>
 
-                <h2 id="tactics">The 14 Tactics (Attack Lifecycle)</h2>
+                <h3>How SOC Teams Use ATT&CK</h3>
                 <table>
-                    <thead><tr><th>ID</th><th>Tactic</th><th>Description</th><th>SOC Focus</th></tr></thead>
+                    <thead><tr><th>Use Case</th><th>How ATT&CK Helps</th><th>Example</th></tr></thead>
                     <tbody>
-                        <tr><td>TA0043</td><td><strong>Reconnaissance</strong></td><td>Gathering information for planning</td><td>Pre-attack intelligence</td></tr>
-                        <tr><td>TA0042</td><td><strong>Resource Development</strong></td><td>Establishing infrastructure/tools</td><td>Threat intel on infrastructure</td></tr>
-                        <tr><td>TA0001</td><td><strong>Initial Access</strong></td><td>Getting into the network</td><td>Phishing, exploit detection</td></tr>
-                        <tr><td>TA0002</td><td><strong>Execution</strong></td><td>Running malicious code</td><td>Process monitoring</td></tr>
-                        <tr><td>TA0003</td><td><strong>Persistence</strong></td><td>Maintaining access</td><td>Registry, scheduled tasks, services</td></tr>
-                        <tr><td>TA0004</td><td><strong>Privilege Escalation</strong></td><td>Gaining higher permissions</td><td>Admin logons, exploits</td></tr>
-                        <tr><td>TA0005</td><td><strong>Defense Evasion</strong></td><td>Avoiding detection</td><td>Behavioral detection</td></tr>
-                        <tr><td>TA0006</td><td><strong>Credential Access</strong></td><td>Stealing credentials</td><td>LSASS, credential dumping</td></tr>
-                        <tr><td>TA0007</td><td><strong>Discovery</strong></td><td>Learning the environment</td><td>Recon commands</td></tr>
-                        <tr><td>TA0008</td><td><strong>Lateral Movement</strong></td><td>Moving through network</td><td>RDP, SMB, remote execution</td></tr>
-                        <tr><td>TA0009</td><td><strong>Collection</strong></td><td>Gathering target data</td><td>Clipboard, staging</td></tr>
-                        <tr><td>TA0011</td><td><strong>Command & Control</strong></td><td>Communicating with implants</td><td>Beaconing, DNS, encrypted</td></tr>
-                        <tr><td>TA0010</td><td><strong>Exfiltration</strong></td><td>Stealing data</td><td>Large transfers, cloud upload</td></tr>
-                        <tr><td>TA0040</td><td><strong>Impact</strong></td><td>Disruption/destruction</td><td>Ransomware, wipers</td></tr>
+                        <tr><td><strong>Detection engineering</strong></td><td>Organize detections by technique</td><td>"We have 15 detections covering T1059 (Command and Scripting)"</td></tr>
+                        <tr><td><strong>Coverage analysis</strong></td><td>Identify gaps in detection</td><td>"We have no coverage for T1550 (Use Alternate Authentication)"</td></tr>
+                        <tr><td><strong>Threat intel</strong></td><td>Map threat actors to techniques</td><td>"APT29 uses T1078 (Valid Accounts) - do we detect this?"</td></tr>
+                        <tr><td><strong>Incident reporting</strong></td><td>Standardized technique references</td><td>"Attacker used T1566.001 (Spearphishing Attachment) for initial access"</td></tr>
+                        <tr><td><strong>Hunting</strong></td><td>Systematic hypothesis generation</td><td>"Let's hunt for T1053.005 (Scheduled Task persistence)"</td></tr>
+                        <tr><td><strong>Communication</strong></td><td>Common language with other teams/vendors</td><td>"Our EDR detects these ATT&CK techniques..."</td></tr>
                     </tbody>
                 </table>
 
-                <h2 id="high-priority">High-Priority Techniques for Detection</h2>
-                <p>Not all techniques are equally important. Focus detection efforts on these commonly used and high-impact techniques:</p>
+                <!-- UNDERSTANDING THE STRUCTURE -->
+                <h2 id="structure"><i class="fas fa-sitemap"></i> Understanding ATT&CK Structure</h2>
 
-                <h3>Initial Access</h3>
+                <h3>The Hierarchy</h3>
                 <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Detection Focus</th></tr></thead>
+                    <thead><tr><th>Level</th><th>What It Is</th><th>Example</th></tr></thead>
                     <tbody>
-                        <tr><td>Phishing: Spearphishing Attachment</td><td>T1566.001</td><td>Malicious email attachments</td><td>Office docs spawning processes</td></tr>
-                        <tr><td>Phishing: Spearphishing Link</td><td>T1566.002</td><td>Malicious links in email</td><td>URL clicks, credential harvesting</td></tr>
-                        <tr><td>Exploit Public-Facing Application</td><td>T1190</td><td>Web app exploitation</td><td>Web shells, anomalous web server behavior</td></tr>
-                        <tr><td>Valid Accounts</td><td>T1078</td><td>Using legitimate credentials</td><td>Anomalous authentication</td></tr>
+                        <tr><td><strong>Tactic</strong></td><td>The attacker's goal (WHY)</td><td>Persistence - maintain access to systems</td></tr>
+                        <tr><td><strong>Technique</strong></td><td>How they achieve the goal (WHAT)</td><td>T1053 - Scheduled Task/Job</td></tr>
+                        <tr><td><strong>Sub-technique</strong></td><td>Specific implementation (HOW specifically)</td><td>T1053.005 - Scheduled Task (Windows)</td></tr>
+                        <tr><td><strong>Procedure</strong></td><td>Real-world implementation</td><td>APT29 creates scheduled tasks using schtasks.exe</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Execution</h3>
+                <h3>The Tactics (Attack Lifecycle)</h3>
                 <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Detection Focus</th></tr></thead>
+                    <thead><tr><th>Tactic</th><th>Goal</th><th>Key Techniques to Know</th><th>Detection Priority</th></tr></thead>
                     <tbody>
-                        <tr><td>Command and Scripting Interpreter: PowerShell</td><td>T1059.001</td><td>PowerShell execution</td><td>Encoded commands, download cradles</td></tr>
-                        <tr><td>Command and Scripting Interpreter: Windows Command Shell</td><td>T1059.003</td><td>cmd.exe usage</td><td>Suspicious parent-child, commands</td></tr>
-                        <tr><td>User Execution: Malicious File</td><td>T1204.002</td><td>User runs malware</td><td>Suspicious file execution from email</td></tr>
-                        <tr><td>System Services: Service Execution</td><td>T1569.002</td><td>Running via services</td><td>PsExec, remote service installation</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Reconnaissance</strong></td><td>Gather information about target</td><td>Active scanning, phishing for info</td><td>Low (mostly external)</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Resource Development</strong></td><td>Create attack infrastructure</td><td>Acquire infrastructure, develop capabilities</td><td>Low (external)</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Initial Access</strong></td><td>Get into the network</td><td>Phishing, exploit public-facing apps, valid accounts</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Execution</strong></td><td>Run malicious code</td><td>PowerShell, command line, WMI, scripts</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Persistence</strong></td><td>Maintain access</td><td>Registry run keys, scheduled tasks, accounts</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Privilege Escalation</strong></td><td>Get higher permissions</td><td>Exploitation, access token manipulation</td><td>HIGH</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Defense Evasion</strong></td><td>Avoid detection</td><td>Obfuscation, disabling security tools</td><td>MEDIUM</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Credential Access</strong></td><td>Steal credentials</td><td>LSASS dumping, keylogging, brute force</td><td>CRITICAL</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Discovery</strong></td><td>Learn about environment</td><td>Network scanning, account discovery</td><td>MEDIUM</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Lateral Movement</strong></td><td>Move to other systems</td><td>RDP, SMB, remote services</td><td>CRITICAL</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Collection</strong></td><td>Gather target data</td><td>Archive collected data, clipboard capture</td><td>MEDIUM</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Command & Control</strong></td><td>Communicate with implants</td><td>Web protocols, DNS, encrypted channels</td><td>HIGH</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Exfiltration</strong></td><td>Steal data out</td><td>Exfil over C2, web service, physical</td><td>CRITICAL</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Impact</strong></td><td>Disrupt operations</td><td>Data encryption, destruction, defacement</td><td>CRITICAL</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Persistence</h3>
-                <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Detection Focus</th></tr></thead>
-                    <tbody>
-                        <tr><td>Boot or Logon Autostart: Registry Run Keys</td><td>T1547.001</td><td>Registry autostart</td><td>Registry modifications to Run keys</td></tr>
-                        <tr><td>Scheduled Task/Job: Scheduled Task</td><td>T1053.005</td><td>Task Scheduler abuse</td><td>Suspicious task creation</td></tr>
-                        <tr><td>Create or Modify System Process: Windows Service</td><td>T1543.003</td><td>Malicious services</td><td>Service installation events</td></tr>
-                        <tr><td>Event Triggered Execution: WMI Event Subscription</td><td>T1546.003</td><td>WMI persistence</td><td>WMI consumer/filter creation</td></tr>
-                    </tbody>
-                </table>
+                <!-- HIGH PRIORITY TECHNIQUES -->
+                <h2 id="priority"><i class="fas fa-exclamation-circle"></i> High-Priority Techniques for SOC</h2>
 
-                <h3>Credential Access</h3>
-                <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Detection Focus</th></tr></thead>
-                    <tbody>
-                        <tr><td>OS Credential Dumping: LSASS Memory</td><td>T1003.001</td><td>Dumping LSASS</td><td>LSASS access, Mimikatz patterns</td></tr>
-                        <tr><td>Brute Force: Password Spraying</td><td>T1110.003</td><td>Testing passwords across accounts</td><td>Auth failure patterns</td></tr>
-                        <tr><td>Steal or Forge Kerberos Tickets: Kerberoasting</td><td>T1558.003</td><td>Cracking service tickets</td><td>Many TGS requests</td></tr>
-                        <tr><td>Unsecured Credentials: Credentials in Files</td><td>T1552.001</td><td>Finding stored credentials</td><td>File access to sensitive paths</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Lateral Movement</h3>
-                <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Detection Focus</th></tr></thead>
-                    <tbody>
-                        <tr><td>Remote Services: Remote Desktop Protocol</td><td>T1021.001</td><td>RDP abuse</td><td>RDP from unexpected sources</td></tr>
-                        <tr><td>Remote Services: SMB/Windows Admin Shares</td><td>T1021.002</td><td>Admin share access</td><td>C$, ADMIN$ access</td></tr>
-                        <tr><td>Remote Services: Windows Remote Management</td><td>T1021.006</td><td>WinRM abuse</td><td>5985/5986 connections</td></tr>
-                        <tr><td>Use Alternate Authentication Material: Pass the Hash</td><td>T1550.002</td><td>Hash-based auth</td><td>NTLM from unusual source</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Command and Control</h3>
-                <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Detection Focus</th></tr></thead>
-                    <tbody>
-                        <tr><td>Application Layer Protocol: Web Protocols</td><td>T1071.001</td><td>HTTP/S C2</td><td>Beaconing patterns, user agent</td></tr>
-                        <tr><td>Application Layer Protocol: DNS</td><td>T1071.004</td><td>DNS tunneling</td><td>High DNS volume, long queries</td></tr>
-                        <tr><td>Encrypted Channel: Symmetric Cryptography</td><td>T1573.001</td><td>Encrypted C2</td><td>JA3/JA3S fingerprints</td></tr>
-                        <tr><td>Ingress Tool Transfer</td><td>T1105</td><td>Downloading tools</td><td>Download from suspicious sources</td></tr>
-                    </tbody>
-                </table>
-
-                <h2 id="soc-applications">Using ATT&CK in SOC Operations</h2>
-
-                <h3>1. Alert Mapping</h3>
-                <p>Map your detection rules to ATT&CK techniques:</p>
-                <ul>
-                    <li>Tag alerts with technique IDs (e.g., T1059.001)</li>
-                    <li>Include technique name in alert titles</li>
-                    <li>Link to ATT&CK documentation in playbooks</li>
-                    <li>Track detection coverage by technique</li>
-                </ul>
-
-                <h3>2. Investigation Context</h3>
-                <p>Use ATT&CK during investigations to:</p>
-                <ul>
-                    <li>Understand what the attacker might do next</li>
-                    <li>Identify related techniques to hunt for</li>
-                    <li>Reference known procedures for the technique</li>
-                    <li>Check which threat actors use this technique</li>
-                </ul>
-
-                <h3>3. Threat Intelligence Integration</h3>
-                <p>Align threat intel with ATT&CK:</p>
-                <ul>
-                    <li>Map threat actor profiles to techniques</li>
-                    <li>Prioritize detection based on relevant threats</li>
-                    <li>Use ATT&CK Navigator to visualize coverage</li>
-                    <li>Compare your coverage to specific threat groups</li>
-                </ul>
-
-                <h3>4. Coverage Assessment</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Example: Mapping detection rules to techniques</span>
-{
-  "rule_name": "Encoded PowerShell Execution",
-  "mitre_techniques": ["T1059.001", "T1027"],
-  "mitre_tactics": ["Execution", "Defense Evasion"],
-  "data_sources": ["Process", "Command"],
-  "coverage_level": "High"
-}
-
-<span style="color: #6aa3f7;">// Coverage calculation</span>
-Total Techniques: 201
-Techniques with Detection: 89
-Coverage Percentage: 44%
-
-// Priority focus
-High-priority techniques covered: 45/50 (90%)
-Low-priority techniques covered: 44/151 (29%)</pre>
+                <h3>Most Commonly Used Techniques</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-chart-bar"></i> Focus Your Detection Efforts Here</div>
+                    <p style="margin: 0.5rem 0;">These techniques appear in the majority of real-world attacks. If you can only detect some things, detect these first.</p>
                 </div>
 
-                <h2 id="att&ck-navigator">ATT&CK Navigator</h2>
-                <p>The ATT&CK Navigator is a web-based tool for visualizing coverage:</p>
-                <ul>
-                    <li><strong>URL:</strong> mitre-attack.github.io/attack-navigator</li>
-                    <li>Create layers showing your detection coverage</li>
-                    <li>Overlay threat actor techniques</li>
-                    <li>Identify coverage gaps</li>
-                    <li>Export for documentation</li>
-                </ul>
-
-                <h2 id="data-sources">Key Data Sources</h2>
-                <p>ATT&CK maps techniques to required data sources:</p>
                 <table>
-                    <thead><tr><th>Data Source</th><th>Examples</th><th>Techniques Detected</th></tr></thead>
+                    <thead><tr><th>Technique</th><th>Why Common</th><th>Detection Approach</th></tr></thead>
                     <tbody>
-                        <tr><td>Process</td><td>Sysmon 1, 4688</td><td>Execution, Defense Evasion</td></tr>
-                        <tr><td>Network Traffic</td><td>Firewall, proxy logs</td><td>C2, Exfiltration, Lateral Movement</td></tr>
-                        <tr><td>File</td><td>Sysmon 11, 23</td><td>Persistence, Collection</td></tr>
-                        <tr><td>Windows Registry</td><td>Sysmon 12, 13, 14</td><td>Persistence, Defense Evasion</td></tr>
-                        <tr><td>Authentication Logs</td><td>4624, 4625, 4648</td><td>Initial Access, Credential Access</td></tr>
-                        <tr><td>Cloud Logs</td><td>Azure AD, CloudTrail</td><td>Initial Access, Persistence</td></tr>
+                        <tr>
+                            <td><strong>T1059 - Command and Scripting Interpreter</strong></td>
+                            <td>PowerShell, cmd, Python - required for most attacks</td>
+                            <td>Script block logging, command line logging, behavioral analysis</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1078 - Valid Accounts</strong></td>
+                            <td>Using stolen credentials is easier than exploiting</td>
+                            <td>Impossible travel, anomalous logons, MFA gaps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1566 - Phishing</strong></td>
+                            <td>#1 initial access method</td>
+                            <td>Email security, user reporting, macro execution</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1003 - OS Credential Dumping</strong></td>
+                            <td>Credentials enable everything else</td>
+                            <td>LSASS access monitoring, credential guard</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1021 - Remote Services</strong></td>
+                            <td>RDP, SSH, SMB for lateral movement</td>
+                            <td>Unusual remote access patterns, workstation-to-workstation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1053 - Scheduled Task/Job</strong></td>
+                            <td>Easy persistence mechanism</td>
+                            <td>Task creation events, unusual task paths</td>
+                        </tr>
+                        <tr>
+                            <td><strong>T1027 - Obfuscated Files</strong></td>
+                            <td>Evade signature detection</td>
+                            <td>Encoded commands, script analysis</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h2 id="resources">Resources</h2>
-                <ul>
-                    <li><strong>MITRE ATT&CK Website:</strong> attack.mitre.org</li>
-                    <li><strong>ATT&CK Navigator:</strong> mitre-attack.github.io/attack-navigator</li>
-                    <li><strong>ATT&CK for Enterprise:</strong> attack.mitre.org/matrices/enterprise</li>
-                    <li><strong>ATT&CK for Cloud:</strong> attack.mitre.org/matrices/enterprise/cloud</li>
-                    <li><strong>Groups (Threat Actors):</strong> attack.mitre.org/groups</li>
-                    <li><strong>Software (Tools/Malware):</strong> attack.mitre.org/software</li>
-                </ul>
+                <!-- USING ATT&CK PRACTICALLY -->
+                <h2 id="practical"><i class="fas fa-tools"></i> Practical Application</h2>
+
+                <h3>Mapping Alerts to ATT&CK</h3>
+                <table>
+                    <thead><tr><th>When You See...</th><th>Map To...</th><th>Investigation Focus</th></tr></thead>
+                    <tbody>
+                        <tr><td>Encoded PowerShell command</td><td>T1059.001 + T1027</td><td>Decode it, check for C2/download</td></tr>
+                        <tr><td>LSASS memory access</td><td>T1003.001</td><td>What process accessed? Credential theft?</td></tr>
+                        <tr><td>New scheduled task from unusual path</td><td>T1053.005</td><td>Persistence - what does it run?</td></tr>
+                        <tr><td>RDP from workstation to workstation</td><td>T1021.001</td><td>Lateral movement - why?</td></tr>
+                        <tr><td>Suspicious inbox rule</td><td>T1564.008</td><td>Email hiding - account compromised?</td></tr>
+                        <tr><td>Registry run key modification</td><td>T1547.001</td><td>Persistence - what will run?</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Building ATT&CK-Aligned Detection</h3>
+                <table>
+                    <thead><tr><th>Step</th><th>Action</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td>1. Choose technique</td><td>Select technique to detect</td><td>T1003.001 - LSASS Memory</td></tr>
+                        <tr><td>2. Research</td><td>Read ATT&CK page, understand variations</td><td>Mimikatz, procdump, comsvcs.dll</td></tr>
+                        <tr><td>3. Identify data sources</td><td>What logs capture this?</td><td>Sysmon Event 10, EDR process access</td></tr>
+                        <tr><td>4. Build detection logic</td><td>Create query/rule</td><td>Process access to lsass.exe with PROCESS_VM_READ</td></tr>
+                        <tr><td>5. Test and tune</td><td>Run against data, handle FPs</td><td>Exclude AV, security tools that legitimately access</td></tr>
+                        <tr><td>6. Document</td><td>Map to technique, add to coverage</td><td>Add to detection matrix</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- COVERAGE ANALYSIS -->
+                <h2 id="coverage"><i class="fas fa-chart-pie"></i> Coverage Analysis</h2>
+
+                <h3>How to Assess Your Coverage</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>How to Answer</th></tr></thead>
+                    <tbody>
+                        <tr><td>Which techniques can we detect?</td><td>Map each detection rule to ATT&CK technique</td></tr>
+                        <tr><td>Which techniques are we blind to?</td><td>Compare your coverage to full ATT&CK matrix</td></tr>
+                        <tr><td>Which gaps matter most?</td><td>Prioritize based on threat actors targeting your industry</td></tr>
+                        <tr><td>What data do we need?</td><td>Check data sources for techniques we want to detect</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Coverage Levels</h3>
+                <table>
+                    <thead><tr><th>Level</th><th>Definition</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>None</strong></td><td>No detection, no data</td><td>Can't see DNS tunneling, don't have DNS logs</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Minimal</strong></td><td>Have data but no active detection</td><td>Have DNS logs but no DNS exfil detection</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Partial</strong></td><td>Detect some variations</td><td>Detect Mimikatz but not other LSASS tools</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Good</strong></td><td>Detect most variations</td><td>Detect multiple LSASS access methods</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Excellent</strong></td><td>Comprehensive, tested detection</td><td>Detect and red team validated</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- COMMON MISTAKES -->
+                <h2 id="mistakes"><i class="fas fa-times-circle"></i> Common ATT&CK Mistakes</h2>
+
+                <table>
+                    <thead><tr><th>Mistake</th><th>Why It's a Problem</th><th>Better Approach</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Trying to detect everything</td>
+                            <td>Impossible, leads to burnout and alert fatigue</td>
+                            <td>Prioritize based on threat intel and risk</td>
+                        </tr>
+                        <tr>
+                            <td>One detection per technique</td>
+                            <td>Techniques have many variations</td>
+                            <td>Multiple detections per technique, cover variations</td>
+                        </tr>
+                        <tr>
+                            <td>Checking boxes without testing</td>
+                            <td>Paper coverage isn't real coverage</td>
+                            <td>Validate detections with red team/purple team</td>
+                        </tr>
+                        <tr>
+                            <td>Ignoring sub-techniques</td>
+                            <td>Missing specific implementation details</td>
+                            <td>Use sub-techniques for precise detection</td>
+                        </tr>
+                        <tr>
+                            <td>Not updating coverage</td>
+                            <td>ATT&CK evolves, so do attackers</td>
+                            <td>Regular coverage reviews, quarterly updates</td>
+                        </tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>

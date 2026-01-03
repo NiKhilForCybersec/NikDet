@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup & DR Security | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Backup & DR Security</span>
+            </div>
+
+            <h1>Backup & Disaster Recovery Security</h1>
+            <p class="lead">Security architecture for backup systems, disaster recovery, and ransomware-resilient infrastructure.</p>
+
+            <div class="content">
+                <h2 id="backup-security">Backup Security Architecture</h2>
+
+                <h3>3-2-1-1-0 Backup Rule</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Requirement</th><th>Implementation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>3</strong></td><td>Three copies of data</td><td>Production + 2 backups</td></tr>
+                        <tr><td><strong>2</strong></td><td>Two different media types</td><td>Disk + cloud/tape</td></tr>
+                        <tr><td><strong>1</strong></td><td>One copy offsite</td><td>Cloud or remote data center</td></tr>
+                        <tr><td><strong>1</strong></td><td>One copy offline/immutable</td><td>Air-gapped or WORM storage</td></tr>
+                        <tr><td><strong>0</strong></td><td>Zero errors (verified)</td><td>Regular restore testing</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Backup Security Controls</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Implementation</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Encryption at rest</strong></td><td>AES-256 encryption for all backups</td><td>Protect backup data</td></tr>
+                        <tr><td><strong>Encryption in transit</strong></td><td>TLS 1.2+ for all backup traffic</td><td>Prevent interception</td></tr>
+                        <tr><td><strong>Key management</strong></td><td>Separate key storage from backup data</td><td>Prevent total compromise</td></tr>
+                        <tr><td><strong>Immutability</strong></td><td>WORM storage, immutable snapshots</td><td>Ransomware protection</td></tr>
+                        <tr><td><strong>Access control</strong></td><td>Separate backup admin accounts, MFA</td><td>Limit blast radius</td></tr>
+                        <tr><td><strong>Network isolation</strong></td><td>Backup network segment, no internet</td><td>Reduce attack surface</td></tr>
+                        <tr><td><strong>Integrity verification</strong></td><td>Checksum validation, restore testing</td><td>Ensure recoverability</td></tr>
+                        <tr><td><strong>Retention policy</strong></td><td>Defined retention, legal hold capability</td><td>Compliance, recovery options</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Immutable Backup Configuration</h3>
+                <table>
+                    <thead><tr><th>Platform</th><th>Immutability Feature</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Azure Blob Storage</td><td>Immutable blob storage</td><td>Time-based retention or legal hold</td></tr>
+                        <tr><td>AWS S3</td><td>Object Lock (WORM)</td><td>Governance or Compliance mode</td></tr>
+                        <tr><td>Veeam</td><td>Hardened Linux Repository</td><td>Immutable flag, XFS with reflinks</td></tr>
+                        <tr><td>Commvault</td><td>WORM storage policy</td><td>Retention lock enabled</td></tr>
+                        <tr><td>Rubrik</td><td>CloudOut immutability</td><td>Enable at archive level</td></tr>
+                        <tr><td>Dell PowerProtect</td><td>Retention Lock</td><td>Compliance or Governance mode</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ransomware-resilience">Ransomware Resilience</h2>
+
+                <h3>Anti-Ransomware Backup Architecture</h3>
+                <table>
+                    <thead><tr><th>Layer</th><th>Control</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Network</strong></td><td>Air-gapped backup network</td><td>Prevent network-based ransomware spread</td></tr>
+                        <tr><td><strong>Access</strong></td><td>Separate credentials, no domain join</td><td>Prevent credential-based access</td></tr>
+                        <tr><td><strong>Storage</strong></td><td>Immutable/WORM storage</td><td>Prevent backup encryption/deletion</td></tr>
+                        <tr><td><strong>Copy</strong></td><td>Offline/tape copy</td><td>Last resort recovery option</td></tr>
+                        <tr><td><strong>Detection</strong></td><td>Anomaly detection on backup jobs</td><td>Detect encryption attempts</td></tr>
+                        <tr><td><strong>Testing</strong></td><td>Regular restore drills</td><td>Verify recovery capability</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Backup Anomaly Detection</h3>
+                <table>
+                    <thead><tr><th>Anomaly</th><th>Indicator</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Change rate spike</td><td>>200% normal change rate</td><td>Alert, investigate before completing</td></tr>
+                        <tr><td>Compression ratio drop</td><td>Significant decrease (encrypted data)</td><td>Alert, potential ransomware</td></tr>
+                        <tr><td>File extension changes</td><td>Mass extension changes detected</td><td>Alert, investigate immediately</td></tr>
+                        <tr><td>Backup deletion attempts</td><td>Unusual delete requests</td><td>Block, alert, investigate</td></tr>
+                        <tr><td>Off-hours backup changes</td><td>Config changes outside maintenance</td><td>Alert, verify authorization</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="rto-rpo">RTO/RPO Requirements</h2>
+
+                <h3>Recovery Objectives by System Tier</h3>
+                <table>
+                    <thead><tr><th>Tier</th><th>System Type</th><th>RTO</th><th>RPO</th><th>Backup Frequency</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>Tier 1</strong></td><td>Mission critical (ERP, email, AD)</td><td>1-4 hours</td><td>15 min - 1 hour</td><td>Continuous/hourly</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Tier 2</strong></td><td>Business critical (CRM, finance)</td><td>4-12 hours</td><td>1-4 hours</td><td>Hourly/4-hourly</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Tier 3</strong></td><td>Important (file servers, apps)</td><td>12-24 hours</td><td>4-24 hours</td><td>Daily</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>Tier 4</strong></td><td>Non-critical (dev, test)</td><td>24-72 hours</td><td>24-48 hours</td><td>Daily/weekly</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Recovery Strategy by RTO</h3>
+                <table>
+                    <thead><tr><th>RTO Target</th><th>Strategy</th><th>Cost</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong><15 minutes</strong></td><td>Active-active, synchronous replication</td><td>Very High</td></tr>
+                        <tr><td><strong>15 min - 1 hour</strong></td><td>Hot standby, near-sync replication</td><td>High</td></tr>
+                        <tr><td><strong>1-4 hours</strong></td><td>Warm standby, async replication</td><td>Medium-High</td></tr>
+                        <tr><td><strong>4-24 hours</strong></td><td>Cold standby, backup restore</td><td>Medium</td></tr>
+                        <tr><td><strong>>24 hours</strong></td><td>Backup restore only</td><td>Low</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dr-testing">DR Testing</h2>
+
+                <h3>DR Test Types</h3>
+                <table>
+                    <thead><tr><th>Test Type</th><th>Description</th><th>Frequency</th><th>Disruption</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Tabletop</strong></td><td>Walk through DR plan verbally</td><td>Quarterly</td><td>None</td></tr>
+                        <tr><td><strong>Component test</strong></td><td>Test individual recovery steps</td><td>Monthly</td><td>None-Low</td></tr>
+                        <tr><td><strong>Parallel test</strong></td><td>Recover to isolated environment</td><td>Annually</td><td>Low</td></tr>
+                        <tr><td><strong>Full failover</strong></td><td>Complete switch to DR site</td><td>Annually (if possible)</td><td>High</td></tr>
+                        <tr><td><strong>Surprise test</strong></td><td>Unannounced DR scenario</td><td>Annually</td><td>Variable</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>DR Test Checklist</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Test Items</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Data</strong></td><td>Database restore, file restore, application data integrity</td></tr>
+                        <tr><td><strong>Systems</strong></td><td>Server boot, service startup, connectivity</td></tr>
+                        <tr><td><strong>Network</strong></td><td>DNS failover, VPN connectivity, external access</td></tr>
+                        <tr><td><strong>Identity</strong></td><td>AD restore, authentication services, SSO</td></tr>
+                        <tr><td><strong>Applications</strong></td><td>Application functionality, integrations, user access</td></tr>
+                        <tr><td><strong>Communication</strong></td><td>Notification systems, contact lists, escalation</td></tr>
+                        <tr><td><strong>Documentation</strong></td><td>Runbook accuracy, procedure validation</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="cloud-dr">Cloud DR Architecture</h2>
+
+                <h3>Azure DR Options</h3>
+                <table>
+                    <thead><tr><th>Service</th><th>DR Feature</th><th>RTO/RPO</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td>Azure Site Recovery</td><td>VM replication to secondary region</td><td>Minutes/seconds</td><td>IaaS workloads</td></tr>
+                        <tr><td>Azure SQL</td><td>Geo-replication, auto-failover groups</td><td>Seconds/seconds</td><td>Databases</td></tr>
+                        <tr><td>Azure Storage</td><td>GRS, GZRS, RA-GRS</td><td>Hours/RPO <15 min</td><td>Storage accounts</td></tr>
+                        <tr><td>Azure Backup</td><td>Cross-region restore</td><td>Hours/based on backup</td><td>Backup recovery</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>AWS DR Options</h3>
+                <table>
+                    <thead><tr><th>Service</th><th>DR Feature</th><th>RTO/RPO</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td>AWS Elastic Disaster Recovery</td><td>Continuous replication</td><td>Minutes/seconds</td><td>EC2 workloads</td></tr>
+                        <tr><td>RDS Multi-AZ</td><td>Synchronous standby</td><td>Minutes/zero</td><td>Database HA</td></tr>
+                        <tr><td>RDS Cross-Region</td><td>Read replicas, promote</td><td>Minutes/minutes</td><td>Database DR</td></tr>
+                        <tr><td>S3 Cross-Region</td><td>Replication</td><td>Hours/minutes</td><td>Object storage DR</td></tr>
+                        <tr><td>AWS Backup</td><td>Cross-region copy</td><td>Hours/based on backup</td><td>Centralized backup</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

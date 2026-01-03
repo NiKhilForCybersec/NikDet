@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Security Matters | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Why Security Matters</span>
+            </div>
+
+            <h1>Why Security Controls Matter</h1>
+            <p class="lead">Connecting security controls to real-world attack scenarios, business impacts, and outcomes. Understand the "why" behind every security decision.</p>
+
+            <div class="content">
+                <h2 id="attack-stories">Real-World Attack Scenarios</h2>
+
+                <h3>Scenario 1: No MFA → Account Takeover → Wire Fraud</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> What Happens Without MFA</div>
+                    <table>
+                        <thead><tr><th>Stage</th><th>What Happened</th><th>Control That Would Have Stopped It</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>1. Credential theft</strong></td><td>CFO clicked phishing link, entered credentials on fake M365 login</td><td>Security awareness training, email filtering</td></tr>
+                            <tr><td><strong>2. Account access</strong></td><td>Attacker logged in with stolen password (no MFA)</td><td><span style="color: #3fb950;">MFA would have blocked here</span></td></tr>
+                            <tr><td><strong>3. Reconnaissance</strong></td><td>Attacker read emails, learned payment processes</td><td>Impossible travel detection, session monitoring</td></tr>
+                            <tr><td><strong>4. Inbox rule</strong></td><td>Created rule to hide replies from vendor</td><td>Inbox rule monitoring, CASB alerts</td></tr>
+                            <tr><td><strong>5. Wire fraud</strong></td><td>Sent email to AP as CFO requesting $2.3M wire to "new" vendor account</td><td>Email DLP, BEC detection, callback verification process</td></tr>
+                            <tr><td><strong>6. Money gone</strong></td><td>Wire sent, funds unrecoverable</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 1rem;"><strong>Business Impact:</strong> $2.3M direct loss, CFO terminated, insurance claim denied (no MFA = negligence), regulatory investigation, stock price drop.</p>
+                    <p><strong>MFA Cost:</strong> ~$3/user/month. <strong>MFA would have prevented:</strong> $2.3M+ loss.</p>
+                </div>
+
+                <h3>Scenario 2: No Network Segmentation → Ransomware Everywhere</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-virus"></i> What Happens With Flat Network</div>
+                    <table>
+                        <thead><tr><th>Stage</th><th>What Happened</th><th>Control That Would Have Stopped It</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>1. Initial access</strong></td><td>User opened malicious attachment, malware executed</td><td>Email security, EDR, user training</td></tr>
+                            <tr><td><strong>2. Discovery</strong></td><td>Malware scanned network, found all 2,000 devices (flat network)</td><td><span style="color: #3fb950;">Segmentation would have limited visibility</span></td></tr>
+                            <tr><td><strong>3. Lateral movement</strong></td><td>Used SMB to spread to file servers, domain controller</td><td><span style="color: #3fb950;">Firewall rules between segments</span></td></tr>
+                            <tr><td><strong>4. Privilege escalation</strong></td><td>Dumped credentials from DC, got domain admin</td><td>PAM, credential guard, DC isolation</td></tr>
+                            <tr><td><strong>5. Deployment</strong></td><td>Pushed ransomware to all 2,000 devices simultaneously</td><td><span style="color: #3fb950;">Microsegmentation, GPO restrictions</span></td></tr>
+                            <tr><td><strong>6. Encryption</strong></td><td>All systems encrypted including backups (on same network)</td><td><span style="color: #3fb950;">Backup network isolation</span></td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 1rem;"><strong>Business Impact:</strong> 3 weeks downtime, $15M recovery costs, $5M ransom paid (no backups), lost contracts, regulatory fines, 50 layoffs.</p>
+                    <p><strong>Segmentation Cost:</strong> ~$200K implementation. <strong>Would have limited impact to:</strong> 1 department, 50 devices, 2 days recovery.</p>
+                </div>
+
+                <h3>Scenario 3: No DLP → Departing Employee → IP Theft</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-user-secret"></i> What Happens Without DLP</div>
+                    <table>
+                        <thead><tr><th>Stage</th><th>What Happened</th><th>Control That Would Have Stopped It</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>1. Resignation</strong></td><td>Senior engineer gave 2-week notice, accepted offer at competitor</td><td>HR process to flag high-risk departures</td></tr>
+                            <tr><td><strong>2. Access retained</strong></td><td>Still had full access to source code, designs during notice period</td><td>Immediate access review on resignation</td></tr>
+                            <tr><td><strong>3. Download</strong></td><td>Downloaded 50GB of design files to personal laptop</td><td><span style="color: #3fb950;">Endpoint DLP would have blocked</span></td></tr>
+                            <tr><td><strong>4. Cloud upload</strong></td><td>Uploaded files to personal Google Drive</td><td><span style="color: #3fb950;">CASB/DLP would have blocked</span></td></tr>
+                            <tr><td><strong>5. USB copy</strong></td><td>Also copied to USB drive as backup</td><td><span style="color: #3fb950;">USB controls would have blocked</span></td></tr>
+                            <tr><td><strong>6. Competitor advantage</strong></td><td>3 months later, competitor launches identical product</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 1rem;"><strong>Business Impact:</strong> Lost $50M product advantage, 18-month lawsuit, settlement cost $10M, reputation damage, lost customer trust.</p>
+                    <p><strong>DLP Cost:</strong> ~$50K/year. <strong>Would have:</strong> Blocked exfiltration, created evidence for legal action.</p>
+                </div>
+
+                <h2 id="roi">Security Control ROI</h2>
+
+                <h3>Cost vs. Breach Impact Analysis</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Annual Cost (Mid-size)</th><th>Breach Type Prevented</th><th>Average Breach Cost</th><th>ROI</th></tr></thead>
+                    <tbody>
+                        <tr><td>MFA</td><td>$20,000</td><td>Account takeover, BEC</td><td>$4.7M (BEC average)</td><td style="color: #3fb950;">235x return</td></tr>
+                        <tr><td>EDR</td><td>$75,000</td><td>Malware, ransomware</td><td>$4.5M (ransomware average)</td><td style="color: #3fb950;">60x return</td></tr>
+                        <tr><td>Email Security</td><td>$30,000</td><td>Phishing, malware delivery</td><td>$4.9M (phishing breach)</td><td style="color: #3fb950;">163x return</td></tr>
+                        <tr><td>Network Segmentation</td><td>$150,000</td><td>Lateral movement, blast radius</td><td>$10M+ (widespread ransomware)</td><td style="color: #3fb950;">67x return</td></tr>
+                        <tr><td>DLP</td><td>$50,000</td><td>Data theft, accidental exposure</td><td>$4.5M (data breach average)</td><td style="color: #3fb950;">90x return</td></tr>
+                        <tr><td>SIEM/Monitoring</td><td>$100,000</td><td>Undetected breaches, dwell time</td><td>$1M+ per month of dwell time</td><td style="color: #3fb950;">Variable, high</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>What Happens With vs. Without Controls</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Without It</th><th>With It</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>MFA</strong></td><td>One phished password = full account access forever</td><td>Stolen password is useless without second factor</td></tr>
+                        <tr><td><strong>EDR</strong></td><td>Malware runs undetected for months, spreads freely</td><td>Malware detected in seconds, automatically contained</td></tr>
+                        <tr><td><strong>Segmentation</strong></td><td>One compromised device can reach everything</td><td>Compromise contained to one zone, limited blast radius</td></tr>
+                        <tr><td><strong>DLP</strong></td><td>Sensitive data leaves without anyone knowing</td><td>Exfiltration blocked or alerted, evidence captured</td></tr>
+                        <tr><td><strong>Backups</strong></td><td>Ransomware = pay ransom or lose everything</td><td>Ransomware = restore from backup, minimal downtime</td></tr>
+                        <tr><td><strong>SIEM</strong></td><td>Breaches discovered months later (if ever)</td><td>Attacks detected in hours/days, rapid response</td></tr>
+                        <tr><td><strong>PAM</strong></td><td>Admin credentials stolen = total compromise</td><td>Admin access time-limited, monitored, requires approval</td></tr>
+                        <tr><td><strong>Email Security</strong></td><td>Phishing and malware land in every inbox</td><td>90%+ of threats blocked before users see them</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="common-objections">Answering Common Objections</h2>
+
+                <h3>"It's Too Expensive"</h3>
+                <table>
+                    <thead><tr><th>Objection</th><th>Response</th><th>Data Point</th></tr></thead>
+                    <tbody>
+                        <tr><td>"We can't afford MFA"</td><td>You can't afford NOT to have it. One BEC incident costs more than 10 years of MFA.</td><td>Average BEC loss: $125,000. MFA cost: ~$10,000/year.</td></tr>
+                        <tr><td>"EDR is too expensive for our size"</td><td>Ransomware doesn't care about company size. SMBs are actually targeted more.</td><td>43% of cyber attacks target SMBs. Average SMB breach: $2.98M.</td></tr>
+                        <tr><td>"We can't justify SIEM cost"</td><td>The cost of NOT detecting breaches is much higher (regulatory fines, dwell time damage).</td><td>Average dwell time without SIEM: 287 days. With SIEM: 30-60 days.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>"It's Too Disruptive"</h3>
+                <table>
+                    <thead><tr><th>Objection</th><th>Response</th><th>Mitigation</th></tr></thead>
+                    <tbody>
+                        <tr><td>"MFA will slow users down"</td><td>Modern MFA takes 5 seconds. Users adapt in days. A breach disrupts for months.</td><td>Use push notifications, Windows Hello, SSO to reduce prompts.</td></tr>
+                        <tr><td>"DLP will block legitimate work"</td><td>Start with monitoring only. Tune before blocking. Create exceptions for valid workflows.</td><td>Phased rollout, business process exceptions, user training.</td></tr>
+                        <tr><td>"Segmentation will break applications"</td><td>Implement in monitor mode first. Document required flows. Enable blocking gradually.</td><td>Traffic analysis before changes, application owner involvement.</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>"We've Never Been Breached"</h3>
+                <table>
+                    <thead><tr><th>Objection</th><th>Response</th><th>Reality Check</th></tr></thead>
+                    <tbody>
+                        <tr><td>"We're not a target"</td><td>Everyone is a target. Automated attacks don't discriminate. You have money, data, or access to someone who does.</td><td>SMBs face 350,000+ attacks per year on average.</td></tr>
+                        <tr><td>"We've been fine without it"</td><td>You might be breached and not know it. Average dwell time is 200+ days. Absence of evidence isn't evidence of absence.</td><td>60% of SMBs that suffer a breach go out of business within 6 months.</td></tr>
+                        <tr><td>"Our industry isn't targeted"</td><td>Every industry is targeted. Healthcare, manufacturing, education, retail - all have major breach incidents.</td><td>Top targeted industries change yearly. No one is exempt.</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="executive-communication">Communicating Security to Leadership</h2>
+
+                <h3>Translating Security to Business Language</h3>
+                <table>
+                    <thead><tr><th>Security Term</th><th>Business Translation</th><th>Impact Statement</th></tr></thead>
+                    <tbody>
+                        <tr><td>MFA</td><td>Account protection</td><td>"Prevents unauthorized access to company accounts, stopping 99% of account takeover attacks that lead to fraud"</td></tr>
+                        <tr><td>EDR</td><td>Threat detection and response</td><td>"Detects and stops malware including ransomware before it can spread, protecting business operations"</td></tr>
+                        <tr><td>DLP</td><td>Data protection</td><td>"Prevents sensitive company and customer data from being stolen or accidentally exposed"</td></tr>
+                        <tr><td>SIEM</td><td>Security monitoring</td><td>"24/7 monitoring that detects attacks early, reducing breach impact and recovery time by 80%"</td></tr>
+                        <tr><td>Segmentation</td><td>Damage containment</td><td>"Limits the spread of any attack, turning a potential company-wide disaster into an isolated incident"</td></tr>
+                        <tr><td>PAM</td><td>Admin access control</td><td>"Protects the 'keys to the kingdom' - admin accounts that could shut down everything if compromised"</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Board-Level Risk Metrics</h3>
+                <table>
+                    <thead><tr><th>Metric</th><th>What It Measures</th><th>Target</th><th>Business Relevance</th></tr></thead>
+                    <tbody>
+                        <tr><td>Mean Time to Detect (MTTD)</td><td>How quickly we find attacks</td><td><24 hours</td><td>Faster detection = less damage = lower costs</td></tr>
+                        <tr><td>Mean Time to Respond (MTTR)</td><td>How quickly we contain attacks</td><td><4 hours</td><td>Faster containment = business back online sooner</td></tr>
+                        <tr><td>Patch compliance</td><td>% of systems up to date</td><td>>95%</td><td>Patched systems are protected from known attacks</td></tr>
+                        <tr><td>MFA adoption</td><td>% of accounts protected</td><td>100%</td><td>Every unprotected account is a potential breach</td></tr>
+                        <tr><td>Phishing click rate</td><td>% of users who fall for tests</td><td><5%</td><td>Lower = fewer successful phishing attacks</td></tr>
+                        <tr><td>Critical vulnerabilities</td><td>Unpatched critical issues</td><td>0 open >30 days</td><td>Critical vulns = actively exploited attack paths</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

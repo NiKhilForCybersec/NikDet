@@ -19,314 +19,282 @@
                 <span>Windows Events</span>
             </div>
 
-            <h1>Windows Event Log Analysis</h1>
-            <p class="lead">Complete reference for Windows Security, System, and Application event log analysis. Master the critical event IDs, understand what they mean, and learn how to use them for threat detection.</p>
+            <h1><i class="fab fa-windows"></i> Windows Event Log Analysis</h1>
+            <p class="lead">Essential Windows Event IDs for security monitoring, investigation, and threat detection.</p>
 
             <div class="content">
-                <h2 id="overview">Overview</h2>
-                <p>Windows Event Logs are the foundation of endpoint visibility on Windows systems. Security events capture authentication, authorization, and audit information critical for detecting attacks. Understanding which events to monitor and how to analyze them is essential for effective threat detection.</p>
+                <!-- WHY WINDOWS EVENTS MATTER -->
+                <h2 id="why-matters"><i class="fas fa-question-circle"></i> Why Windows Events Matter</h2>
 
-                <h2 id="critical-events">Critical Security Events</h2>
-                
-                <h3>Authentication Events</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> The Foundation of Windows Security Monitoring</div>
+                    <p style="margin: 0.5rem 0;">Windows Event Logs are the primary source of security telemetry for Windows systems. Understanding them is non-negotiable for any SOC analyst.</p>
+                </div>
+
                 <table>
-                    <thead><tr><th>Event ID</th><th>Name</th><th>Description</th><th>Key Fields</th></tr></thead>
+                    <thead><tr><th>Without Windows Event Knowledge</th><th>With Windows Event Knowledge</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>4624</strong></td><td>Successful Logon</td><td>An account successfully logged on</td><td>LogonType, TargetUserName, IpAddress, WorkstationName</td></tr>
-                        <tr><td><strong>4625</strong></td><td>Failed Logon</td><td>An account failed to log on</td><td>FailureReason, TargetUserName, IpAddress, Status</td></tr>
-                        <tr><td><strong>4634</strong></td><td>Logoff</td><td>An account was logged off</td><td>TargetUserName, LogonType</td></tr>
-                        <tr><td><strong>4648</strong></td><td>Explicit Credentials</td><td>Logon using explicit credentials (RunAs)</td><td>SubjectUserName, TargetUserName, TargetServerName</td></tr>
-                        <tr><td><strong>4672</strong></td><td>Special Privileges</td><td>Admin/special privileges assigned to logon</td><td>SubjectUserName, PrivilegeList</td></tr>
-                        <tr><td><strong>4776</strong></td><td>NTLM Auth (DC)</td><td>DC validated credentials (NTLM)</td><td>TargetUserName, Workstation, Status</td></tr>
-                        <tr><td><strong>4768</strong></td><td>TGT Requested (DC)</td><td>Kerberos TGT was requested</td><td>TargetUserName, IpAddress, ServiceName</td></tr>
-                        <tr><td><strong>4769</strong></td><td>Service Ticket (DC)</td><td>Kerberos service ticket requested</td><td>TargetUserName, ServiceName, IpAddress</td></tr>
-                        <tr><td><strong>4771</strong></td><td>Pre-Auth Failed (DC)</td><td>Kerberos pre-authentication failed</td><td>TargetUserName, IpAddress, FailureCode</td></tr>
+                        <tr><td>Can't investigate Windows-based attacks</td><td>Full visibility into Windows activity</td></tr>
+                        <tr><td>Miss critical security indicators</td><td>Detect logons, process execution, privilege use</td></tr>
+                        <tr><td>Rely entirely on EDR (single point of failure)</td><td>Multiple detection layers</td></tr>
+                        <tr><td>Can't build custom detections</td><td>Create precise, tailored alerts</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Logon Type Reference</h3>
+                <!-- CRITICAL EVENT IDS -->
+                <h2 id="critical-events"><i class="fas fa-exclamation-circle"></i> Critical Event IDs to Know</h2>
+
+                <h3>Authentication Events (Security Log)</h3>
                 <table>
-                    <thead><tr><th>Type</th><th>Name</th><th>Description</th><th>Security Relevance</th></tr></thead>
+                    <thead><tr><th>Event ID</th><th>Description</th><th>Why It Matters</th><th>What to Look For</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>2</strong></td><td>Interactive</td><td>Console logon (keyboard)</td><td>Physical access or RDP</td></tr>
-                        <tr><td><strong>3</strong></td><td>Network</td><td>Network logon (file share, etc)</td><td>Lateral movement indicator</td></tr>
-                        <tr><td><strong>4</strong></td><td>Batch</td><td>Scheduled task execution</td><td>Persistence mechanism</td></tr>
-                        <tr><td><strong>5</strong></td><td>Service</td><td>Service started</td><td>Service account activity</td></tr>
-                        <tr><td><strong>7</strong></td><td>Unlock</td><td>Workstation unlocked</td><td>User activity</td></tr>
-                        <tr><td><strong>8</strong></td><td>NetworkCleartext</td><td>Network with cleartext creds</td><td>Credential exposure risk</td></tr>
-                        <tr><td><strong>9</strong></td><td>NewCredentials</td><td>Cloned token with new creds</td><td>RunAs behavior</td></tr>
-                        <tr><td><strong>10</strong></td><td>RemoteInteractive</td><td>RDP/Terminal Services</td><td>Remote access</td></tr>
-                        <tr><td><strong>11</strong></td><td>CachedInteractive</td><td>Cached domain credentials</td><td>Offline logon</td></tr>
+                        <tr>
+                            <td style="color: #3fb950;"><strong>4624</strong></td>
+                            <td>Successful logon</td>
+                            <td>Track who accesses systems</td>
+                            <td>Logon Type, source IP, unusual times/accounts</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4625</strong></td>
+                            <td>Failed logon</td>
+                            <td>Brute force, password spray detection</td>
+                            <td>Volume, source IP, target accounts</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>4648</strong></td>
+                            <td>Explicit credential logon</td>
+                            <td>Credential use for different account</td>
+                            <td>runas, credential theft indicators</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #d29922;"><strong>4634/4647</strong></td>
+                            <td>Logoff</td>
+                            <td>Session duration analysis</td>
+                            <td>Correlate with 4624 for session length</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4768</strong></td>
+                            <td>Kerberos TGT requested</td>
+                            <td>Initial Kerberos authentication</td>
+                            <td>AS-REP roasting, unusual requests</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4769</strong></td>
+                            <td>Kerberos service ticket requested</td>
+                            <td>Service access, Kerberoasting</td>
+                            <td>RC4 encryption, unusual services</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4771</strong></td>
+                            <td>Kerberos pre-auth failed</td>
+                            <td>Password spray against Kerberos</td>
+                            <td>Volume per account/IP</td>
+                        </tr>
                     </tbody>
                 </table>
+
+                <h3>Logon Types Explained</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-key"></i> Understanding Logon Types in Event 4624</div>
+                    <table>
+                        <thead><tr><th>Type</th><th>Name</th><th>Meaning</th><th>Security Relevance</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>2</strong></td><td>Interactive</td><td>Console/physical logon</td><td>Normal for workstations</td></tr>
+                            <tr><td><strong>3</strong></td><td>Network</td><td>Access via network (SMB, etc.)</td><td>Watch for lateral movement</td></tr>
+                            <tr><td><strong>4</strong></td><td>Batch</td><td>Scheduled task</td><td>Check task legitimacy</td></tr>
+                            <tr><td><strong>5</strong></td><td>Service</td><td>Service start</td><td>Unusual services = suspicious</td></tr>
+                            <tr><td><strong>7</strong></td><td>Unlock</td><td>Workstation unlocked</td><td>Normal activity</td></tr>
+                            <tr><td><strong>8</strong></td><td>NetworkCleartext</td><td>Password sent in clear</td><td>Insecure - legacy apps</td></tr>
+                            <tr><td><strong>9</strong></td><td>NewCredentials</td><td>runas /netonly</td><td>Credential use indicator</td></tr>
+                            <tr><td><strong>10</strong></td><td>RemoteInteractive</td><td>RDP</td><td>Watch for unusual RDP</td></tr>
+                            <tr><td><strong>11</strong></td><td>CachedInteractive</td><td>Cached credentials (offline)</td><td>Laptop not on network</td></tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <h3>Account Management Events</h3>
                 <table>
-                    <thead><tr><th>Event ID</th><th>Name</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <thead><tr><th>Event ID</th><th>Description</th><th>Why It Matters</th><th>What to Look For</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>4720</strong></td><td>Account Created</td><td>User account was created</td><td>Rogue account creation</td></tr>
-                        <tr><td><strong>4722</strong></td><td>Account Enabled</td><td>User account was enabled</td><td>Dormant account activation</td></tr>
-                        <tr><td><strong>4723</strong></td><td>Password Change</td><td>User attempted to change password</td><td>Password spray follow-up</td></tr>
-                        <tr><td><strong>4724</strong></td><td>Password Reset</td><td>Password reset attempted</td><td>Account takeover</td></tr>
-                        <tr><td><strong>4725</strong></td><td>Account Disabled</td><td>User account was disabled</td><td>IR containment verification</td></tr>
-                        <tr><td><strong>4726</strong></td><td>Account Deleted</td><td>User account was deleted</td><td>Evidence destruction</td></tr>
-                        <tr><td><strong>4728</strong></td><td>Member Added to Global Group</td><td>Member added to security-enabled global group</td><td>Privilege escalation</td></tr>
-                        <tr><td><strong>4732</strong></td><td>Member Added to Local Group</td><td>Member added to security-enabled local group</td><td>Local privilege escalation</td></tr>
-                        <tr><td><strong>4756</strong></td><td>Member Added to Universal Group</td><td>Member added to universal group</td><td>Enterprise privilege escalation</td></tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4720</strong></td>
+                            <td>User account created</td>
+                            <td>Persistence via new account</td>
+                            <td>Who created it? Expected?</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4722</strong></td>
+                            <td>User account enabled</td>
+                            <td>Re-enabling disabled account</td>
+                            <td>Was it disabled for a reason?</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4728/4732/4756</strong></td>
+                            <td>Member added to security group</td>
+                            <td>Privilege escalation</td>
+                            <td>Added to Admins, Domain Admins?</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>4738</strong></td>
+                            <td>User account changed</td>
+                            <td>Account modification</td>
+                            <td>What changed? Password? Properties?</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>4724</strong></td>
+                            <td>Password reset attempt</td>
+                            <td>Unauthorized password reset</td>
+                            <td>Who reset whose password?</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h3>Process and Object Events</h3>
+                <h3>Process and Service Events</h3>
                 <table>
-                    <thead><tr><th>Event ID</th><th>Name</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <thead><tr><th>Event ID</th><th>Description</th><th>Why It Matters</th><th>What to Look For</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>4688</strong></td><td>Process Creation</td><td>New process created</td><td>Command execution monitoring</td></tr>
-                        <tr><td><strong>4689</strong></td><td>Process Exit</td><td>Process exited</td><td>Process lifetime analysis</td></tr>
-                        <tr><td><strong>4697</strong></td><td>Service Installed</td><td>Service was installed</td><td>Persistence detection</td></tr>
-                        <tr><td><strong>4698</strong></td><td>Scheduled Task Created</td><td>Scheduled task created</td><td>Persistence detection</td></tr>
-                        <tr><td><strong>4699</strong></td><td>Scheduled Task Deleted</td><td>Scheduled task deleted</td><td>Evidence destruction</td></tr>
-                        <tr><td><strong>4702</strong></td><td>Scheduled Task Updated</td><td>Scheduled task updated</td><td>Task modification</td></tr>
-                        <tr><td><strong>5140</strong></td><td>Network Share Access</td><td>Network share object accessed</td><td>Lateral movement detection</td></tr>
-                        <tr><td><strong>5145</strong></td><td>Detailed Share Access</td><td>Network share with detailed access</td><td>File access auditing</td></tr>
+                        <tr>
+                            <td style="color: #3fb950;"><strong>4688</strong></td>
+                            <td>Process created</td>
+                            <td>See all process execution</td>
+                            <td>Command line (if enabled), parent process</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>4697</strong></td>
+                            <td>Service installed</td>
+                            <td>Persistence, lateral movement</td>
+                            <td>PsExec, malicious services</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>7045</strong></td>
+                            <td>Service installed (System log)</td>
+                            <td>Same as above, different log</td>
+                            <td>Service name, executable path</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>4698</strong></td>
+                            <td>Scheduled task created</td>
+                            <td>Persistence mechanism</td>
+                            <td>Task name, action, who created</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h2 id="detection-queries">Detection Queries</h2>
+                <!-- DETECTION PATTERNS -->
+                <h2 id="detection-patterns"><i class="fas fa-search"></i> Common Detection Patterns</h2>
 
-                <h3>Brute Force Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Failed logon brute force</span>
+                <h3>Pattern: Brute Force / Password Spray</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Events</th><th>Query Logic</th></tr></thead>
+                    <tbody>
+                        <tr><td>Many failed logons, one account</td><td>4625 volume for single user</td><td>Count 4625 by TargetUserName > threshold</td></tr>
+                        <tr><td>Many failed logons, many accounts, one IP</td><td>4625 from single source</td><td>Count 4625 by IpAddress, distinct users</td></tr>
+                        <tr><td>Failed then success</td><td>4625 followed by 4624</td><td>Sequence: 4625(s) then 4624, same user</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Pattern: Lateral Movement</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Events</th><th>Query Logic</th></tr></thead>
+                    <tbody>
+                        <tr><td>RDP from workstation to workstation</td><td>4624 Type 10</td><td>Source != server, Target = workstation</td></tr>
+                        <tr><td>PsExec usage</td><td>7045, 4624 Type 3</td><td>Service name = PSEXESVC</td></tr>
+                        <tr><td>Admin share access</td><td>5140</td><td>ShareName = C$, ADMIN$</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Pattern: Privilege Escalation</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Events</th><th>Query Logic</th></tr></thead>
+                    <tbody>
+                        <tr><td>Added to admin group</td><td>4728, 4732, 4756</td><td>Group = Administrators, Domain Admins</td></tr>
+                        <tr><td>New admin account</td><td>4720 then 4732</td><td>Sequence: account created then added to admins</td></tr>
+                        <tr><td>Sensitive privilege use</td><td>4672, 4673</td><td>SeDebugPrivilege, SeTcbPrivilege</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- SAMPLE QUERIES -->
+                <h2 id="queries"><i class="fas fa-terminal"></i> Investigation Queries</h2>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Failed logons by account (brute force detection)</span>
 SecurityEvent
+| where TimeGenerated > ago(24h)
 | where EventID == 4625
-| summarize FailedAttempts=count(),
-    TargetAccounts=dcount(TargetUserName),
-    Accounts=make_set(TargetUserName, 10)
-    by IpAddress, bin(TimeGenerated, 5m)
-| where FailedAttempts > 10
-| order by FailedAttempts desc
+| summarize FailedCount = count(), 
+    SourceIPs = make_set(IpAddress),
+    FailureCodes = make_set(FailureReason)
+    by TargetUserName
+| where FailedCount > 10
+| order by FailedCount desc
 
-<span style="color: #6aa3f7;">// KQL - Password spray pattern (many users, few attempts each)</span>
+<span style="color: #6aa3f7;">// KQL - Successful RDP logons</span>
 SecurityEvent
-| where EventID == 4625
-| summarize 
-    FailedAttempts=count(),
-    UniqueUsers=dcount(TargetUserName),
-    Users=make_set(TargetUserName, 50)
-    by IpAddress, bin(TimeGenerated, 15m)
-| where UniqueUsers > 5 and FailedAttempts / UniqueUsers < 3
-| order by UniqueUsers desc
-
-<span style="color: #6aa3f7;">// SPL - Brute force detection</span>
-index=windows sourcetype="WinEventLog:Security" EventCode=4625
-| bin _time span=5m
-| stats count as FailedAttempts, dc(TargetUserName) as UniqueUsers,
-    values(TargetUserName) as Accounts by IpAddress, _time
-| where FailedAttempts > 10
-| sort -FailedAttempts</pre>
-                </div>
-
-                <h3>Lateral Movement Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Network logons from workstation to workstation</span>
-SecurityEvent
+| where TimeGenerated > ago(7d)
 | where EventID == 4624
-| where LogonType == 3 // Network logon
-| where IpAddress !startswith "127."
-| extend SourceHost = toupper(WorkstationName)
-| extend TargetHost = toupper(Computer)
-| where SourceHost != TargetHost
-| where SourceHost !endswith "SERVER" and TargetHost !endswith "SERVER"
-| project TimeGenerated, SourceHost, TargetHost, 
-    Account=TargetUserName, IpAddress
-| summarize Connections=count() by SourceHost, TargetHost, Account
-| where Connections > 1
+| where LogonType == 10
+| project TimeGenerated, Computer, TargetUserName, IpAddress
+| order by TimeGenerated desc
 
-<span style="color: #6aa3f7;">// KQL - RDP logons from unusual sources</span>
-SecurityEvent
-| where EventID == 4624
-| where LogonType == 10 // RDP
-| summarize 
-    RDPSessions=count(),
-    Sources=make_set(IpAddress)
-    by TargetUserName, Computer
-| where RDPSessions > 1
-
-<span style="color: #6aa3f7;">// KQL - Admin share access</span>
-SecurityEvent
-| where EventID == 5140
-| where ShareName in ("\\\\*\\C$", "\\\\*\\ADMIN$", "\\\\*\\IPC$")
-| project TimeGenerated, Computer, Account=SubjectUserName,
-    IpAddress, ShareName
-| order by TimeGenerated desc</pre>
-                </div>
-
-                <h3>Privilege Escalation Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - User added to privileged groups</span>
-SecurityEvent
-| where EventID in (4728, 4732, 4756)
-| extend GroupName = TargetUserName
-| where GroupName in ("Domain Admins", "Enterprise Admins",
-    "Schema Admins", "Administrators", "Account Operators",
-    "Backup Operators", "Server Operators")
-| project TimeGenerated, Computer, GroupName,
-    AddedUser=MemberName, AddedBy=SubjectUserName
-
-<span style="color: #6aa3f7;">// KQL - New admin account created</span>
-SecurityEvent
-| where EventID == 4720
-| project AccountCreated=TargetUserName, CreatedBy=SubjectUserName,
-    TimeGenerated, Computer
-| join kind=inner (
-    SecurityEvent
-    | where EventID == 4732
-    | where TargetUserName == "Administrators"
-    | project AddedUser=MemberName, TimeAdded=TimeGenerated
-) on $left.AccountCreated == $right.AddedUser
-| where TimeAdded - TimeGenerated < 1h
-| project TimeGenerated, AccountCreated, CreatedBy, TimeAdded
-
-<span style="color: #6aa3f7;">// SPL - Privileged group modifications</span>
-index=windows sourcetype="WinEventLog:Security" 
-(EventCode=4728 OR EventCode=4732 OR EventCode=4756)
-TargetUserName IN ("Domain Admins", "Administrators", 
-    "Enterprise Admins", "Schema Admins")
-| table _time, Computer, EventCode, TargetUserName, 
-    MemberName, SubjectUserName</pre>
-                </div>
-
-                <h3>Persistence Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Suspicious scheduled task creation</span>
-SecurityEvent
-| where EventID == 4698
-| extend TaskContent = tostring(EventData)
-| where TaskContent has_any ("powershell", "cmd", "wscript",
-    "\\Temp\\", "\\AppData\\", "http://", "https://")
-| project TimeGenerated, Computer, Account=SubjectUserName,
-    TaskContent
-
-<span style="color: #6aa3f7;">// KQL - Service installation (System log)</span>
+<span style="color: #6aa3f7;">// KQL - New service installations</span>
 Event
-| where Source == "Service Control Manager"
-| where EventID == 7045
-| extend ServiceName = extract("Service Name:\\s+(.*?)\\s+Service", 1, RenderedDescription)
-| extend ImagePath = extract("Service File Name:\\s+(.*?)\\s+Service Type", 1, RenderedDescription)
-| where ImagePath has_any ("\\Temp\\", "\\AppData\\", "cmd",
-    "powershell", "\\Users\\")
+| where TimeGenerated > ago(24h)
+| where EventLog == "System" and EventID == 7045
+| parse EventData with * '<Data Name="ServiceName">' ServiceName '</Data>' *
+| parse EventData with * '<Data Name="ImagePath">' ImagePath '</Data>' *
 | project TimeGenerated, Computer, ServiceName, ImagePath
 
-<span style="color: #6aa3f7;">// SPL - Scheduled task persistence</span>
-index=windows sourcetype="WinEventLog:Security" EventCode=4698
-| rex field=TaskContent "<Command>(?<Command>[^<]+)</Command>"
-| rex field=TaskContent "<Arguments>(?<Arguments>[^<]+)</Arguments>"
-| search Command="*powershell*" OR Command="*cmd*" 
-    OR Arguments="*http*"
-| table _time, host, SubjectUserName, TaskName, Command, Arguments</pre>
+<span style="color: #6aa3f7;">// KQL - Account added to privileged group</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID in (4728, 4732, 4756)
+| where TargetUserName has_any ("Admin", "Domain Admins", "Enterprise Admins")
+| project TimeGenerated, Computer, SubjectUserName, MemberName, TargetUserName
+</pre>
                 </div>
 
-                <h3>Credential Access Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - NTLM authentication anomalies</span>
-SecurityEvent
-| where EventID == 4776
-| where Status != "0x0" // Non-success
-| summarize 
-    FailedAttempts=count(),
-    Workstations=make_set(Workstation)
-    by TargetUserName
-| where FailedAttempts > 5
-| order by FailedAttempts desc
+                <!-- WHAT IF SCENARIOS -->
+                <h2 id="what-if"><i class="fas fa-random"></i> Investigation Scenarios</h2>
 
-<span style="color: #6aa3f7;">// KQL - Pass-the-Hash indicators</span>
-// Look for NTLM auth (4624 Type 3) where account doesn't normally 
-// authenticate from that workstation
-SecurityEvent
-| where EventID == 4624
-| where LogonType == 3
-| where AuthenticationPackageName == "NTLM"
-| summarize 
-    FirstSeen=min(TimeGenerated),
-    Logons=count()
-    by TargetUserName, WorkstationName, Computer
-| where Logons < 3 // New/rare combination
-
-<span style="color: #6aa3f7;">// KQL - Kerberoasting (many service ticket requests)</span>
-SecurityEvent
-| where EventID == 4769
-| where ServiceName !endswith "$" // Not machine accounts
-| where ServiceName !in ("krbtgt", "kadmin")
-| where TicketEncryptionType in ("0x17", "0x18") // RC4 encryption
-| summarize 
-    Requests=count(),
-    Services=dcount(ServiceName),
-    ServiceList=make_set(ServiceName, 20)
-    by IpAddress, TargetUserName
-| where Services > 5
-| order by Services desc</pre>
-                </div>
-
-                <h2 id="sysmon">Sysmon Events</h2>
-                <p>Sysmon provides enhanced visibility beyond native Windows events.</p>
-                
                 <table>
-                    <thead><tr><th>Event ID</th><th>Name</th><th>Detection Use</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Events to Check</th><th>Investigation Steps</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>1</strong></td><td>Process Creation</td><td>Full command line, hashes, parent process</td></tr>
-                        <tr><td><strong>3</strong></td><td>Network Connection</td><td>Process network connections</td></tr>
-                        <tr><td><strong>7</strong></td><td>Image Loaded</td><td>DLL loading, injection detection</td></tr>
-                        <tr><td><strong>8</strong></td><td>CreateRemoteThread</td><td>Process injection</td></tr>
-                        <tr><td><strong>10</strong></td><td>Process Access</td><td>LSASS access, credential dumping</td></tr>
-                        <tr><td><strong>11</strong></td><td>File Create</td><td>File creation monitoring</td></tr>
-                        <tr><td><strong>12</strong></td><td>Registry Create/Delete</td><td>Registry persistence</td></tr>
-                        <tr><td><strong>13</strong></td><td>Registry Value Set</td><td>Registry modifications</td></tr>
-                        <tr><td><strong>15</strong></td><td>FileCreateStreamHash</td><td>ADS creation</td></tr>
-                        <tr><td><strong>17</strong></td><td>Pipe Created</td><td>Named pipe (C2 indicator)</td></tr>
-                        <tr><td><strong>18</strong></td><td>Pipe Connected</td><td>Named pipe connection</td></tr>
-                        <tr><td><strong>19-21</strong></td><td>WMI Events</td><td>WMI persistence</td></tr>
-                        <tr><td><strong>22</strong></td><td>DNS Query</td><td>DNS-based detection</td></tr>
-                        <tr><td><strong>23</strong></td><td>File Delete</td><td>File deletion tracking</td></tr>
-                        <tr><td><strong>25</strong></td><td>Process Tampering</td><td>Process hollowing, herpaderping</td></tr>
+                        <tr>
+                            <td><strong>Suspected account compromise</strong></td>
+                            <td>4624, 4625, 4648, 4672</td>
+                            <td>Check login sources, times, privilege use, failed attempts before success</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Possible lateral movement</strong></td>
+                            <td>4624 (Type 3, 10), 7045, 5140</td>
+                            <td>Track network logons, new services, admin share access</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Persistence mechanism hunt</strong></td>
+                            <td>4698, 7045, 4720, 4732</td>
+                            <td>Look for new tasks, services, accounts, group memberships</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Privilege escalation check</strong></td>
+                            <td>4672, 4673, 4728, 4732</td>
+                            <td>Check sensitive privilege assignment, admin group changes</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h3>Sysmon Detection Queries</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Process injection (CreateRemoteThread)</span>
-Event
-| where Source == "Microsoft-Windows-Sysmon"
-| where EventID == 8
-| extend SourceImage = extract("SourceImage:\\s+(.*?)\\s+", 1, RenderedDescription)
-| extend TargetImage = extract("TargetImage:\\s+(.*?)\\s+", 1, RenderedDescription)
-| where TargetImage !has SourceImage // Not self-injection
-| project TimeGenerated, Computer, SourceImage, TargetImage
+                <!-- COMMON ISSUES -->
+                <h2 id="issues"><i class="fas fa-exclamation-triangle"></i> Common Issues</h2>
 
-<span style="color: #6aa3f7;">// KQL - LSASS access (Sysmon 10)</span>
-Event
-| where Source == "Microsoft-Windows-Sysmon"
-| where EventID == 10
-| where RenderedDescription has "lsass.exe"
-| extend SourceImage = extract("SourceImage:\\s+(.*?)\\s+", 1, RenderedDescription)
-| where SourceImage !in ("C:\\Windows\\System32\\lsass.exe",
-    "C:\\Windows\\System32\\csrss.exe")
-| project TimeGenerated, Computer, SourceImage
-
-<span style="color: #6aa3f7;">// SPL - Sysmon process creation with encoded commands</span>
-index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
-EventCode=1
-(CommandLine="*-enc*" OR CommandLine="*-e *" OR CommandLine="*encodedcommand*")
-| table _time, host, User, Image, ParentImage, CommandLine</pre>
-                </div>
-
-                <h2 id="baseline">Baseline Guidance</h2>
-                <p>Before hunting, establish what's normal in your environment:</p>
-                <ul>
-                    <li><strong>Normal admin activity hours</strong> - When do IT admins work?</li>
-                    <li><strong>Expected service accounts</strong> - Which accounts should have Type 3/4/5 logons?</li>
-                    <li><strong>Authorized remote access sources</strong> - Which IPs/subnets for RDP?</li>
-                    <li><strong>Expected scheduled tasks</strong> - What tasks exist normally?</li>
-                    <li><strong>Normal PowerShell usage</strong> - What scripts run regularly?</li>
-                </ul>
+                <table>
+                    <thead><tr><th>Issue</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr><td>4688 doesn't show command line</td><td>Audit policy not configured</td><td>Enable "Include command line in process creation events"</td></tr>
+                        <tr><td>Can't see network logon source</td><td>Missing network address field</td><td>Check if source is local (shows "-" or "::1")</td></tr>
+                        <tr><td>Too many 4624/4625 events</td><td>Service accounts, monitoring tools</td><td>Filter known service accounts, focus on human accounts</td></tr>
+                        <tr><td>Events being overwritten</td><td>Log size too small</td><td>Increase Security log size, forward to SIEM</td></tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>

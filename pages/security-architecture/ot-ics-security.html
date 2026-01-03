@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OT/ICS Security | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>OT/ICS Security</span>
+            </div>
+
+            <h1>OT/ICS Security Architecture</h1>
+            <p class="lead">Security architecture for Operational Technology and Industrial Control Systems including SCADA, PLCs, and manufacturing environments.</p>
+
+            <div class="content">
+                <h2 id="purdue">Purdue Model Architecture</h2>
+
+                <h3>Network Segmentation Levels</h3>
+                <table>
+                    <thead><tr><th>Level</th><th>Name</th><th>Components</th><th>Security Controls</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Level 5</strong></td><td>Enterprise Network</td><td>Corporate IT, email, ERP</td><td>Standard IT security controls</td></tr>
+                        <tr><td><strong>Level 4</strong></td><td>Site Business</td><td>Site servers, business systems</td><td>Firewall, access control</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Level 3.5</strong></td><td>DMZ</td><td>Historian mirror, patch server, jump host</td><td>Data diode option, strict ACLs</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Level 3</strong></td><td>Site Operations</td><td>Historian, MES, engineering workstations</td><td>OT firewall, application allowlisting</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Level 2</strong></td><td>Area Supervisory</td><td>HMI, SCADA servers, OPC</td><td>Network monitoring, strict segmentation</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Level 1</strong></td><td>Basic Control</td><td>PLCs, RTUs, controllers</td><td>Physical security, firmware integrity</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Level 0</strong></td><td>Process</td><td>Sensors, actuators, field devices</td><td>Physical security, serial protocols</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>IT/OT DMZ Architecture</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Purpose</th><th>Direction</th><th>Controls</th></tr></thead>
+                    <tbody>
+                        <tr><td>Data Diode</td><td>One-way data transfer</td><td>OT → IT only</td><td>Hardware-enforced unidirectional</td></tr>
+                        <tr><td>Historian Mirror</td><td>IT access to OT data</td><td>OT → DMZ → IT</td><td>Read-only replication</td></tr>
+                        <tr><td>Jump Host</td><td>Secure admin access</td><td>IT → DMZ → OT (controlled)</td><td>MFA, session recording, PAM</td></tr>
+                        <tr><td>Patch Server</td><td>Software updates</td><td>IT → DMZ → OT</td><td>Manual transfer, malware scan</td></tr>
+                        <tr><td>Antivirus Update</td><td>AV definitions</td><td>IT → DMZ → OT</td><td>Tested definitions only</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="protocols">Industrial Protocol Security</h2>
+
+                <h3>Common OT Protocols</h3>
+                <table>
+                    <thead><tr><th>Protocol</th><th>Use Case</th><th>Security Concerns</th><th>Mitigations</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Modbus</strong></td><td>PLC communication</td><td>No authentication, no encryption</td><td>Network segmentation, monitoring</td></tr>
+                        <tr><td><strong>DNP3</strong></td><td>Utilities, SCADA</td><td>Optional security (Secure Auth)</td><td>Enable Secure Authentication v5</td></tr>
+                        <tr><td><strong>OPC UA</strong></td><td>Data exchange</td><td>Supports security, often misconfigured</td><td>Enable security mode, certificates</td></tr>
+                        <tr><td><strong>OPC DA/Classic</strong></td><td>Legacy data exchange</td><td>DCOM-based, Windows vulnerabilities</td><td>Migrate to OPC UA, segment</td></tr>
+                        <tr><td><strong>EtherNet/IP</strong></td><td>Industrial Ethernet</td><td>No native security</td><td>Segmentation, CIP Security option</td></tr>
+                        <tr><td><strong>PROFINET</strong></td><td>Siemens devices</td><td>Limited security</td><td>Segmentation, firmware updates</td></tr>
+                        <tr><td><strong>BACnet</strong></td><td>Building automation</td><td>Optional security (BACnet/SC)</td><td>Enable BACnet Secure Connect</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ot-controls">OT Security Controls</h2>
+
+                <h3>Control Implementation Matrix</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>IT Equivalent</th><th>OT Implementation</th><th>Challenges</th></tr></thead>
+                    <tbody>
+                        <tr><td>Patching</td><td>Regular patching (14-30 days)</td><td>Scheduled maintenance windows, vendor approval</td><td>Uptime requirements, vendor certification</td></tr>
+                        <tr><td>Antivirus</td><td>Real-time AV/EDR</td><td>OT-approved AV, allowlisting preferred</td><td>Performance impact, false positives</td></tr>
+                        <tr><td>Network Monitoring</td><td>IDS/IPS inline</td><td>Passive monitoring, OT-aware IDS</td><td>Cannot block production traffic</td></tr>
+                        <tr><td>Access Control</td><td>AD/SSO/MFA</td><td>Local accounts, separate OT AD, MFA where possible</td><td>Legacy systems, availability</td></tr>
+                        <tr><td>Logging</td><td>Centralized SIEM</td><td>OT historian, separate OT SIEM</td><td>Protocol support, air-gap</td></tr>
+                        <tr><td>Vulnerability Scanning</td><td>Regular scanning</td><td>Passive scanning, careful active scans</td><td>Can crash OT devices</td></tr>
+                        <tr><td>Backup</td><td>Standard backup</td><td>Configuration backups, golden images</td><td>Proprietary formats</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Application Allowlisting for OT</h3>
+                <table>
+                    <thead><tr><th>Platform</th><th>Recommended Tool</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Windows HMI/Engineering</td><td>Windows Defender Application Control (WDAC)</td><td>Audit mode first, then enforce</td></tr>
+                        <tr><td>Windows Servers</td><td>AppLocker or WDAC</td><td>Publisher rules for signed apps</td></tr>
+                        <tr><td>Specialized OT</td><td>Vendor-specific (Honeywell, Siemens)</td><td>Vendor-supported allowlist</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ot-monitoring">OT Monitoring & Detection</h2>
+
+                <h3>OT-Specific Detection Tools</h3>
+                <table>
+                    <thead><tr><th>Tool Category</th><th>Examples</th><th>Capabilities</th></tr></thead>
+                    <tbody>
+                        <tr><td>OT Network Monitoring</td><td>Claroty, Dragos, Nozomi</td><td>Asset discovery, protocol analysis, anomaly detection</td></tr>
+                        <tr><td>OT Endpoint Protection</td><td>Claroty xDome, Dragos Platform</td><td>Endpoint visibility, change detection</td></tr>
+                        <tr><td>OT Vulnerability Management</td><td>Tenable OT, Claroty</td><td>Passive scanning, risk prioritization</td></tr>
+                        <tr><td>OT SIEM</td><td>Splunk for OT, Sentinel with OT connectors</td><td>Log aggregation, correlation</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>OT-Specific Detections</h3>
+                <table>
+                    <thead><tr><th>Detection</th><th>Indicator</th><th>Severity</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Unauthorized device on OT network</td><td>New MAC/IP not in asset inventory</td><td>High</td><td>Isolate, investigate</td></tr>
+                        <tr><td>PLC program change</td><td>Ladder logic modification</td><td>Critical</td><td>Verify authorized change</td></tr>
+                        <tr><td>Engineering workstation malware</td><td>AV alert on engineering station</td><td>Critical</td><td>Isolate, preserve evidence</td></tr>
+                        <tr><td>Unusual Modbus commands</td><td>Write commands from new source</td><td>High</td><td>Verify authorized activity</td></tr>
+                        <tr><td>IT malware in OT network</td><td>Known IT malware signature</td><td>Critical</td><td>Incident response, assess spread</td></tr>
+                        <tr><td>Remote access anomaly</td><td>VPN access at unusual time/location</td><td>Medium</td><td>Verify with user</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ot-incident">OT Incident Response</h2>
+
+                <h3>OT-Specific IR Considerations</h3>
+                <table>
+                    <thead><tr><th>Phase</th><th>IT Approach</th><th>OT Adaptation</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Detection</strong></td><td>SIEM alerts, EDR</td><td>OT monitoring tools, process anomalies</td></tr>
+                        <tr><td><strong>Containment</strong></td><td>Isolate affected systems</td><td>Coordinate with operations, maintain safety systems</td></tr>
+                        <tr><td><strong>Eradication</strong></td><td>Remove malware, patch</td><td>Vendor involvement, maintenance window</td></tr>
+                        <tr><td><strong>Recovery</strong></td><td>Restore from backup</td><td>PLC reload, process restart procedures</td></tr>
+                        <tr><td><strong>Lessons Learned</strong></td><td>Technical improvements</td><td>Include process engineers, safety review</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Safety-Critical Considerations</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Never isolate Safety Instrumented Systems (SIS) without proper procedures</li>
+                        <li>Coordinate all containment with plant operations</li>
+                        <li>Prioritize physical safety over cyber incident response</li>
+                        <li>Have vendor support on standby for critical systems</li>
+                        <li>Know manual override procedures for all automated systems</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

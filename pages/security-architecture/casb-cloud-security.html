@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CASB & Cloud Security Configuration | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>CASB & Cloud Security</span>
+            </div>
+
+            <h1>CASB & Cloud Security Configuration</h1>
+            <p class="lead">Complete implementation guide for Cloud Access Security Broker (CASB), SaaS security, cloud posture management, and shadow IT discovery.</p>
+
+            <div class="content">
+                <h2 id="casb-overview">CASB Architecture</h2>
+
+                <h3>CASB Deployment Modes</h3>
+                <table>
+                    <thead><tr><th>Mode</th><th>How It Works</th><th>Pros</th><th>Cons</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>API Mode</strong></td><td>Connects via cloud app APIs</td><td>No traffic redirection, deep visibility</td><td>Post-event only, limited real-time blocking</td><td>Sanctioned SaaS apps</td></tr>
+                        <tr><td><strong>Forward Proxy</strong></td><td>Traffic routed through CASB</td><td>Real-time blocking, all traffic</td><td>Requires agent or PAC file</td><td>Managed devices</td></tr>
+                        <tr><td><strong>Reverse Proxy</strong></td><td>CASB sits in front of app</td><td>Agentless, BYOD support</td><td>Only works for specific apps</td><td>Unmanaged devices</td></tr>
+                        <tr><td><strong>Log Collection</strong></td><td>Analyzes firewall/proxy logs</td><td>Shadow IT discovery</td><td>No enforcement capability</td><td>Discovery phase</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="shadow-it">Shadow IT Discovery</h2>
+
+                <h3>Discovery Methods</h3>
+                <table>
+                    <thead><tr><th>Method</th><th>Data Source</th><th>What It Finds</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>Firewall logs</td><td>NGFW, proxy</td><td>Cloud apps by domain</td><td>Log forwarding to CASB</td></tr>
+                        <tr><td>Endpoint agent</td><td>CASB agent</td><td>All cloud access including encrypted</td><td>Deploy agent via MDM</td></tr>
+                        <tr><td>API integration</td><td>IdP (Entra ID)</td><td>OAuth apps, consented apps</td><td>API connector</td></tr>
+                        <tr><td>DNS logs</td><td>DNS servers</td><td>Cloud service domains</td><td>DNS query logging</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>App Risk Classification</h3>
+                <table>
+                    <thead><tr><th>Risk Score</th><th>Category</th><th>Examples</th><th>Policy</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #3fb950;">1-3 (Low)</td><td>Enterprise-ready</td><td>M365, Salesforce, Workday</td><td>Allow, monitor, apply DLP</td></tr>
+                        <tr><td style="color: #d29922;">4-6 (Medium)</td><td>Acceptable with controls</td><td>Slack, Zoom, Dropbox Business</td><td>Allow with restrictions</td></tr>
+                        <tr><td style="color: #f0883e;">7-8 (High)</td><td>Risky, consumer-grade</td><td>Personal cloud storage, free tools</td><td>Warn or block uploads</td></tr>
+                        <tr><td style="color: #f85149;">9-10 (Critical)</td><td>Known malicious/risky</td><td>File sharing sites, risky categories</td><td>Block</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="saas-security">SaaS Application Security</h2>
+
+                <h3>Microsoft 365 CASB Policies (Defender for Cloud Apps)</h3>
+                <table>
+                    <thead><tr><th>Policy Name</th><th>Type</th><th>Condition</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Mass download</td><td>Activity</td><td>>50 files downloaded in 1 hour</td><td>Alert + suspend user</td></tr>
+                        <tr><td>External sharing sensitive</td><td>File</td><td>Confidential label shared externally</td><td>Remove sharing + alert</td></tr>
+                        <tr><td>Ransomware activity</td><td>Anomaly</td><td>Multiple file extensions changed</td><td>Alert + suspend + notify SOC</td></tr>
+                        <tr><td>Impossible travel</td><td>Anomaly</td><td>Login from distant locations</td><td>Alert + require MFA</td></tr>
+                        <tr><td>OAuth app with high permissions</td><td>App</td><td>Mail.ReadWrite or Files.ReadWrite.All</td><td>Alert for review</td></tr>
+                        <tr><td>Activity from anonymous IP</td><td>Activity</td><td>TOR exit node, anonymous proxy</td><td>Block + alert</td></tr>
+                        <tr><td>Inactive account activity</td><td>Anomaly</td><td>Activity after 30+ days inactive</td><td>Alert + require MFA</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Salesforce Security Configuration</h3>
+                <table>
+                    <thead><tr><th>Control</th><th>Configuration</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>SSO enforcement</td><td>SAML with Entra ID, disable direct login</td><td>Centralized authentication</td></tr>
+                        <tr><td>Session timeout</td><td>2 hours inactive, 8 hours max</td><td>Limit exposure</td></tr>
+                        <tr><td>IP restrictions</td><td>Corporate IPs + ZTNA only</td><td>Network-based access control</td></tr>
+                        <tr><td>Login hours</td><td>Business hours for non-admins</td><td>Reduce off-hours risk</td></tr>
+                        <tr><td>Shield encryption</td><td>Encrypt sensitive fields</td><td>Data protection</td></tr>
+                        <tr><td>Event monitoring</td><td>Forward to SIEM</td><td>Security visibility</td></tr>
+                        <tr><td>Report export controls</td><td>Limit export to specific roles</td><td>Data loss prevention</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="oauth">OAuth App Governance</h2>
+
+                <h3>OAuth Risk Assessment</h3>
+                <table>
+                    <thead><tr><th>Permission Scope</th><th>Risk Level</th><th>Examples</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Mail.Read</td><td>High</td><td>Read all mailboxes</td><td>Require admin consent</td></tr>
+                        <tr><td>Mail.ReadWrite</td><td>Critical</td><td>Read/write all mail</td><td>Block or require justification</td></tr>
+                        <tr><td>Files.ReadWrite.All</td><td>Critical</td><td>Access all files</td><td>Block or require justification</td></tr>
+                        <tr><td>User.Read</td><td>Low</td><td>Read user profile</td><td>Allow</td></tr>
+                        <tr><td>Directory.Read.All</td><td>High</td><td>Read directory data</td><td>Admin consent only</td></tr>
+                        <tr><td>offline_access</td><td>Medium</td><td>Refresh tokens</td><td>Monitor for abuse</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>App Consent Settings</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Configuration</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>User consent</td><td>Disabled or low-impact only</td><td>Prevent shadow IT, risky apps</td></tr>
+                        <tr><td>Admin consent workflow</td><td>Enabled</td><td>Users request, admins approve</td></tr>
+                        <tr><td>Group-based consent</td><td>Specific groups for specific apps</td><td>Controlled app deployment</td></tr>
+                        <tr><td>Publisher verification</td><td>Required for consent</td><td>Trust verified publishers</td></tr>
+                        <tr><td>Consent review</td><td>Quarterly review of all consents</td><td>Remove unused/risky</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="cspm">Cloud Security Posture Management</h2>
+
+                <h3>Azure Security Benchmark Controls</h3>
+                <table>
+                    <thead><tr><th>Control Area</th><th>Key Checks</th><th>Remediation</th></tr></thead>
+                    <tbody>
+                        <tr><td>Identity</td><td>MFA enabled, no legacy auth, PIM for admins</td><td>Enable MFA, block legacy auth</td></tr>
+                        <tr><td>Network</td><td>NSG on all subnets, no public IPs on VMs</td><td>Apply NSGs, use Azure Bastion</td></tr>
+                        <tr><td>Data</td><td>Encryption at rest, TLS 1.2+, CMK where required</td><td>Enable encryption, upgrade TLS</td></tr>
+                        <tr><td>Compute</td><td>EDR deployed, patched, no public management</td><td>Deploy Defender, auto-patch</td></tr>
+                        <tr><td>Logging</td><td>Diagnostic logs to SIEM, activity log exported</td><td>Enable all diagnostic settings</td></tr>
+                        <tr><td>Key Management</td><td>Keys in Key Vault, rotated, access controlled</td><td>Migrate keys, enable rotation</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>AWS Security Best Practices</h3>
+                <table>
+                    <thead><tr><th>Service</th><th>Security Control</th><th>Configuration</th></tr></thead>
+                    <tbody>
+                        <tr><td>IAM</td><td>No root usage, MFA everywhere</td><td>CloudTrail alert on root, MFA policy</td></tr>
+                        <tr><td>S3</td><td>No public buckets, encryption</td><td>S3 Block Public Access, SSE-S3/KMS</td></tr>
+                        <tr><td>EC2</td><td>No public SSH/RDP, IMDSv2</td><td>Security groups, Instance Metadata v2</td></tr>
+                        <tr><td>RDS</td><td>Encryption, no public access</td><td>RDS encryption, private subnets</td></tr>
+                        <tr><td>CloudTrail</td><td>All regions, log file validation</td><td>Multi-region trail, integrity</td></tr>
+                        <tr><td>GuardDuty</td><td>Enabled all regions</td><td>Enable + integrate with SIEM</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="monitoring-casb">CASB Monitoring</h2>
+
+                <h3>CASB Alerts Configuration</h3>
+                <table>
+                    <thead><tr><th>Alert</th><th>Severity</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Risky OAuth app consented</td><td>High</td><td>Review app, revoke if unapproved</td></tr>
+                        <tr><td>Mass file download</td><td>High</td><td>Contact user, check for exfil</td></tr>
+                        <tr><td>Sensitive file shared externally</td><td>High</td><td>Remove sharing, contact owner</td></tr>
+                        <tr><td>Login from unusual location</td><td>Medium</td><td>Verify with user</td></tr>
+                        <tr><td>Activity from anonymous IP</td><td>High</td><td>Block session, investigate</td></tr>
+                        <tr><td>Potential ransomware</td><td>Critical</td><td>Suspend user, IR engagement</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Cloud Security Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - OAuth apps with high-risk permissions</span>
+AuditLogs
+| where OperationName == "Consent to application"
+| extend Permissions = tostring(TargetResources[0].modifiedProperties)
+| where Permissions has_any ("Mail.ReadWrite", "Files.ReadWrite.All", "Directory.ReadWrite")
+| project TimeGenerated, User = InitiatedBy.user.userPrincipalName, App = TargetResources[0].displayName, Permissions
+
+<span style="color: #6aa3f7;">// KQL - Unusual cloud app usage</span>
+CloudAppEvents
+| where TimeGenerated > ago(24h)
+| summarize EventCount = count() by Application, AccountDisplayName
+| join kind=leftouter (
+    CloudAppEvents | where TimeGenerated between(ago(30d) .. ago(1d)) | summarize BaselineCount = count() by Application, AccountDisplayName
+) on Application, AccountDisplayName
+| where EventCount > BaselineCount * 3
+
+<span style="color: #6aa3f7;">// KQL - External sharing in SharePoint/OneDrive</span>
+CloudAppEvents
+| where ActionType in ("SharingSet", "AnonymousLinkCreated")
+| where RawEventData has "External" or RawEventData has "Anyone"
+| project TimeGenerated, AccountDisplayName, ActionType, ObjectName
+
+<span style="color: #6aa3f7;">// KQL - Azure resource changes</span>
+AzureActivity
+| where OperationNameValue has_any ("delete", "write")
+| where ActivityStatusValue == "Succeeded"
+| project TimeGenerated, Caller, OperationNameValue, ResourceGroup, Resource
+</pre>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

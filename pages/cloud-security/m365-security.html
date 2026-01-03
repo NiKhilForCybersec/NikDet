@@ -6,7 +6,6 @@
     <title>Microsoft 365 Security | SOC Compendium</title>
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
@@ -14,162 +13,148 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Cloud Security</a><span class="separator">/</span><span>Microsoft 365</span></div>
-            <div class="page-header">
-                <h1><i class="fab fa-microsoft" style="color: #00a4ef;"></i> Microsoft 365 Security</h1>
-                <p class="lead">Monitor and detect threats across Exchange, SharePoint, Teams, and other M365 services.</p>
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Cloud Security</a><span class="separator">/</span>
+                <span>Microsoft 365</span>
             </div>
+
+            <h1>Microsoft 365 Security Monitoring</h1>
+            <p class="lead">SOC monitoring guide for Microsoft 365 including Exchange Online, SharePoint, OneDrive, Teams, and Entra ID security events.</p>
+
             <div class="content">
-                <h2>M365 Log Sources</h2>
+                <h2 id="key-logs">Key Log Sources</h2>
                 <table>
-                    <thead><tr><th>Log Source</th><th>Table in Sentinel</th><th>Key Events</th></tr></thead>
+                    <thead><tr><th>Log Source</th><th>Location</th><th>Key Events</th><th>Retention</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Unified Audit Log</strong></td><td>OfficeActivity</td><td>All M365 activity</td></tr>
-                        <tr><td><strong>Exchange Online</strong></td><td>OfficeActivity (Exchange)</td><td>Mailbox access, rules</td></tr>
-                        <tr><td><strong>SharePoint/OneDrive</strong></td><td>OfficeActivity (SharePoint)</td><td>File operations</td></tr>
-                        <tr><td><strong>Teams</strong></td><td>OfficeActivity (Teams)</td><td>Meetings, chats</td></tr>
-                        <tr><td><strong>Defender for O365</strong></td><td>EmailEvents, EmailAttachmentInfo</td><td>Email threats</td></tr>
+                        <tr><td><strong>Unified Audit Log</strong></td><td>Compliance Center</td><td>All M365 activity</td><td>90 days (E3), 1 year (E5)</td></tr>
+                        <tr><td><strong>Sign-in Logs</strong></td><td>Entra ID</td><td>Authentication events</td><td>30 days (free), 30 days (P1/P2)</td></tr>
+                        <tr><td><strong>Audit Logs</strong></td><td>Entra ID</td><td>Directory changes</td><td>30 days</td></tr>
+                        <tr><td><strong>Defender Alerts</strong></td><td>Security Portal</td><td>Threat detections</td><td>180 days</td></tr>
+                        <tr><td><strong>Message Trace</strong></td><td>Exchange Admin</td><td>Email flow</td><td>10 days (detail), 90 days (summary)</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Business Email Compromise (BEC) Detection</h2>
+                <h2 id="high-risk">High-Risk Events to Monitor</h2>
+                <table>
+                    <thead><tr><th>Event</th><th>Operation Name</th><th>Risk</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Admin role assigned</td><td>Add member to role</td><td>Critical</td><td>Verify authorization</td></tr>
+                        <tr><td>Inbox rule created</td><td>New-InboxRule</td><td>High</td><td>Check for forwarding/deletion</td></tr>
+                        <tr><td>Mail forwarding enabled</td><td>Set-Mailbox</td><td>High</td><td>Verify business need</td></tr>
+                        <tr><td>OAuth app consent</td><td>Consent to application</td><td>High</td><td>Review permissions</td></tr>
+                        <tr><td>External sharing</td><td>SharingSet</td><td>Medium</td><td>Verify data classification</td></tr>
+                        <tr><td>DLP policy match</td><td>DlpRuleMatch</td><td>Medium-High</td><td>Assess data exposure</td></tr>
+                        <tr><td>eDiscovery search</td><td>SearchCreated</td><td>High</td><td>Verify authorized user</td></tr>
+                        <tr><td>Mailbox delegated</td><td>Add-MailboxPermission</td><td>Medium</td><td>Verify business need</td></tr>
+                    </tbody>
+                </table>
 
-                <h3>Inbox Rule Creation</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Suspicious inbox rules (common BEC tactic)</span>
-OfficeActivity
-| where Operation in ("New-InboxRule", "Set-InboxRule")
-| extend RuleParameters = tostring(Parameters)
-| where RuleParameters has_any ("DeleteMessage", "MoveToDeletedItems", 
-    "ForwardTo", "RedirectTo", "SoftDelete")
-| project TimeGenerated, UserId, Operation, RuleParameters, ClientIP</pre>
-                </div>
+                <h2 id="queries">M365 Detection Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Inbox rules with forwarding or deletion</span>
+CloudAppEvents
+| where ActionType == "New-InboxRule"
+| where RawEventData has_any ("ForwardTo", "RedirectTo", "DeleteMessage", "MoveToFolder")
+| extend RuleDetails = parse_json(RawEventData)
+| project TimeGenerated, AccountDisplayName, ActionType, RuleDetails
 
-                <h3>Mail Forwarding to External</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// External forwarding enabled</span>
-OfficeActivity
-| where Operation == "Set-Mailbox"
-| extend ForwardingAddress = tostring(parse_json(Parameters)[?Name == "ForwardingSmtpAddress"].Value)
-| where isnotempty(ForwardingAddress)
-| where ForwardingAddress !endswith "@yourdomain.com"
-| project TimeGenerated, UserId, ForwardingAddress, ClientIP</pre>
-                </div>
+<span style="color: #6aa3f7;">// KQL - Email auto-forwarding to external</span>
+CloudAppEvents
+| where ActionType == "Set-Mailbox"
+| where RawEventData has "ForwardingSmtpAddress"
+| extend ForwardAddress = extract(@"ForwardingSmtpAddress.*?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+)", 1, tostring(RawEventData))
+| where ForwardAddress !endswith "yourcompany.com"
+| project TimeGenerated, AccountDisplayName, ForwardAddress
 
-                <h3>Delegate Access Granted</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Mailbox permissions added</span>
-OfficeActivity
-| where Operation in ("Add-MailboxPermission", "Add-RecipientPermission")
-| project TimeGenerated, UserId, Operation, 
-    parse_json(Parameters), ClientIP</pre>
-                </div>
+<span style="color: #6aa3f7;">// KQL - OAuth application consent</span>
+AuditLogs
+| where OperationName == "Consent to application"
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend ConsentUser = tostring(InitiatedBy.user.userPrincipalName)
+| extend Permissions = tostring(TargetResources[0].modifiedProperties)
+| project TimeGenerated, ConsentUser, AppName, Permissions
 
-                <h2>Data Exfiltration Detection</h2>
+<span style="color: #6aa3f7;">// KQL - Risky OAuth apps (mail/files access)</span>
+AuditLogs
+| where OperationName == "Consent to application"
+| where TargetResources[0].modifiedProperties has_any ("Mail.Read", "Mail.ReadWrite", "Files.Read", "Files.ReadWrite")
+| extend AppName = tostring(TargetResources[0].displayName)
+| project TimeGenerated, InitiatedBy.user.userPrincipalName, AppName
 
-                <h3>Mass File Download</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Large number of file downloads</span>
-OfficeActivity
-| where RecordType == "SharePointFileOperation"
-| where Operation in ("FileDownloaded", "FileSyncDownloadedFull")
-| summarize DownloadCount = count(), Files = make_set(SourceFileName) 
-    by UserId, bin(TimeGenerated, 1h)
+<span style="color: #6aa3f7;">// KQL - SharePoint external sharing</span>
+CloudAppEvents
+| where ActionType in ("SharingSet", "AnonymousLinkCreated", "SecureLinkCreated")
+| where RawEventData has "External"
+| project TimeGenerated, AccountDisplayName, ActionType, ObjectName
+
+<span style="color: #6aa3f7;">// KQL - Mass file downloads</span>
+CloudAppEvents
+| where ActionType == "FileDownloaded"
+| summarize DownloadCount = count(), Files = make_set(ObjectName, 10) by AccountDisplayName, bin(TimeGenerated, 1h)
 | where DownloadCount > 50
-| project TimeGenerated, UserId, DownloadCount</pre>
+
+<span style="color: #6aa3f7;">// KQL - Admin role assignments</span>
+AuditLogs
+| where OperationName has "Add member to role"
+| extend Role = tostring(TargetResources[0].modifiedProperties[1].newValue)
+| extend Target = tostring(TargetResources[0].userPrincipalName)
+| extend Actor = tostring(InitiatedBy.user.userPrincipalName)
+| project TimeGenerated, Actor, Target, Role
+
+<span style="color: #6aa3f7;">// KQL - eDiscovery searches</span>
+CloudAppEvents
+| where ActionType in ("SearchCreated", "SearchStarted", "SearchExported")
+| project TimeGenerated, AccountDisplayName, ActionType, ObjectName
+
+<span style="color: #6aa3f7;">// KQL - Mailbox permission changes</span>
+CloudAppEvents
+| where ActionType in ("Add-MailboxPermission", "Add-RecipientPermission")
+| project TimeGenerated, AccountDisplayName, ActionType, RawEventData
+</pre>
                 </div>
 
-                <h3>External Sharing</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Files shared with external users</span>
-OfficeActivity
-| where RecordType == "SharePointSharingOperation"
-| where Operation in ("SharingInvitationCreated", "AddedToSecureLink", 
-    "AnonymousLinkCreated")
-| extend TargetUser = tostring(parse_json(TargetUserOrGroupName))
-| where TargetUser !endswith "@yourdomain.com" or Operation == "AnonymousLinkCreated"
-| project TimeGenerated, UserId, Operation, TargetUser, SourceFileName</pre>
-                </div>
-
-                <h2>Phishing Detection</h2>
-
-                <h3>Defender for Office 365 Alerts</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Phishing emails detected</span>
-EmailEvents
-| where ThreatTypes has "Phish"
-| project TimeGenerated, RecipientEmailAddress, SenderFromAddress,
-    Subject, ThreatTypes, DeliveryAction, DetectionMethods
-
-<span style="color: #6aa3f7;">// User clicked phishing link</span>
-UrlClickEvents
-| where IsClickedThrough == true
-| where ThreatTypes has "Phish"
-| project TimeGenerated, AccountUpn, Url, NetworkMessageId</pre>
-                </div>
-
-                <h3>Post-Delivery Actions</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Emails ZAP'd (Zero-hour Auto Purge)</span>
-EmailPostDeliveryEvents
-| where Action == "ZAP"
-| project TimeGenerated, RecipientEmailAddress, NetworkMessageId,
-    ThreatTypes, ActionType</pre>
-                </div>
-
-                <h2>Key M365 Operations to Monitor</h2>
+                <h2 id="email-threats">Email Threat Detection</h2>
                 <table>
-                    <thead><tr><th>Category</th><th>Operation</th><th>Risk</th></tr></thead>
+                    <thead><tr><th>Threat Type</th><th>Defender Detection</th><th>Manual Indicators</th></tr></thead>
                     <tbody>
-                        <tr><td rowspan="4"><strong>Exchange</strong></td><td>New-InboxRule (with forwarding/delete)</td><td style="color: #f07070;">High</td></tr>
-                        <tr><td>Set-Mailbox (ForwardingSmtpAddress)</td><td style="color: #f07070;">High</td></tr>
-                        <tr><td>Add-MailboxPermission</td><td style="color: #f0b756;">Medium</td></tr>
-                        <tr><td>MailItemsAccessed (unusual volume)</td><td style="color: #f0b756;">Medium</td></tr>
-                        <tr><td rowspan="3"><strong>SharePoint</strong></td><td>SharingInvitationCreated (external)</td><td style="color: #f0b756;">Medium</td></tr>
-                        <tr><td>AnonymousLinkCreated</td><td style="color: #f0b756;">Medium</td></tr>
-                        <tr><td>FileDownloaded (mass)</td><td style="color: #f07070;">High</td></tr>
-                        <tr><td rowspan="2"><strong>Teams</strong></td><td>MemberAdded (external)</td><td style="color: #5ce0c4;">Low</td></tr>
-                        <tr><td>TeamCreated (sensitive name)</td><td style="color: #5ce0c4;">Low</td></tr>
-                        <tr><td rowspan="2"><strong>Admin</strong></td><td>UserLoggedIn (admin account)</td><td style="color: #5ce0c4;">Medium</td></tr>
-                        <tr><td>AdminRole assigned</td><td style="color: #f07070;">High</td></tr>
+                        <tr><td>Phishing</td><td>ThreatType = Phish</td><td>Suspicious sender, urgency, credential requests</td></tr>
+                        <tr><td>Malware</td><td>ThreatType = Malware</td><td>Executable attachments, macros</td></tr>
+                        <tr><td>BEC</td><td>Impersonation detection</td><td>Executive spoofing, payment requests</td></tr>
+                        <tr><td>Spam</td><td>CAT = Spam</td><td>Bulk sender, low reputation</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Defender for Office 365 Tables</h2>
+                <h2 id="investigation">Investigation Checklist</h2>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-search"></i> M365 Compromise Investigation</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Check sign-in logs</strong> - Unusual locations, IPs, devices</li>
+                        <li><strong>Review inbox rules</strong> - Forwarding, deletion rules</li>
+                        <li><strong>Check OAuth apps</strong> - Unauthorized app consent</li>
+                        <li><strong>Review sent items</strong> - Phishing sent from account</li>
+                        <li><strong>Check mailbox permissions</strong> - Delegated access added</li>
+                        <li><strong>Review file activity</strong> - Mass downloads, external sharing</li>
+                        <li><strong>Check Teams/SharePoint</strong> - External sharing enabled</li>
+                    </ul>
+                </div>
+
+                <h2 id="containment">Containment Actions</h2>
                 <table>
-                    <thead><tr><th>Table</th><th>Contents</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>Method</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>EmailEvents</strong></td><td>Email metadata, threats</td></tr>
-                        <tr><td><strong>EmailAttachmentInfo</strong></td><td>Attachment details</td></tr>
-                        <tr><td><strong>EmailUrlInfo</strong></td><td>URLs in emails</td></tr>
-                        <tr><td><strong>UrlClickEvents</strong></td><td>User URL clicks</td></tr>
-                        <tr><td><strong>EmailPostDeliveryEvents</strong></td><td>ZAP, admin actions</td></tr>
+                        <tr><td>Account compromise</td><td>Reset password + revoke sessions</td><td>Entra ID portal or PowerShell</td></tr>
+                        <tr><td>Malicious inbox rule</td><td>Remove rule</td><td>Remove-InboxRule</td></tr>
+                        <tr><td>OAuth app abuse</td><td>Revoke consent + block app</td><td>Enterprise Applications</td></tr>
+                        <tr><td>Email forwarding</td><td>Remove forwarding</td><td>Set-Mailbox -ForwardingSmtpAddress $null</td></tr>
+                        <tr><td>Phishing sent</td><td>Recall/delete sent emails</td><td>Content Search + Purge</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Investigation Queries</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// All activity for compromised user</span>
-OfficeActivity
-| where UserId == "compromised@company.com"
-| where TimeGenerated > ago(7d)
-| project TimeGenerated, Operation, ClientIP, RecordType
-| sort by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// Find emails from malicious sender</span>
-EmailEvents
-| where SenderFromAddress == "attacker@phishing.com"
-| project TimeGenerated, RecipientEmailAddress, Subject,
-    DeliveryAction, ThreatTypes
-
-<span style="color: #6aa3f7;">// Find users who clicked malicious URL</span>
-UrlClickEvents
-| where Url has "malicious.com"
-| project TimeGenerated, AccountUpn, Url, IsClickedThrough</pre>
-                </div>
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../js/main.js"></script>
 </body>

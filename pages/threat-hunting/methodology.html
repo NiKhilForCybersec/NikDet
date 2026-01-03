@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hunt Methodology | SOC Compendium</title>
+    <title>Threat Hunting Methodology | SOC Compendium</title>
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
@@ -14,305 +13,216 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Threat Hunting</a><span class="separator">/</span><span>Methodology</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-project-diagram" style="color: var(--accent-primary);"></i> Threat Hunting Methodology</h1>
-                <p class="lead">A structured approach to conducting effective threat hunts.</p>
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Threat Hunting</a><span class="separator">/</span>
+                <span>Methodology</span>
             </div>
+
+            <h1><i class="fas fa-crosshairs"></i> Threat Hunting Methodology</h1>
+            <p class="lead">Structured approach to proactively finding threats that evade automated detection.</p>
+
             <div class="content">
-                <h2>PEAK Hunting Framework</h2>
-                <p>PEAK is a structured framework for organizing threat hunting activities:</p>
+                <!-- WHY HUNT -->
+                <h2 id="why-hunt"><i class="fas fa-question-circle"></i> Why Threat Hunting?</h2>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; border-top: 3px solid #6aa3f7;">
-                        <h3 style="color: #6aa3f7; margin-top: 0;"><i class="fas fa-clipboard-list"></i> P - Prepare</h3>
-                        <ul style="margin: 0; font-size: 0.9rem;">
-                            <li>Define scope and objectives</li>
-                            <li>Identify data sources</li>
-                            <li>Develop hypothesis</li>
-                            <li>Prepare queries and tools</li>
-                        </ul>
-                    </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; border-top: 3px solid #5ce0c4;">
-                        <h3 style="color: #5ce0c4; margin-top: 0;"><i class="fas fa-terminal"></i> E - Execute</h3>
-                        <ul style="margin: 0; font-size: 0.9rem;">
-                            <li>Run queries</li>
-                            <li>Analyze results</li>
-                            <li>Pivot on findings</li>
-                            <li>Iterate as needed</li>
-                        </ul>
-                    </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; border-top: 3px solid #f0b756;">
-                        <h3 style="color: #f0b756; margin-top: 0;"><i class="fas fa-microscope"></i> A - Act</h3>
-                        <ul style="margin: 0; font-size: 0.9rem;">
-                            <li>Escalate if threat found</li>
-                            <li>Create detections</li>
-                            <li>Recommend improvements</li>
-                            <li>Update threat intel</li>
-                        </ul>
-                    </div>
-                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; border-top: 3px solid #a78bf6;">
-                        <h3 style="color: #a78bf6; margin-top: 0;"><i class="fas fa-graduation-cap"></i> K - Knowledge</h3>
-                        <ul style="margin: 0; font-size: 0.9rem;">
-                            <li>Document findings</li>
-                            <li>Share with team</li>
-                            <li>Update playbooks</li>
-                            <li>Improve for next hunt</li>
-                        </ul>
-                    </div>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> The Fundamental Problem</div>
+                    <p style="margin: 0.5rem 0;">Automated detections catch known threats. But skilled attackers specifically design their attacks to evade detection. Hunting fills this gap.</p>
                 </div>
 
-                <h2>Phase 1: Prepare</h2>
-
-                <h3>1.1 Select Hunt Focus</h3>
-                <p>Choose what you're hunting for based on:</p>
+                <h3>Detection vs. Hunting</h3>
                 <table>
-                    <thead><tr><th>Source</th><th>Example</th><th>When to Use</th></tr></thead>
+                    <thead><tr><th>Aspect</th><th>Automated Detection</th><th>Threat Hunting</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Threat Intelligence</strong></td><td>New APT report mentions technique</td><td>Active threat campaign</td></tr>
-                        <tr><td><strong>ATT&CK Gaps</strong></td><td>No detection for T1055</td><td>Coverage improvement</td></tr>
-                        <tr><td><strong>Recent Incidents</strong></td><td>Similar attack in industry</td><td>Proactive validation</td></tr>
-                        <tr><td><strong>High-Value Assets</strong></td><td>Domain controllers</td><td>Risk-based prioritization</td></tr>
-                        <tr><td><strong>Anomaly Signals</strong></td><td>Unusual network traffic spike</td><td>Suspicious indicators</td></tr>
+                        <tr><td><strong>Approach</strong></td><td>Reactive - alerts on known patterns</td><td>Proactive - searches for unknown threats</td></tr>
+                        <tr><td><strong>Speed</strong></td><td>Real-time or near real-time</td><td>Periodic, scheduled</td></tr>
+                        <tr><td><strong>Scope</strong></td><td>Pre-defined rules and signatures</td><td>Creative, hypothesis-driven</td></tr>
+                        <tr><td><strong>Catches</strong></td><td>Known attack patterns</td><td>Novel attacks, evasion techniques</td></tr>
+                        <tr><td><strong>Resource</strong></td><td>Automated (machine)</td><td>Human analyst expertise</td></tr>
                     </tbody>
                 </table>
 
-                <h3>1.2 Form Hypothesis</h3>
-                <p>Write a clear, testable hypothesis:</p>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
-                    <strong>Template:</strong><br><br>
-                    "I believe [THREAT ACTOR/MALWARE] may be [DOING WHAT] in our environment<br>
-                    using [TECHNIQUE/TOOL] which would leave evidence in [DATA SOURCE]<br>
-                    that I can find by [LOOKING FOR WHAT]."<br><br>
-                    <strong>Example:</strong><br><br>
-                    "I believe attackers may be establishing persistence in our environment<br>
-                    using scheduled tasks which would leave evidence in Windows Event Logs (4698)<br>
-                    that I can find by looking for tasks created by non-admin users or from unusual paths."
-                </div>
-
-                <h3>1.3 Identify Data Sources</h3>
-                <p>What logs/telemetry do you need?</p>
-                <ul>
-                    <li><strong>Primary source:</strong> Most directly relevant (e.g., Sysmon for process creation)</li>
-                    <li><strong>Supporting sources:</strong> For context and correlation</li>
-                    <li><strong>Time range:</strong> How far back do you need to look?</li>
-                    <li><strong>Scope:</strong> All systems or specific segments?</li>
-                </ul>
-
-                <h3>1.4 Prepare Queries</h3>
-                <p>Write your hunt queries before starting. Include:</p>
-                <ul>
-                    <li>Baseline query (what's normal?)</li>
-                    <li>Detection query (what's suspicious?)</li>
-                    <li>Pivot queries (where to go next?)</li>
-                </ul>
-
-                <h2>Phase 2: Execute</h2>
-
-                <h3>2.1 Run Initial Query</h3>
-                <p>Execute your primary hunt query:</p>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Example: Hunt for suspicious scheduled tasks</span>
-SecurityEvent
-| where TimeGenerated > ago(30d)
-| where EventID == 4698
-| extend TaskName = tostring(EventData.TaskName)
-| extend TaskPath = tostring(EventData.TaskContent)
-| where SubjectUserName !endswith "$"  <span style="color: #6aa3f7;">// Exclude computer accounts</span>
-| where TaskName !has "Microsoft"       <span style="color: #6aa3f7;">// Exclude known MS tasks</span>
-| project TimeGenerated, Computer, SubjectUserName, TaskName, TaskPath</pre>
-                </div>
-
-                <h3>2.2 Analyze Results</h3>
-                <p>For each result, ask:</p>
-                <ul>
-                    <li><strong>Is this expected?</strong> Known software, admin activity?</li>
-                    <li><strong>Is this anomalous?</strong> Rare user, unusual timing, strange path?</li>
-                    <li><strong>Is this suspicious?</strong> Matches known TTP, indicators of compromise?</li>
-                    <li><strong>What else should I check?</strong> Related events, other systems?</li>
-                </ul>
-
-                <h3>2.3 Pivot on Findings</h3>
-                <p>When you find something interesting, expand your search:</p>
+                <h3>When Hunting Makes the Difference</h3>
                 <table>
-                    <thead><tr><th>Found</th><th>Pivot To</th><th>Why</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Why Detection Missed It</th><th>How Hunting Finds It</th></tr></thead>
                     <tbody>
-                        <tr><td>Suspicious process</td><td>Parent process, child processes</td><td>Understand execution chain</td></tr>
-                        <tr><td>Suspicious user</td><td>All user activity</td><td>Find other malicious actions</td></tr>
-                        <tr><td>Suspicious host</td><td>All host activity</td><td>Identify compromise scope</td></tr>
-                        <tr><td>Malicious IP/domain</td><td>All connections to that IOC</td><td>Find all affected systems</td></tr>
-                        <tr><td>Malicious file hash</td><td>All systems with that file</td><td>Identify spread</td></tr>
+                        <tr><td>Living-off-the-land attack</td><td>Uses legitimate tools (PowerShell, WMI)</td><td>Look for unusual patterns in legitimate tool usage</td></tr>
+                        <tr><td>Slow and low exfiltration</td><td>Below volume thresholds</td><td>Analyze cumulative data movement over time</td></tr>
+                        <tr><td>Custom malware</td><td>No signature exists</td><td>Hunt for behavioral anomalies, C2 patterns</td></tr>
+                        <tr><td>Insider threat</td><td>Authorized access, legitimate credentials</td><td>Look for access pattern anomalies</td></tr>
+                        <tr><td>Supply chain compromise</td><td>Trusted software, signed binaries</td><td>Hunt for unusual behavior from trusted sources</td></tr>
                     </tbody>
                 </table>
 
-                <h3>2.4 Pivoting Queries</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Found suspicious process? Look at what else it did</span>
+                <!-- HUNTING METHODOLOGIES -->
+                <h2 id="methodologies"><i class="fas fa-map"></i> Hunting Methodologies</h2>
+
+                <h3>Three Main Approaches</h3>
+                <table>
+                    <thead><tr><th>Approach</th><th>Description</th><th>When to Use</th><th>Example</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #3fb950;"><strong>Intel-Driven</strong></td>
+                            <td>Hunt based on threat intelligence (IOCs, TTPs, actor reports)</td>
+                            <td>New threat intel received, industry-targeting campaign</td>
+                            <td>"Hunt for Volt Typhoon TTPs in our environment"</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #d29922;"><strong>Hypothesis-Driven</strong></td>
+                            <td>Form hypothesis about attacker behavior, test it</td>
+                            <td>No specific intel, general proactive hunting</td>
+                            <td>"If an attacker compromised us, they'd need to move laterally..."</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>Anomaly-Driven</strong></td>
+                            <td>Look for statistical outliers from baseline</td>
+                            <td>Good data, established baselines</td>
+                            <td>"Find users with login patterns unlike their peers"</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>The Hunting Loop</h3>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-sync-alt"></i> Iterative Hunting Process</div>
+                    <table>
+                        <thead><tr><th>Step</th><th>Action</th><th>Output</th><th>Time</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>1. Hypothesize</strong></td><td>Form testable hypothesis about threat behavior</td><td>Clear, specific hypothesis statement</td><td>30 min</td></tr>
+                            <tr><td><strong>2. Data Check</strong></td><td>Verify you have data to test hypothesis</td><td>Data availability confirmation</td><td>15 min</td></tr>
+                            <tr><td><strong>3. Query</strong></td><td>Build and run queries to test hypothesis</td><td>Raw results</td><td>1-2 hours</td></tr>
+                            <tr><td><strong>4. Analyze</strong></td><td>Review results, separate signal from noise</td><td>Findings (or no findings)</td><td>1-2 hours</td></tr>
+                            <tr><td><strong>5. Investigate</strong></td><td>Dig into suspicious findings</td><td>Confirmed threat or explained activity</td><td>Variable</td></tr>
+                            <tr><td><strong>6. Document</strong></td><td>Record findings, create detection if pattern found</td><td>Hunt report, new detection rule</td><td>30 min</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- BUILDING HYPOTHESES -->
+                <h2 id="hypotheses"><i class="fas fa-brain"></i> Building Good Hypotheses</h2>
+
+                <h3>What Makes a Good Hypothesis</h3>
+                <table>
+                    <thead><tr><th>Good Hypothesis</th><th>Bad Hypothesis</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr><td>"Attackers using scheduled tasks for persistence will create tasks running from unusual paths"</td><td>"Find bad scheduled tasks"</td><td>Specific, testable, based on TTP</td></tr>
+                        <tr><td>"Compromised accounts will show login patterns different from historical baseline"</td><td>"Look for suspicious logins"</td><td>Defines what "suspicious" means</td></tr>
+                        <tr><td>"Data exfiltration via DNS will show unusually long DNS queries or high query volume to single domain"</td><td>"Find DNS exfil"</td><td>Specifies the observables</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Hypothesis Sources</h3>
+                <table>
+                    <thead><tr><th>Source</th><th>How to Use</th><th>Example Hypothesis</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>MITRE ATT&CK</strong></td><td>Pick technique, think about how it looks in your data</td><td>T1053.005: "Hunt for scheduled tasks created by non-admin users"</td></tr>
+                        <tr><td><strong>Threat reports</strong></td><td>Extract TTPs from reports on relevant threat actors</td><td>"Hunt for use of certutil for downloading as seen in APT report"</td></tr>
+                        <tr><td><strong>Recent incidents</strong></td><td>What did we miss? How could we find it earlier?</td><td>"Hunt for similar initial access patterns to last month's phishing incident"</td></tr>
+                        <tr><td><strong>Red team findings</strong></td><td>What techniques worked against us?</td><td>"Hunt for the lateral movement technique red team used"</td></tr>
+                        <tr><td><strong>Industry alerts</strong></td><td>What's targeting our sector?</td><td>"Hunt for healthcare-targeting ransomware precursor activity"</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- PRACTICAL HUNTING -->
+                <h2 id="practical"><i class="fas fa-terminal"></i> Practical Hunt Examples</h2>
+
+                <h3>Hunt 1: Unusual Scheduled Tasks</h3>
+                <table>
+                    <thead><tr><th>Element</th><th>Details</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Hypothesis</strong></td><td>Attackers create scheduled tasks from user-writable locations for persistence</td></tr>
+                        <tr><td><strong>Data needed</strong></td><td>Windows Event 4698 (task created), Sysmon, EDR task creation events</td></tr>
+                        <tr><td><strong>What to look for</strong></td><td>Tasks running executables from: Downloads, Temp, AppData, user profiles</td></tr>
+                        <tr><td><strong>Expected FPs</strong></td><td>Some legitimate software installs this way; user-created tasks</td></tr>
+                        <tr><td><strong>Investigation steps</strong></td><td>Check executable reputation, creation time vs. install time, process tree</td></tr>
+                    </tbody>
+                </table>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - Hunt for scheduled tasks from unusual locations</span>
 DeviceProcessEvents
-| where InitiatingProcessFileName =~ "suspicious.exe" 
-    or FileName =~ "suspicious.exe"
-| project Timestamp, DeviceName, FileName, ProcessCommandLine, 
-    InitiatingProcessFileName, InitiatingProcessCommandLine
-| sort by Timestamp
-
-<span style="color: #6aa3f7;">// Found suspicious user? Get all their activity</span>
-union DeviceProcessEvents, DeviceNetworkEvents, DeviceLogonEvents
-| where AccountName =~ "suspicious_user"
-| project Timestamp, DeviceName, ActionType, FileName, 
-    RemoteUrl, RemoteIP
-| sort by Timestamp
-
-<span style="color: #6aa3f7;">// Found malicious hash? Find all occurrences</span>
-DeviceFileEvents
-| where SHA256 == "abc123..."
-| project Timestamp, DeviceName, FileName, FolderPath, ActionType</pre>
+| where Timestamp > ago(30d)
+| where InitiatingProcessFileName =~ "schtasks.exe" or ActionType == "ScheduledTaskCreated"
+| where ProcessCommandLine has_any ("\\Users\\", "\\Temp\\", "\\Downloads\\", "\\AppData\\")
+| project Timestamp, DeviceName, AccountName, ProcessCommandLine, InitiatingProcessFileName
+| summarize Count = count(), Devices = make_set(DeviceName) by ProcessCommandLine
+| order by Count desc
+</pre>
                 </div>
 
-                <h2>Phase 3: Act</h2>
-
-                <h3>3.1 If Threat Found</h3>
-                <div class="info-box danger">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Active Threat Response</div>
-                    <ol style="margin: 0.5rem 0 0 1rem;">
-                        <li><strong>STOP hunting</strong> - This is now an incident</li>
-                        <li><strong>Document</strong> - Screenshot/save all findings</li>
-                        <li><strong>Escalate</strong> - Follow IR procedures</li>
-                        <li><strong>Preserve evidence</strong> - Don't modify affected systems</li>
-                        <li><strong>Hand off</strong> - IR team takes over</li>
-                    </ol>
-                </div>
-
-                <h3>3.2 If No Threat Found</h3>
-                <p>A "clean" hunt is still valuable:</p>
-                <ul>
-                    <li><strong>Document the absence:</strong> "No evidence of X in our environment"</li>
-                    <li><strong>Create detection:</strong> If you could hunt for it, you can detect it</li>
-                    <li><strong>Note limitations:</strong> "Could not detect if attacker used technique Y"</li>
-                    <li><strong>Improve data:</strong> Identify missing telemetry</li>
-                </ul>
-
-                <h3>3.3 Create Detections</h3>
-                <p>Convert hunt queries to automated detections:</p>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Hunt query (manual)</span>
-SecurityEvent
-| where EventID == 4698
-| where TaskName !has "Microsoft"
-| where SubjectUserName !endswith "$"
-
-<span style="color: #6aa3f7;">// Detection rule (automated)</span>
-<span style="color: #a78bf6;">name:</span> Suspicious Scheduled Task Creation
-<span style="color: #a78bf6;">description:</span> Detects scheduled tasks created by non-admin users
-<span style="color: #a78bf6;">severity:</span> Medium
-<span style="color: #a78bf6;">query:</span> |
-    SecurityEvent
-    | where EventID == 4698
-    | where TaskName !has "Microsoft"
-    | where SubjectUserName !endswith "$"
-    | where SubjectUserName !in ("admin_list")</pre>
-                </div>
-
-                <h2>Phase 4: Knowledge</h2>
-
-                <h3>4.1 Hunt Report Template</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">Hunt ID:</span> HUNT-2025-001
-<span style="color: #a78bf6;">Date:</span> 2025-01-15
-<span style="color: #a78bf6;">Hunter:</span> Security Analyst
-<span style="color: #a78bf6;">Duration:</span> 4 hours
-
-<span style="color: #a78bf6;">HYPOTHESIS:</span>
-Attackers may have established persistence via scheduled tasks
-created from suspicious locations or by non-admin users.
-
-<span style="color: #a78bf6;">DATA SOURCES:</span>
-- Windows Security Events (4698, 4699, 4702)
-- Sysmon Event 1 (correlated)
-- Time Range: 30 days
-
-<span style="color: #a78bf6;">METHODOLOGY:</span>
-1. Queried for all scheduled task creation events
-2. Filtered out known legitimate tasks
-3. Analyzed remaining for suspicious patterns
-4. Pivoted on suspicious findings
-
-<span style="color: #a78bf6;">FINDINGS:</span>
-- Total tasks analyzed: 1,247
-- Suspicious tasks identified: 3
-- Confirmed malicious: 0
-- False positives: 3 (documented below)
-
-<span style="color: #a78bf6;">FALSE POSITIVES:</span>
-1. IT automation tool (added to allowlist)
-2. Developer test script (user notified)
-3. Legacy backup script (scheduled for removal)
-
-<span style="color: #a78bf6;">ACTIONS TAKEN:</span>
-1. Created detection rule: "Suspicious Scheduled Task Creation"
-2. Updated baseline with legitimate tasks
-3. Documented findings in threat wiki
-
-<span style="color: #a78bf6;">RECOMMENDATIONS:</span>
-1. Improve logging for task command line content
-2. Review IT automation practices
-3. Schedule follow-up hunt for services (T1543.003)
-
-<span style="color: #a78bf6;">STATUS:</span> Complete - No active threat</pre>
-                </div>
-
-                <h3>4.2 Share Knowledge</h3>
-                <ul>
-                    <li><strong>Team briefing:</strong> Share findings in team meeting</li>
-                    <li><strong>Wiki update:</strong> Add to threat hunting knowledge base</li>
-                    <li><strong>Playbook update:</strong> Improve hunt playbook for next time</li>
-                    <li><strong>Detection catalog:</strong> Add new rules created</li>
-                </ul>
-
-                <h2>Hunt Scheduling</h2>
+                <h3>Hunt 2: Beaconing Detection</h3>
                 <table>
-                    <thead><tr><th>Cadence</th><th>Focus</th><th>Duration</th></tr></thead>
+                    <thead><tr><th>Element</th><th>Details</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Weekly</strong></td><td>Quick hunts for active threats</td><td>2-4 hours</td></tr>
-                        <tr><td><strong>Monthly</strong></td><td>Deep dive on specific technique</td><td>1-2 days</td></tr>
-                        <tr><td><strong>Quarterly</strong></td><td>Comprehensive coverage review</td><td>1 week</td></tr>
-                        <tr><td><strong>Ad-hoc</strong></td><td>Response to new intelligence</td><td>As needed</td></tr>
+                        <tr><td><strong>Hypothesis</strong></td><td>C2 beacons show regular, periodic communication patterns</td></tr>
+                        <tr><td><strong>Data needed</strong></td><td>Firewall logs, proxy logs, DNS logs with timestamps</td></tr>
+                        <tr><td><strong>What to look for</strong></td><td>Connections to same destination at regular intervals (±small jitter)</td></tr>
+                        <tr><td><strong>Expected FPs</strong></td><td>Legitimate software updates, monitoring agents, heartbeats</td></tr>
+                        <tr><td><strong>Investigation steps</strong></td><td>Check destination reputation, what process is connecting, payload analysis</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Maturity Model</h2>
+                <!-- WHAT IF SCENARIOS -->
+                <h2 id="what-if"><i class="fas fa-random"></i> Hunting Challenges</h2>
+
                 <table>
-                    <thead><tr><th>Level</th><th>Characteristics</th><th>Next Step</th></tr></thead>
+                    <thead><tr><th>Challenge</th><th>Solution</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td style="color: #f07070;"><strong>Level 0: Initial</strong></td>
-                            <td>No formal hunting program</td>
-                            <td>Start with 1 hunt/month</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #f0b756;"><strong>Level 1: Minimal</strong></td>
-                            <td>Ad-hoc hunting based on IOCs</td>
-                            <td>Develop hypothesis framework</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #6aa3f7;"><strong>Level 2: Procedural</strong></td>
-                            <td>Regular hunts with documentation</td>
-                            <td>Create playbooks, automate findings</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #5ce0c4;"><strong>Level 3: Innovative</strong></td>
-                            <td>Threat intel-driven, custom analytics</td>
-                            <td>Share with community, research</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #a78bf6;"><strong>Level 4: Leading</strong></td>
-                            <td>Original research, automated hunting</td>
-                            <td>Continuous improvement</td>
-                        </tr>
+                        <tr><td><strong>Too many results to review</strong></td><td>Add more filters, focus on high-value targets first, use statistical methods to find outliers</td></tr>
+                        <tr><td><strong>No results at all</strong></td><td>Check data availability, broaden query, verify hypothesis is testable with available data</td></tr>
+                        <tr><td><strong>Can't tell FPs from TPs</strong></td><td>Document the FPs (they become baseline), focus on anomalies from that baseline</td></tr>
+                        <tr><td><strong>Hunt found nothing, was it worth it?</strong></td><td>Yes - documented gap, proved hypothesis, learned about environment</td></tr>
+                        <tr><td><strong>Found something! Now what?</strong></td><td>Shift to investigation mode, follow IR procedures, escalate if confirmed threat</td></tr>
+                        <tr><td><strong>Management wants ROI numbers</strong></td><td>Track: hunts run, findings, detections created, time savings vs. discovery by other means</td></tr>
                     </tbody>
                 </table>
+
+                <!-- HUNT TO DETECTION -->
+                <h2 id="hunt-to-detect"><i class="fas fa-bell"></i> Converting Hunts to Detections</h2>
+
+                <h3>When to Create a Detection</h3>
+                <table>
+                    <thead><tr><th>Create Detection If...</th><th>Don't Create Detection If...</th></tr></thead>
+                    <tbody>
+                        <tr><td>Pattern is reliably malicious</td><td>Too many false positives to be useful</td></tr>
+                        <tr><td>Query performs well (fast enough)</td><td>Query is too slow/expensive for real-time</td></tr>
+                        <tr><td>Clear response action exists</td><td>Finding requires too much human judgment</td></tr>
+                        <tr><td>Pattern is likely to recur</td><td>One-time or very rare occurrence</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Detection Creation Process</h3>
+                <ol>
+                    <li><strong>Refine query</strong> - Optimize for performance, reduce FPs</li>
+                    <li><strong>Test historically</strong> - Run against 30+ days of data</li>
+                    <li><strong>Document FP patterns</strong> - What legitimate activity matches?</li>
+                    <li><strong>Create exclusions</strong> - Filter out known good</li>
+                    <li><strong>Write response procedure</strong> - What should analyst do when it fires?</li>
+                    <li><strong>Deploy in audit mode</strong> - Monitor before alerting</li>
+                    <li><strong>Tune and enable</strong> - Adjust thresholds, enable alerting</li>
+                </ol>
+
+                <!-- DOCUMENTING HUNTS -->
+                <h2 id="documentation"><i class="fas fa-file-alt"></i> Hunt Documentation</h2>
+
+                <table>
+                    <thead><tr><th>Document</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Hypothesis</strong></td><td>Others can repeat or build on your work</td></tr>
+                        <tr><td><strong>Data sources used</strong></td><td>Know what's covered and what's not</td></tr>
+                        <tr><td><strong>Queries used</strong></td><td>Reusable for future hunts</td></tr>
+                        <tr><td><strong>Results summary</strong></td><td>What did you find (or not find)?</td></tr>
+                        <tr><td><strong>False positive patterns</strong></td><td>Don't re-investigate same FPs next time</td></tr>
+                        <tr><td><strong>Recommendations</strong></td><td>Detections to create, gaps to address</td></tr>
+                        <tr><td><strong>Time spent</strong></td><td>Track effort for resource planning</td></tr>
+                    </tbody>
+                </table>
+
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../js/main.js"></script>
 </body>

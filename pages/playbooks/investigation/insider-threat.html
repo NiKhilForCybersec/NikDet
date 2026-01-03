@@ -19,385 +19,433 @@
                 <span>Insider Threat</span>
             </div>
 
-            <div class="playbook-header">
-                <div class="playbook-id">INV-010</div>
-                <h1>Insider Threat Investigation</h1>
-                <p class="lead">Comprehensive investigation playbook for insider threat incidents. Covers data theft, sabotage, policy violations, and departing employee scenarios with HR and Legal coordination requirements.</p>
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-crosshairs"></i> MITRE ATT&CK Mapping</div>
-                    <p style="margin: 0.3rem 0;">Insider threats map to multiple MITRE techniques: <strong>T1005</strong> (Data from Local System), <strong>T1039</strong> (Data from Network Shared Drive), <strong>T1567</strong> (Exfiltration Over Web Service), <strong>T1048</strong> (Exfiltration Over Alternative Protocol), <strong>T1052</strong> (Exfiltration Over Physical Medium), <strong>T1485</strong> (Data Destruction - sabotage), <strong>T1489</strong> (Service Stop - sabotage).</p>
-                </div>
-                <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">4-8 hours</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Team</span><span class="playbook-meta-value">SOC + HR + Legal</span></div>
-                </div>
-            </div>
+            <h1><i class="fas fa-user-secret"></i> Insider Threat Investigation</h1>
+            <p class="lead">Investigating potential malicious or negligent insider activity - a sensitive investigation requiring careful handling.</p>
 
             <div class="content">
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-balance-scale"></i> Legal and HR Coordination Required</div>
-                    <p style="margin: 0.3rem 0;">Insider threat investigations have significant legal and employment law implications. ALWAYS coordinate with HR and Legal before taking any action that could affect employment. Maintain strict confidentiality, follow evidence chain of custody, and document all activities meticulously.</p>
-                </div>
+                <!-- WHY THIS MATTERS -->
+                <h2 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h2>
 
-                <h2 id="overview">Insider Threat Categories</h2>
-                <table>
-                    <thead><tr><th>Type</th><th>Motivation</th><th>Indicators</th><th>Risk Level</th><th>Response Approach</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Malicious Insider</strong></td><td>Financial gain, revenge, ideology</td><td>Data hoarding, unusual access, policy violations</td><td>Critical</td><td>Covert investigation, legal action</td></tr>
-                        <tr><td><strong>Departing Employee</strong></td><td>Take work to new job</td><td>Mass downloads before leaving, personal device use</td><td>High</td><td>Exit monitoring, quick containment</td></tr>
-                        <tr><td><strong>Negligent Insider</strong></td><td>Unintentional mistakes</td><td>Policy violations, accidental exposure</td><td>Medium</td><td>Training, process improvement</td></tr>
-                        <tr><td><strong>Compromised Insider</strong></td><td>Account/credential theft</td><td>Unusual behavior, login anomalies</td><td>High</td><td>Treat as external attack</td></tr>
-                        <tr><td><strong>Colluding Insider</strong></td><td>Working with external party</td><td>Competitor contact, unusual communications</td><td>Critical</td><td>Law enforcement coordination</td></tr>
-                        <tr><td><strong>Disgruntled Employee</strong></td><td>Sabotage, revenge</td><td>Recent discipline, denied promotion, conflict</td><td>High</td><td>Immediate access review</td></tr>
-                        <tr><td><strong>Second Streamer</strong></td><td>Side business/moonlighting</td><td>Using company resources for personal gain</td><td>Medium</td><td>HR policy enforcement</td></tr>
-                    </tbody>
-                </table>
-
-                <h2 id="step1">Step 1: Initial Assessment (30 min)</h2>
-
-                <h3>1.1 Trigger Analysis</h3>
-                <table>
-                    <thead><tr><th>Trigger Type</th><th>Source</th><th>Urgency</th><th>Initial Response</th></tr></thead>
-                    <tbody>
-                        <tr><td>DLP alert</td><td>DLP system</td><td>Varies by data</td><td>Assess data sensitivity, volume</td></tr>
-                        <tr><td>Manager report</td><td>HR/Management</td><td>Medium</td><td>Document concerns, gather specifics</td></tr>
-                        <tr><td>Departing employee</td><td>HR notification</td><td>High</td><td>Proactive monitoring activation</td></tr>
-                        <tr><td>Behavioral anomaly</td><td>UEBA/analytics</td><td>Medium</td><td>Baseline comparison</td></tr>
-                        <tr><td>Anonymous tip</td><td>Ethics hotline</td><td>Varies</td><td>Validate, investigate quietly</td></tr>
-                        <tr><td>Audit finding</td><td>Internal audit</td><td>Medium</td><td>Review audit details</td></tr>
-                        <tr><td>Peer observation</td><td>Coworker report</td><td>Low-Medium</td><td>Corroborate with data</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>1.2 Employee Context (Coordinate with HR)</h3>
-                <table>
-                    <thead><tr><th>Information</th><th>Source</th><th>Relevance</th></tr></thead>
-                    <tbody>
-                        <tr><td>Employment status</td><td>HR system</td><td>Active, notice period, PIP, terminated?</td></tr>
-                        <tr><td>Role and access level</td><td>IAM, HR</td><td>What should they legitimately access?</td></tr>
-                        <tr><td>Recent performance issues</td><td>HR</td><td>Disciplinary action, denied promotion?</td></tr>
-                        <tr><td>Resignation date</td><td>HR</td><td>Timeline for departure monitoring</td></tr>
-                        <tr><td>New employer (if known)</td><td>HR/Manager</td><td>Competitor? Similar industry?</td></tr>
-                        <tr><td>Access to sensitive data</td><td>Data classification</td><td>What sensitive data can they reach?</td></tr>
-                        <tr><td>Previous incidents</td><td>HR/Security</td><td>Prior warnings or concerns?</td></tr>
-                        <tr><td>Financial stress indicators</td><td>HR (carefully)</td><td>Payroll issues, garnishments?</td></tr>
-                    </tbody>
-                </table>
-
-                <h2 id="step2">Step 2: Establish Behavioral Baseline (30 min)</h2>
-
-                <h3>2.1 Normal Activity Patterns</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Historical working hours pattern</span>
-let targetUser = "user@company.com";
-SigninLogs
-| where TimeGenerated between (ago(90d) .. ago(7d)) // Historical baseline
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| extend Hour = hourofday(TimeGenerated)
-| extend DayOfWeek = dayofweek(TimeGenerated)
-| summarize LoginCount = count() by Hour, DayOfWeek
-| order by DayOfWeek asc, Hour asc
-
-<span style="color: #6aa3f7;">// KQL - Typical applications accessed</span>
-SigninLogs
-| where TimeGenerated between (ago(90d) .. ago(7d))
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| summarize 
-    AccessCount = count(),
-    LastAccess = max(TimeGenerated)
-    by AppDisplayName
-| order by AccessCount desc
-
-<span style="color: #6aa3f7;">// KQL - Normal file access volume</span>
-DeviceFileEvents
-| where TimeGenerated between (ago(90d) .. ago(7d))
-| where InitiatingProcessAccountName =~ "username"
-| where ActionType in ("FileRead", "FileCopied")
-| summarize DailyFiles = count() by bin(TimeGenerated, 1d)
-| summarize 
-    AvgDailyFiles = round(avg(DailyFiles), 0),
-    MaxDailyFiles = max(DailyFiles),
-    StdDevFiles = round(stdev(DailyFiles), 0)
-
-<span style="color: #6aa3f7;">// KQL - Historical data transfer volume</span>
-DeviceNetworkEvents
-| where TimeGenerated between (ago(90d) .. ago(7d))
-| where InitiatingProcessAccountName =~ "username"
-| where RemoteIPType == "Public"
-| summarize 
-    DailySent = sum(SentBytes),
-    DailyReceived = sum(ReceivedBytes)
-    by bin(TimeGenerated, 1d)
-| summarize 
-    AvgDailySentMB = round(avg(DailySent) / 1048576.0, 2),
-    MaxDailySentMB = round(max(DailySent) / 1048576.0, 2)</pre>
-                </div>
-
-                <h2 id="step3">Step 3: Anomaly Detection (45 min)</h2>
-
-                <h3>3.1 Access Anomalies</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Off-hours activity (compared to baseline)</span>
-let targetUser = "user@company.com";
-SigninLogs
-| where TimeGenerated > ago(30d)
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| extend Hour = hourofday(TimeGenerated)
-| extend DayOfWeek = dayofweek(TimeGenerated)
-| where Hour < 6 or Hour > 22 or DayOfWeek in (0d, 6d)
-| project TimeGenerated, Hour, DayOfWeek, AppDisplayName, 
-    IPAddress, DeviceDetail
-
-<span style="color: #6aa3f7;">// KQL - First-time system access</span>
-let targetUser = "user@company.com";
-let recentApps = SigninLogs
-| where TimeGenerated > ago(7d)
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| distinct AppDisplayName;
-let historicalApps = SigninLogs
-| where TimeGenerated between (ago(90d) .. ago(7d))
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| distinct AppDisplayName;
-recentApps
-| join kind=leftanti historicalApps on AppDisplayName
-// Shows apps accessed recently that were never accessed before
-
-<span style="color: #6aa3f7;">// KQL - Spike in file access volume</span>
-let targetUser = "username";
-let baseline = DeviceFileEvents
-| where TimeGenerated between (ago(90d) .. ago(7d))
-| where InitiatingProcessAccountName =~ targetUser
-| summarize DailyFiles = count() by bin(TimeGenerated, 1d)
-| summarize AvgDaily = avg(DailyFiles), StdDev = stdev(DailyFiles);
-DeviceFileEvents
-| where TimeGenerated > ago(7d)
-| where InitiatingProcessAccountName =~ targetUser
-| summarize RecentDaily = count() by bin(TimeGenerated, 1d)
-| extend AvgBaseline = toscalar(baseline | project AvgDaily)
-| extend StdDevBaseline = toscalar(baseline | project StdDev)
-| extend ZScore = (RecentDaily - AvgBaseline) / StdDevBaseline
-| where ZScore > 3 // More than 3 standard deviations above normal
-
-<span style="color: #6aa3f7;">// KQL - Access to systems outside normal scope</span>
-let targetUser = "user@company.com";
-// Get user's normal systems from historical data
-let normalSystems = SigninLogs
-| where TimeGenerated between (ago(90d) .. ago(14d))
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| distinct AppDisplayName, ResourceDisplayName;
-// Find recent access to new systems
-SigninLogs
-| where TimeGenerated > ago(14d)
-| where UserPrincipalName =~ targetUser
-| where ResultType == 0
-| join kind=leftanti normalSystems on AppDisplayName
-| project TimeGenerated, AppDisplayName, IPAddress</pre>
-                </div>
-
-                <h3>3.2 Data Access Anomalies</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Access to sensitive directories</span>
-let targetUser = "username";
-let sensitivePaths = dynamic([
-    "HR", "Finance", "Legal", "Executive", "Confidential",
-    "Restricted", "M&A", "Contracts", "Salary", "Payroll",
-    "Customer", "Trade Secret", "Source Code"
-]);
-DeviceFileEvents
-| where TimeGenerated > ago(30d)
-| where InitiatingProcessAccountName =~ targetUser
-| where FolderPath has_any (sensitivePaths)
-| summarize 
-    AccessCount = count(),
-    FilesAccessed = dcount(FileName),
-    TotalSize = sum(FileSize)
-    by FolderPath
-| order by AccessCount desc
-
-<span style="color: #6aa3f7;">// KQL - Mass file downloads/copies</span>
-let targetUser = "username";
-DeviceFileEvents
-| where TimeGenerated > ago(14d)
-| where InitiatingProcessAccountName =~ targetUser
-| where ActionType in ("FileRead", "FileCopied")
-| summarize 
-    FileCount = count(),
-    TotalSize = sum(FileSize),
-    UniqueFiles = dcount(FileName)
-    by bin(TimeGenerated, 1h), DeviceName
-| where FileCount > 100 or TotalSize > 104857600 // 100 files or 100 MB
-| extend SizeMB = round(TotalSize / 1048576.0, 2)
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// KQL - Database query patterns</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(30d)
-| where AccountName =~ "targetuser"
-| where FileName in~ ("sqlcmd.exe", "sqlplus.exe", "mysql.exe",
-    "psql.exe", "mongo.exe", "bcp.exe")
-| project TimeGenerated, DeviceName, FileName, ProcessCommandLine
-
-<span style="color: #6aa3f7;">// KQL - Search queries indicating data hunting</span>
-DeviceEvents
-| where TimeGenerated > ago(30d)
-| where AccountName =~ "targetuser"
-| where ActionType == "SearchQuery"
-| where AdditionalFields has_any ("password", "confidential",
-    "salary", "customer list", "source code", "trade secret")
-| project TimeGenerated, SearchQuery = AdditionalFields</pre>
-                </div>
-
-                <h2 id="step4">Step 4: Exfiltration Analysis (30 min)</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Emails to personal accounts</span>
-let targetUser = "target.user@company.com";
-let personalDomains = dynamic(["gmail.com", "yahoo.com", 
-    "hotmail.com", "outlook.com", "icloud.com", "protonmail.com"]);
-EmailEvents
-| where TimeGenerated > ago(90d)
-| where SenderFromAddress =~ targetUser
-| extend RecipientDomain = tostring(split(RecipientEmailAddress, "@")[1])
-| where RecipientDomain in (personalDomains)
-| summarize 
-    EmailCount = count(),
-    WithAttachments = countif(AttachmentCount > 0),
-    Recipients = make_set(RecipientEmailAddress, 5)
-| extend RiskIndicator = iff(WithAttachments > 10, "HIGH", 
-    iff(WithAttachments > 3, "MEDIUM", "LOW"))
-
-<span style="color: #6aa3f7;">// KQL - Cloud storage uploads</span>
-DeviceNetworkEvents
-| where TimeGenerated > ago(30d)
-| where InitiatingProcessAccountName =~ "targetuser"
-| where RemoteUrl has_any ("dropbox.com", "drive.google.com",
-    "onedrive.live.com", "box.com", "mega.nz", "wetransfer.com")
-| where SentBytes > 1048576 // 1 MB
-| summarize 
-    TotalSentMB = round(sum(SentBytes) / 1048576.0, 2),
-    Connections = count()
-    by RemoteUrl, bin(TimeGenerated, 1d)
-| order by TotalSentMB desc
-
-<span style="color: #6aa3f7;">// KQL - USB device usage</span>
-DeviceEvents
-| where TimeGenerated > ago(30d)
-| where AccountName =~ "targetuser"
-| where ActionType == "PnpDeviceConnected"
-| where DeviceDescription has_any ("USB", "Removable", "Mass Storage")
-| project TimeGenerated, DeviceName, DeviceDescription, DeviceId
-
-<span style="color: #6aa3f7;">// KQL - Printing activity (often overlooked)</span>
-DeviceEvents
-| where TimeGenerated > ago(30d)
-| where AccountName =~ "targetuser"
-| where ActionType == "PrintJobStart"
-| summarize PrintJobs = count() by bin(TimeGenerated, 1d)
-| where PrintJobs > 20 // Unusual print volume
-
-<span style="color: #6aa3f7;">// KQL - Archive file creation</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(30d)
-| where AccountName =~ "targetuser"
-| where FileName in~ ("7z.exe", "winrar.exe", "zip.exe", "tar.exe")
-| project TimeGenerated, DeviceName, ProcessCommandLine
-
-<span style="color: #6aa3f7;">// KQL - Screenshots and screen recording</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(30d)
-| where AccountName =~ "targetuser"
-| where FileName in~ ("snippingtool.exe", "screenshotx.exe", 
-    "obs64.exe", "camtasia.exe", "sharex.exe")
-| project TimeGenerated, DeviceName, FileName, ProcessCommandLine</pre>
-                </div>
-
-                <h2 id="step5">Step 5: Communication Analysis (20 min)</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Emails to competitors (if known)</span>
-let targetUser = "target.user@company.com";
-let competitorDomains = dynamic(["competitor1.com", "competitor2.com",
-    "competitor3.com"]);
-EmailEvents
-| where TimeGenerated > ago(180d)
-| where SenderFromAddress =~ targetUser
-| extend RecipientDomain = tostring(split(RecipientEmailAddress, "@")[1])
-| where RecipientDomain in (competitorDomains)
-| project TimeGenerated, RecipientEmailAddress, Subject, AttachmentCount
-
-<span style="color: #6aa3f7;">// KQL - External email patterns</span>
-EmailEvents
-| where TimeGenerated > ago(90d)
-| where SenderFromAddress =~ "target.user@company.com"
-| where RecipientEmailAddress !endswith "@company.com"
-| extend RecipientDomain = tostring(split(RecipientEmailAddress, "@")[1])
-| summarize EmailCount = count() by RecipientDomain
-| order by EmailCount desc
-// Review for unusual or unexpected external contacts
-
-<span style="color: #6aa3f7;">// KQL - Teams/Slack messages to external</span>
-CloudAppEvents
-| where TimeGenerated > ago(30d)
-| where AccountDisplayName =~ "Target User"
-| where Application in ("Microsoft Teams", "Slack")
-| where ActionType has "Message"
-| where RawEventData has "external" or RawEventData has "guest"
-| project TimeGenerated, ActionType, RawEventData</pre>
-                </div>
-
-                <h2 id="containment">Containment Options</h2>
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> HR and Legal Approval Required</div>
-                    <p style="margin: 0.3rem 0;">Do NOT take containment actions without explicit HR and Legal approval. Premature action can compromise legal proceedings, violate employment law, or alert the subject.</p>
-                </div>
-
-                <table>
-                    <thead><tr><th>Action</th><th>Impact Level</th><th>When to Use</th><th>HR/Legal Approval</th></tr></thead>
-                    <tbody>
-                        <tr><td>Enhanced monitoring</td><td>Low - covert</td><td>Gathering more evidence</td><td>Recommended</td></tr>
-                        <tr><td>Restrict sensitive data access</td><td>Medium</td><td>Limiting potential damage</td><td>Required</td></tr>
-                        <tr><td>Disable external email</td><td>Medium</td><td>Active exfil via email</td><td>Required</td></tr>
-                        <tr><td>Block cloud storage</td><td>Medium</td><td>Active cloud uploads</td><td>Required</td></tr>
-                        <tr><td>Disable USB ports</td><td>Medium</td><td>USB exfil confirmed</td><td>Required</td></tr>
-                        <tr><td>Revoke VPN access</td><td>Medium-High</td><td>Remote access concern</td><td>Required</td></tr>
-                        <tr><td>Account suspension</td><td>High - visible</td><td>Immediate threat</td><td>Required</td></tr>
-                        <tr><td>Device seizure</td><td>High - visible</td><td>Forensic investigation</td><td>Required + Legal</td></tr>
-                    </tbody>
-                </table>
-
-                <h2 id="evidence">Evidence Collection Requirements</h2>
-                <table>
-                    <thead><tr><th>Evidence Type</th><th>Collection Method</th><th>Chain of Custody</th><th>Legal Admissibility</th></tr></thead>
-                    <tbody>
-                        <tr><td>Disk image</td><td>Forensic imaging (FTK, EnCase)</td><td>Hash verification, secure storage</td><td>High</td></tr>
-                        <tr><td>Email archive</td><td>eDiscovery/Legal hold</td><td>Litigation hold, export logs</td><td>High</td></tr>
-                        <tr><td>Log exports</td><td>SIEM export, timestamped</td><td>Analyst documentation</td><td>Medium-High</td></tr>
-                        <tr><td>Network captures</td><td>PCAP with timestamps</td><td>Hash, analyst notes</td><td>Medium</td></tr>
-                        <tr><td>Screenshots</td><td>Timestamped captures</td><td>Signed and dated</td><td>Medium</td></tr>
-                        <tr><td>Access reports</td><td>System audit logs</td><td>Export with metadata</td><td>High</td></tr>
-                        <tr><td>Physical evidence</td><td>USB drives, phones (with legal)</td><td>Custody form, sealed storage</td><td>High</td></tr>
-                    </tbody>
-                </table>
-
-                <h2 id="escalation">Escalation Criteria</h2>
                 <div class="info-box danger">
-                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li>Confirmed data exfiltration in progress</li>
-                        <li>Access to trade secrets or critical IP confirmed</li>
-                        <li>Evidence of collusion with competitors</li>
-                        <li>Sabotage of systems or data detected</li>
-                        <li>Multiple insiders involved</li>
-                        <li>Evidence of fraud or financial crimes</li>
-                        <li>Classified or regulated data involved</li>
-                        <li>Subject appears aware of investigation</li>
+                    <div class="info-box-title"><i class="fas fa-user-shield"></i> The Insider Threat Reality</div>
+                    <p style="margin: 0.5rem 0;">Insiders have legitimate access, know where valuable data is, and understand security controls. They're the hardest threats to detect and can cause the most damage.</p>
+                    <table>
+                        <thead><tr><th>Insider Type</th><th>Motivation</th><th>Typical Actions</th><th>Damage Potential</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Malicious</strong></td><td>Financial gain, revenge, ideology</td><td>Data theft, sabotage, fraud</td><td>Very High</td></tr>
+                            <tr><td><strong>Negligent</strong></td><td>Convenience, ignorance</td><td>Policy violations, mishandling data</td><td>Medium-High</td></tr>
+                            <tr><td><strong>Compromised</strong></td><td>Coerced, credentials stolen</td><td>Used as attack vector</td><td>High</td></tr>
+                            <tr><td><strong>Departing</strong></td><td>Take work product, competitive advantage</td><td>Mass data download, IP theft</td><td>High</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Why Insiders Are Different</h3>
+                <table>
+                    <thead><tr><th>External Attacker</th><th>Insider Threat</th></tr></thead>
+                    <tbody>
+                        <tr><td>Must break in</td><td>Already has access</td></tr>
+                        <tr><td>Limited knowledge of environment</td><td>Knows where valuable data lives</td></tr>
+                        <tr><td>Must evade detection systems</td><td>Legitimate activity blends in</td></tr>
+                        <tr><td>Unknown identity</td><td>Known, trusted individual</td></tr>
+                        <tr><td>Technical investigation</td><td>HR, legal, technical coordination required</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- WHEN TO USE -->
+                <h2 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h2>
+
+                <h3>Insider Threat Indicators</h3>
+                <table>
+                    <thead><tr><th>Indicator Category</th><th>Specific Signs</th><th>Confidence</th><th>Source</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>Data exfiltration</strong></td><td>Large USB copies, cloud uploads, email attachments</td><td>High</td><td>DLP, CASB, EDR</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Access anomalies</strong></td><td>Accessing data outside job scope</td><td>Medium-High</td><td>DLP, file access logs</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Resignation + data activity</strong></td><td>Data downloads after giving notice</td><td>High</td><td>HR + DLP correlation</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Off-hours activity</strong></td><td>Unusual access times, especially sensitive data</td><td>Medium</td><td>Auth logs, file access</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Privilege abuse</strong></td><td>Using admin access for non-job purposes</td><td>Medium</td><td>Privileged access logs</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Policy violations</strong></td><td>Repeated security policy violations</td><td>Low-Medium</td><td>DLP, email security</td></tr>
+                        <tr><td style="color: #d29922;"><strong>HR-reported concerns</strong></td><td>Behavioral changes, disgruntlement reported</td><td>Variable</td><td>HR referral</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Context That Increases Risk</h3>
+                <table>
+                    <thead><tr><th>Context</th><th>Why It Matters</th><th>Risk Multiplier</th></tr></thead>
+                    <tbody>
+                        <tr><td>Employee gave notice / departing</td><td>Highest risk period for data theft</td><td>High</td></tr>
+                        <tr><td>Recent negative performance review</td><td>Potential resentment, retaliation</td><td>Medium</td></tr>
+                        <tr><td>Access to sensitive data (IP, PII, financial)</td><td>Higher value targets</td><td>High</td></tr>
+                        <tr><td>Privileged access (admin, developer)</td><td>More capability to cause damage</td><td>High</td></tr>
+                        <tr><td>Known financial difficulties</td><td>Motivation for theft/fraud</td><td>Medium</td></tr>
+                        <tr><td>Working for competitor soon</td><td>Direct motive for IP theft</td><td>Very High</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- CRITICAL CONSIDERATIONS -->
+                <h2 id="critical"><i class="fas fa-gavel"></i> Critical Investigation Considerations</h2>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> IMPORTANT: Legal and HR Coordination</div>
+                    <p style="margin: 0.5rem 0;"><strong>Insider threat investigations are NOT like other security investigations.</strong></p>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li><strong>Involve HR and Legal EARLY</strong> - Before extensive investigation</li>
+                        <li><strong>Document everything</strong> - May be used in legal proceedings</li>
+                        <li><strong>Maintain confidentiality</strong> - Do not discuss with colleagues</li>
+                        <li><strong>Avoid tipping off the subject</strong> - Don't alert them to investigation</li>
+                        <li><strong>Follow company policy</strong> - Every organization has specific requirements</li>
+                        <li><strong>Consider privacy laws</strong> - GDPR, local regulations may apply</li>
                     </ul>
                 </div>
+
+                <h3>What NOT to Do</h3>
+                <table>
+                    <thead><tr><th>Don't</th><th>Why</th><th>Instead</th></tr></thead>
+                    <tbody>
+                        <tr><td>Confront the employee yourself</td><td>Could compromise investigation, legal issues</td><td>Coordinate through HR</td></tr>
+                        <tr><td>Discuss with other team members</td><td>Rumors spread, may tip off subject</td><td>Need-to-know only</td></tr>
+                        <tr><td>Access employee's personal accounts</td><td>Privacy violations, inadmissible</td><td>Focus on corporate data only</td></tr>
+                        <tr><td>Make assumptions about guilt</td><td>May be innocent, could be compromised</td><td>Investigate objectively</td></tr>
+                        <tr><td>Rush to containment</td><td>May alert subject, lose evidence</td><td>Plan containment carefully with HR/Legal</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- DECISION FRAMEWORK -->
+                <h2 id="decisions"><i class="fas fa-sitemap"></i> Investigation Decision Framework</h2>
+
+                <h3>Severity Assessment</h3>
+                <table>
+                    <thead><tr><th>Factor</th><th>Low</th><th>Medium</th><th>High</th><th>Critical</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Data sensitivity</strong></td><td>Public/internal</td><td>Confidential</td><td>Restricted/PII</td><td>Trade secrets/critical IP</td></tr>
+                        <tr><td><strong>Data volume</strong></td><td>Few files</td><td>Moderate</td><td>Large volume</td><td>Systematic collection</td></tr>
+                        <tr><td><strong>Employee status</strong></td><td>Current, no issues</td><td>Performance concerns</td><td>Gave notice</td><td>Terminated/joining competitor</td></tr>
+                        <tr><td><strong>Evidence strength</strong></td><td>Anomaly only</td><td>Suspicious pattern</td><td>Clear policy violation</td><td>Confirmed exfiltration</td></tr>
+                        <tr><td><strong>Intent indicators</strong></td><td>Possibly accidental</td><td>Negligent</td><td>Deliberate</td><td>Malicious/premeditated</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Investigation vs. Monitoring Decision</h3>
+                <table>
+                    <thead><tr><th>Investigate Now If...</th><th>Monitor First If...</th></tr></thead>
+                    <tbody>
+                        <tr><td>Clear data exfiltration evidence</td><td>Anomaly without clear malicious intent</td></tr>
+                        <tr><td>Employee departing imminently</td><td>Employee not leaving, time to observe</td></tr>
+                        <tr><td>High-value data involved</td><td>Low-sensitivity data</td></tr>
+                        <tr><td>HR/Legal request immediate action</td><td>Preliminary assessment phase</td></tr>
+                        <tr><td>Evidence may be destroyed</td><td>No immediate risk of evidence loss</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- HOW TO INVESTIGATE -->
+                <h2 id="how-to"><i class="fas fa-search"></i> How to Investigate</h2>
+
+                <h3>Step 1: Establish Scope with HR/Legal</h3>
+                <table>
+                    <thead><tr><th>Discuss</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr><td>What triggered the concern?</td><td>Understand the specific allegations</td></tr>
+                        <tr><td>What data/systems should we examine?</td><td>Define investigation scope</td></tr>
+                        <tr><td>What's the employee's status?</td><td>Influences urgency and approach</td></tr>
+                        <tr><td>Any legal holds or constraints?</td><td>Ensure compliance</td></tr>
+                        <tr><td>Who needs to be informed?</td><td>Maintain confidentiality appropriately</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Step 2: Collect Evidence</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - File access patterns for user</span>
+DeviceFileEvents
+| where Timestamp > ago(90d)
+| where InitiatingProcessAccountName =~ "suspect-user"
+| where ActionType in ("FileRead", "FileCopied", "FileModified")
+| summarize 
+    FileCount = count(),
+    UniqueFiles = dcount(FileName),
+    DataVolume = sum(FileSize)
+    by bin(Timestamp, 1d)
+| order by Timestamp asc
+
+<span style="color: #6aa3f7;">// KQL - USB/removable media activity</span>
+DeviceEvents
+| where Timestamp > ago(90d)
+| where DeviceName == "USER-DEVICE"
+| where ActionType in ("UsbDriveMounted", "RemovableStorageFileEvent")
+| project Timestamp, ActionType, AdditionalFields
+
+<span style="color: #6aa3f7;">// KQL - Cloud upload activity</span>
+CloudAppEvents
+| where Timestamp > ago(90d)
+| where AccountId =~ "suspect-user@company.com"
+| where ActionType in ("FileUploaded", "FileShared")
+| summarize UploadCount = count(), DataMB = sum(toint(RawEventData.size))/1048576 
+    by Application, bin(Timestamp, 1d)
+
+<span style="color: #6aa3f7;">// KQL - Email with attachments to personal/external</span>
+EmailEvents
+| where Timestamp > ago(90d)
+| where SenderFromAddress =~ "suspect-user@company.com"
+| where RecipientEmailAddress !endswith "company.com"
+| where AttachmentCount > 0
+| project Timestamp, RecipientEmailAddress, Subject, AttachmentCount
+</pre>
+                </div>
+
+                <h3>Step 3: Establish Baseline vs. Anomaly</h3>
+                <table>
+                    <thead><tr><th>Compare</th><th>Baseline (Normal)</th><th>Anomaly (Suspicious)</th></tr></thead>
+                    <tbody>
+                        <tr><td>Data access volume</td><td>Similar to previous months</td><td>10x normal volume</td></tr>
+                        <tr><td>Access times</td><td>Business hours</td><td>Middle of night, weekends</td></tr>
+                        <tr><td>Data types accessed</td><td>Related to job function</td><td>Outside job scope</td></tr>
+                        <tr><td>External sharing</td><td>To known partners/clients</td><td>To personal accounts, competitors</td></tr>
+                        <tr><td>Device usage</td><td>Corporate devices only</td><td>Personal devices, USB</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Step 4: Timeline Reconstruction</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Why It Matters</th></tr></thead>
+                    <tbody>
+                        <tr><td>When did anomalous behavior start?</td><td>May correlate with trigger event</td></tr>
+                        <tr><td>Is there a pattern (time of day, day of week)?</td><td>Indicates deliberate vs. accidental</td></tr>
+                        <tr><td>What was accessed vs. what was taken?</td><td>Shows intent and scope</td></tr>
+                        <tr><td>Where did data go?</td><td>Critical for impact assessment</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- WHAT IF SCENARIOS -->
+                <h2 id="what-if"><i class="fas fa-random"></i> What If Scenarios</h2>
+
+                <table>
+                    <thead><tr><th>What If...</th><th>Then...</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Employee is still employed and unaware?</strong></td><td>Maintain secrecy, coordinate with HR on approach</td><td>Tipping off allows evidence destruction</td></tr>
+                        <tr><td><strong>Employee already left the company?</strong></td><td>Preserve all data immediately, legal hold, may need forensic imaging</td><td>Can't collect more evidence after departure</td></tr>
+                        <tr><td><strong>Data went to competitor?</strong></td><td>Escalate to Legal immediately, may involve litigation</td><td>Trade secret theft has legal remedies</td></tr>
+                        <tr><td><strong>Activity looks negligent, not malicious?</strong></td><td>Still document, HR may address via training/policy</td><td>Negligence still causes damage</td></tr>
+                        <tr><td><strong>Investigation finds nothing concrete?</strong></td><td>Document findings, may implement enhanced monitoring with HR approval</td><td>Absence of evidence isn't proof of innocence</td></tr>
+                        <tr><td><strong>Employee may be compromised (credentials stolen)?</strong></td><td>Shift to account compromise investigation, different approach</td><td>They may be victim, not perpetrator</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- CONTAINMENT -->
+                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h2>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Coordinate All Actions with HR/Legal</div>
+                    <p>Unlike external threats, containment of insider threats has employment law implications. Every action must be coordinated.</p>
+                </div>
+
+                <table>
+                    <thead><tr><th>Action</th><th>When Appropriate</th><th>Considerations</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Enhanced monitoring</strong></td><td>Suspicion but no proof</td><td>Must comply with monitoring policies</td></tr>
+                        <tr><td><strong>Access restriction</strong></td><td>Clear risk, coordinated with HR</td><td>May tip off employee</td></tr>
+                        <tr><td><strong>Device collection</strong></td><td>Departure or termination</td><td>Forensic imaging before return</td></tr>
+                        <tr><td><strong>Account disable</strong></td><td>Termination or immediate risk</td><td>Coordinate with HR termination</td></tr>
+                        <tr><td><strong>Legal hold</strong></td><td>Any potential litigation</td><td>Preserve all related data</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- DOCUMENTATION -->
+                <h2 id="documentation"><i class="fas fa-file-alt"></i> Documentation Requirements</h2>
+
+                <table>
+                    <thead><tr><th>Document</th><th>Contents</th><th>Why</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Investigation log</strong></td><td>All actions, findings, timestamps</td><td>May be used in legal proceedings</td></tr>
+                        <tr><td><strong>Evidence inventory</strong></td><td>What was collected, chain of custody</td><td>Admissibility in court</td></tr>
+                        <tr><td><strong>Data impact assessment</strong></td><td>What data was accessed/taken</td><td>Determine business impact</td></tr>
+                        <tr><td><strong>Communication log</strong></td><td>Who was informed, when</td><td>Demonstrate proper handling</td></tr>
+                        <tr><td><strong>Final report</strong></td><td>Summary for HR/Legal/Management</td><td>Decision support for next steps</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- ESCALATION -->
+                <h2 id="escalation"><i class="fas fa-arrow-up"></i> Escalation Criteria</h2>
+
+                <div class="info-box danger">
+                    <div class="info-box-title">Immediate Escalation Required When:</div>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li>Trade secrets or critical IP confirmed exfiltrated</li>
+                        <li>Data sent to competitor</li>
+                        <li>Large-scale PII exposure</li>
+                        <li>Evidence of fraud or financial crime</li>
+                        <li>Employee is executive or has privileged access</li>
+                        <li>Evidence destruction occurring</li>
+                        <li>Any indication of criminal activity</li>
+                    </ul>
+                </div>
+
+    <script src="../../../js/main.js"></script>
+
+                <!-- BEHAVIORAL INDICATORS -->
+                <h2 id="behavioral"><i class="fas fa-user-clock"></i> Behavioral Indicators Deep Dive</h2>
+
+                <h3>Technical Indicators</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Detection Method</th><th>False Positive Consideration</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Bulk file downloads</td>
+                            <td>DLP, file access volume anomaly</td>
+                            <td>May be legitimate project work - check job function</td>
+                        </tr>
+                        <tr>
+                            <td>USB device usage spike</td>
+                            <td>Endpoint DLP, device events</td>
+                            <td>Some roles legitimately use USB frequently</td>
+                        </tr>
+                        <tr>
+                            <td>Personal cloud storage access</td>
+                            <td>CASB, proxy logs</td>
+                            <td>May access for personal reasons on break</td>
+                        </tr>
+                        <tr>
+                            <td>Print volume increase</td>
+                            <td>Print server logs</td>
+                            <td>End of quarter reports, presentations</td>
+                        </tr>
+                        <tr>
+                            <td>After-hours network access</td>
+                            <td>Auth logs, VPN logs</td>
+                            <td>Some roles work odd hours legitimately</td>
+                        </tr>
+                        <tr>
+                            <td>Email forwarding to personal</td>
+                            <td>Email rules audit</td>
+                            <td>May be convenience, still policy violation</td>
+                        </tr>
+                        <tr>
+                            <td>Screenshot/recording tools</td>
+                            <td>EDR process monitoring</td>
+                            <td>May be used for legitimate documentation</td>
+                        </tr>
+                        <tr>
+                            <td>Archive creation before transfer</td>
+                            <td>EDR file events</td>
+                            <td>Creating archives is common - check destination</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>HR/Behavioral Correlations</h3>
+                <table>
+                    <thead><tr><th>HR Event</th><th>Risk Window</th><th>Recommended Action</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Employee gave notice</td>
+                            <td>Immediately through last day</td>
+                            <td>Enhanced monitoring, access review, exit interview</td>
+                        </tr>
+                        <tr>
+                            <td>Passed over for promotion</td>
+                            <td>30-60 days after</td>
+                            <td>Manager awareness, baseline monitoring</td>
+                        </tr>
+                        <tr>
+                            <td>Negative performance review</td>
+                            <td>30-90 days after</td>
+                            <td>Manager follow-up, awareness</td>
+                        </tr>
+                        <tr>
+                            <td>Announced layoffs in department</td>
+                            <td>Until layoffs complete</td>
+                            <td>Enhanced monitoring for affected groups</td>
+                        </tr>
+                        <tr>
+                            <td>Contract ending</td>
+                            <td>30 days before end</td>
+                            <td>Access review, enhanced monitoring</td>
+                        </tr>
+                        <tr>
+                            <td>Workplace conflict reported</td>
+                            <td>Variable</td>
+                            <td>Coordinate with HR on appropriate monitoring</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- INVESTIGATION QUERIES -->
+                <h2 id="queries"><i class="fas fa-terminal"></i> Additional Investigation Queries</h2>
+
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - User activity timeline (comprehensive)</span>
+let targetUser = "suspect-user@company.com";
+let lookback = 90d;
+union
+    (SigninLogs | where TimeGenerated > ago(lookback) | where UserPrincipalName =~ targetUser 
+     | project TimeGenerated, Activity = "SignIn", Details = strcat(AppDisplayName, " from ", IPAddress))),
+    (AuditLogs | where TimeGenerated > ago(lookback) | where InitiatedBy.user.userPrincipalName =~ targetUser
+     | project TimeGenerated, Activity = "AuditAction", Details = OperationName),
+    (CloudAppEvents | where Timestamp > ago(lookback) | where AccountId =~ targetUser
+     | project TimeGenerated = Timestamp, Activity = ActionType, Details = strcat(Application, ": ", ObjectName))
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Compare user to peer group</span>
+let targetUser = "suspect-user";
+let targetDept = "Engineering";  // Adjust to user's department
+let lookback = 30d;
+DeviceFileEvents
+| where Timestamp > ago(lookback)
+| extend Department = iff(InitiatingProcessAccountName == targetUser, "Target", targetDept)
+| summarize FileActions = count(), UniqueFiles = dcount(FileName) 
+    by InitiatingProcessAccountName, Department
+| order by FileActions desc
+
+<span style="color: #6aa3f7;">// KQL - Sensitive file access</span>
+DeviceFileEvents
+| where Timestamp > ago(90d)
+| where InitiatingProcessAccountName =~ "suspect-user"
+| where FolderPath has_any ("confidential", "restricted", "secret", "hr", "finance", "legal", "executive")
+| project Timestamp, FileName, FolderPath, ActionType
+
+<span style="color: #6aa3f7;">// KQL - Data movement to external destinations</span>
+DeviceNetworkEvents
+| where Timestamp > ago(90d)
+| where InitiatingProcessAccountName =~ "suspect-user"
+| where RemoteUrl has_any ("dropbox", "drive.google", "onedrive.live", "box.com", "wetransfer", "mega.nz")
+| summarize Uploads = count(), DataBytes = sum(SentBytes) by RemoteUrl, bin(Timestamp, 1d)
+</pre>
+                </div>
+
+                <!-- INTERVIEW SUPPORT -->
+                <h2 id="interview"><i class="fas fa-comments"></i> Investigation Interview Support</h2>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-user-tie"></i> Note: HR Conducts Interviews</div>
+                    <p>Security provides technical findings to support HR-led conversations. You typically won't interview the employee directly.</p>
+                </div>
+
+                <h3>Evidence Package for HR</h3>
+                <table>
+                    <thead><tr><th>Provide</th><th>Format</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                        <tr><td>Timeline of suspicious activity</td><td>Chronological list with timestamps</td><td>Shows pattern of behavior</td></tr>
+                        <tr><td>Specific policy violations</td><td>Activity mapped to policy</td><td>Clear basis for discussion</td></tr>
+                        <tr><td>Comparison to normal behavior</td><td>Charts showing deviation</td><td>Context for anomaly</td></tr>
+                        <tr><td>Data inventory accessed/taken</td><td>List of files/data</td><td>Understand what's at risk</td></tr>
+                        <tr><td>Destination of data</td><td>Where data was sent</td><td>Assess intent</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- PREVENTION -->
+                <h2 id="prevention"><i class="fas fa-shield-virus"></i> Prevention and Detection Improvements</h2>
+
+                <h3>Post-Investigation Recommendations</h3>
+                <table>
+                    <thead><tr><th>Finding</th><th>Recommendation</th><th>Owner</th></tr></thead>
+                    <tbody>
+                        <tr><td>Data exfil via USB undetected</td><td>Implement USB DLP controls</td><td>Security Engineering</td></tr>
+                        <tr><td>Access beyond job requirements</td><td>Implement least privilege, regular access reviews</td><td>IAM Team</td></tr>
+                        <tr><td>No baseline for user behavior</td><td>Deploy UEBA solution</td><td>Security Operations</td></tr>
+                        <tr><td>HR events not correlated</td><td>Create HR-Security information sharing process</td><td>HR + Security</td></tr>
+                        <tr><td>Departing employee monitoring gap</td><td>Standard enhanced monitoring for departing employees</td><td>HR + Security</td></tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>
@@ -406,31 +454,3 @@ CloudAppEvents
     <script src="../../../js/main.js"></script>
 </body>
 </html>
-
-                <h2 id="what-to-look-for">What to Look For - Behavioral Red Flags</h2>
-                <table>
-                    <thead><tr><th>Behavior</th><th>Risk Indicator</th><th>Investigation Focus</th></tr></thead>
-                    <tbody>
-                        <tr><td>Working unusual hours consistently</td><td>Medium - avoiding oversight?</td><td>What are they doing during those hours?</td></tr>
-                        <tr><td>Accessing systems outside job role</td><td>High - scope creep or reconnaissance</td><td>What systems? What data?</td></tr>
-                        <tr><td>Mass file downloads/copies</td><td>High - potential data theft</td><td>What files? Where did they go?</td></tr>
-                        <tr><td>USB device usage spike</td><td>High - physical exfiltration</td><td>What was copied? What devices?</td></tr>
-                        <tr><td>Personal email large attachments</td><td>High - exfiltration channel</td><td>What was sent? To whom?</td></tr>
-                        <tr><td>Cloud storage uploads</td><td>High - personal cloud = exfil</td><td>What service? What volume?</td></tr>
-                        <tr><td>Printing spike</td><td>Medium - physical copies</td><td>What documents? Business need?</td></tr>
-                        <tr><td>Screenshot/screen recording tools</td><td>Medium-High - capturing data</td><td>What applications were open?</td></tr>
-                        <tr><td>Accessing after resignation notice</td><td>Critical - departing insider</td><td>Immediate monitoring required</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Questions to Ask (Not the User - The Data)</h3>
-                <ul>
-                    <li><strong>Timeline:</strong> When did the suspicious behavior start? What changed?</li>
-                    <li><strong>Pattern:</strong> Is this a one-time event or ongoing pattern?</li>
-                    <li><strong>Volume:</strong> How much data is involved? Is it unusual?</li>
-                    <li><strong>Destination:</strong> Where is the data going? Can we trace it?</li>
-                    <li><strong>Context:</strong> Is there a legitimate business reason this could be innocent?</li>
-                    <li><strong>History:</strong> Has this user had previous DLP/policy alerts?</li>
-                    <li><strong>Employment status:</strong> Resigned? On PIP? Recent discipline? Denied promotion?</li>
-                </ul>
-

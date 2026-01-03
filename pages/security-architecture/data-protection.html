@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Protection & DLP Configuration | SOC Compendium</title>
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Security Architecture</a><span class="separator">/</span>
+                <span>Data Protection</span>
+            </div>
+
+            <h1>Data Protection & DLP Configuration</h1>
+            <p class="lead">Complete guide to implementing data classification, DLP policies, encryption, and data governance across enterprise environments.</p>
+
+            <div class="content">
+                <h2 id="classification">Data Classification Framework</h2>
+
+                <h3>Classification Levels</h3>
+                <table>
+                    <thead><tr><th>Level</th><th>Label</th><th>Description</th><th>Examples</th><th>Handling Requirements</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>1</strong></td><td>Restricted</td><td>Highest sensitivity, severe impact if disclosed</td><td>M&A data, trade secrets, passwords, PCI</td><td>Encryption required, need-to-know, no external sharing</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>2</strong></td><td>Confidential</td><td>Sensitive business data, significant impact</td><td>Financial reports, HR data, customer PII, contracts</td><td>Encryption recommended, internal sharing controlled</td></tr>
+                        <tr><td style="color: #d29922;"><strong>3</strong></td><td>Internal</td><td>Internal use only, minor impact</td><td>Policies, org charts, internal communications</td><td>No external sharing without approval</td></tr>
+                        <tr><td style="color: #3fb950;"><strong>4</strong></td><td>Public</td><td>Approved for public release</td><td>Marketing materials, public website content</td><td>No restrictions</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Sensitive Information Types (SITs)</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Type</th><th>Pattern/Detection</th><th>Confidence</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>PII</strong></td><td>Social Security Number</td><td>XXX-XX-XXXX with keyword context</td><td>High</td></tr>
+                        <tr><td><strong>PII</strong></td><td>Driver's License</td><td>State-specific patterns</td><td>Medium</td></tr>
+                        <tr><td><strong>PII</strong></td><td>Passport Number</td><td>Country-specific patterns</td><td>Medium</td></tr>
+                        <tr><td><strong>Financial</strong></td><td>Credit Card Number</td><td>Luhn validation + BIN</td><td>High</td></tr>
+                        <tr><td><strong>Financial</strong></td><td>Bank Account (ABA)</td><td>9-digit routing + account</td><td>Medium</td></tr>
+                        <tr><td><strong>Financial</strong></td><td>SWIFT Code</td><td>8-11 character pattern</td><td>Medium</td></tr>
+                        <tr><td><strong>Health</strong></td><td>Medical Record Number</td><td>Custom pattern per organization</td><td>Medium</td></tr>
+                        <tr><td><strong>Health</strong></td><td>Health Insurance ID</td><td>Various payer patterns</td><td>Medium</td></tr>
+                        <tr><td><strong>Credentials</strong></td><td>API Keys</td><td>Service-specific patterns (AWS, Azure)</td><td>High</td></tr>
+                        <tr><td><strong>Credentials</strong></td><td>Passwords in files</td><td>Keyword + pattern matching</td><td>Medium</td></tr>
+                        <tr><td><strong>IP</strong></td><td>Source Code</td><td>File extensions + keywords</td><td>Low-Medium</td></tr>
+                        <tr><td><strong>IP</strong></td><td>Project Codenames</td><td>Custom dictionary</td><td>Custom</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dlp-policies">DLP Policy Configuration</h2>
+
+                <h3>Microsoft Purview DLP - Policy Framework</h3>
+                <table>
+                    <thead><tr><th>Policy</th><th>Location</th><th>Content</th><th>Action</th><th>Override</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>DLP-001-Block-PCI-External</strong></td><td>Exchange, SharePoint, OneDrive, Teams, Endpoint</td><td>Credit card numbers ≥5</td><td>Block + notify user + alert admin</td><td>Business justification</td></tr>
+                        <tr><td><strong>DLP-002-Block-SSN-External</strong></td><td>Exchange, SharePoint, OneDrive, Teams, Endpoint</td><td>SSN ≥1</td><td>Block + notify user + alert admin</td><td>Manager approval</td></tr>
+                        <tr><td><strong>DLP-003-Warn-PII-External</strong></td><td>Exchange, SharePoint, OneDrive, Teams</td><td>Any PII external sharing</td><td>Warn + require justification</td><td>Yes with logging</td></tr>
+                        <tr><td><strong>DLP-004-Block-Source-Code</strong></td><td>Endpoint, Exchange</td><td>Source code files (.py, .java, .cs)</td><td>Block USB + external email</td><td>IT approval</td></tr>
+                        <tr><td><strong>DLP-005-Block-Credentials</strong></td><td>All locations</td><td>API keys, connection strings</td><td>Block + alert SOC</td><td>No override</td></tr>
+                        <tr><td><strong>DLP-006-Audit-Confidential</strong></td><td>All locations</td><td>Confidential label</td><td>Audit only</td><td>N/A</td></tr>
+                        <tr><td><strong>DLP-007-Restrict-HR-Data</strong></td><td>All locations</td><td>HR-tagged content</td><td>Block non-HR access</td><td>HR approval</td></tr>
+                        <tr><td><strong>DLP-008-Block-Bulk-Download</strong></td><td>Endpoint</td><td>>100 files/hr or >500MB</td><td>Block + alert SOC</td><td>No override</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Endpoint DLP Configuration</h3>
+                <table>
+                    <thead><tr><th>Activity</th><th>Default Action</th><th>Sensitive Content Action</th><th>Monitoring</th></tr></thead>
+                    <tbody>
+                        <tr><td>Copy to USB</td><td>Audit</td><td>Block (Restricted), Warn (Confidential)</td><td>All activities logged</td></tr>
+                        <tr><td>Copy to network share</td><td>Allow</td><td>Audit (all levels)</td><td>All activities logged</td></tr>
+                        <tr><td>Upload to cloud storage</td><td>Audit</td><td>Block (non-approved apps)</td><td>All activities logged</td></tr>
+                        <tr><td>Copy to clipboard</td><td>Allow</td><td>Audit only</td><td>Sensitive content only</td></tr>
+                        <tr><td>Print</td><td>Allow</td><td>Warn (Confidential), Block (Restricted)</td><td>Sensitive content only</td></tr>
+                        <tr><td>Access by unallowed apps</td><td>Block</td><td>Block + notify</td><td>All blocked attempts</td></tr>
+                        <tr><td>RDP copy/paste</td><td>Audit</td><td>Block (Restricted)</td><td>All activities logged</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Approved Cloud Apps for DLP</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Approved Apps</th><th>Blocked Apps</th><th>Action on Blocked</th></tr></thead>
+                    <tbody>
+                        <tr><td>File Storage</td><td>OneDrive, SharePoint, Box (corporate)</td><td>Dropbox personal, Google Drive personal, Mega</td><td>Block upload</td></tr>
+                        <tr><td>Email</td><td>Outlook, corporate Gmail</td><td>Personal email services</td><td>Block attachment</td></tr>
+                        <tr><td>Collaboration</td><td>Teams, Slack (corporate)</td><td>Discord, WhatsApp</td><td>Block file sharing</td></tr>
+                        <tr><td>File Transfer</td><td>Corporate SFTP</td><td>WeTransfer, SendSpace, Firefox Send</td><td>Block upload</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="sensitivity-labels">Sensitivity Labels Configuration</h2>
+
+                <h3>Label Configuration</h3>
+                <table>
+                    <thead><tr><th>Label</th><th>Encryption</th><th>Watermark</th><th>Header/Footer</th><th>Access Expiry</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Public</strong></td><td>None</td><td>None</td><td>None</td><td>None</td></tr>
+                        <tr><td><strong>Internal</strong></td><td>None</td><td>None</td><td>"Internal Use Only"</td><td>None</td></tr>
+                        <tr><td><strong>Confidential</strong></td><td>Encrypt (org users only)</td><td>"Confidential"</td><td>"Confidential - Do Not Distribute"</td><td>None</td></tr>
+                        <tr><td><strong>Confidential - External</strong></td><td>Encrypt (specific recipients)</td><td>"Confidential"</td><td>Yes</td><td>30 days</td></tr>
+                        <tr><td><strong>Restricted</strong></td><td>Encrypt (specific users only)</td><td>"Restricted" diagonal</td><td>"RESTRICTED - NEED TO KNOW"</td><td>7 days</td></tr>
+                        <tr><td><strong>Restricted - Project X</strong></td><td>Encrypt (project team only)</td><td>Custom watermark</td><td>Project-specific</td><td>Revocable</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Auto-Labeling Rules</h3>
+                <table>
+                    <thead><tr><th>Rule</th><th>Condition</th><th>Applied Label</th><th>Scope</th></tr></thead>
+                    <tbody>
+                        <tr><td>Credit card detection</td><td>≥1 credit card number</td><td>Confidential</td><td>All files</td></tr>
+                        <tr><td>SSN detection</td><td>≥1 SSN</td><td>Restricted</td><td>All files</td></tr>
+                        <tr><td>HR folder</td><td>Location = HR SharePoint</td><td>Confidential</td><td>HR sites</td></tr>
+                        <tr><td>Finance reports</td><td>Keywords: "Q1 Results", "Financial Statement"</td><td>Confidential</td><td>Finance sites</td></tr>
+                        <tr><td>Source code</td><td>File extension .py, .java, .cs, .cpp</td><td>Internal</td><td>Dev repos</td></tr>
+                        <tr><td>Executive communications</td><td>From/To executive group</td><td>Confidential</td><td>Email</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="encryption-config">Encryption Configuration</h2>
+
+                <h3>Azure Information Protection Encryption Settings</h3>
+                <table>
+                    <thead><tr><th>Setting</th><th>Confidential</th><th>Restricted</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>Algorithm</td><td>AES-256</td><td>AES-256</td><td>Industry standard</td></tr>
+                        <tr><td>Access rights - View</td><td>All org users</td><td>Specific users/groups</td><td>Need-to-know for restricted</td></tr>
+                        <tr><td>Access rights - Edit</td><td>All org users</td><td>Specific users/groups</td><td>Controlled modification</td></tr>
+                        <tr><td>Access rights - Print</td><td>Allowed</td><td>Blocked</td><td>Prevent physical copies</td></tr>
+                        <tr><td>Access rights - Copy</td><td>Allowed</td><td>Blocked</td><td>Prevent data extraction</td></tr>
+                        <tr><td>Access rights - Forward</td><td>Allowed</td><td>Blocked</td><td>Prevent redistribution</td></tr>
+                        <tr><td>Offline access</td><td>30 days</td><td>7 days</td><td>Re-authentication required</td></tr>
+                        <tr><td>Content expiry</td><td>None</td><td>Configurable</td><td>Time-limited access</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="dlp-monitoring">DLP Monitoring & Alerts</h2>
+
+                <h3>DLP Alert Configuration</h3>
+                <table>
+                    <thead><tr><th>Alert</th><th>Trigger</th><th>Severity</th><th>Notification</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>High volume DLP hits</td><td>>10 hits/hour same user</td><td>High</td><td>SOC + Manager</td><td>Investigate for exfil</td></tr>
+                        <tr><td>Restricted data external</td><td>Any restricted label external</td><td>Critical</td><td>SOC + DLP team</td><td>Immediate investigation</td></tr>
+                        <tr><td>Policy override</td><td>User overrides DLP block</td><td>Medium</td><td>Manager</td><td>Review justification</td></tr>
+                        <tr><td>USB sensitive data</td><td>Confidential+ to USB</td><td>High</td><td>SOC + Manager</td><td>Verify authorization</td></tr>
+                        <tr><td>Departing employee DLP</td><td>Any DLP hit by departing user</td><td>High</td><td>SOC + HR</td><td>Immediate review</td></tr>
+                        <tr><td>Cloud upload blocked</td><td>Upload to unsanctioned cloud</td><td>Medium</td><td>User + audit</td><td>User awareness</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>DLP Monitoring Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin: 0.5rem 0;">
+<pre style="margin: 0;">
+<span style="color: #6aa3f7;">// KQL - DLP policy matches by user</span>
+DLPEvent
+| where TimeGenerated > ago(24h)
+| summarize Matches = count(), Policies = make_set(PolicyName) by UserPrincipalName
+| where Matches > 5
+| order by Matches desc
+
+<span style="color: #6aa3f7;">// KQL - DLP blocks and overrides</span>
+DLPEvent
+| where TimeGenerated > ago(7d)
+| where ActionTaken in ("Block", "Override")
+| summarize 
+    Blocks = countif(ActionTaken == "Block"),
+    Overrides = countif(ActionTaken == "Override")
+    by PolicyName
+
+<span style="color: #6aa3f7;">// KQL - Sensitive data to external</span>
+DLPEvent
+| where TimeGenerated > ago(24h)
+| where DestinationType == "External"
+| where SensitiveInfoTypes has_any ("Credit Card", "SSN", "PII")
+| project TimeGenerated, UserPrincipalName, FileName, SensitiveInfoTypes, Destination
+
+<span style="color: #6aa3f7;">// KQL - Endpoint DLP - USB activity</span>
+DeviceEvents
+| where ActionType == "RemovableStorageFileEvent"
+| where AdditionalFields has "Sensitive"
+| summarize FileCount = count(), TotalSize = sum(tolong(AdditionalFields.FileSize)) by AccountName, DeviceName
+
+<span style="color: #6aa3f7;">// SPL - DLP violations summary</span>
+index=dlp action=block OR action=warn
+| stats count by user, policy, action, destination_type
+| where count > 3
+</pre>
+                </div>
+
+                <h2 id="data-governance">Data Governance</h2>
+
+                <h3>Retention Policies</h3>
+                <table>
+                    <thead><tr><th>Data Type</th><th>Retention</th><th>Location</th><th>Legal Hold</th></tr></thead>
+                    <tbody>
+                        <tr><td>Email - general</td><td>7 years</td><td>Exchange Online</td><td>Override retention</td></tr>
+                        <tr><td>Email - executive</td><td>10 years</td><td>Exchange Online</td><td>Override retention</td></tr>
+                        <tr><td>Teams chat</td><td>7 years</td><td>Teams</td><td>Override retention</td></tr>
+                        <tr><td>SharePoint - general</td><td>7 years</td><td>SharePoint Online</td><td>Override retention</td></tr>
+                        <tr><td>HR records</td><td>Employee tenure + 7 years</td><td>HR Systems + SharePoint</td><td>Override retention</td></tr>
+                        <tr><td>Financial records</td><td>7 years (SOX)</td><td>Finance systems</td><td>Override retention</td></tr>
+                        <tr><td>Healthcare records</td><td>6 years (HIPAA minimum)</td><td>EHR systems</td><td>Override retention</td></tr>
+                        <tr><td>Security logs</td><td>1 year hot, 7 years archive</td><td>SIEM + archive</td><td>Override retention</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="../../js/main.js"></script>
+</body>
+</html>

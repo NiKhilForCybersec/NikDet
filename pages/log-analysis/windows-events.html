@@ -3,24 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Windows Event Logs | SOC Compendium</title>
+    <title>Windows Event Log Analysis | SOC Compendium</title>
     <link rel="stylesheet" href="../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        .event-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); margin: 1rem 0; overflow: hidden; }
-        .event-card-header { padding: 0.75rem 1rem; background: var(--bg-tertiary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
-        .event-id { font-family: var(--font-mono); font-weight: 700; color: var(--accent-primary); }
-        .event-name { font-weight: 600; }
-        .event-card-body { padding: 1rem; }
-        .event-importance { padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.7rem; font-weight: 600; }
-        .event-importance.critical { background: rgba(240,112,112,0.2); color: #f07070; }
-        .event-importance.high { background: rgba(240,183,86,0.2); color: #f0b756; }
-        .event-importance.medium { background: rgba(106,163,247,0.2); color: #6aa3f7; }
-        .field-table { margin: 0.5rem 0; font-size: 0.85rem; }
-        .field-table td { padding: 0.25rem 0.5rem; }
-        .field-name { font-family: var(--font-mono); color: var(--accent-secondary); }
-    </style>
 </head>
 <body>
     <nav class="main-nav">
@@ -28,190 +13,324 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="index.html">Log Analysis</a><span class="separator">/</span><span>Windows Events</span></div>
-            <div class="page-header">
-                <h1><i class="fab fa-windows" style="color: #0078d4;"></i> Windows Event Logs</h1>
-                <p class="lead">Master the Windows Event Log - the foundation of Windows security monitoring.</p>
+            <div class="breadcrumb">
+                <a href="../../index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Log Analysis</a><span class="separator">/</span>
+                <span>Windows Events</span>
             </div>
+
+            <h1>Windows Event Log Analysis</h1>
+            <p class="lead">Complete reference for Windows Security, System, and Application event log analysis. Master the critical event IDs, understand what they mean, and learn how to use them for threat detection.</p>
+
             <div class="content">
-                <h2>Windows Event Log Overview</h2>
-                <p>Windows Event Logs are the primary source of security telemetry on Windows systems. Understanding these logs is essential for every SOC analyst.</p>
+                <h2 id="overview">Overview</h2>
+                <p>Windows Event Logs are the foundation of endpoint visibility on Windows systems. Security events capture authentication, authorization, and audit information critical for detecting attacks. Understanding which events to monitor and how to analyze them is essential for effective threat detection.</p>
 
-                <h3>Log Locations</h3>
+                <h2 id="critical-events">Critical Security Events</h2>
+                
+                <h3>Authentication Events</h3>
                 <table>
-                    <thead><tr><th>Log Name</th><th>Path</th><th>Security Value</th></tr></thead>
+                    <thead><tr><th>Event ID</th><th>Name</th><th>Description</th><th>Key Fields</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Security</strong></td><td><code>%SystemRoot%\System32\Winevt\Logs\Security.evtx</code></td><td>Authentication, authorization, audit events</td></tr>
-                        <tr><td><strong>System</strong></td><td><code>%SystemRoot%\System32\Winevt\Logs\System.evtx</code></td><td>Service changes, driver loading</td></tr>
-                        <tr><td><strong>Application</strong></td><td><code>%SystemRoot%\System32\Winevt\Logs\Application.evtx</code></td><td>Application errors, some security events</td></tr>
-                        <tr><td><strong>PowerShell</strong></td><td><code>Microsoft-Windows-PowerShell/Operational</code></td><td>PowerShell execution, scripts</td></tr>
-                        <tr><td><strong>Sysmon</strong></td><td><code>Microsoft-Windows-Sysmon/Operational</code></td><td>Enhanced process/network/file monitoring</td></tr>
+                        <tr><td><strong>4624</strong></td><td>Successful Logon</td><td>An account successfully logged on</td><td>LogonType, TargetUserName, IpAddress, WorkstationName</td></tr>
+                        <tr><td><strong>4625</strong></td><td>Failed Logon</td><td>An account failed to log on</td><td>FailureReason, TargetUserName, IpAddress, Status</td></tr>
+                        <tr><td><strong>4634</strong></td><td>Logoff</td><td>An account was logged off</td><td>TargetUserName, LogonType</td></tr>
+                        <tr><td><strong>4648</strong></td><td>Explicit Credentials</td><td>Logon using explicit credentials (RunAs)</td><td>SubjectUserName, TargetUserName, TargetServerName</td></tr>
+                        <tr><td><strong>4672</strong></td><td>Special Privileges</td><td>Admin/special privileges assigned to logon</td><td>SubjectUserName, PrivilegeList</td></tr>
+                        <tr><td><strong>4776</strong></td><td>NTLM Auth (DC)</td><td>DC validated credentials (NTLM)</td><td>TargetUserName, Workstation, Status</td></tr>
+                        <tr><td><strong>4768</strong></td><td>TGT Requested (DC)</td><td>Kerberos TGT was requested</td><td>TargetUserName, IpAddress, ServiceName</td></tr>
+                        <tr><td><strong>4769</strong></td><td>Service Ticket (DC)</td><td>Kerberos service ticket requested</td><td>TargetUserName, ServiceName, IpAddress</td></tr>
+                        <tr><td><strong>4771</strong></td><td>Pre-Auth Failed (DC)</td><td>Kerberos pre-authentication failed</td><td>TargetUserName, IpAddress, FailureCode</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Critical Security Events</h2>
-                <p>These are the most important Event IDs for security monitoring. Learn them by heart.</p>
-
-                <h3 style="color: #6aa3f7;"><i class="fas fa-key"></i> Authentication Events</h3>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">4624</span> - <span class="event-name">Successful Logon</span></div>
-                        <span class="event-importance critical">Critical</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>Generated when a user successfully logs on. One of the most important events for tracking user activity.</p>
-                        <h4>Key Fields</h4>
-                        <table class="field-table">
-                            <tr><td class="field-name">SubjectUserName</td><td>Account that performed the logon operation</td></tr>
-                            <tr><td class="field-name">TargetUserName</td><td>Account that was logged on</td></tr>
-                            <tr><td class="field-name">LogonType</td><td>How the logon occurred (see table below)</td></tr>
-                            <tr><td class="field-name">IpAddress</td><td>Source IP for network logons</td></tr>
-                            <tr><td class="field-name">WorkstationName</td><td>Source hostname</td></tr>
-                        </table>
-                        <h4>Logon Types</h4>
-                        <table>
-                            <thead><tr><th>Type</th><th>Name</th><th>Description</th><th>Security Notes</th></tr></thead>
-                            <tbody>
-                                <tr><td>2</td><td>Interactive</td><td>Console logon</td><td>Physical or KVM access</td></tr>
-                                <tr><td>3</td><td>Network</td><td>SMB, mapped drive</td><td>Common for lateral movement</td></tr>
-                                <tr><td>4</td><td>Batch</td><td>Scheduled task</td><td>Check for suspicious tasks</td></tr>
-                                <tr><td>5</td><td>Service</td><td>Service started</td><td>Service account usage</td></tr>
-                                <tr><td>7</td><td>Unlock</td><td>Workstation unlock</td><td>User returned to workstation</td></tr>
-                                <tr><td>10</td><td>RemoteInteractive</td><td>RDP session</td><td>Monitor for unusual sources</td></tr>
-                                <tr><td>11</td><td>CachedInteractive</td><td>Cached domain creds</td><td>Offline logon</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">4625</span> - <span class="event-name">Failed Logon</span></div>
-                        <span class="event-importance critical">Critical</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>Generated when a logon attempt fails. Essential for detecting brute force and password spray attacks.</p>
-                        <h4>Common Status Codes</h4>
-                        <table>
-                            <thead><tr><th>Status</th><th>SubStatus</th><th>Meaning</th></tr></thead>
-                            <tbody>
-                                <tr><td>0xC000006D</td><td>0xC000006A</td><td>Bad password</td></tr>
-                                <tr><td>0xC000006D</td><td>0xC0000064</td><td>User doesn't exist</td></tr>
-                                <tr><td>0xC0000234</td><td>-</td><td>Account locked out</td></tr>
-                                <tr><td>0xC0000072</td><td>-</td><td>Account disabled</td></tr>
-                                <tr><td>0xC0000193</td><td>-</td><td>Account expired</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <h3 style="color: #5ce0c4; margin-top: 2rem;"><i class="fas fa-cog"></i> Process Events</h3>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">4688</span> - <span class="event-name">Process Creation</span></div>
-                        <span class="event-importance critical">Critical</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>Generated when a new process is created. Foundation of endpoint detection.</p>
-                        <h4>Key Fields</h4>
-                        <table class="field-table">
-                            <tr><td class="field-name">NewProcessName</td><td>Full path to executable</td></tr>
-                            <tr><td class="field-name">CommandLine</td><td>Full command line (requires GPO)</td></tr>
-                            <tr><td class="field-name">ParentProcessName</td><td>Process that launched this one</td></tr>
-                            <tr><td class="field-name">SubjectUserName</td><td>User who started the process</td></tr>
-                        </table>
-                        <div class="info-box info" style="margin-top: 1rem;">
-                            <div class="info-box-title"><i class="fas fa-info-circle"></i> Enable Command Line Logging</div>
-                            <p style="margin: 0.5rem 0;">Command line is NOT logged by default. Enable via Group Policy.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <h3 style="color: #f0b756; margin-top: 2rem;"><i class="fas fa-users"></i> Account Management</h3>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">4720</span> - <span class="event-name">User Account Created</span></div>
-                        <span class="event-importance high">High</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>A new user account was created. Could be legitimate provisioning or attacker persistence.</p>
-                    </div>
-                </div>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">4728/4732/4756</span> - <span class="event-name">Member Added to Group</span></div>
-                        <span class="event-importance high">High</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>A member was added to a security group. Critical for privilege escalation detection.</p>
-                        <p><strong>4728:</strong> Global group | <strong>4732:</strong> Local group | <strong>4756:</strong> Universal group</p>
-                    </div>
-                </div>
-
-                <h3 style="color: #a78bf6; margin-top: 2rem;"><i class="fas fa-clock"></i> Persistence Mechanisms</h3>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">4698</span> - <span class="event-name">Scheduled Task Created</span></div>
-                        <span class="event-importance high">High</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>A scheduled task was created. Common persistence mechanism for attackers.</p>
-                    </div>
-                </div>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">7045</span> - <span class="event-name">Service Installed (System Log)</span></div>
-                        <span class="event-importance high">High</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>A new service was installed. Note: This is in the System log, not Security.</p>
-                    </div>
-                </div>
-
-                <h3 style="color: #f07070; margin-top: 2rem;"><i class="fas fa-exclamation-triangle"></i> Defense Evasion</h3>
-
-                <div class="event-card">
-                    <div class="event-card-header">
-                        <div><span class="event-id">1102</span> - <span class="event-name">Audit Log Cleared</span></div>
-                        <span class="event-importance critical">Critical</span>
-                    </div>
-                    <div class="event-card-body">
-                        <p>The Security event log was cleared. Strong indicator of attacker covering tracks.</p>
-                        <div class="info-box danger" style="margin-top: 1rem;">
-                            <div class="info-box-title"><i class="fas fa-skull"></i> Always Investigate</div>
-                            <p style="margin: 0;">This event should ALWAYS trigger an investigation. There is almost never a legitimate reason to clear the Security log.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <h2>Quick Reference Table</h2>
+                <h3>Logon Type Reference</h3>
                 <table>
-                    <thead><tr><th>Event ID</th><th>Name</th><th>Log</th><th>Priority</th></tr></thead>
+                    <thead><tr><th>Type</th><th>Name</th><th>Description</th><th>Security Relevance</th></tr></thead>
                     <tbody>
-                        <tr><td>4624</td><td>Successful Logon</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
-                        <tr><td>4625</td><td>Failed Logon</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
-                        <tr><td>4648</td><td>Explicit Credential Logon</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
-                        <tr><td>4688</td><td>Process Creation</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
-                        <tr><td>4720</td><td>User Created</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
-                        <tr><td>4728/32/56</td><td>Member Added to Group</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
-                        <tr><td>4698</td><td>Scheduled Task Created</td><td>Security</td><td style="color: #f0b756;">High</td></tr>
-                        <tr><td>4768</td><td>Kerberos TGT Request</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
-                        <tr><td>4769</td><td>Kerberos Service Ticket</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
-                        <tr><td>4776</td><td>NTLM Authentication</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
-                        <tr><td>5140</td><td>Network Share Accessed</td><td>Security</td><td style="color: #6aa3f7;">Medium</td></tr>
-                        <tr><td>7045</td><td>Service Installed</td><td>System</td><td style="color: #f0b756;">High</td></tr>
-                        <tr><td>1102</td><td>Audit Log Cleared</td><td>Security</td><td style="color: #f07070;">Critical</td></tr>
+                        <tr><td><strong>2</strong></td><td>Interactive</td><td>Console logon (keyboard)</td><td>Physical access or RDP</td></tr>
+                        <tr><td><strong>3</strong></td><td>Network</td><td>Network logon (file share, etc)</td><td>Lateral movement indicator</td></tr>
+                        <tr><td><strong>4</strong></td><td>Batch</td><td>Scheduled task execution</td><td>Persistence mechanism</td></tr>
+                        <tr><td><strong>5</strong></td><td>Service</td><td>Service started</td><td>Service account activity</td></tr>
+                        <tr><td><strong>7</strong></td><td>Unlock</td><td>Workstation unlocked</td><td>User activity</td></tr>
+                        <tr><td><strong>8</strong></td><td>NetworkCleartext</td><td>Network with cleartext creds</td><td>Credential exposure risk</td></tr>
+                        <tr><td><strong>9</strong></td><td>NewCredentials</td><td>Cloned token with new creds</td><td>RunAs behavior</td></tr>
+                        <tr><td><strong>10</strong></td><td>RemoteInteractive</td><td>RDP/Terminal Services</td><td>Remote access</td></tr>
+                        <tr><td><strong>11</strong></td><td>CachedInteractive</td><td>Cached domain credentials</td><td>Offline logon</td></tr>
                     </tbody>
                 </table>
+
+                <h3>Account Management Events</h3>
+                <table>
+                    <thead><tr><th>Event ID</th><th>Name</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>4720</strong></td><td>Account Created</td><td>User account was created</td><td>Rogue account creation</td></tr>
+                        <tr><td><strong>4722</strong></td><td>Account Enabled</td><td>User account was enabled</td><td>Dormant account activation</td></tr>
+                        <tr><td><strong>4723</strong></td><td>Password Change</td><td>User attempted to change password</td><td>Password spray follow-up</td></tr>
+                        <tr><td><strong>4724</strong></td><td>Password Reset</td><td>Password reset attempted</td><td>Account takeover</td></tr>
+                        <tr><td><strong>4725</strong></td><td>Account Disabled</td><td>User account was disabled</td><td>IR containment verification</td></tr>
+                        <tr><td><strong>4726</strong></td><td>Account Deleted</td><td>User account was deleted</td><td>Evidence destruction</td></tr>
+                        <tr><td><strong>4728</strong></td><td>Member Added to Global Group</td><td>Member added to security-enabled global group</td><td>Privilege escalation</td></tr>
+                        <tr><td><strong>4732</strong></td><td>Member Added to Local Group</td><td>Member added to security-enabled local group</td><td>Local privilege escalation</td></tr>
+                        <tr><td><strong>4756</strong></td><td>Member Added to Universal Group</td><td>Member added to universal group</td><td>Enterprise privilege escalation</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Process and Object Events</h3>
+                <table>
+                    <thead><tr><th>Event ID</th><th>Name</th><th>Description</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>4688</strong></td><td>Process Creation</td><td>New process created</td><td>Command execution monitoring</td></tr>
+                        <tr><td><strong>4689</strong></td><td>Process Exit</td><td>Process exited</td><td>Process lifetime analysis</td></tr>
+                        <tr><td><strong>4697</strong></td><td>Service Installed</td><td>Service was installed</td><td>Persistence detection</td></tr>
+                        <tr><td><strong>4698</strong></td><td>Scheduled Task Created</td><td>Scheduled task created</td><td>Persistence detection</td></tr>
+                        <tr><td><strong>4699</strong></td><td>Scheduled Task Deleted</td><td>Scheduled task deleted</td><td>Evidence destruction</td></tr>
+                        <tr><td><strong>4702</strong></td><td>Scheduled Task Updated</td><td>Scheduled task updated</td><td>Task modification</td></tr>
+                        <tr><td><strong>5140</strong></td><td>Network Share Access</td><td>Network share object accessed</td><td>Lateral movement detection</td></tr>
+                        <tr><td><strong>5145</strong></td><td>Detailed Share Access</td><td>Network share with detailed access</td><td>File access auditing</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="detection-queries">Detection Queries</h2>
+
+                <h3>Brute Force Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Failed logon brute force</span>
+SecurityEvent
+| where EventID == 4625
+| summarize FailedAttempts=count(),
+    TargetAccounts=dcount(TargetUserName),
+    Accounts=make_set(TargetUserName, 10)
+    by IpAddress, bin(TimeGenerated, 5m)
+| where FailedAttempts > 10
+| order by FailedAttempts desc
+
+<span style="color: #6aa3f7;">// KQL - Password spray pattern (many users, few attempts each)</span>
+SecurityEvent
+| where EventID == 4625
+| summarize 
+    FailedAttempts=count(),
+    UniqueUsers=dcount(TargetUserName),
+    Users=make_set(TargetUserName, 50)
+    by IpAddress, bin(TimeGenerated, 15m)
+| where UniqueUsers > 5 and FailedAttempts / UniqueUsers < 3
+| order by UniqueUsers desc
+
+<span style="color: #6aa3f7;">// SPL - Brute force detection</span>
+index=windows sourcetype="WinEventLog:Security" EventCode=4625
+| bin _time span=5m
+| stats count as FailedAttempts, dc(TargetUserName) as UniqueUsers,
+    values(TargetUserName) as Accounts by IpAddress, _time
+| where FailedAttempts > 10
+| sort -FailedAttempts</pre>
+                </div>
+
+                <h3>Lateral Movement Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Network logons from workstation to workstation</span>
+SecurityEvent
+| where EventID == 4624
+| where LogonType == 3 // Network logon
+| where IpAddress !startswith "127."
+| extend SourceHost = toupper(WorkstationName)
+| extend TargetHost = toupper(Computer)
+| where SourceHost != TargetHost
+| where SourceHost !endswith "SERVER" and TargetHost !endswith "SERVER"
+| project TimeGenerated, SourceHost, TargetHost, 
+    Account=TargetUserName, IpAddress
+| summarize Connections=count() by SourceHost, TargetHost, Account
+| where Connections > 1
+
+<span style="color: #6aa3f7;">// KQL - RDP logons from unusual sources</span>
+SecurityEvent
+| where EventID == 4624
+| where LogonType == 10 // RDP
+| summarize 
+    RDPSessions=count(),
+    Sources=make_set(IpAddress)
+    by TargetUserName, Computer
+| where RDPSessions > 1
+
+<span style="color: #6aa3f7;">// KQL - Admin share access</span>
+SecurityEvent
+| where EventID == 5140
+| where ShareName in ("\\\\*\\C$", "\\\\*\\ADMIN$", "\\\\*\\IPC$")
+| project TimeGenerated, Computer, Account=SubjectUserName,
+    IpAddress, ShareName
+| order by TimeGenerated desc</pre>
+                </div>
+
+                <h3>Privilege Escalation Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - User added to privileged groups</span>
+SecurityEvent
+| where EventID in (4728, 4732, 4756)
+| extend GroupName = TargetUserName
+| where GroupName in ("Domain Admins", "Enterprise Admins",
+    "Schema Admins", "Administrators", "Account Operators",
+    "Backup Operators", "Server Operators")
+| project TimeGenerated, Computer, GroupName,
+    AddedUser=MemberName, AddedBy=SubjectUserName
+
+<span style="color: #6aa3f7;">// KQL - New admin account created</span>
+SecurityEvent
+| where EventID == 4720
+| project AccountCreated=TargetUserName, CreatedBy=SubjectUserName,
+    TimeGenerated, Computer
+| join kind=inner (
+    SecurityEvent
+    | where EventID == 4732
+    | where TargetUserName == "Administrators"
+    | project AddedUser=MemberName, TimeAdded=TimeGenerated
+) on $left.AccountCreated == $right.AddedUser
+| where TimeAdded - TimeGenerated < 1h
+| project TimeGenerated, AccountCreated, CreatedBy, TimeAdded
+
+<span style="color: #6aa3f7;">// SPL - Privileged group modifications</span>
+index=windows sourcetype="WinEventLog:Security" 
+(EventCode=4728 OR EventCode=4732 OR EventCode=4756)
+TargetUserName IN ("Domain Admins", "Administrators", 
+    "Enterprise Admins", "Schema Admins")
+| table _time, Computer, EventCode, TargetUserName, 
+    MemberName, SubjectUserName</pre>
+                </div>
+
+                <h3>Persistence Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Suspicious scheduled task creation</span>
+SecurityEvent
+| where EventID == 4698
+| extend TaskContent = tostring(EventData)
+| where TaskContent has_any ("powershell", "cmd", "wscript",
+    "\\Temp\\", "\\AppData\\", "http://", "https://")
+| project TimeGenerated, Computer, Account=SubjectUserName,
+    TaskContent
+
+<span style="color: #6aa3f7;">// KQL - Service installation (System log)</span>
+Event
+| where Source == "Service Control Manager"
+| where EventID == 7045
+| extend ServiceName = extract("Service Name:\\s+(.*?)\\s+Service", 1, RenderedDescription)
+| extend ImagePath = extract("Service File Name:\\s+(.*?)\\s+Service Type", 1, RenderedDescription)
+| where ImagePath has_any ("\\Temp\\", "\\AppData\\", "cmd",
+    "powershell", "\\Users\\")
+| project TimeGenerated, Computer, ServiceName, ImagePath
+
+<span style="color: #6aa3f7;">// SPL - Scheduled task persistence</span>
+index=windows sourcetype="WinEventLog:Security" EventCode=4698
+| rex field=TaskContent "<Command>(?<Command>[^<]+)</Command>"
+| rex field=TaskContent "<Arguments>(?<Arguments>[^<]+)</Arguments>"
+| search Command="*powershell*" OR Command="*cmd*" 
+    OR Arguments="*http*"
+| table _time, host, SubjectUserName, TaskName, Command, Arguments</pre>
+                </div>
+
+                <h3>Credential Access Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - NTLM authentication anomalies</span>
+SecurityEvent
+| where EventID == 4776
+| where Status != "0x0" // Non-success
+| summarize 
+    FailedAttempts=count(),
+    Workstations=make_set(Workstation)
+    by TargetUserName
+| where FailedAttempts > 5
+| order by FailedAttempts desc
+
+<span style="color: #6aa3f7;">// KQL - Pass-the-Hash indicators</span>
+// Look for NTLM auth (4624 Type 3) where account doesn't normally 
+// authenticate from that workstation
+SecurityEvent
+| where EventID == 4624
+| where LogonType == 3
+| where AuthenticationPackageName == "NTLM"
+| summarize 
+    FirstSeen=min(TimeGenerated),
+    Logons=count()
+    by TargetUserName, WorkstationName, Computer
+| where Logons < 3 // New/rare combination
+
+<span style="color: #6aa3f7;">// KQL - Kerberoasting (many service ticket requests)</span>
+SecurityEvent
+| where EventID == 4769
+| where ServiceName !endswith "$" // Not machine accounts
+| where ServiceName !in ("krbtgt", "kadmin")
+| where TicketEncryptionType in ("0x17", "0x18") // RC4 encryption
+| summarize 
+    Requests=count(),
+    Services=dcount(ServiceName),
+    ServiceList=make_set(ServiceName, 20)
+    by IpAddress, TargetUserName
+| where Services > 5
+| order by Services desc</pre>
+                </div>
+
+                <h2 id="sysmon">Sysmon Events</h2>
+                <p>Sysmon provides enhanced visibility beyond native Windows events.</p>
+                
+                <table>
+                    <thead><tr><th>Event ID</th><th>Name</th><th>Detection Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>1</strong></td><td>Process Creation</td><td>Full command line, hashes, parent process</td></tr>
+                        <tr><td><strong>3</strong></td><td>Network Connection</td><td>Process network connections</td></tr>
+                        <tr><td><strong>7</strong></td><td>Image Loaded</td><td>DLL loading, injection detection</td></tr>
+                        <tr><td><strong>8</strong></td><td>CreateRemoteThread</td><td>Process injection</td></tr>
+                        <tr><td><strong>10</strong></td><td>Process Access</td><td>LSASS access, credential dumping</td></tr>
+                        <tr><td><strong>11</strong></td><td>File Create</td><td>File creation monitoring</td></tr>
+                        <tr><td><strong>12</strong></td><td>Registry Create/Delete</td><td>Registry persistence</td></tr>
+                        <tr><td><strong>13</strong></td><td>Registry Value Set</td><td>Registry modifications</td></tr>
+                        <tr><td><strong>15</strong></td><td>FileCreateStreamHash</td><td>ADS creation</td></tr>
+                        <tr><td><strong>17</strong></td><td>Pipe Created</td><td>Named pipe (C2 indicator)</td></tr>
+                        <tr><td><strong>18</strong></td><td>Pipe Connected</td><td>Named pipe connection</td></tr>
+                        <tr><td><strong>19-21</strong></td><td>WMI Events</td><td>WMI persistence</td></tr>
+                        <tr><td><strong>22</strong></td><td>DNS Query</td><td>DNS-based detection</td></tr>
+                        <tr><td><strong>23</strong></td><td>File Delete</td><td>File deletion tracking</td></tr>
+                        <tr><td><strong>25</strong></td><td>Process Tampering</td><td>Process hollowing, herpaderping</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Sysmon Detection Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Process injection (CreateRemoteThread)</span>
+Event
+| where Source == "Microsoft-Windows-Sysmon"
+| where EventID == 8
+| extend SourceImage = extract("SourceImage:\\s+(.*?)\\s+", 1, RenderedDescription)
+| extend TargetImage = extract("TargetImage:\\s+(.*?)\\s+", 1, RenderedDescription)
+| where TargetImage !has SourceImage // Not self-injection
+| project TimeGenerated, Computer, SourceImage, TargetImage
+
+<span style="color: #6aa3f7;">// KQL - LSASS access (Sysmon 10)</span>
+Event
+| where Source == "Microsoft-Windows-Sysmon"
+| where EventID == 10
+| where RenderedDescription has "lsass.exe"
+| extend SourceImage = extract("SourceImage:\\s+(.*?)\\s+", 1, RenderedDescription)
+| where SourceImage !in ("C:\\Windows\\System32\\lsass.exe",
+    "C:\\Windows\\System32\\csrss.exe")
+| project TimeGenerated, Computer, SourceImage
+
+<span style="color: #6aa3f7;">// SPL - Sysmon process creation with encoded commands</span>
+index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
+EventCode=1
+(CommandLine="*-enc*" OR CommandLine="*-e *" OR CommandLine="*encodedcommand*")
+| table _time, host, User, Image, ParentImage, CommandLine</pre>
+                </div>
+
+                <h2 id="baseline">Baseline Guidance</h2>
+                <p>Before hunting, establish what's normal in your environment:</p>
+                <ul>
+                    <li><strong>Normal admin activity hours</strong> - When do IT admins work?</li>
+                    <li><strong>Expected service accounts</strong> - Which accounts should have Type 3/4/5 logons?</li>
+                    <li><strong>Authorized remote access sources</strong> - Which IPs/subnets for RDP?</li>
+                    <li><strong>Expected scheduled tasks</strong> - What tasks exist normally?</li>
+                    <li><strong>Normal PowerShell usage</strong> - What scripts run regularly?</li>
+                </ul>
+
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../js/main.js"></script>
 </body>

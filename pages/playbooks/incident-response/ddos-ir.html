@@ -9,153 +9,212 @@
 </head>
 <body>
     <nav class="main-nav">
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>DDoS IR</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>DDoS IR</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">IR-005</div>
+                <h1>DDoS Incident Response</h1>
+                <p class="lead">Comprehensive incident response playbook for Distributed Denial of Service attacks. Covers volumetric, protocol, and application layer attacks with mitigation strategies.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">Minutes to Hours</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Team</span><span class="playbook-meta-value">SOC + Network + Cloud</span></div>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-IR-004</div>
-                    <h1>DDoS Incident Response</h1>
-                    <p class="lead">Response procedures for Distributed Denial of Service attacks, from detection through mitigation and recovery.</p>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Business Impact Alert</div>
+                    <p style="margin: 0.3rem 0;">DDoS attacks directly impact service availability and customer experience. Rapid response is critical. Engage your DDoS protection provider early. Consider whether the DDoS is a distraction for another attack.</p>
                 </div>
 
-                <h2>DDoS Attack Types</h2>
+                <h2 id="classification">DDoS Attack Classification</h2>
                 <table>
-                    <thead><tr><th>Type</th><th>Layer</th><th>Method</th><th>Mitigation</th></tr></thead>
+                    <thead><tr><th>Attack Type</th><th>Layer</th><th>Characteristics</th><th>Mitigation</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Volumetric</strong></td><td>L3/L4</td><td>Flood bandwidth (UDP, ICMP)</td><td>Upstream filtering, scrubbing</td></tr>
-                        <tr><td><strong>Protocol</strong></td><td>L3/L4</td><td>Exhaust resources (SYN flood, Ping of Death)</td><td>SYN cookies, rate limiting</td></tr>
-                        <tr><td><strong>Application</strong></td><td>L7</td><td>Exhaust application (HTTP flood, Slowloris)</td><td>WAF, bot detection</td></tr>
-                        <tr><td><strong>Amplification</strong></td><td>L3/L4</td><td>Reflected traffic (DNS, NTP, Memcached)</td><td>Source validation, filtering</td></tr>
+                        <tr><td><strong>Volumetric</strong></td><td>L3/L4</td><td>High bandwidth, floods pipes</td><td>Upstream filtering, scrubbing</td></tr>
+                        <tr><td><strong>UDP Flood</strong></td><td>L4</td><td>Random UDP packets</td><td>Rate limiting, blackholing</td></tr>
+                        <tr><td><strong>ICMP Flood</strong></td><td>L3</td><td>Ping floods</td><td>ICMP rate limiting</td></tr>
+                        <tr><td><strong>SYN Flood</strong></td><td>L4</td><td>TCP handshake exhaustion</td><td>SYN cookies, rate limiting</td></tr>
+                        <tr><td><strong>DNS Amplification</strong></td><td>L4</td><td>Amplified DNS responses</td><td>Source validation, filtering</td></tr>
+                        <tr><td><strong>NTP Amplification</strong></td><td>L4</td><td>Amplified NTP responses</td><td>Source validation</td></tr>
+                        <tr><td><strong>HTTP Flood</strong></td><td>L7</td><td>Legitimate-looking requests</td><td>WAF, rate limiting, CAPTCHA</td></tr>
+                        <tr><td><strong>Slowloris</strong></td><td>L7</td><td>Connection exhaustion</td><td>Timeout tuning, connection limits</td></tr>
+                        <tr><td><strong>Application Attack</strong></td><td>L7</td><td>Expensive operations</td><td>WAF, caching, scaling</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Detection Indicators</h2>
+                <h2 id="phase1">Phase 1: Detection and Validation (5-15 min)</h2>
+
+                <h3>1.1 Confirm DDoS Attack</h3>
                 <table>
-                    <thead><tr><th>Indicator</th><th>Threshold</th><th>Detection Source</th></tr></thead>
+                    <thead><tr><th>Indicator</th><th>Check</th><th>Normal vs Attack</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Bandwidth spike</strong></td><td>&gt;80% of capacity</td><td>Network monitoring, ISP</td></tr>
-                        <tr><td><strong>Connection rate</strong></td><td>&gt;10x normal</td><td>Firewall, load balancer</td></tr>
-                        <tr><td><strong>Response time</strong></td><td>&gt;5x normal latency</td><td>APM, synthetic monitoring</td></tr>
-                        <tr><td><strong>Error rate</strong></td><td>Sudden spike</td><td>Application logs, WAF</td></tr>
-                        <tr><td><strong>User reports</strong></td><td>Multiple complaints</td><td>Help desk, social media</td></tr>
+                        <tr><td>Traffic volume</td><td>Network monitoring</td><td>Normal baseline vs spike</td></tr>
+                        <tr><td>Request rate</td><td>Web server, WAF</td><td>Normal vs abnormal rate</td></tr>
+                        <tr><td>Service availability</td><td>Monitoring tools</td><td>Healthy vs degraded</td></tr>
+                        <tr><td>Source diversity</td><td>Firewall logs</td><td>Few sources = legit, many = DDoS</td></tr>
+                        <tr><td>Request patterns</td><td>WAF, application logs</td><td>Varied vs repetitive</td></tr>
+                        <tr><td>Geographic distribution</td><td>GeoIP analysis</td><td>Normal vs unusual locations</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Severity Classification</h2>
+                <h3>1.2 Determine Attack Type</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Volumetric Attack Indicators:</span>
+- Bandwidth saturation (>80% capacity)
+- High packets per second
+- Traffic from many sources
+- Protocol: UDP, ICMP dominant
+
+<span style="color: #6aa3f7;">// Protocol Attack Indicators:</span>
+- SYN flood: High SYN rate, half-open connections
+- ACK flood: Unexpected ACK packets
+- Connection exhaustion: Max connections reached
+
+<span style="color: #6aa3f7;">// Application Layer Indicators:</span>
+- High HTTP request rate
+- Specific URL targeted
+- Normal packet counts, high request rate
+- Server CPU/memory spike</pre>
+                </div>
+
+                <h2 id="phase2">Phase 2: Mitigation (Immediate)</h2>
+
+                <h3>2.1 Mitigation Options by Attack Type</h3>
                 <table>
-                    <thead><tr><th>Severity</th><th>Criteria</th><th>Response Time</th></tr></thead>
+                    <thead><tr><th>Attack Type</th><th>Immediate Action</th><th>Secondary Action</th><th>Provider Action</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Critical</strong></td><td>Complete service outage</td><td>Immediate</td></tr>
-                        <tr><td><strong>High</strong></td><td>Significant degradation, partial outage</td><td>15 minutes</td></tr>
-                        <tr><td><strong>Medium</strong></td><td>Performance impact, no outage</td><td>1 hour</td></tr>
-                        <tr><td><strong>Low</strong></td><td>Detected attack, mitigated automatically</td><td>4 hours</td></tr>
+                        <tr><td>Volumetric</td><td>Enable DDoS protection</td><td>Blackhole routing</td><td>Upstream scrubbing</td></tr>
+                        <tr><td>SYN Flood</td><td>Enable SYN cookies</td><td>Rate limit SYN</td><td>ISP filtering</td></tr>
+                        <tr><td>UDP Flood</td><td>Block UDP (if possible)</td><td>Rate limiting</td><td>Scrubbing center</td></tr>
+                        <tr><td>DNS Amplification</td><td>Block spoofed sources</td><td>Rate limit DNS</td><td>BCP38 filtering</td></tr>
+                        <tr><td>HTTP Flood</td><td>WAF rules, CAPTCHA</td><td>Rate limiting</td><td>CDN protection</td></tr>
+                        <tr><td>Slowloris</td><td>Reduce timeouts</td><td>Connection limits</td><td>WAF/proxy</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Phase 1: Detection & Triage</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Check current traffic patterns</span>
-CommonSecurityLog
+                <h3>2.2 DDoS Protection Provider Engagement</h3>
+                <table>
+                    <thead><tr><th>Provider</th><th>Activation Method</th><th>Typical Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Cloudflare</td><td>Dashboard, API, always-on</td><td>Automatic or 5-15 min</td></tr>
+                        <tr><td>Akamai/Prolexic</td><td>Phone, portal</td><td>15-30 min</td></tr>
+                        <tr><td>AWS Shield</td><td>Automatic (Standard), contact (Advanced)</td><td>Automatic or 15 min</td></tr>
+                        <tr><td>Azure DDoS</td><td>Automatic detection</td><td>Automatic</td></tr>
+                        <tr><td>Arbor Networks</td><td>Portal, phone</td><td>15-30 min</td></tr>
+                        <tr><td>ISP</td><td>Phone support</td><td>30-60 min</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>2.3 Emergency Mitigation Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// iptables - Rate limiting (Linux)</span>
+# Limit incoming connections per IP
+iptables -A INPUT -p tcp --dport 80 -m connlimit --connlimit-above 50 -j DROP
+
+# SYN flood protection
+iptables -A INPUT -p tcp --syn -m limit --limit 1/s --limit-burst 3 -j ACCEPT
+
+# Block specific attacking IP
+iptables -A INPUT -s ATTACKER_IP -j DROP
+
+<span style="color: #6aa3f7;">// nginx - Rate limiting</span>
+# In http block:
+limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s;
+
+# In server block:
+limit_req zone=one burst=20 nodelay;
+
+<span style="color: #6aa3f7;">// Apache - Connection limits</span>
+# mod_reqtimeout
+RequestReadTimeout header=20-40,MinRate=500 body=20,MinRate=500
+
+<span style="color: #6aa3f7;">// Cloud WAF rule example (pseudo-code)</span>
+IF request_rate > 100/min per IP
+AND country NOT IN (allowed_countries)
+THEN block OR challenge</pre>
+                </div>
+
+                <h2 id="phase3">Phase 3: Analysis and Tuning (During Attack)</h2>
+
+                <h3>3.1 Traffic Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Traffic volume analysis</span>
+AzureNetworkAnalytics_CL
 | where TimeGenerated > ago(1h)
-| where DeviceVendor == "Firewall"
-| summarize Connections=count(), 
-    UniqueIPs=dcount(SourceIP),
-    TotalBytes=sum(ReceivedBytes + SentBytes)
+| summarize 
+    TotalBytes = sum(BytesSent_d + BytesReceived_d),
+    Packets = sum(PacketsSent_d + PacketsReceived_d)
     by bin(TimeGenerated, 1m)
 | render timechart
 
-<span style="color: #6aa3f7;">// Identify top source IPs</span>
+<span style="color: #6aa3f7;">// KQL - Top source IPs</span>
 CommonSecurityLog
-| where TimeGenerated > ago(15m)
-| summarize Count=count() by SourceIP
-| top 100 by Count
-| extend GeoInfo = geo_info_from_ip_address(SourceIP)</pre>
+| where TimeGenerated > ago(1h)
+| where DeviceAction == "Deny" or Activity has "DROP"
+| summarize Count = count() by SourceIP
+| top 50 by Count
+| order by Count desc
+
+<span style="color: #6aa3f7;">// KQL - Geographic distribution</span>
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| extend GeoInfo = geo_info_from_ip_address(SourceIP)
+| extend Country = tostring(GeoInfo.country)
+| summarize Count = count() by Country
+| order by Count desc
+
+<span style="color: #6aa3f7;">// SPL - DDoS traffic analysis</span>
+index=firewall action=blocked
+| timechart span=1m count by src_ip limit=20</pre>
                 </div>
 
-                <h3>Triage Checklist</h3>
-                <ul>
-                    <li>☐ Confirm attack (not legitimate traffic spike)</li>
-                    <li>☐ Identify attack type (volumetric, protocol, application)</li>
-                    <li>☐ Determine affected services</li>
-                    <li>☐ Assess current impact level</li>
-                    <li>☐ Identify attack vectors and sources</li>
-                    <li>☐ Notify stakeholders</li>
-                </ul>
-
-                <h2>Phase 2: Mitigation</h2>
+                <h2 id="phase4">Phase 4: Recovery</h2>
                 <table>
-                    <thead><tr><th>Attack Type</th><th>Primary Mitigation</th><th>Secondary</th></tr></thead>
+                    <thead><tr><th>Step</th><th>Action</th><th>Verification</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Volumetric</strong></td><td>Enable DDoS protection service (Cloudflare, Akamai)</td><td>ISP null routing, scrubbing</td></tr>
-                        <tr><td><strong>SYN Flood</strong></td><td>Enable SYN cookies, increase backlog</td><td>Rate limit by source</td></tr>
-                        <tr><td><strong>HTTP Flood</strong></td><td>WAF rate limiting, bot detection</td><td>CAPTCHA, geo-blocking</td></tr>
-                        <tr><td><strong>Slowloris</strong></td><td>Connection timeout tuning</td><td>Limit connections per IP</td></tr>
-                        <tr><td><strong>Amplification</strong></td><td>Block spoofed sources</td><td>BCP38 filtering</td></tr>
+                        <tr><td>1</td><td>Confirm attack has stopped</td><td>Traffic returns to baseline</td></tr>
+                        <tr><td>2</td><td>Gradually remove emergency blocks</td><td>Service remains stable</td></tr>
+                        <tr><td>3</td><td>Monitor for attack resumption</td><td>24-48 hour watch</td></tr>
+                        <tr><td>4</td><td>Review and tune protection</td><td>Update rules/policies</td></tr>
+                        <tr><td>5</td><td>Document attack details</td><td>Incident report complete</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Mitigation Commands</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Cloudflare - Enable Under Attack Mode</span>
-curl -X PATCH "https://api.cloudflare.com/client/v4/zones/{zone_id}/settings/security_level" \
-     -H "Authorization: Bearer {token}" \
-     -H "Content-Type: application/json" \
-     --data '{"value":"under_attack"}'
-
-<span style="color: #6aa3f7;">// iptables - Rate limit connections</span>
-iptables -A INPUT -p tcp --dport 80 -m state --state NEW -m limit --limit 50/minute --limit-burst 200 -j ACCEPT
-iptables -A INPUT -p tcp --dport 80 -m state --state NEW -j DROP
-
-<span style="color: #6aa3f7;">// Block specific IP range</span>
-iptables -A INPUT -s 192.0.2.0/24 -j DROP
-
-<span style="color: #6aa3f7;">// nginx - Rate limiting</span>
-limit_req_zone $binary_remote_addr zone=one:10m rate=30r/s;
-limit_req zone=one burst=50 nodelay;</pre>
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Service is completely unavailable</li>
+                        <li>Attack exceeds protection capacity</li>
+                        <li>Revenue-impacting services affected</li>
+                        <li>Customer-facing systems down</li>
+                        <li>DDoS appears to be covering another attack</li>
+                        <li>Ransom demand received</li>
+                        <li>Attack persists beyond 30 minutes</li>
+                    </ul>
                 </div>
 
-                <h2>Phase 3: Escalation</h2>
+                <h2 id="postincident">Post-Incident Actions</h2>
                 <table>
-                    <thead><tr><th>Condition</th><th>Escalate To</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Action</th><th>Timeline</th><th>Owner</th></tr></thead>
                     <tbody>
-                        <tr><td>Attack exceeds mitigation capacity</td><td>DDoS protection vendor</td><td>Engage support, increase scrubbing</td></tr>
-                        <tr><td>ISP-level mitigation needed</td><td>ISP NOC</td><td>Request upstream filtering</td></tr>
-                        <tr><td>Business-critical impact</td><td>Executive leadership</td><td>Business continuity decisions</td></tr>
-                        <tr><td>Suspected targeted attack</td><td>Law enforcement</td><td>Report, preserve evidence</td></tr>
+                        <tr><td>Document attack characteristics</td><td>Within 24 hours</td><td>SOC</td></tr>
+                        <tr><td>Review protection effectiveness</td><td>Within 48 hours</td><td>Network team</td></tr>
+                        <tr><td>Update runbooks</td><td>Within 1 week</td><td>SOC</td></tr>
+                        <tr><td>Review protection capacity</td><td>Within 2 weeks</td><td>Management</td></tr>
+                        <tr><td>Conduct lessons learned</td><td>Within 2 weeks</td><td>All teams</td></tr>
                     </tbody>
                 </table>
-
-                <h2>Phase 4: Recovery</h2>
-                <ul>
-                    <li>☐ Confirm attack has stopped or is controlled</li>
-                    <li>☐ Gradually restore normal operations</li>
-                    <li>☐ Monitor for follow-up attacks</li>
-                    <li>☐ Verify all services functioning</li>
-                    <li>☐ Document attack characteristics</li>
-                    <li>☐ Update protection rules if needed</li>
-                </ul>
-
-                <h2>Phase 5: Post-Incident</h2>
-                <table>
-                    <thead><tr><th>Activity</th><th>Owner</th><th>Timeline</th></tr></thead>
-                    <tbody>
-                        <tr><td>Attack analysis report</td><td>SOC</td><td>24-48 hours</td></tr>
-                        <tr><td>Protection gap assessment</td><td>Security Engineering</td><td>1 week</td></tr>
-                        <tr><td>Lessons learned meeting</td><td>SOC Manager</td><td>1 week</td></tr>
-                        <tr><td>Runbook updates</td><td>SOC</td><td>2 weeks</td></tr>
-                        <tr><td>Protection improvements</td><td>Security Engineering</td><td>As identified</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Communication Templates</h2>
-                <h3>Internal Status Update</h3>
-                <p style="font-style: italic; font-size: 0.85rem; color: var(--text-secondary);">"We are experiencing a DDoS attack affecting [services]. Attack type: [type]. Current status: [status]. Estimated time to resolution: [ETA]. Next update in [time]."</p>
-
-                <h3>External Customer Communication</h3>
-                <p style="font-style: italic; font-size: 0.85rem; color: var(--text-secondary);">"We are aware of connectivity issues affecting some users. Our team is actively working to resolve this. We apologize for any inconvenience and will provide updates as available."</p>
 
             </div>
         </div>

@@ -9,207 +9,235 @@
 </head>
 <body>
     <nav class="main-nav">
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Phishing IR</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Phishing IR</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">IR-004</div>
+                <h1>Phishing Incident Response</h1>
+                <p class="lead">Comprehensive incident response playbook for phishing attacks. Covers credential harvesting, malware delivery, BEC attempts, and widespread campaign response.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">Hours to Days</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Team</span><span class="playbook-meta-value">SOC + IT + HR</span></div>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-IR-002</div>
-                    <h1>Phishing Incident Response</h1>
-                    <p class="lead">Complete response playbook for phishing campaigns, from detection through remediation and prevention.</p>
-                </div>
-
-                <h2>Phishing Incident Severity</h2>
+                <h2 id="classification">Phishing Incident Classification</h2>
                 <table>
-                    <thead><tr><th>Scenario</th><th>Severity</th><th>Response Time</th><th>Escalation</th></tr></thead>
+                    <thead><tr><th>Type</th><th>Severity</th><th>Key Risk</th><th>Response Priority</th></tr></thead>
                     <tbody>
-                        <tr><td>Email reported, no clicks</td><td>Low</td><td>4 hours</td><td>SOC only</td></tr>
-                        <tr><td>Email clicked, no credentials entered</td><td>Medium</td><td>2 hours</td><td>SOC only</td></tr>
-                        <tr><td>Credentials entered</td><td>High</td><td>1 hour</td><td>SOC + IT</td></tr>
-                        <tr><td>Malware downloaded/executed</td><td>High</td><td>30 minutes</td><td>SOC + IR Team</td></tr>
-                        <tr><td>Executive/VIP targeted (BEC)</td><td>Critical</td><td>Immediate</td><td>SOC + Management + Legal</td></tr>
-                        <tr><td>Wire transfer initiated</td><td>Critical</td><td>Immediate</td><td>SOC + Finance + Legal + Law Enforcement</td></tr>
+                        <tr><td>Credential phishing (no clicks)</td><td>Low</td><td>Potential exposure</td><td>Block, monitor</td></tr>
+                        <tr><td>Credential phishing (clicked)</td><td>Medium</td><td>Possible credential theft</td><td>Same day response</td></tr>
+                        <tr><td>Credentials submitted</td><td>High</td><td>Confirmed credential theft</td><td>Immediate response</td></tr>
+                        <tr><td>Malware attachment (not opened)</td><td>Medium</td><td>Potential infection</td><td>Block, remove</td></tr>
+                        <tr><td>Malware attachment (opened)</td><td>High</td><td>System compromise</td><td>Immediate IR</td></tr>
+                        <tr><td>BEC attempt</td><td>High</td><td>Financial/data loss</td><td>Immediate response</td></tr>
+                        <tr><td>Widespread campaign</td><td>High</td><td>Multiple victims</td><td>Full IR activation</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Phase 1: Detection & Scoping</h2>
-                <h3>Identify Campaign Scope</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Find all recipients of phishing email</span>
-EmailEvents
-| where TimeGenerated > ago(7d)
-| where SenderFromAddress == "phisher@malicious-domain.com"
-    or Subject == "Urgent: Verify Your Account"
-    or NetworkMessageId == "&lt;specific-message-id&gt;"
-| summarize Recipients=make_set(RecipientEmailAddress), 
-    Count=count() by SenderFromAddress, Subject
-| extend RecipientCount = array_length(Recipients)
+                <h2 id="phase1">Phase 1: Detection and Scoping (30 min)</h2>
 
-<span style="color: #6aa3f7;">// Track who clicked</span>
+                <h3>1.1 Initial Assessment</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Source</th><th>Impact on Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>How many recipients?</td><td>Email gateway</td><td>Scale of response</td></tr>
+                        <tr><td>How many delivered?</td><td>Email gateway</td><td>Remediation scope</td></tr>
+                        <tr><td>How many clicked?</td><td>URL tracking, proxy</td><td>Investigation scope</td></tr>
+                        <tr><td>Any credentials submitted?</td><td>Phishing site logs (if accessible)</td><td>Credential reset scope</td></tr>
+                        <tr><td>Any attachments opened?</td><td>EDR</td><td>Malware investigation</td></tr>
+                        <tr><td>Targeted or opportunistic?</td><td>Email analysis</td><td>Sophistication assessment</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>1.2 Scoping Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Find all recipients of phishing email</span>
+let phishingSender = "attacker@phishing-domain.com";
+let phishingSubject = "Urgent: Verify your account";
+EmailEvents
+| where TimeGenerated > ago(48h)
+| where SenderFromAddress =~ phishingSender 
+    or Subject has phishingSubject
+| summarize 
+    TotalRecipients = dcount(RecipientEmailAddress),
+    Delivered = countif(DeliveryAction == "Delivered"),
+    Blocked = countif(DeliveryAction != "Delivered"),
+    RecipientList = make_set(RecipientEmailAddress, 100)
+
+<span style="color: #6aa3f7;">// KQL - Check for link clicks</span>
+let phishingUrl = "phishing-domain.com";
 UrlClickEvents
-| where TimeGenerated > ago(7d)
-| where Url contains "malicious-domain.com"
-| project TimeGenerated, AccountUpn, Url, ActionType, IsClickedThrough, NetworkMessageId
+| where TimeGenerated > ago(48h)
+| where Url has phishingUrl
+| project TimeGenerated, AccountUpn, Url, ActionType, 
+    IsClickedThrough, NetworkMessageId
+| summarize 
+    Clickers = dcount(AccountUpn),
+    ClickerList = make_set(AccountUpn, 50),
+    TotalClicks = count()
 
-<span style="color: #6aa3f7;">// Find similar campaigns (sender infrastructure)</span>
-EmailEvents
-| where TimeGenerated > ago(30d)
-| where SenderFromDomain == "malicious-domain.com"
-    or SenderMailFromDomain == "malicious-domain.com"
-    or SenderIPv4 == "185.123.45.67"
-| summarize Campaigns=dcount(Subject), 
-    Recipients=dcount(RecipientEmailAddress),
-    Subjects=make_set(Subject)
-    by SenderFromAddress</pre>
-                </div>
+<span style="color: #6aa3f7;">// KQL - Check for attachment opens</span>
+let phishingHash = "SHA256_HASH";
+DeviceFileEvents
+| where SHA256 == phishingHash
+| where ActionType in ("FileCreated", "FileModified")
+| summarize 
+    AffectedDevices = dcount(DeviceName),
+    DeviceList = make_set(DeviceName, 50)
 
-                <h3>Scope Assessment Table</h3>
-                <table>
-                    <thead><tr><th>Metric</th><th>How to Find</th><th>Action</th></tr></thead>
-                    <tbody>
-                        <tr><td>Total recipients</td><td>Email search by IOCs</td><td>Document for remediation</td></tr>
-                        <tr><td>Emails delivered vs blocked</td><td>DeliveryAction field</td><td>Focus on delivered</td></tr>
-                        <tr><td>Users who clicked</td><td>URL click logs/proxy logs</td><td>Priority investigation</td></tr>
-                        <tr><td>Users who submitted credentials</td><td>POST requests to phishing site</td><td>Immediate password reset</td></tr>
-                        <tr><td>Attachments opened</td><td>Endpoint telemetry</td><td>Malware investigation</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Phase 2: Containment</h2>
-                <h3>Immediate Actions (First 30 Minutes)</h3>
-                <table>
-                    <thead><tr><th>Action</th><th>Priority</th><th>Command/Steps</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Block sender</strong></td><td>1</td><td><code>New-TenantAllowBlockListItems -ListType Sender -Entries "phisher@domain.com" -Block</code></td></tr>
-                        <tr><td><strong>Block domain</strong></td><td>1</td><td><code>New-TransportRule -SenderDomainIs "malicious.com" -DeleteMessage $true</code></td></tr>
-                        <tr><td><strong>Block URL</strong></td><td>1</td><td><code>New-TenantAllowBlockListItems -ListType Url -Entries "malicious.com/*" -Block</code></td></tr>
-                        <tr><td><strong>Delete from mailboxes</strong></td><td>2</td><td>Content Search + Purge (soft delete first)</td></tr>
-                        <tr><td><strong>Reset compromised passwords</strong></td><td>2</td><td><code>Update-MgUser -PasswordProfile @{ForceChange=$true}</code></td></tr>
-                        <tr><td><strong>Revoke sessions</strong></td><td>2</td><td><code>Revoke-MgUserSignInSession</code></td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Email Purge Process</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Create compliance search</span>
-New-ComplianceSearch -Name "Phishing-IR-2025-001" `
-    -ExchangeLocation All `
-    -ContentMatchQuery '(From:phisher@malicious.com) AND (Subject:"Urgent: Verify Your Account")'
-
-<span style="color: #6aa3f7;">// Start search</span>
-Start-ComplianceSearch -Identity "Phishing-IR-2025-001"
-
-<span style="color: #6aa3f7;">// Check results</span>
-Get-ComplianceSearch -Identity "Phishing-IR-2025-001" | FL Status, Items
-
-<span style="color: #6aa3f7;">// Soft delete (recoverable)</span>
-New-ComplianceSearchAction -SearchName "Phishing-IR-2025-001" -Purge -PurgeType SoftDelete
-
-<span style="color: #6aa3f7;">// Monitor purge progress</span>
-Get-ComplianceSearchAction -Identity "Phishing-IR-2025-001_Purge" | FL Status, Results</pre>
-                </div>
-
-                <h2>Phase 3: Compromised Account Response</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Check for malicious inbox rules</span>
-Get-InboxRule -Mailbox victim@company.com | Where-Object {
-    $_.ForwardTo -or $_.ForwardAsAttachmentTo -or $_.RedirectTo -or 
-    $_.DeleteMessage -or $_.MoveToFolder -eq "RSS Feeds"
-} | Format-List Name, ForwardTo, DeleteMessage, MoveToFolder
-
-<span style="color: #6aa3f7;">// Remove malicious rules</span>
-Get-InboxRule -Mailbox victim@company.com | Where-Object {
-    $_.ForwardTo -like "*@external*"
-} | Remove-InboxRule -Confirm:$false
-
-<span style="color: #6aa3f7;">// Check mailbox forwarding</span>
-Get-Mailbox -Identity victim@company.com | FL ForwardingSMTPAddress, DeliverToMailboxAndForward
-
-<span style="color: #6aa3f7;">// Remove forwarding</span>
-Set-Mailbox -Identity victim@company.com -ForwardingSMTPAddress $null
-
-<span style="color: #6aa3f7;">// Check for OAuth app consents</span>
-Get-MgUserOauth2PermissionGrant -UserId "victim@company.com" | 
-    Select-Object ClientId, Scope, ConsentType
-
-<span style="color: #6aa3f7;">// Review sign-in activity post-compromise</span>
+<span style="color: #6aa3f7;">// KQL - Post-click activity for compromised users</span>
+let clickedUsers = dynamic(["user1@company.com", "user2@company.com"]);
+let clickTime = datetime(2025-01-01T12:00:00Z);
 SigninLogs
-| where TimeGenerated > ago(24h)
-| where UserPrincipalName == "victim@company.com"
-| project TimeGenerated, IPAddress, Location, AppDisplayName, 
-    ResultType, ResultDescription, DeviceDetail</pre>
+| where TimeGenerated > clickTime
+| where UserPrincipalName in (clickedUsers)
+| project TimeGenerated, UserPrincipalName, IPAddress, 
+    Location, AppDisplayName, ResultType
+| order by TimeGenerated asc</pre>
                 </div>
 
-                <h2>Phase 4: Investigation</h2>
-                <h3>Post-Compromise Activity Check</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Check for sent emails (attacker using mailbox)</span>
-EmailEvents
-| where TimeGenerated > ago(7d)
-| where SenderFromAddress == "victim@company.com"
-| where RecipientEmailAddress !endswith "@company.com"
-| project TimeGenerated, RecipientEmailAddress, Subject
+                <h2 id="phase2">Phase 2: Containment (1-2 hours)</h2>
 
-<span style="color: #6aa3f7;">// Check for file access</span>
-OfficeActivity
-| where TimeGenerated > ago(7d)
-| where UserId == "victim@company.com"
-| where Operation in ("FileDownloaded", "FileAccessed", "FileSyncDownloadedFull")
-| summarize Count=count(), Files=make_set(SourceFileName) by Operation
+                <h3>2.1 Email Containment</h3>
+                <table>
+                    <thead><tr><th>Action</th><th>Method</th><th>Priority</th><th>Verification</th></tr></thead>
+                    <tbody>
+                        <tr><td>Remove from all mailboxes</td><td>Threat Explorer, PowerShell</td><td>Immediate</td><td>Search returns 0</td></tr>
+                        <tr><td>Block sender address</td><td>Transport rule</td><td>High</td><td>Test email blocked</td></tr>
+                        <tr><td>Block sender domain</td><td>Transport rule</td><td>High</td><td>Test email blocked</td></tr>
+                        <tr><td>Block phishing URL</td><td>Safe Links, proxy</td><td>High</td><td>URL inaccessible</td></tr>
+                        <tr><td>Submit to Microsoft</td><td>Admin submission</td><td>Medium</td><td>Submission confirmed</td></tr>
+                    </tbody>
+                </table>
 
-<span style="color: #6aa3f7;">// Check for admin actions</span>
+                <h3>2.2 Email Removal Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// PowerShell - Search and purge phishing emails</span>
+# Create compliance search
+New-ComplianceSearch -Name "Phishing_Remediation_$(Get-Date -Format 'yyyyMMdd')" `
+    -ExchangeLocation All `
+    -ContentMatchQuery '(From:attacker@phishing-domain.com) AND (Subject:"Urgent")'
+
+# Start the search
+Start-ComplianceSearch -Identity "Phishing_Remediation_20250101"
+
+# Review results
+Get-ComplianceSearch -Identity "Phishing_Remediation_20250101" | FL
+
+# Purge (soft delete - recoverable)
+New-ComplianceSearchAction -SearchName "Phishing_Remediation_20250101" `
+    -Purge -PurgeType SoftDelete
+
+# Purge (hard delete - permanent)
+New-ComplianceSearchAction -SearchName "Phishing_Remediation_20250101" `
+    -Purge -PurgeType HardDelete
+
+<span style="color: #6aa3f7;">// PowerShell - Block sender via transport rule</span>
+New-TransportRule -Name "Block Phishing Domain" `
+    -FromAddressMatchesPatterns "@phishing-domain\.com$" `
+    -RejectMessageReasonText "Blocked by security policy" `
+    -RejectMessageEnhancedStatusCode "5.7.1"</pre>
+                </div>
+
+                <h3>2.3 Account Containment</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>Method</th></tr></thead>
+                    <tbody>
+                        <tr><td>Link clicked only</td><td>Monitor for suspicious activity</td><td>Enhanced monitoring</td></tr>
+                        <tr><td>Credentials likely entered</td><td>Force password reset</td><td>Azure AD/AD</td></tr>
+                        <tr><td>Credentials confirmed stolen</td><td>Reset password + revoke sessions</td><td>Azure AD/AD</td></tr>
+                        <tr><td>MFA bypass suspected</td><td>Re-register MFA</td><td>Azure AD</td></tr>
+                        <tr><td>Post-compromise activity</td><td>Disable account temporarily</td><td>Azure AD/AD</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="phase3">Phase 3: Investigation (2-4 hours)</h2>
+
+                <h3>3.1 Compromise Assessment</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Suspicious sign-ins after phishing</span>
+let affectedUsers = dynamic(["user1@company.com", "user2@company.com"]);
+let phishingTime = datetime(2025-01-01T12:00:00Z);
+SigninLogs
+| where TimeGenerated > phishingTime
+| where UserPrincipalName in (affectedUsers)
+| where ResultType == "0" // Successful
+| project TimeGenerated, UserPrincipalName, IPAddress, Location,
+    AppDisplayName, DeviceDetail, RiskLevelDuringSignIn
+| order by TimeGenerated asc
+
+<span style="color: #6aa3f7;">// KQL - Mailbox rule changes</span>
+CloudAppEvents
+| where TimeGenerated > phishingTime
+| where AccountDisplayName in (affectedUsers)
+| where ActionType in ("New-InboxRule", "Set-InboxRule", "Set-Mailbox")
+| project TimeGenerated, AccountDisplayName, ActionType, RawEventData
+
+<span style="color: #6aa3f7;">// KQL - Email forwarding added</span>
+CloudAppEvents
+| where ActionType == "Set-Mailbox"
+| where RawEventData has "ForwardingSmtpAddress"
+| project TimeGenerated, AccountDisplayName, RawEventData
+
+<span style="color: #6aa3f7;">// KQL - OAuth apps consented</span>
 AuditLogs
-| where TimeGenerated > ago(7d)
-| where InitiatedBy.user.userPrincipalName == "victim@company.com"
-| where Category == "RoleManagement" or Category == "UserManagement"
-| project TimeGenerated, OperationName, TargetResources</pre>
+| where TimeGenerated > phishingTime
+| where OperationName == "Consent to application"
+| where InitiatedBy.user.userPrincipalName in (affectedUsers)
+| project TimeGenerated, User = InitiatedBy.user.userPrincipalName,
+    AppName = TargetResources[0].displayName</pre>
                 </div>
 
-                <h2>Phase 5: Eradication & Recovery</h2>
+                <h2 id="phase4">Phase 4: Eradication and Recovery</h2>
                 <table>
-                    <thead><tr><th>Task</th><th>Steps</th><th>Verification</th></tr></thead>
+                    <thead><tr><th>Task</th><th>Method</th><th>Verification</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>All phishing emails removed</strong></td><td>Compliance search purge</td><td>Re-run search shows 0 results</td></tr>
-                        <tr><td><strong>All IOCs blocked</strong></td><td>Block sender, domain, URL</td><td>Test rules are active</td></tr>
-                        <tr><td><strong>Compromised accounts secured</strong></td><td>Password reset, MFA re-enroll</td><td>User can access with new creds</td></tr>
-                        <tr><td><strong>Malicious rules removed</strong></td><td>Remove inbox rules, forwarding</td><td>Re-check mailbox settings</td></tr>
-                        <tr><td><strong>OAuth apps revoked</strong></td><td>Remove suspicious consents</td><td>Check consent list is clean</td></tr>
+                        <tr><td>Remove malicious inbox rules</td><td>PowerShell, admin console</td><td>Get-InboxRule shows clean</td></tr>
+                        <tr><td>Remove email forwarding</td><td>Set-Mailbox</td><td>No forwarding configured</td></tr>
+                        <tr><td>Revoke OAuth consents</td><td>Enterprise Apps</td><td>App removed</td></tr>
+                        <tr><td>Reset credentials</td><td>Azure AD/AD</td><td>Old password fails</td></tr>
+                        <tr><td>Re-register MFA</td><td>Azure AD</td><td>New MFA method active</td></tr>
+                        <tr><td>Review sent items</td><td>Mailbox review</td><td>No malicious emails sent</td></tr>
+                        <tr><td>Notify affected users</td><td>Email/call</td><td>User awareness confirmed</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Phase 6: Lessons Learned</h2>
-                <ul>
-                    <li>Why did email bypass filters? (new domain, look-alike, compromised sender)</li>
-                    <li>How many users clicked? What training needed?</li>
-                    <li>Can detection be improved? (Sigma rule, custom detection)</li>
-                    <li>Was response time adequate?</li>
-                    <li>Should similar domains be preemptively blocked?</li>
-                </ul>
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate to Major Incident If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Executive accounts compromised</li>
+                        <li>Finance team targeted with BEC</li>
+                        <li>Multiple accounts showing post-compromise activity</li>
+                        <li>Malware executed from attachment</li>
+                        <li>Attacker accessed sensitive data</li>
+                        <li>Attacker sent emails from compromised accounts</li>
+                        <li>Evidence of persistence mechanisms</li>
+                        <li>Targeted attack (spear phishing) confirmed</li>
+                    </ul>
+                </div>
 
-                <h2>BEC-Specific Response</h2>
+                <h2 id="communication">User Communication</h2>
                 <table>
-                    <thead><tr><th>Scenario</th><th>Immediate Action</th><th>Follow-up</th></tr></thead>
+                    <thead><tr><th>Audience</th><th>Timing</th><th>Message</th></tr></thead>
                     <tbody>
-                        <tr><td>Wire transfer requested</td><td>Contact finance to halt, call bank</td><td>Law enforcement report</td></tr>
-                        <tr><td>Gift card purchase</td><td>Stop purchase if possible</td><td>User awareness</td></tr>
-                        <tr><td>Vendor payment redirect</td><td>Verify with vendor via known contact</td><td>Legal notification</td></tr>
-                        <tr><td>Payroll diversion</td><td>Contact HR/Payroll immediately</td><td>Employee notification</td></tr>
+                        <tr><td>Clicked users</td><td>Immediate</td><td>Password reset required, what to watch for</td></tr>
+                        <tr><td>All recipients</td><td>Same day</td><td>Warning about phishing email</td></tr>
+                        <tr><td>All employees</td><td>If widespread</td><td>General awareness, how to report</td></tr>
+                        <tr><td>Management</td><td>As appropriate</td><td>Incident summary, impact</td></tr>
                     </tbody>
                 </table>
-
-                <h2>Documentation Requirements</h2>
-                <ul>
-                    <li>☐ Initial detection time and method</li>
-                    <li>☐ Campaign IOCs (sender, domain, URLs, hashes)</li>
-                    <li>☐ Total recipients and click count</li>
-                    <li>☐ Compromised accounts identified</li>
-                    <li>☐ Containment actions and timestamps</li>
-                    <li>☐ Evidence preserved (email samples, headers)</li>
-                    <li>☐ User notifications sent</li>
-                    <li>☐ Lessons learned documented</li>
-                </ul>
 
             </div>
         </div>

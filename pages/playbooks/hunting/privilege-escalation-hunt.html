@@ -6,7 +6,6 @@
     <title>Privilege Escalation Hunt | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
@@ -14,155 +13,333 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Privilege Escalation Hunt</span></div>
-            <div class="content">
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Privilege Escalation Hunt</span>
+            </div>
+
             <div class="playbook-header">
-                <div class="playbook-id">PB-TH-007</div>
-                <h1>Privilege Escalation Hunt</h1>
-                <p class="lead">Hunting for privilege escalation including UAC bypass, token manipulation, and exploitation.</p>
+                <div class="playbook-id">HUNT-TA0004</div>
+                <h1>Privilege Escalation Hunt Playbook</h1>
+                <p class="lead">Hunt for privilege escalation techniques including UAC bypass, token manipulation, exploitation, and group membership changes.</p>
                 <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-medium">Medium</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L3/Hunt</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">2-4 hours</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">MITRE Tactic</span><span class="playbook-meta-value">TA0004</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Difficulty</span><span class="playbook-meta-value">Advanced</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">3-4 hours</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Data Sources</span><span class="playbook-meta-value">Process, Auth, Registry</span></div>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;"><span class="mitre-tag">TA0004</span></div>
-            </div>
-
-            <h2>Overview</h2>
-            <p>Hunting for privilege escalation including UAC bypass, token manipulation, and exploitation. This playbook provides systematic procedures applicable across any security environment.</p>
-
-            <h2>When to Use This Playbook</h2>
-            <p>Use this playbook when you encounter alerts or incidents matching the description above. It provides step-by-step guidance for efficient handling.</p>
-
-            <h2>Prerequisites</h2>
-            <h3>Required Access</h3>
-            <ul>
-                <li><strong>SIEM</strong> - Microsoft Sentinel or Splunk for log analysis</li>
-                <li><strong>EDR</strong> - Endpoint detection and response platform</li>
-                <li><strong>Identity</strong> - Azure AD / Active Directory access</li>
-                <li><strong>Network</strong> - Firewall, proxy, DNS logs</li>
-            </ul>
-
-            <h2>Procedure</h2>
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Initial Assessment</div>
-                        <div class="step-description">Gather context about the alert or incident:</div>
-                        <ul>
-                            <li>Review alert details and severity</li>
-                            <li>Identify affected users, hosts, or systems</li>
-                            <li>Determine timeline of events</li>
-                            <li>Check for related alerts</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Evidence Collection</div>
-                        <div class="step-description">Gather relevant data for analysis:</div>
-                        <ul>
-                            <li>Query SIEM for related events</li>
-                            <li>Pull endpoint telemetry from EDR</li>
-                            <li>Collect network flow data if applicable</li>
-                            <li>Preserve volatile evidence if needed</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Analysis</div>
-                        <div class="step-description">Analyze collected evidence to determine:</div>
-                        <ul>
-                            <li>Is this a true positive or false positive?</li>
-                            <li>What is the full scope of impact?</li>
-                            <li>What was the attack vector/technique?</li>
-                            <li>Are there additional indicators of compromise?</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Containment</div>
-                        <div class="step-description">If confirmed malicious, execute containment:</div>
-                        <ul>
-                            <li>Isolate affected systems if needed</li>
-                            <li>Block malicious indicators</li>
-                            <li>Disable compromised accounts</li>
-                            <li>Prevent further spread</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Documentation & Closure</div>
-                        <div class="step-description">Complete the investigation:</div>
-                        <ul>
-                            <li>Document all findings</li>
-                            <li>Record IOCs for threat intel</li>
-                            <li>Update ticket with timeline</li>
-                            <li>Determine final classification</li>
-                        </ul>
-                    </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                    <span class="mitre-tag">T1548</span>
+                    <span class="mitre-tag">T1134</span>
+                    <span class="mitre-tag">T1068</span>
+                    <span class="mitre-tag">T1078</span>
+                    <span class="mitre-tag">T1484</span>
                 </div>
             </div>
 
-            <h2>Decision Tree</h2>
-            <div class="decision-tree">
-                <div class="decision-node question"><strong>Is this a confirmed security incident?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Close as False Positive with documentation</div>
-                    <div class="decision-node action"><strong>YES →</strong> Execute containment, continue investigation</div>
-                </div>
-                <div class="decision-node question"><strong>Is escalation required?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Complete remediation, close incident</div>
-                    <div class="decision-node escalate"><strong>YES →</strong> Escalate to IR team with all findings</div>
-                </div>
-            </div>
+            <div class="content">
+                <h2 id="overview">Hunt Overview</h2>
+                <p>Privilege escalation allows attackers to gain higher-level permissions than their initial access provides. This is a critical step in most attacks, as elevated privileges enable persistence, credential access, and lateral movement.</p>
 
-            <h2>Investigation Queries</h2>
-            <h3>KQL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>// Investigate related events
-let TimeRange = ago(24h);
-let Target = "entity-to-investigate";
-search in (SecurityEvent, SigninLogs, DeviceEvents)
-| where TimeGenerated > TimeRange
-| where * contains Target
-| project TimeGenerated, Type, Activity
-| order by TimeGenerated desc</code></pre>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-crosshairs"></i> Hunt Objectives</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Identify UAC bypass techniques</li>
+                        <li>Detect token manipulation and impersonation</li>
+                        <li>Find exploitation of vulnerabilities</li>
+                        <li>Discover unauthorized group membership changes</li>
+                        <li>Identify abuse of elevation mechanisms</li>
+                    </ul>
                 </div>
-            </div>
 
-            <h3>SPL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>index=* earliest=-24h "entity-to-investigate"
-| stats count by index sourcetype _time
-| sort - _time</code></pre>
+                <h3>Techniques Covered</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Data Sources</th></tr></thead>
+                    <tbody>
+                        <tr><td>Abuse Elevation Control: UAC Bypass</td><td>T1548.002</td><td>Bypassing User Account Control</td><td>Registry, Process</td></tr>
+                        <tr><td>Access Token Manipulation</td><td>T1134</td><td>Token theft, impersonation</td><td>Process, API</td></tr>
+                        <tr><td>Exploitation for Privilege Escalation</td><td>T1068</td><td>Exploiting vulnerabilities</td><td>Process, Crash logs</td></tr>
+                        <tr><td>Valid Accounts: Domain Accounts</td><td>T1078.002</td><td>Using privileged domain accounts</td><td>Auth logs</td></tr>
+                        <tr><td>Domain Policy Modification</td><td>T1484</td><td>GPO abuse</td><td>Group Policy logs</td></tr>
+                        <tr><td>Scheduled Task/Job</td><td>T1053</td><td>Tasks running as SYSTEM</td><td>Task events</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="hunt1">Hunt 1: UAC Bypass</h2>
+                
+                <h3>1.1 Registry-Based UAC Bypass</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - UAC bypass via registry (fodhelper, eventvwr)</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(7d)
+| where RegistryKey has_any (
+    "\\Software\\Classes\\ms-settings\\shell\\open\\command",
+    "\\Software\\Classes\\mscfile\\shell\\open\\command",
+    "\\Software\\Classes\\exefile\\shell\\runas\\command"
+)
+| where ActionType == "RegistryValueSet"
+| project TimeGenerated, DeviceName, RegistryKey, RegistryValueName,
+    RegistryValueData, InitiatingProcessFileName,
+    InitiatingProcessCommandLine
+
+<span style="color: #6aa3f7;">// KQL - Environment variable UAC bypass</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(7d)
+| where RegistryKey has "\\Environment"
+| where RegistryValueName in ("windir", "systemroot", "comspec")
+| where RegistryValueData !has "C:\\Windows"
+| project TimeGenerated, DeviceName, RegistryValueName,
+    RegistryValueData, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// SPL - UAC bypass registry modifications</span>
+index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
+EventCode=13
+(TargetObject="*ms-settings\\shell\\open\\command*" 
+ OR TargetObject="*mscfile\\shell\\open\\command*")
+| table _time, host, Image, TargetObject, Details</pre>
                 </div>
-            </div>
 
-            <h2>MITRE ATT&CK Mapping</h2>
-            <table>
-                <thead><tr><th>Technique</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><span class="mitre-tag">TA0004</span></td><td>Relevant technique for this playbook</td></tr>
-                </tbody>
-            </table>
-</div>
+                <h3>1.2 Auto-Elevate Binary Abuse</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Auto-elevate binaries spawning suspicious children</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where InitiatingProcessFileName in~ (
+    "fodhelper.exe", "eventvwr.exe", "computerdefaults.exe",
+    "sdclt.exe", "slui.exe", "cmstp.exe", "wsreset.exe"
+)
+| where FileName in~ ("cmd.exe", "powershell.exe", "pwsh.exe",
+    "wscript.exe", "cscript.exe", "mshta.exe")
+| project TimeGenerated, DeviceName, InitiatingProcessFileName,
+    FileName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - CMSTP UAC bypass</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "cmstp.exe"
+| where ProcessCommandLine has "/ni" or ProcessCommandLine has "/au"
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
+                </div>
+
+                <h2 id="hunt2">Hunt 2: Token Manipulation</h2>
+                
+                <h3>2.1 Token Impersonation</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Sensitive privilege use (SeDebugPrivilege, etc)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4673 // Sensitive privilege use
+| where PrivilegeList has_any (
+    "SeDebugPrivilege", "SeTcbPrivilege", "SeAssignPrimaryTokenPrivilege",
+    "SeImpersonatePrivilege", "SeLoadDriverPrivilege"
+)
+| where SubjectUserName !endswith "$" // Not computer account
+| project TimeGenerated, Computer, SubjectUserName,
+    ProcessName, PrivilegeList
+
+<span style="color: #6aa3f7;">// KQL - Token manipulation commands</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any (
+    "token::elevate", "token::duplicate", "token::impersonate",
+    "Invoke-TokenManipulation", "Get-System", "getsystem"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Process running as SYSTEM from user context</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where AccountName =~ "SYSTEM"
+| where InitiatingProcessAccountName !in ("SYSTEM", "LOCAL SERVICE", 
+    "NETWORK SERVICE")
+| where InitiatingProcessAccountName !endswith "$"
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine,
+    AccountName, InitiatingProcessAccountName,
+    InitiatingProcessFileName</pre>
+                </div>
+
+                <h3>2.2 Named Pipe Impersonation</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Named pipe creation (potential impersonation)</span>
+Event
+| where Source == "Microsoft-Windows-Sysmon"
+| where EventID == 17 // Pipe created
+| extend PipeName = extract("PipeName:\\s+(.*?)\\s+", 1, RenderedDescription)
+| extend Image = extract("Image:\\s+(.*?)\\s+", 1, RenderedDescription)
+| where PipeName !in ("\\msagent", "\\spoolss", "\\wkssvc")
+| where Image !has "System32"
+| project TimeGenerated, Computer, Image, PipeName
+
+<span style="color: #6aa3f7;">// KQL - PrintSpoofer, Potato exploits</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any (
+    "printspoofer", "juicypotato", "sweetpotato", "godpotato",
+    "roguepotato", "hotpotato", "rottenpotato"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
+                </div>
+
+                <h2 id="hunt3">Hunt 3: Group Membership Changes</h2>
+                
+                <h3>3.1 Privileged Group Additions</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - User added to privileged groups</span>
+SecurityEvent
+| where TimeGenerated > ago(30d)
+| where EventID in (4728, 4732, 4756)
+| extend GroupName = TargetUserName
+| where GroupName in ("Domain Admins", "Enterprise Admins",
+    "Schema Admins", "Administrators", "Account Operators",
+    "Backup Operators", "Server Operators", "Domain Controllers",
+    "Print Operators", "Cert Publishers")
+| project TimeGenerated, Computer, GroupName,
+    AddedUser=MemberName, AddedBy=SubjectUserName
+
+<span style="color: #6aa3f7;">// KQL - AdminSDHolder protected groups</span>
+SecurityEvent
+| where EventID in (4728, 4732, 4756)
+| where TargetUserName in (
+    "Domain Admins", "Enterprise Admins", "Schema Admins",
+    "Administrators", "Account Operators", "Backup Operators",
+    "Server Operators", "Print Operators", "Replicator"
+)
+| project TimeGenerated, Computer, Operation=Activity,
+    Group=TargetUserName, Member=MemberName, Actor=SubjectUserName
+
+<span style="color: #6aa3f7;">// SPL - Privileged group modifications</span>
+index=windows sourcetype="WinEventLog:Security"
+(EventCode=4728 OR EventCode=4732 OR EventCode=4756)
+TargetUserName IN ("Domain Admins", "Administrators", 
+    "Enterprise Admins", "Schema Admins")
+| table _time, Computer, EventCode, TargetUserName, 
+    MemberName, SubjectUserName</pre>
+                </div>
+
+                <h3>3.2 Account Privilege Changes</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - User rights assignment</span>
+SecurityEvent
+| where TimeGenerated > ago(30d)
+| where EventID == 4704 // User right assigned
+| project TimeGenerated, Computer, TargetAccount=TargetUserName,
+    AssignedBy=SubjectUserName, Privilege=PrivilegeList
+
+<span style="color: #6aa3f7;">// KQL - net localgroup commands</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("net.exe", "net1.exe")
+| where ProcessCommandLine has "localgroup" 
+    and ProcessCommandLine has "/add"
+| where ProcessCommandLine has_any ("administrators", "admin")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
+                </div>
+
+                <h2 id="hunt4">Hunt 4: Exploitation</h2>
+                
+                <h3>4.1 Known Exploit Indicators</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Common privesc exploit tools</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ (
+    "printnightmare.exe", "zerologon.exe", "petitpotam.exe",
+    "CVE-*.exe", "exploit.exe", "poc.exe"
+) or ProcessCommandLine has_any (
+    "PrintNightmare", "CVE-2021", "CVE-2022", "CVE-2023",
+    "EternalBlue", "ZeroLogon", "PetitPotam", "SeriousSam"
+)
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine
+
+<span style="color: #6aa3f7;">// KQL - Process creation with unusual integrity</span>
+// A low-integrity process spawning high-integrity
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessIntegrityLevel in ("High", "System")
+| where InitiatingProcessIntegrityLevel in ("Low", "Medium")
+| where InitiatingProcessFileName !in~ ("consent.exe", "svchost.exe")
+| project TimeGenerated, DeviceName, FileName, ProcessIntegrityLevel,
+    InitiatingProcessFileName, InitiatingProcessIntegrityLevel</pre>
+                </div>
+
+                <h3>4.2 Scheduled Task Abuse</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Scheduled task running as SYSTEM</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4698 // Task created
+| extend TaskContent = tostring(EventData)
+| where TaskContent has "SYSTEM" or TaskContent has "S-1-5-18"
+| where SubjectUserName !endswith "$" // Created by user, runs as SYSTEM
+| project TimeGenerated, Computer, SubjectUserName, TaskContent
+
+<span style="color: #6aa3f7;">// KQL - Task created by non-admin user</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "schtasks.exe"
+| where ProcessCommandLine has "/create"
+| where ProcessCommandLine has_any ("/ru system", "/ru SYSTEM",
+    "/ru \"NT AUTHORITY\\SYSTEM\"")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
+                </div>
+
+                <h2 id="hunt5">Hunt 5: Service Abuse</h2>
+                
+                <h3>5.1 Service Configuration Changes</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Service binary path modification</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(7d)
+| where RegistryKey has "\\Services\\"
+| where RegistryValueName == "ImagePath"
+| where ActionType == "RegistryValueSet"
+| extend ServiceName = extract(@"Services\\([^\\]+)", 1, RegistryKey)
+| where RegistryValueData has_any ("cmd", "powershell", "\\Temp\\",
+    "\\Users\\", "\\AppData\\")
+| project TimeGenerated, DeviceName, ServiceName, RegistryValueData,
+    InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - sc.exe config commands</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "sc.exe"
+| where ProcessCommandLine has "config" and ProcessCommandLine has "binpath"
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Unquoted service path exploitation</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FolderPath matches regex @"C:\\Program\s" // Unquoted path
+| where FolderPath !has "C:\\Program Files"
+| project TimeGenerated, DeviceName, FileName, FolderPath,
+    ProcessCommandLine</pre>
+                </div>
+
+                <h2 id="analysis">Analysis Guidance</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Risk Level</th><th>Next Steps</th></tr></thead>
+                    <tbody>
+                        <tr><td>UAC bypass registry modification</td><td>High</td><td>Investigate process, check persistence</td></tr>
+                        <tr><td>Token manipulation commands</td><td>Critical</td><td>Assume compromise, investigate</td></tr>
+                        <tr><td>Privileged group addition</td><td>Critical</td><td>Verify authorization, investigate</td></tr>
+                        <tr><td>Potato exploit detection</td><td>Critical</td><td>Isolate system, full investigation</td></tr>
+                        <tr><td>Service path modification</td><td>High</td><td>Check service, verify legitimate</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="response">Response Actions</h2>
+                <ol>
+                    <li><strong>UAC bypass:</strong> Investigate source → Check persistence → Remove malware</li>
+                    <li><strong>Token abuse:</strong> Isolate system → Full investigation → Reset credentials</li>
+                    <li><strong>Group changes:</strong> Revert if unauthorized → Investigate actor → Review all changes</li>
+                    <li><strong>Exploitation:</strong> Isolate → Patch vulnerability → Full compromise assessment</li>
+                </ol>
+
+            </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
-    <script src="../../../../../js/main.js"></script>
+    <script src="../../../js/main.js"></script>
 </body>
 </html>

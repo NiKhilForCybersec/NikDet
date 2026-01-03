@@ -9,160 +9,314 @@
 </head>
 <body>
     <nav class="main-nav">
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Ransomware IR</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Ransomware IR</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">IR-001</div>
+                <h1>Ransomware Incident Response</h1>
+                <p class="lead">Critical incident response playbook for ransomware attacks. Covers detection, containment, eradication, recovery, and lessons learned with specific guidance for different ransomware variants and attack stages.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">Critical</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">Hours to Days</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Team</span><span class="playbook-meta-value">SOC + IR + IT + Legal + Exec</span></div>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-IR-001</div>
-                    <h1>Ransomware Incident Response</h1>
-                    <p class="lead">Time-critical response procedures for active ransomware incidents. Speed is essential - every minute matters.</p>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> Critical Incident - Immediate Action Required</div>
+                    <p style="margin: 0.3rem 0;">Ransomware is a time-critical emergency. Every minute of delay allows further encryption and lateral spread. Activate incident response team immediately. Do NOT attempt to negotiate without executive and legal approval. Preserve evidence for potential law enforcement involvement.</p>
                 </div>
 
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> CRITICAL: Time-Sensitive Response</div>
-                    <p style="margin: 0.5rem 0 0 0;">Ransomware spreads rapidly. Do NOT wait to gather more information before containing. Isolate first, investigate second.</p>
+                <h2 id="immediate">Immediate Actions (First 15 Minutes)</h2>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Activate Incident Response</div>
+                            <ul>
+                                <li>Declare ransomware incident</li>
+                                <li>Notify IR team lead and CISO</li>
+                                <li>Establish secure communication channel (not corporate email)</li>
+                                <li>Begin incident timeline documentation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Assess Scope Immediately</div>
+                            <table>
+                                <thead><tr><th>Question</th><th>Impact</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Single system or multiple?</td><td>Scope of containment</td><td>Query EDR for spread</td></tr>
+                                    <tr><td>Servers or workstations?</td><td>Business impact</td><td>Prioritize server protection</td></tr>
+                                    <tr><td>Domain controllers affected?</td><td>Full domain compromise</td><td>Consider DC isolation</td></tr>
+                                    <tr><td>Backups accessible?</td><td>Recovery capability</td><td>Protect backup infrastructure</td></tr>
+                                    <tr><td>Active encryption ongoing?</td><td>Time criticality</td><td>Immediate network isolation</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Immediate Containment Decision</div>
+                            <table>
+                                <thead><tr><th>Scenario</th><th>Recommended Action</th><th>Risk</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Active encryption spreading</td><td>Network-wide isolation</td><td>Business disruption</td></tr>
+                                    <tr><td>Limited to few systems</td><td>Isolate affected + adjacent</td><td>May miss spread</td></tr>
+                                    <tr><td>Domain controllers at risk</td><td>Isolate DCs first</td><td>Auth disruption</td></tr>
+                                    <tr><td>Backup servers at risk</td><td>Immediately isolate backups</td><td>Recovery protection</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <h2>Immediate Actions (First 15 Minutes)</h2>
+                <h2 id="containment">Phase 1: Containment (First 1-4 Hours)</h2>
+
+                <h3>1.1 Network Containment Options</h3>
                 <table>
-                    <thead><tr><th>Priority</th><th>Action</th><th>How</th><th>Who</th></tr></thead>
+                    <thead><tr><th>Method</th><th>Speed</th><th>Impact</th><th>When to Use</th></tr></thead>
                     <tbody>
-                        <tr><td>1</td><td><strong>Isolate affected systems</strong></td><td>EDR isolation or network disconnect</td><td>SOC Analyst</td></tr>
-                        <tr><td>2</td><td><strong>Notify IR lead/manager</strong></td><td>Phone call, not email</td><td>SOC Analyst</td></tr>
-                        <tr><td>3</td><td><strong>Preserve evidence</strong></td><td>Do NOT reboot or wipe systems</td><td>All</td></tr>
-                        <tr><td>4</td><td><strong>Identify patient zero</strong></td><td>First system with encryption activity</td><td>SOC Analyst</td></tr>
-                        <tr><td>5</td><td><strong>Check backup status</strong></td><td>Are backups intact and accessible?</td><td>IT/Backup Admin</td></tr>
-                        <tr><td>6</td><td><strong>Isolate backup systems</strong></td><td>Disconnect to protect from encryption</td><td>IT/Backup Admin</td></tr>
+                        <tr><td>EDR network isolation</td><td>Fast</td><td>Low (targeted)</td><td>Known affected systems</td></tr>
+                        <tr><td>Switch port disable</td><td>Fast</td><td>Medium</td><td>Specific hosts/VLANs</td></tr>
+                        <tr><td>Firewall rules</td><td>Medium</td><td>Medium</td><td>Block lateral movement</td></tr>
+                        <tr><td>VLAN quarantine</td><td>Medium</td><td>Medium</td><td>Segment-level isolation</td></tr>
+                        <tr><td>Disable domain trusts</td><td>Medium</td><td>High</td><td>Multi-domain spread</td></tr>
+                        <tr><td>Full network shutdown</td><td>Slow</td><td>Critical</td><td>Catastrophic spread</td></tr>
                     </tbody>
                 </table>
 
-                <h2>DO NOT</h2>
-                <ul>
-                    <li>❌ Reboot infected systems (destroys memory evidence)</li>
-                    <li>❌ Run antivirus scans on infected systems (can corrupt encrypted files)</li>
-                    <li>❌ Delete ransom notes (needed for identification)</li>
-                    <li>❌ Communicate using potentially compromised email</li>
-                    <li>❌ Attempt to negotiate or pay without proper authorization</li>
-                    <li>❌ Publicly disclose the incident prematurely</li>
-                </ul>
-
-                <h2>Containment Phase (15-60 Minutes)</h2>
-
-                <h3>Network Containment</h3>
-                <table>
-                    <thead><tr><th>Action</th><th>Command/Method</th><th>Purpose</th></tr></thead>
-                    <tbody>
-                        <tr><td>Block lateral movement ports</td><td>Block TCP 445, 135, 139, 3389 between segments</td><td>Stop SMB/RDP spread</td></tr>
-                        <tr><td>Block known C2</td><td>Add IOCs to firewall block lists</td><td>Cut attacker communication</td></tr>
-                        <tr><td>Disable compromised accounts</td><td>AD: <code>Disable-ADAccount</code></td><td>Stop credential abuse</td></tr>
-                        <tr><td>Consider network segmentation</td><td>Isolate affected VLANs</td><td>Contain spread</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Scope Assessment</h3>
-                <p>Rapidly determine how far the infection has spread:</p>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL: Find systems with ransomware file extensions</span>
+                <h3>1.2 Containment Commands</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Find all systems with ransomware indicators</span>
+let ransomwareExtensions = dynamic([".encrypted", ".locked", 
+    ".crypto", ".crypt", ".enc", ".pay", ".ransom"]);
 DeviceFileEvents
 | where TimeGenerated > ago(24h)
-| where FileName endswith ".locked" or FileName endswith ".encrypted" 
-    or FileName endswith ".crypted" or FileName contains "readme"
-| summarize Count=count() by DeviceName
-| order by Count desc
+| where ActionType == "FileCreated"
+| where FileName has_any (ransomwareExtensions)
+| summarize 
+    EncryptedFiles = count(),
+    FirstSeen = min(TimeGenerated)
+    by DeviceName
+| order by FirstSeen asc
 
-<span style="color: #6aa3f7;">// KQL: Find lateral movement using compromised account</span>
-SigninLogs
-| where TimeGenerated > ago(24h)
-| where UserPrincipalName == "compromised_user@company.com"
-| summarize Logins=count() by IPAddress, AppDisplayName
+<span style="color: #6aa3f7;">// KQL - Identify potential patient zero</span>
+DeviceFileEvents
+| where ActionType == "FileCreated"
+| where FileName has_any (".encrypted", ".locked", "readme", "ransom")
+| summarize FirstEncryption = min(TimeGenerated) by DeviceName
+| order by FirstEncryption asc
+| take 5
 
-<span style="color: #6aa3f7;">// KQL: Find process execution patterns</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(24h)
-| where ProcessCommandLine has_any ("vssadmin", "wmic", "shadowcopy", "bcdedit", "wbadmin")
-| project TimeGenerated, DeviceName, ProcessCommandLine, InitiatingProcessFileName</pre>
+<span style="color: #6aa3f7;">// KQL - Check for lateral movement from patient zero</span>
+let patientZero = "HOSTNAME";
+let compromiseTime = datetime(2025-01-01T00:00:00Z);
+DeviceNetworkEvents
+| where TimeGenerated > compromiseTime
+| where DeviceName =~ patientZero
+| where RemoteIP startswith "10." or RemoteIP startswith "192.168."
+| where RemotePort in (445, 135, 139, 3389, 22, 5985)
+| summarize Connections = count() by RemoteIP, RemotePort
+| order by Connections desc
+
+<span style="color: #6aa3f7;">// PowerShell - Isolate system via firewall</span>
+# Block all traffic except management
+netsh advfirewall set allprofiles firewallpolicy blockinbound,blockoutbound
+netsh advfirewall firewall add rule name="Allow Management" dir=in action=allow remoteip=MANAGEMENT_IP
+
+<span style="color: #6aa3f7;">// PowerShell - Disable SMB to prevent spread</span>
+Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force
+Set-SmbServerConfiguration -EnableSMB2Protocol $false -Force</pre>
                 </div>
 
-                <h2>Investigation Phase (1-4 Hours)</h2>
-
-                <h3>Determine Attack Vector</h3>
+                <h3>1.3 Critical Asset Protection</h3>
                 <table>
-                    <thead><tr><th>Vector</th><th>Evidence to Look For</th></tr></thead>
+                    <thead><tr><th>Asset</th><th>Protection Action</th><th>Priority</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Phishing</strong></td><td>Email with attachment or link before first encryption</td></tr>
-                        <tr><td><strong>RDP Brute Force</strong></td><td>Multiple failed logins followed by success, external IP</td></tr>
-                        <tr><td><strong>VPN Compromise</strong></td><td>Login from unusual location, credential theft</td></tr>
-                        <tr><td><strong>Supply Chain</strong></td><td>Compromised software update, MSP access</td></tr>
-                        <tr><td><strong>Exploit</strong></td><td>Vulnerability exploitation, public-facing system</td></tr>
+                        <tr><td>Domain Controllers</td><td>Network isolate, disable remote mgmt</td><td>Critical</td></tr>
+                        <tr><td>Backup Servers</td><td>Disconnect from network immediately</td><td>Critical</td></tr>
+                        <tr><td>File Servers</td><td>Disable shares, isolate</td><td>High</td></tr>
+                        <tr><td>Database Servers</td><td>Stop services, isolate</td><td>High</td></tr>
+                        <tr><td>Virtualization Hosts</td><td>Isolate management network</td><td>High</td></tr>
+                        <tr><td>Cloud Infrastructure</td><td>Review access, disable sync</td><td>High</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Ransomware Identification</h3>
-                <ul>
-                    <li>Collect ransom note text</li>
-                    <li>Note encrypted file extension</li>
-                    <li>Use ID Ransomware (id-ransomware.malwarehunterteam.com) to identify variant</li>
-                    <li>Check for known decryptors (nomoreransom.org)</li>
-                </ul>
+                <h2 id="identification">Phase 2: Identification (Hours 2-8)</h2>
 
-                <h3>Timeline Construction</h3>
-                <p>Build a timeline of attacker activity:</p>
-                <ul>
-                    <li>When did initial access occur?</li>
-                    <li>What was the dwell time before ransomware?</li>
-                    <li>What systems did the attacker access?</li>
-                    <li>Was data exfiltrated before encryption?</li>
-                    <li>How did lateral movement occur?</li>
-                </ul>
-
-                <h2>Communication Plan</h2>
+                <h3>2.1 Ransomware Variant Identification</h3>
                 <table>
-                    <thead><tr><th>Stakeholder</th><th>When to Notify</th><th>What to Communicate</th></tr></thead>
+                    <thead><tr><th>Indicator</th><th>Where to Find</th><th>Identification Value</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Executive Leadership</strong></td><td>Within 1 hour</td><td>High-level summary, business impact</td></tr>
-                        <tr><td><strong>Legal</strong></td><td>Within 2 hours</td><td>Potential regulatory implications</td></tr>
-                        <tr><td><strong>Cyber Insurance</strong></td><td>Within 24 hours</td><td>Claim initiation, coverage review</td></tr>
-                        <tr><td><strong>Law Enforcement</strong></td><td>Consider within 24 hours</td><td>FBI IC3, local authorities</td></tr>
-                        <tr><td><strong>Affected Customers</strong></td><td>Per legal/regulatory requirements</td><td>What happened, what we're doing</td></tr>
-                        <tr><td><strong>Employees</strong></td><td>When appropriate</td><td>What to do, what not to do</td></tr>
+                        <tr><td>File extension</td><td>Encrypted files</td><td>Specific to variant</td></tr>
+                        <tr><td>Ransom note</td><td>Desktop, folders</td><td>Contains variant name</td></tr>
+                        <tr><td>Encryption pattern</td><td>File analysis</td><td>Technical fingerprint</td></tr>
+                        <tr><td>TOR site URL</td><td>Ransom note</td><td>Operator identification</td></tr>
+                        <tr><td>Bitcoin address</td><td>Ransom note</td><td>Campaign tracking</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Recovery Phase</h2>
-
-                <h3>Recovery Options</h3>
+                <h3>2.2 Identification Resources</h3>
                 <table>
-                    <thead><tr><th>Option</th><th>When to Use</th><th>Considerations</th></tr></thead>
+                    <thead><tr><th>Resource</th><th>URL</th><th>Use</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Restore from backup</strong></td><td>Backups are intact and recent</td><td>Preferred option. Verify backups aren't encrypted.</td></tr>
-                        <tr><td><strong>Decryptor tool</strong></td><td>Known ransomware with available decryptor</td><td>Check nomoreransom.org first</td></tr>
-                        <tr><td><strong>Rebuild systems</strong></td><td>No backups, can rebuild from scratch</td><td>Time-consuming but clean</td></tr>
-                        <tr><td><strong>Pay ransom</strong></td><td>Last resort, business decision</td><td>No guarantee of decryption. May be illegal. Funds criminals.</td></tr>
+                        <tr><td>ID Ransomware</td><td>id-ransomware.malwarehunterteam.com</td><td>Variant identification</td></tr>
+                        <tr><td>No More Ransom</td><td>nomoreransom.org</td><td>Decryptors, identification</td></tr>
+                        <tr><td>Emsisoft Decryptors</td><td>emsisoft.com/ransomware-decryption</td><td>Free decryption tools</td></tr>
+                        <tr><td>Kaspersky NoRansom</td><td>noransom.kaspersky.com</td><td>Decryptors</td></tr>
+                        <tr><td>BleepingComputer</td><td>bleepingcomputer.com/ransomware</td><td>Variant information</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Recovery Steps</h3>
-                <ol>
-                    <li><strong>Confirm containment:</strong> Ensure no active attacker presence</li>
-                    <li><strong>Validate backups:</strong> Confirm backups are clean and complete</li>
-                    <li><strong>Rebuild infrastructure:</strong> AD, critical servers first</li>
-                    <li><strong>Reset all credentials:</strong> Assume all passwords compromised</li>
-                    <li><strong>Restore data:</strong> From validated backups</li>
-                    <li><strong>Enhanced monitoring:</strong> Watch for return activity</li>
-                    <li><strong>Remediate root cause:</strong> Fix the vulnerability that allowed entry</li>
-                </ol>
+                <h3>2.3 Scope Assessment Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Full scope of affected systems</span>
+DeviceFileEvents
+| where TimeGenerated > ago(48h)
+| where ActionType == "FileCreated"
+| where FileName has_any (".encrypted", ".locked", "ransom", "readme.txt")
+| summarize 
+    AffectedFiles = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+    by DeviceName
+| order by FirstSeen asc
 
-                <h2>Post-Incident</h2>
-                <ul>
-                    <li>Conduct lessons learned within 1-2 weeks</li>
-                    <li>Document complete timeline and actions</li>
-                    <li>Implement recommendations to prevent recurrence</li>
-                    <li>Update incident response plan based on lessons</li>
-                    <li>Brief leadership on root cause and improvements</li>
-                </ul>
+<span style="color: #6aa3f7;">// KQL - Timeline of spread</span>
+DeviceFileEvents
+| where FileName endswith ".encrypted"
+| summarize FirstEncryption = min(TimeGenerated) by DeviceName
+| order by FirstEncryption asc
+| extend MinutesSinceStart = datetime_diff('minute', FirstEncryption, 
+    toscalar(DeviceFileEvents | where FileName endswith ".encrypted" 
+    | summarize min(TimeGenerated)))
+
+<span style="color: #6aa3f7;">// KQL - Identify entry vector</span>
+let patientZero = "FIRST_AFFECTED_HOST";
+let firstEncryption = datetime(2025-01-01T10:00:00Z);
+DeviceProcessEvents
+| where DeviceName =~ patientZero
+| where TimeGenerated between ((firstEncryption - 4h) .. firstEncryption)
+| project TimeGenerated, FileName, ProcessCommandLine, 
+    InitiatingProcessFileName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Check for precursor malware</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName has_any ("psexec", "wmic", "cobalt", 
+    "mimikatz", "rubeus", "bloodhound")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine</pre>
+                </div>
+
+                <h2 id="eradication">Phase 3: Eradication (Days 1-3)</h2>
+
+                <h3>3.1 Eradication Checklist</h3>
+                <table>
+                    <thead><tr><th>Task</th><th>Method</th><th>Verification</th></tr></thead>
+                    <tbody>
+                        <tr><td>Remove ransomware binaries</td><td>EDR/AV cleanup</td><td>Scan shows clean</td></tr>
+                        <tr><td>Remove persistence mechanisms</td><td>Autoruns, services, tasks</td><td>No auto-start entries</td></tr>
+                        <tr><td>Reset compromised credentials</td><td>AD/Azure AD</td><td>All sessions terminated</td></tr>
+                        <tr><td>Reset KRBTGT (if DC compromised)</td><td>PowerShell script (2x)</td><td>Kerberos tickets invalid</td></tr>
+                        <tr><td>Patch exploited vulnerabilities</td><td>WSUS/SCCM</td><td>Vulnerability scan clean</td></tr>
+                        <tr><td>Remove attacker backdoors</td><td>Full endpoint sweep</td><td>No IOCs present</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>3.2 Credential Reset Requirements</h3>
+                <table>
+                    <thead><tr><th>Account Type</th><th>Reset Required?</th><th>Additional Actions</th></tr></thead>
+                    <tbody>
+                        <tr><td>Domain Admin accounts</td><td>Yes - Immediately</td><td>Review membership, audit use</td></tr>
+                        <tr><td>Service accounts</td><td>Yes - Coordinate with apps</td><td>Update app configurations</td></tr>
+                        <tr><td>KRBTGT</td><td>Yes if DC compromised</td><td>Reset twice, 10+ hours apart</td></tr>
+                        <tr><td>Local admin accounts</td><td>Yes - All affected systems</td><td>Implement LAPS if not present</td></tr>
+                        <tr><td>Regular user accounts</td><td>Yes if credentials harvested</td><td>Enforce password change</td></tr>
+                        <tr><td>Azure AD/Cloud accounts</td><td>Yes - All privileged</td><td>Revoke all sessions</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="recovery">Phase 4: Recovery (Days 2-7+)</h2>
+
+                <h3>4.1 Recovery Decision Tree</h3>
+                <table>
+                    <thead><tr><th>Scenario</th><th>Primary Option</th><th>Alternative</th><th>Timeline</th></tr></thead>
+                    <tbody>
+                        <tr><td>Clean backups available</td><td>Restore from backup</td><td>N/A</td><td>Hours to days</td></tr>
+                        <tr><td>Decryptor available</td><td>Use decryptor</td><td>Restore critical only</td><td>Hours to days</td></tr>
+                        <tr><td>No backups, no decryptor</td><td>Rebuild systems</td><td>Consider payment (last resort)</td><td>Days to weeks</td></tr>
+                        <tr><td>Partial backups</td><td>Hybrid approach</td><td>Prioritize critical</td><td>Days</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>4.2 Recovery Prioritization</h3>
+                <table>
+                    <thead><tr><th>Priority</th><th>Systems</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                        <tr><td>1 - Critical</td><td>AD/DNS, backup infrastructure</td><td>Required for all other recovery</td></tr>
+                        <tr><td>2 - High</td><td>Email, core business apps</td><td>Business operations</td></tr>
+                        <tr><td>3 - Medium</td><td>File servers, databases</td><td>Data access</td></tr>
+                        <tr><td>4 - Lower</td><td>User workstations</td><td>Can reimage efficiently</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="communication">Communication Requirements</h2>
+                <table>
+                    <thead><tr><th>Audience</th><th>Timing</th><th>Content</th><th>Channel</th></tr></thead>
+                    <tbody>
+                        <tr><td>Executive team</td><td>Immediately, then hourly</td><td>Scope, impact, timeline</td><td>Secure call/chat</td></tr>
+                        <tr><td>Legal counsel</td><td>Within 1 hour</td><td>Full details, evidence</td><td>Privileged communication</td></tr>
+                        <tr><td>Cyber insurance</td><td>Per policy (usually 24h)</td><td>Incident notification</td><td>Per policy</td></tr>
+                        <tr><td>Law enforcement</td><td>Per legal advice</td><td>Incident report</td><td>FBI IC3, local FBI</td></tr>
+                        <tr><td>Employees</td><td>When appropriate</td><td>What they need to know</td><td>Non-email channel</td></tr>
+                        <tr><td>Customers/public</td><td>Per legal/PR advice</td><td>Carefully crafted</td><td>Official channels</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="ransom">Ransom Payment Considerations</h2>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Payment Decision Framework</div>
+                    <p style="margin: 0.3rem 0;">Payment should be considered only as a last resort after exploring all alternatives. Involve legal counsel, executives, and potentially law enforcement in any payment decision.</p>
+                </div>
+
+                <table>
+                    <thead><tr><th>Factor</th><th>Consider Payment</th><th>Against Payment</th></tr></thead>
+                    <tbody>
+                        <tr><td>Backup availability</td><td>No viable backups</td><td>Clean backups exist</td></tr>
+                        <tr><td>Decryptor available</td><td>None available</td><td>Free decryptor exists</td></tr>
+                        <tr><td>Business impact</td><td>Existential threat</td><td>Manageable disruption</td></tr>
+                        <tr><td>Threat actor reputation</td><td>Known to provide keys</td><td>Known to not decrypt</td></tr>
+                        <tr><td>Legal restrictions</td><td>Not sanctioned entity</td><td>OFAC sanctioned group</td></tr>
+                        <tr><td>Time to recover</td><td>Months without payment</td><td>Days/weeks with backups</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="postincident">Post-Incident Actions</h2>
+                <table>
+                    <thead><tr><th>Action</th><th>Timeline</th><th>Owner</th></tr></thead>
+                    <tbody>
+                        <tr><td>Full incident timeline</td><td>Week 1 post-recovery</td><td>IR Team</td></tr>
+                        <tr><td>Root cause analysis</td><td>Week 2</td><td>IR + Security</td></tr>
+                        <tr><td>Lessons learned meeting</td><td>Week 2-3</td><td>All stakeholders</td></tr>
+                        <tr><td>Control gap analysis</td><td>Week 3-4</td><td>Security team</td></tr>
+                        <tr><td>Remediation roadmap</td><td>Week 4</td><td>CISO</td></tr>
+                        <tr><td>Tabletop exercise update</td><td>Month 2</td><td>IR Team</td></tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>
@@ -171,3 +325,33 @@ DeviceProcessEvents
     <script src="../../../js/main.js"></script>
 </body>
 </html>
+
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate to Crisis Management If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li><strong>Business-critical systems encrypted</strong> - ERP, email, file servers</li>
+                        <li><strong>Revenue-generating systems affected</strong> - production, sales, customer-facing</li>
+                        <li><strong>Data exfiltration confirmed</strong> - double extortion scenario</li>
+                        <li><strong>Recovery time exceeds 24 hours</strong> - extended business impact</li>
+                        <li><strong>Regulatory data involved</strong> - PII, PHI, PCI data encrypted/exfiltrated</li>
+                        <li><strong>Ransom demand received</strong> - executive decision required</li>
+                        <li><strong>Media attention likely</strong> - public-facing impact</li>
+                        <li><strong>Supply chain impact</strong> - partners/customers affected</li>
+                    </ul>
+                </div>
+
+                <h3>Crisis Team Activation</h3>
+                <table>
+                    <thead><tr><th>Role</th><th>Responsibility</th><th>Contact Priority</th></tr></thead>
+                    <tbody>
+                        <tr><td>CEO/Executive Sponsor</td><td>Final decision authority on ransom, communications</td><td>Within 1 hour</td></tr>
+                        <tr><td>CISO/CIO</td><td>Technical response coordination</td><td>Immediate</td></tr>
+                        <tr><td>General Counsel</td><td>Legal implications, regulatory, law enforcement</td><td>Within 1 hour</td></tr>
+                        <tr><td>CFO</td><td>Financial decisions, insurance</td><td>Within 2 hours</td></tr>
+                        <tr><td>Communications/PR</td><td>Internal/external messaging</td><td>Within 2 hours</td></tr>
+                        <tr><td>HR</td><td>Employee communications, wellbeing</td><td>Within 4 hours</td></tr>
+                        <tr><td>External IR firm</td><td>Forensics, negotiation support</td><td>Per insurance/contract</td></tr>
+                    </tbody>
+                </table>
+

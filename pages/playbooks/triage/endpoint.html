@@ -6,166 +6,348 @@
     <title>Endpoint Alert Triage | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Endpoint Triage</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Endpoint Triage</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">PB-TRI-002</div>
+                <h1>Endpoint Alert Triage Playbook</h1>
+                <p class="lead">Quick triage procedure for EDR and endpoint security alerts. Covers suspicious process execution, behavioral detections, LOLBAS abuse, and endpoint compromise indicators.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1 / L2</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Last Updated</span><span class="playbook-meta-value">2025-01-02</span></div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                    <span class="mitre-tag">T1059</span>
+                    <span class="mitre-tag">T1218</span>
+                    <span class="mitre-tag">T1055</span>
+                    <span class="mitre-tag">T1027</span>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-TRI-002</div>
-                    <h1>Endpoint Alert Triage</h1>
-                    <p class="lead">Triage EDR and endpoint security alerts including suspicious processes, behavioral detections, and malware alerts.</p>
-                    <div class="playbook-meta">
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-20 min</span></div>
+                <h2 id="scope">Alert Types Covered</h2>
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Source</th><th>Default Priority</th><th>Typical FP Rate</th></tr></thead>
+                    <tbody>
+                        <tr><td>Suspicious PowerShell execution</td><td>EDR</td><td>High</td><td>Medium (admin scripts)</td></tr>
+                        <tr><td>LOLBAS/Living-off-the-land</td><td>EDR</td><td>Medium-High</td><td>Medium</td></tr>
+                        <tr><td>Suspicious parent-child process</td><td>EDR</td><td>High</td><td>Low-Medium</td></tr>
+                        <tr><td>Process injection detected</td><td>EDR</td><td>Critical</td><td>Low</td></tr>
+                        <tr><td>Credential dumping attempt</td><td>EDR</td><td>Critical</td><td>Low</td></tr>
+                        <tr><td>Ransomware behavior</td><td>EDR</td><td>Critical</td><td>Very Low</td></tr>
+                        <tr><td>Suspicious script execution</td><td>EDR</td><td>Medium-High</td><td>Medium</td></tr>
+                        <tr><td>Persistence mechanism created</td><td>EDR</td><td>High</td><td>Medium</td></tr>
+                        <tr><td>Command and control communication</td><td>EDR</td><td>Critical</td><td>Low</td></tr>
+                        <tr><td>Defense evasion technique</td><td>EDR</td><td>High</td><td>Low</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="triage-flow">Triage Decision Flow</h2>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Was the action blocked?</div>
+                            <ul>
+                                <li><strong>Blocked:</strong> Lower urgency, but still investigate the attempt</li>
+                                <li><strong>Allowed/Detected only:</strong> Higher urgency - investigate immediately</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">What triggered the alert?</div>
+                            <ul>
+                                <li><strong>Known malware hash:</strong> High confidence, likely true positive</li>
+                                <li><strong>Behavioral detection:</strong> Check context, could be FP</li>
+                                <li><strong>ML/Anomaly detection:</strong> Higher FP rate, needs context</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Analyze process context</div>
+                            <ul>
+                                <li>What is the parent process?</li>
+                                <li>What is the command line?</li>
+                                <li>Is this expected for the user/system?</li>
+                                <li>What happened before and after?</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Make triage decision</div>
+                            <table>
+                                <thead><tr><th>Finding</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Legitimate admin activity</td><td>Close as FP, document</td></tr>
+                                    <tr><td>Suspicious but blocked</td><td>Document, check for other indicators</td></tr>
+                                    <tr><td>Suspicious and allowed</td><td>Escalate to L2, consider isolation</td></tr>
+                                    <tr><td>Clear malicious activity</td><td>Isolate immediately, escalate</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <h2>Common Endpoint Alert Types</h2>
+                <h2 id="parent-child">Parent-Child Process Analysis</h2>
+                
+                <h3>Suspicious Parent-Child Relationships</h3>
                 <table>
-                    <thead><tr><th>Alert Type</th><th>Description</th><th>Typical Severity</th></tr></thead>
+                    <thead><tr><th>Parent</th><th>Child</th><th>Suspicion Level</th><th>Common Attack</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Malware Detected</strong></td><td>Known malicious file identified</td><td>High</td></tr>
-                        <tr><td><strong>Suspicious Process</strong></td><td>Unusual process behavior or chain</td><td>Medium-High</td></tr>
-                        <tr><td><strong>LOLBin Abuse</strong></td><td>Living-off-the-land binary misuse</td><td>Medium</td></tr>
-                        <tr><td><strong>Credential Access</strong></td><td>Attempts to dump credentials</td><td>Critical</td></tr>
-                        <tr><td><strong>Defense Evasion</strong></td><td>Tampering with security tools</td><td>High</td></tr>
-                        <tr><td><strong>Persistence</strong></td><td>Registry/scheduled task modifications</td><td>Medium-High</td></tr>
-                        <tr><td><strong>PUA/Adware</strong></td><td>Potentially unwanted application</td><td>Low</td></tr>
+                        <tr><td>winword.exe / excel.exe</td><td>cmd.exe / powershell.exe</td><td>High</td><td>Macro malware</td></tr>
+                        <tr><td>outlook.exe</td><td>cmd.exe / powershell.exe</td><td>High</td><td>Phishing payload</td></tr>
+                        <tr><td>explorer.exe</td><td>mshta.exe / wscript.exe</td><td>Medium-High</td><td>User clicked malware</td></tr>
+                        <tr><td>w3wp.exe / httpd.exe</td><td>cmd.exe / powershell.exe</td><td>Critical</td><td>Web shell</td></tr>
+                        <tr><td>svchost.exe</td><td>cmd.exe (unusual)</td><td>High</td><td>Service exploitation</td></tr>
+                        <tr><td>wmiprvse.exe</td><td>powershell.exe</td><td>High</td><td>WMI lateral movement</td></tr>
+                        <tr><td>wscript.exe / cscript.exe</td><td>powershell.exe</td><td>High</td><td>Script-based dropper</td></tr>
+                        <tr><td>mshta.exe</td><td>powershell.exe</td><td>High</td><td>HTA attack</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 1: Initial Assessment</h2>
-                <p>For every endpoint alert, immediately determine:</p>
-                <ul>
-                    <li><strong>What triggered?</strong> File, process, behavior, network?</li>
-                    <li><strong>What action was taken?</strong> Blocked, quarantined, alerted only?</li>
-                    <li><strong>What host?</strong> Workstation, server, VIP machine?</li>
-                    <li><strong>What user?</strong> Admin, regular user, service account?</li>
-                </ul>
+                <h3>Normal Parent-Child Relationships</h3>
+                <table>
+                    <thead><tr><th>Parent</th><th>Child</th><th>Context</th></tr></thead>
+                    <tbody>
+                        <tr><td>explorer.exe</td><td>Most user applications</td><td>User launched program</td></tr>
+                        <tr><td>services.exe</td><td>svchost.exe</td><td>Service start</td></tr>
+                        <tr><td>svchost.exe</td><td>taskhostw.exe</td><td>Scheduled task</td></tr>
+                        <tr><td>cmd.exe</td><td>Most programs</td><td>CLI execution</td></tr>
+                        <tr><td>powershell.exe</td><td>Most programs</td><td>Script execution</td></tr>
+                    </tbody>
+                </table>
 
-                <h2>Step 2: Process Analysis</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Get process tree context</span>
+                <h2 id="command-analysis">Command Line Analysis</h2>
+
+                <h3>Suspicious PowerShell Patterns</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #ff6b6b;">// HIGH RISK - Encoded commands</span>
+powershell -enc [Base64String]
+powershell -e [Base64String]
+powershell -EncodedCommand [Base64String]
+
+<span style="color: #ff6b6b;">// HIGH RISK - Download and execute</span>
+IEX (New-Object Net.WebClient).DownloadString('http://...')
+Invoke-Expression (Invoke-WebRequest -Uri 'http://...')
+IEX (iwr 'http://...').Content
+(New-Object Net.WebClient).DownloadFile('http://...', 'C:\...')
+
+<span style="color: #ff6b6b;">// HIGH RISK - Bypass/evasion</span>
+powershell -ExecutionPolicy Bypass
+powershell -ep bypass -w hidden
+Set-ExecutionPolicy Bypass -Scope Process
+[System.Reflection.Assembly]::Load(...)
+
+<span style="color: #ffd93d;">// MEDIUM RISK - Could be legitimate</span>
+powershell -WindowStyle Hidden
+powershell -NoProfile
+powershell -NonInteractive
+
+<span style="color: #6bff8a;">// LOW RISK - Usually legitimate</span>
+Get-Process, Get-Service, Get-EventLog
+Import-Module, Install-Module</pre>
+                </div>
+
+                <h3>LOLBAS Abuse Indicators</h3>
+                <table>
+                    <thead><tr><th>Binary</th><th>Suspicious Usage</th><th>Legitimate Usage</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>certutil.exe</strong></td><td><code>-urlcache -split -f http://</code></td><td>Certificate management</td></tr>
+                        <tr><td><strong>bitsadmin.exe</strong></td><td><code>/transfer /download http://</code></td><td>BITS administration</td></tr>
+                        <tr><td><strong>mshta.exe</strong></td><td><code>http://</code> or <code>javascript:</code></td><td>Usually not needed</td></tr>
+                        <tr><td><strong>regsvr32.exe</strong></td><td><code>/s /n /u /i:http://</code></td><td>DLL registration</td></tr>
+                        <tr><td><strong>rundll32.exe</strong></td><td><code>javascript:</code> or unusual DLLs</td><td>DLL execution</td></tr>
+                        <tr><td><strong>msiexec.exe</strong></td><td><code>/q /i http://</code></td><td>Software installation</td></tr>
+                        <tr><td><strong>wmic.exe</strong></td><td><code>process call create</code> remote</td><td>System queries</td></tr>
+                        <tr><td><strong>cmstp.exe</strong></td><td><code>/ni /s *.inf</code></td><td>Connection Manager</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="quick-queries">Quick Triage Queries</h2>
+
+                <h3>Context Gathering Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Get full process tree for device</span>
+let targetDevice = "HOSTNAME";
+let alertTime = datetime(2025-01-02T12:00:00Z);
 DeviceProcessEvents
-| where DeviceName == "HOSTNAME"
-| where TimeGenerated > ago(1h)
-| where FileName == "suspicious.exe" or ProcessId == 1234
-| project TimeGenerated, FileName, ProcessCommandLine,
-    InitiatingProcessFileName, InitiatingProcessCommandLine,
-    AccountName, FolderPath, SHA256
+| where DeviceName =~ targetDevice
+| where TimeGenerated between ((alertTime - 30m) .. (alertTime + 30m))
+| project TimeGenerated, ProcessId, FileName, FolderPath,
+    ProcessCommandLine, InitiatingProcessFileName,
+    InitiatingProcessId, InitiatingProcessCommandLine,
+    AccountName
 | order by TimeGenerated asc
 
-<span style="color: #a78bf6;">// KQL: Check parent-child process chain</span>
-let SuspiciousPID = 1234;
-DeviceProcessEvents
-| where DeviceName == "HOSTNAME"
-| where TimeGenerated > ago(4h)
-| where ProcessId == SuspiciousPID or InitiatingProcessId == SuspiciousPID
-| project TimeGenerated, ProcessId, FileName, ProcessCommandLine,
-    InitiatingProcessId, InitiatingProcessFileName
-| order by TimeGenerated asc
-
-<span style="color: #a78bf6;">// KQL: What network connections did the process make?</span>
+<span style="color: #6aa3f7;">// KQL - Network connections from process</span>
+let targetDevice = "HOSTNAME";
+let targetProcess = "suspicious.exe";
 DeviceNetworkEvents
-| where DeviceName == "HOSTNAME"
-| where InitiatingProcessFileName == "suspicious.exe"
-| project TimeGenerated, RemoteIP, RemotePort, RemoteUrl, 
-    LocalPort, ActionType</pre>
+| where DeviceName =~ targetDevice
+| where InitiatingProcessFileName =~ targetProcess
+| project TimeGenerated, RemoteIP, RemotePort, RemoteUrl,
+    ActionType
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Files created by process</span>
+DeviceFileEvents
+| where DeviceName =~ targetDevice
+| where InitiatingProcessFileName =~ targetProcess
+| where ActionType == "FileCreated"
+| project TimeGenerated, FileName, FolderPath, SHA256
+
+<span style="color: #6aa3f7;">// KQL - Is this file common in environment?</span>
+let fileHash = "SHA256_HASH";
+DeviceFileEvents
+| where SHA256 == fileHash
+| summarize Devices=dcount(DeviceName), 
+    FirstSeen=min(TimeGenerated),
+    LastSeen=max(TimeGenerated)
+| extend Prevalence = iff(Devices > 100, "Common", 
+    iff(Devices > 10, "Moderate", "Rare"))</pre>
                 </div>
 
-                <h2>Step 3: Process Chain Analysis</h2>
-                <p>Look for suspicious parent → child relationships:</p>
+                <h2 id="alert-specific">Alert-Specific Triage</h2>
+
+                <h3>Suspicious PowerShell Alert</h3>
                 <table>
-                    <thead><tr><th>Suspicious Chain</th><th>Likely Attack</th></tr></thead>
+                    <thead><tr><th>Check</th><th>Benign Indicator</th><th>Malicious Indicator</th></tr></thead>
                     <tbody>
-                        <tr><td>outlook.exe → cmd.exe/powershell.exe</td><td>Phishing payload execution</td></tr>
-                        <tr><td>excel.exe → cmd.exe/powershell.exe</td><td>Macro malware</td></tr>
-                        <tr><td>winword.exe → wscript.exe/cscript.exe</td><td>Document dropper</td></tr>
-                        <tr><td>explorer.exe → rundll32.exe (unusual args)</td><td>DLL execution technique</td></tr>
-                        <tr><td>services.exe → cmd.exe</td><td>Service-based execution</td></tr>
-                        <tr><td>wmiprvse.exe → powershell.exe</td><td>WMI lateral movement</td></tr>
-                        <tr><td>Any → mshta.exe, regsvr32.exe, certutil.exe</td><td>LOLBin abuse</td></tr>
+                        <tr><td>Parent process</td><td>explorer.exe, cmd.exe, scheduled task</td><td>Office apps, mshta, wscript</td></tr>
+                        <tr><td>Command line</td><td>Clear text, known script path</td><td>Encoded, download cradle</td></tr>
+                        <tr><td>User context</td><td>IT admin, service account</td><td>Standard user, unexpected</td></tr>
+                        <tr><td>Network activity</td><td>None or internal</td><td>External connections, C2 patterns</td></tr>
+                        <tr><td>Files created</td><td>Logs, known paths</td><td>Temp directory, random names</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 4: File Reputation Check</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">Check file hash on:</span>
-• VirusTotal: https://www.virustotal.com/gui/file/{SHA256}
-• Hybrid Analysis: https://www.hybrid-analysis.com
-• Any.Run: https://any.run
-
-<span style="color: #a78bf6;">// KQL: Get file hash from alert</span>
-DeviceFileEvents
-| where DeviceName == "HOSTNAME"
-| where FileName == "suspicious.exe"
-| project FileName, SHA256, SHA1, MD5, FolderPath, FileSize
-| take 1
-
-<span style="color: #a78bf6;">// KQL: How many other hosts have this file?</span>
-DeviceFileEvents
-| where TimeGenerated > ago(30d)
-| where SHA256 == "file-hash-here"
-| summarize Hosts = dcount(DeviceName), HostList = make_set(DeviceName, 10)</pre>
+                <h3>Process Injection Alert</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Process Injection is High Confidence</div>
+                    <p style="margin: 0.3rem 0;">Process injection alerts have low false positive rates. Treat as likely true positive.</p>
                 </div>
-
-                <h2>Step 5: Decision Tree</h2>
-                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                    <p><strong>Q1: Was the threat blocked/quarantined?</strong></p>
-                    <ul>
-                        <li><strong>YES</strong> → Lower urgency. Verify no other indicators. May close if isolated.</li>
-                        <li><strong>NO (Alert only)</strong> → Continue investigation, may need manual remediation.</li>
-                    </ul>
-                    <p><strong>Q2: Is the file/process signed by trusted publisher?</strong></p>
-                    <ul>
-                        <li><strong>YES (Microsoft, known vendor)</strong> → May be LOLBin abuse. Check command line.</li>
-                        <li><strong>NO (Unsigned or unknown)</strong> → Higher suspicion. Check reputation.</li>
-                    </ul>
-                    <p><strong>Q3: Is this a known good application?</strong></p>
-                    <ul>
-                        <li><strong>YES (IT-approved software)</strong> → Likely false positive. Tune detection.</li>
-                        <li><strong>NO/Unknown</strong> → Continue to Q4.</li>
-                    </ul>
-                    <p><strong>Q4: Did process make network connections or spawn children?</strong></p>
-                    <ul>
-                        <li><strong>YES</strong> → <span style="color: var(--accent-danger);">ESCALATE</span> - Potential active compromise.</li>
-                        <li><strong>NO</strong> → Lower risk if also blocked. Document and close.</li>
-                    </ul>
-                </div>
-
-                <h2>Common False Positives</h2>
                 <table>
-                    <thead><tr><th>Scenario</th><th>How to Identify</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Technique</th><th>Indicators</th><th>Risk</th></tr></thead>
                     <tbody>
-                        <tr><td>IT admin tools (PsExec, etc.)</td><td>Known admin user, authorized activity</td><td>Verify with IT, add exclusion if warranted</td></tr>
-                        <tr><td>Security scanning tools</td><td>Known vuln scanner, pen test scheduled</td><td>Verify window, close</td></tr>
-                        <tr><td>Software installation</td><td>Correlates with deployment</td><td>Verify with IT</td></tr>
-                        <tr><td>Developer tools</td><td>On developer workstation, expected tools</td><td>Document pattern, tune</td></tr>
-                        <tr><td>Archive extractors</td><td>7z, WinRAR for legitimate use</td><td>Check what was extracted</td></tr>
+                        <tr><td>CreateRemoteThread</td><td>Thread created in remote process</td><td>Critical</td></tr>
+                        <tr><td>Process Hollowing</td><td>Unmapped sections, suspended process</td><td>Critical</td></tr>
+                        <tr><td>DLL Injection</td><td>Unusual DLL load path</td><td>High</td></tr>
+                        <tr><td>APC Injection</td><td>Queued APC to remote thread</td><td>Critical</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Escalation Criteria</h2>
-                <p>Escalate immediately if:</p>
-                <ul>
-                    <li>Credential dumping detected (Mimikatz, LSASS access)</li>
-                    <li>Process making C2-like network connections</li>
-                    <li>Ransomware behavior (mass file encryption)</li>
-                    <li>Multiple endpoints with same threat</li>
-                    <li>Server or critical asset affected</li>
-                    <li>Defense evasion (disabling AV)</li>
-                </ul>
+                <h3>Credential Access Alert</h3>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Credential Access is Critical</div>
+                    <p style="margin: 0.3rem 0;">LSASS access, credential dumping, and Mimikatz detections should always be escalated.</p>
+                </div>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - LSASS access patterns</span>
+DeviceProcessEvents
+| where FileName =~ "lsass.exe"
+    or ProcessCommandLine has "lsass"
+    or InitiatingProcessCommandLine has "lsass"
+| where InitiatingProcessFileName !in~ ("svchost.exe", 
+    "csrss.exe", "wininit.exe", "services.exe")
+| project TimeGenerated, DeviceName, FileName, 
+    ProcessCommandLine, InitiatingProcessFileName,
+    InitiatingProcessCommandLine</pre>
+                </div>
+
+                <h2 id="hash-lookup">Hash Reputation Checks</h2>
+                <table>
+                    <thead><tr><th>Source</th><th>URL</th><th>What to Check</th></tr></thead>
+                    <tbody>
+                        <tr><td>VirusTotal</td><td>virustotal.com</td><td>AV detections, behavior, community</td></tr>
+                        <tr><td>Hybrid Analysis</td><td>hybrid-analysis.com</td><td>Sandbox reports</td></tr>
+                        <tr><td>MalwareBazaar</td><td>bazaar.abuse.ch</td><td>Known malware samples</td></tr>
+                        <tr><td>ANY.RUN</td><td>any.run</td><td>Interactive sandbox reports</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Escalate Immediately If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Process injection confirmed</li>
+                        <li>LSASS access or credential dumping</li>
+                        <li>Ransomware behavior indicators</li>
+                        <li>C2 communication detected</li>
+                        <li>Known malware hash</li>
+                        <li>Cobalt Strike or other framework detected</li>
+                        <li>Web shell or server compromise</li>
+                        <li>Lateral movement indicators</li>
+                        <li>Multiple alerts on same host</li>
+                        <li>Server or critical system affected</li>
+                    </ul>
+                </div>
+
+                <h2 id="containment">Quick Containment</h2>
+                <p>If immediate containment is needed while escalating:</p>
+                <table>
+                    <thead><tr><th>Action</th><th>Method</th><th>When to Use</th></tr></thead>
+                    <tbody>
+                        <tr><td>Network isolate</td><td>EDR console isolation</td><td>Active threat, not blocked</td></tr>
+                        <tr><td>Kill process</td><td>EDR or taskkill command</td><td>Malicious process running</td></tr>
+                        <tr><td>Quarantine file</td><td>EDR quarantine action</td><td>Malware file identified</td></tr>
+                        <tr><td>Disable user</td><td>AD account disable</td><td>Compromised account</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="common-fps">Common False Positives</h2>
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Common FP Source</th><th>How to Identify</th></tr></thead>
+                    <tbody>
+                        <tr><td>Encoded PowerShell</td><td>SCCM, Intune, admin scripts</td><td>Decode command, check source</td></tr>
+                        <tr><td>LOLBAS usage</td><td>Legitimate admin tools</td><td>Check user, time, context</td></tr>
+                        <tr><td>Suspicious parent-child</td><td>Automation, deployment tools</td><td>Check for known software</td></tr>
+                        <tr><td>Persistence creation</td><td>Software installation</td><td>Check installer source</td></tr>
+                        <tr><td>Network anomaly</td><td>New legitimate software</td><td>Verify software legitimacy</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="documentation">Documentation Template</h2>
+                <table>
+                    <thead><tr><th>Field</th><th>Value</th></tr></thead>
+                    <tbody>
+                        <tr><td>Alert ID</td><td>[Alert ID]</td></tr>
+                        <tr><td>Alert Type</td><td>[Type from EDR]</td></tr>
+                        <tr><td>Hostname</td><td>[Device name]</td></tr>
+                        <tr><td>User</td><td>[Username]</td></tr>
+                        <tr><td>Process</td><td>[Process name and path]</td></tr>
+                        <tr><td>Command Line</td><td>[Full command line]</td></tr>
+                        <tr><td>Parent Process</td><td>[Parent process chain]</td></tr>
+                        <tr><td>File Hash</td><td>[SHA256]</td></tr>
+                        <tr><td>Hash Reputation</td><td>[VT score, known malware]</td></tr>
+                        <tr><td>Action Taken</td><td>[Blocked/Allowed]</td></tr>
+                        <tr><td>Network Activity</td><td>[Connections observed]</td></tr>
+                        <tr><td>Triage Result</td><td>[TP/FP/Needs Investigation]</td></tr>
+                        <tr><td>Actions Taken</td><td>[Isolation/Escalation/Closed]</td></tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../../js/main.js"></script>
 </body>

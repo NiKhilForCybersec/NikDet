@@ -9,193 +9,235 @@
 </head>
 <body>
     <nav class="main-nav">
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>DLP Triage</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>DLP Triage</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">TRI-007</div>
+                <h1>DLP Alert Triage</h1>
+                <p class="lead">Comprehensive triage procedure for Data Loss Prevention alerts. Assess data sensitivity, verify policy violations, determine intent, and make rapid escalation decisions for potential data breaches.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1 / L2</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tools</span><span class="playbook-meta-value">DLP Console, SIEM, CASB</span></div>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-TRIAGE-007</div>
-                    <h1>DLP Alert Triage</h1>
-                    <p class="lead">Rapid triage procedures for Data Loss Prevention alerts. Balance data protection with business operations.</p>
-                </div>
-
-                <h2>DLP Alert Categories</h2>
+                <h2 id="alert-types">DLP Alert Categories</h2>
                 <table>
-                    <thead><tr><th>Category</th><th>Data Types</th><th>Typical Severity</th><th>Initial Response</th></tr></thead>
+                    <thead><tr><th>Alert Type</th><th>Channel</th><th>Priority</th><th>FP Rate</th><th>Key Indicators</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>PII/PHI</strong></td><td>SSN, medical records, financial data</td><td>High</td><td>Assess regulatory impact, scope exposure</td></tr>
-                        <tr><td><strong>Financial</strong></td><td>Credit cards, bank accounts, payroll</td><td>High</td><td>PCI implications, assess compromise</td></tr>
-                        <tr><td><strong>Intellectual Property</strong></td><td>Source code, designs, trade secrets</td><td>High</td><td>Business impact, competitor risk</td></tr>
-                        <tr><td><strong>Credentials</strong></td><td>Passwords, API keys, certificates</td><td>Critical</td><td>Immediate rotation if exposed</td></tr>
-                        <tr><td><strong>Business Confidential</strong></td><td>Contracts, M&A data, strategy docs</td><td>Medium-High</td><td>Assess recipient, business context</td></tr>
-                        <tr><td><strong>Employee Data</strong></td><td>HR records, performance reviews</td><td>Medium</td><td>Privacy implications, HR notification</td></tr>
+                        <tr><td><strong>Email to External</strong></td><td>Email gateway</td><td>Medium-High</td><td>Medium</td><td>Attachment, recipient domain</td></tr>
+                        <tr><td><strong>Cloud Upload</strong></td><td>CASB/Proxy</td><td>High</td><td>Medium</td><td>File size, destination service</td></tr>
+                        <tr><td><strong>USB Copy</strong></td><td>Endpoint DLP</td><td>High</td><td>Low</td><td>File type, volume</td></tr>
+                        <tr><td><strong>Print</strong></td><td>Endpoint DLP</td><td>Medium</td><td>High</td><td>Document content</td></tr>
+                        <tr><td><strong>Screen Capture</strong></td><td>Endpoint DLP</td><td>Medium</td><td>High</td><td>Application context</td></tr>
+                        <tr><td><strong>Network Share</strong></td><td>Network DLP</td><td>Medium</td><td>Medium</td><td>Destination, file type</td></tr>
+                        <tr><td><strong>Web Upload</strong></td><td>Proxy/CASB</td><td>High</td><td>Medium</td><td>URL category, file type</td></tr>
+                        <tr><td><strong>Application</strong></td><td>App-specific</td><td>Medium</td><td>High</td><td>Action, data type</td></tr>
                     </tbody>
                 </table>
 
-                <h2>DLP Channel Analysis</h2>
-                <table>
-                    <thead><tr><th>Channel</th><th>Common Triggers</th><th>Key Questions</th><th>False Positive Rate</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Email (outbound)</strong></td><td>Attachments, body content</td><td>Is recipient authorized? Business purpose?</td><td>Medium</td></tr>
-                        <tr><td><strong>Cloud Storage</strong></td><td>Sharing, sync to personal</td><td>Was sharing necessary? Who received access?</td><td>High</td></tr>
-                        <tr><td><strong>USB/Removable</strong></td><td>Copy to external device</td><td>Work device? Authorized transfer?</td><td>Low</td></tr>
-                        <tr><td><strong>Print</strong></td><td>Sensitive document printing</td><td>Secure printer? Business need?</td><td>High</td></tr>
-                        <tr><td><strong>Web Upload</strong></td><td>Upload to personal sites</td><td>Is site authorized? What was uploaded?</td><td>Medium</td></tr>
-                        <tr><td><strong>Clipboard</strong></td><td>Copy to unauthorized apps</td><td>Destination application? Data type?</td><td>Very High</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Triage Decision Matrix</h2>
-                <table>
-                    <thead><tr><th>Factor</th><th>Lower Risk</th><th>Higher Risk</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Recipient</strong></td><td>Internal, business partner</td><td>Personal email, competitor, unknown</td></tr>
-                        <tr><td><strong>Data Volume</strong></td><td>Single document</td><td>Bulk export, many files</td></tr>
-                        <tr><td><strong>User History</strong></td><td>First incident, good standing</td><td>Repeat violations, performance issues</td></tr>
-                        <tr><td><strong>Data Sensitivity</strong></td><td>Low classification</td><td>Highly confidential, regulated data</td></tr>
-                        <tr><td><strong>Action Outcome</strong></td><td>Blocked</td><td>Allowed (policy in warn mode)</td></tr>
-                        <tr><td><strong>User Context</strong></td><td>Normal business hours/location</td><td>After hours, unusual location</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Investigation Queries</h2>
-                <h3>Microsoft Purview DLP</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// DLP incidents in last 24 hours</span>
-DLPAlerts
-| where TimeGenerated > ago(24h)
-| project TimeGenerated, User, PolicyName, SensitiveInfoType, 
-    Action, Destination, FileName, FileSize
-| order by TimeGenerated desc
-
-<span style="color: #6aa3f7;">// User's DLP history (pattern analysis)</span>
-DLPAlerts
-| where TimeGenerated > ago(90d)
-| where User == "user@company.com"
-| summarize TotalIncidents=count(), Blocked=countif(Action=="Block"),
-    Allowed=countif(Action=="Allow") by PolicyName
-| order by TotalIncidents desc
-
-<span style="color: #6aa3f7;">// Bulk data movement detection</span>
-OfficeActivity
-| where TimeGenerated > ago(24h)
-| where UserId == "user@company.com"
-| where Operation in ("FileDownloaded", "FileSyncDownloadedFull")
-| summarize FileCount=count(), TotalSize=sum(FileSize) by bin(TimeGenerated, 1h)
-| where FileCount > 50 or TotalSize > 100000000
-
-<span style="color: #6aa3f7;">// External sharing events</span>
-OfficeActivity
-| where TimeGenerated > ago(24h)
-| where Operation in ("AnonymousLinkCreated", "SharingInvitationCreated", 
-    "AddedToSecureLink", "SecureLinkCreated")
-| where TargetUserOrGroupType == "Guest" or TargetUserOrGroupName contains "@"
-| project TimeGenerated, UserId, FileName, TargetUserOrGroupName, Site_Url</pre>
-                </div>
-
-                <h3>Symantec/Broadcom DLP</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// User incident history</span>
-index=dlp user="jsmith" earliest=-30d
-| stats count by policy_name, severity, action
-| sort -count
-
-<span style="color: #6aa3f7;">// High severity incidents today</span>
-index=dlp severity=HIGH earliest=-24h
-| table _time, user, policy_name, filename, recipient, action, match_count</pre>
-                </div>
-
-                <h2>Common False Positive Scenarios</h2>
-                <table>
-                    <thead><tr><th>Scenario</th><th>Why It's FP</th><th>Resolution</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Test data with fake SSNs</strong></td><td>Matches SSN pattern but fake</td><td>Add test data exception</td></tr>
-                        <tr><td><strong>Marketing materials with customer logos</strong></td><td>Contains company names from customer list</td><td>Context-based exception</td></tr>
-                        <tr><td><strong>Resume with personal info</strong></td><td>User's own data</td><td>Self-data exception</td></tr>
-                        <tr><td><strong>Public financial reports</strong></td><td>Already public information</td><td>Classification exception</td></tr>
-                        <tr><td><strong>Encrypted file transfer</strong></td><td>Data is protected in transit</td><td>Review encryption policy</td></tr>
-                        <tr><td><strong>Authorized vendor communication</strong></td><td>Business-approved recipient</td><td>Add to approved list</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Triage Workflow</h2>
+                <h2 id="triage-flow">Triage Decision Flow</h2>
                 <div class="step-container">
                     <div class="step">
                         <div class="step-indicator"><div class="step-number-badge">1</div></div>
                         <div class="step-content">
-                            <div class="step-title">Assess Data Sensitivity</div>
-                            <p>What type of data triggered the alert? Is it actually sensitive? Check classification and content.</p>
+                            <div class="step-title">Assess Data Classification</div>
+                            <table>
+                                <thead><tr><th>Classification</th><th>Examples</th><th>Regulation</th><th>Priority</th></tr></thead>
+                                <tbody>
+                                    <tr><td>PII</td><td>SSN, DOB, addresses</td><td>GDPR, CCPA</td><td>High</td></tr>
+                                    <tr><td>PHI</td><td>Medical records, diagnoses</td><td>HIPAA</td><td>Critical</td></tr>
+                                    <tr><td>PCI</td><td>Credit cards, CVV</td><td>PCI-DSS</td><td>Critical</td></tr>
+                                    <tr><td>Financial</td><td>Bank accounts, tax info</td><td>GLBA</td><td>High</td></tr>
+                                    <tr><td>IP/Trade Secret</td><td>Source code, designs</td><td>Civil</td><td>High</td></tr>
+                                    <tr><td>Confidential</td><td>Internal docs, strategy</td><td>Policy</td><td>Medium</td></tr>
+                                    <tr><td>Public</td><td>Marketing materials</td><td>None</td><td>Low</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-indicator"><div class="step-number-badge">2</div></div>
                         <div class="step-content">
-                            <div class="step-title">Identify Destination</div>
-                            <p>Where was the data going? Internal, authorized external, or unauthorized destination?</p>
+                            <div class="step-title">Evaluate Policy Match</div>
+                            <ul>
+                                <li><strong>True match?</strong> Does content actually contain sensitive data?</li>
+                                <li><strong>Pattern quality:</strong> Regex match vs keyword vs exact data</li>
+                                <li><strong>Context:</strong> Is this expected for user's role?</li>
+                                <li><strong>Volume:</strong> Single record vs bulk data</li>
+                                <li><strong>File type:</strong> Database export vs document vs spreadsheet</li>
+                            </ul>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-indicator"><div class="step-number-badge">3</div></div>
                         <div class="step-content">
-                            <div class="step-title">Check User Context</div>
-                            <p>User's role, department, history, and whether action aligns with job function.</p>
+                            <div class="step-title">Assess User and Destination</div>
+                            <table>
+                                <thead><tr><th>Factor</th><th>Lower Risk</th><th>Higher Risk</th></tr></thead>
+                                <tbody>
+                                    <tr><td>User role</td><td>Job requires data access</td><td>No business need</td></tr>
+                                    <tr><td>User history</td><td>First-time, no prior alerts</td><td>Repeat offender</td></tr>
+                                    <tr><td>User status</td><td>Long-term employee</td><td>Departing/new employee</td></tr>
+                                    <tr><td>Destination</td><td>Known business partner</td><td>Personal email/cloud</td></tr>
+                                    <tr><td>Time</td><td>Business hours</td><td>Unusual hours</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-indicator"><div class="step-number-badge">4</div></div>
                         <div class="step-content">
-                            <div class="step-title">Determine Action Taken</div>
-                            <p>Was data blocked, warned, or allowed? If allowed, assess exposure and containment need.</p>
+                            <div class="step-title">Determine Intent</div>
+                            <table>
+                                <thead><tr><th>Indicator</th><th>Likely Accidental</th><th>Potentially Malicious</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Volume</td><td>Single file/record</td><td>Bulk extraction</td></tr>
+                                    <tr><td>Timing</td><td>During normal work</td><td>Off-hours, before leaving</td></tr>
+                                    <tr><td>Destination</td><td>Legitimate recipient</td><td>Personal accounts</td></tr>
+                                    <tr><td>Behavior</td><td>Open about activity</td><td>Trying to hide (encryption)</td></tr>
+                                    <tr><td>History</td><td>First occurrence</td><td>Pattern of violations</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <div class="step">
                         <div class="step-indicator"><div class="step-number-badge">5</div></div>
                         <div class="step-content">
-                            <div class="step-title">Escalate or Close</div>
-                            <p>Based on risk assessment, either close as FP/low risk or escalate to IR/management.</p>
+                            <div class="step-title">Make Triage Decision</div>
+                            <table>
+                                <thead><tr><th>Scenario</th><th>Decision</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>FP - Pattern misfire</td><td>Close</td><td>Consider policy tuning</td></tr>
+                                    <tr><td>Legitimate business</td><td>Document, close</td><td>Educate if needed</td></tr>
+                                    <tr><td>Accidental violation</td><td>Coach user</td><td>Training, document</td></tr>
+                                    <tr><td>Policy violation</td><td>HR notification</td><td>Document, track</td></tr>
+                                    <tr><td>Potential theft</td><td>Escalate</td><td>Full investigation</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
 
-                <h2>Escalation Criteria</h2>
+                <h2 id="queries">DLP Triage Queries</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Microsoft Purview DLP alerts</span>
+SecurityAlert
+| where TimeGenerated > ago(24h)
+| where ProductName == "Microsoft Cloud App Security" 
+    or ProductName == "Microsoft Data Loss Prevention"
+| project TimeGenerated, AlertName, Description, 
+    UserPrincipalName = tostring(Entities[0].Name),
+    Severity, Status
+
+<span style="color: #6aa3f7;">// KQL - User's DLP history</span>
+SecurityAlert
+| where ProductName has "DLP"
+| where UserPrincipalName =~ "user@company.com"
+| summarize 
+    TotalAlerts = count(),
+    HighSeverity = countif(Severity == "High"),
+    LastAlert = max(TimeGenerated)
+    by AlertName
+| order by TotalAlerts desc
+
+<span style="color: #6aa3f7;">// KQL - Email DLP violations</span>
+EmailEvents
+| where TimeGenerated > ago(7d)
+| where EmailDirection == "Outbound"
+| where DlpPolicyMatched == true
+| project TimeGenerated, SenderFromAddress, RecipientEmailAddress,
+    Subject, AttachmentCount, DlpPolicy = NetworkMessageId
+
+<span style="color: #6aa3f7;">// KQL - Cloud app uploads with sensitive data</span>
+CloudAppEvents
+| where TimeGenerated > ago(24h)
+| where ActionType in ("FileUploaded", "FileShared")
+| where Application in ("Dropbox", "Google Drive", 
+    "OneDrive Personal", "Box")
+| project TimeGenerated, AccountDisplayName, Application,
+    ActionType, ObjectName, IPAddress
+
+<span style="color: #6aa3f7;">// KQL - USB file copies</span>
+DeviceFileEvents
+| where TimeGenerated > ago(24h)
+| where ActionType == "FileCreated"
+| where FolderPath matches regex @"^[D-Z]:\\"
+| where InitiatingProcessFileName !in ("explorer.exe", "System")
+| summarize 
+    FileCount = count(),
+    TotalSize = sum(FileSize)
+    by DeviceName, InitiatingProcessAccountName
+| where FileCount > 10 or TotalSize > 10485760
+| extend TotalMB = round(TotalSize / 1048576.0, 2)
+
+<span style="color: #6aa3f7;">// SPL - DLP policy violations</span>
+index=dlp 
+| stats count by user, policy_name, action, severity
+| where count > 1
+| sort -count</pre>
+                </div>
+
+                <h2 id="common-fps">Common False Positives</h2>
                 <table>
-                    <thead><tr><th>Condition</th><th>Escalate To</th><th>Timeframe</th></tr></thead>
+                    <thead><tr><th>FP Type</th><th>Cause</th><th>Example</th><th>Resolution</th></tr></thead>
                     <tbody>
-                        <tr><td>Bulk PII exposure (>100 records)</td><td>IR Team, Privacy Officer</td><td>Immediate</td></tr>
-                        <tr><td>Departing employee exfiltration</td><td>HR, Legal, IR Team</td><td>Immediate</td></tr>
-                        <tr><td>Credential exposure</td><td>IR Team for rotation</td><td>Immediate</td></tr>
-                        <tr><td>Source code to competitor</td><td>Legal, Management</td><td>Immediate</td></tr>
-                        <tr><td>Repeated policy violations</td><td>HR, User's Manager</td><td>Within 24 hours</td></tr>
-                        <tr><td>Regulatory data breach</td><td>Privacy Officer, Legal</td><td>Immediate</td></tr>
+                        <tr><td>Pattern match</td><td>Regex too broad</td><td>Phone number matching random digits</td><td>Refine pattern</td></tr>
+                        <tr><td>Test data</td><td>Dev/test environments</td><td>Fake SSNs in test files</td><td>Exclude test paths</td></tr>
+                        <tr><td>Business process</td><td>Legitimate data sharing</td><td>HR sending offer letters</td><td>Create exception</td></tr>
+                        <tr><td>Encrypted files</td><td>Cannot read content</td><td>Password-protected docs</td><td>Adjust policy</td></tr>
+                        <tr><td>Public data</td><td>Overly sensitive policy</td><td>Marketing materials flagged</td><td>Exclude classification</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Response Actions</h2>
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Bulk sensitive data (PII, PHI, PCI) sent externally</li>
+                        <li>Data sent to competitor or foreign entity</li>
+                        <li>Departing employee exfiltrating data</li>
+                        <li>Pattern suggests intentional theft</li>
+                        <li>Database exports or large file archives</li>
+                        <li>Source code or trade secrets involved</li>
+                        <li>Multiple channels used (email + cloud + USB)</li>
+                        <li>User attempting to bypass DLP controls</li>
+                    </ul>
+                </div>
+
+                <h2 id="containment">Quick Containment Actions</h2>
                 <table>
-                    <thead><tr><th>Scenario</th><th>Containment</th><th>Remediation</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>Method</th><th>Coordination</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Email sent (not blocked)</strong></td><td>Recall if possible, notify recipient</td><td>User coaching, policy review</td></tr>
-                        <tr><td><strong>Cloud sharing to external</strong></td><td>Remove sharing, revoke access</td><td>Review sharing permissions</td></tr>
-                        <tr><td><strong>USB copy (blocked)</strong></td><td>No action needed</td><td>User awareness</td></tr>
-                        <tr><td><strong>Bulk download detected</strong></td><td>Disable account pending review</td><td>Full investigation</td></tr>
-                        <tr><td><strong>Credential in email</strong></td><td>Rotate credential immediately</td><td>User training</td></tr>
+                        <tr><td>Email violation</td><td>Recall/delete email</td><td>Exchange admin</td><td>Email team</td></tr>
+                        <tr><td>Cloud upload</td><td>Remove shared file</td><td>CASB/Cloud admin</td><td>Cloud team</td></tr>
+                        <tr><td>Ongoing exfil</td><td>Block user access</td><td>AD/Azure AD</td><td>HR, Manager</td></tr>
+                        <tr><td>USB copy</td><td>Disable USB ports</td><td>Endpoint policy</td><td>IT</td></tr>
+                        <tr><td>Active threat</td><td>Network isolate</td><td>EDR/Switch</td><td>Security</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Documentation Requirements</h2>
-                <ul>
-                    <li>☐ Data type and sensitivity level</li>
-                    <li>☐ Volume of data involved</li>
-                    <li>☐ Destination (internal/external, specific recipient)</li>
-                    <li>☐ DLP action (blocked/warned/allowed)</li>
-                    <li>☐ User and their role/department</li>
-                    <li>☐ Business justification (if any)</li>
-                    <li>☐ Investigation findings</li>
-                    <li>☐ Containment actions taken</li>
-                    <li>☐ Follow-up required (policy tuning, user training)</li>
-                </ul>
+                <h2 id="regulatory">Regulatory Considerations</h2>
+                <table>
+                    <thead><tr><th>Regulation</th><th>Data Type</th><th>Notification Requirement</th><th>Timeline</th></tr></thead>
+                    <tbody>
+                        <tr><td>GDPR</td><td>EU personal data</td><td>Supervisory authority + data subjects</td><td>72 hours</td></tr>
+                        <tr><td>CCPA</td><td>California residents' PI</td><td>Affected individuals</td><td>Most expedient</td></tr>
+                        <tr><td>HIPAA</td><td>Protected health info</td><td>HHS + individuals</td><td>60 days</td></tr>
+                        <tr><td>PCI-DSS</td><td>Cardholder data</td><td>Card brands + acquirer</td><td>Immediately</td></tr>
+                        <tr><td>State laws</td><td>Varies</td><td>Varies by state</td><td>30-90 days</td></tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>

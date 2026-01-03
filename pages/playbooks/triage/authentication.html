@@ -6,152 +6,327 @@
     <title>Authentication Alert Triage | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Authentication Triage</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Authentication Triage</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">TRI-002</div>
+                <h1>Authentication Alert Triage</h1>
+                <p class="lead">Comprehensive triage procedure for authentication-related security alerts including failed logins, brute force, password spray, MFA bypass, impossible travel, and credential stuffing attacks.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1 / L2</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tools</span><span class="playbook-meta-value">SIEM, Azure AD, AD</span></div>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-TRI-001</div>
-                    <h1>Authentication Alert Triage</h1>
-                    <p class="lead">Quickly triage authentication-related alerts including failed logins, brute force, impossible travel, and suspicious sign-ins.</p>
-                    <div class="playbook-meta">
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L1</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">5-15 min</span></div>
+                <h2 id="alert-types">Authentication Alert Types</h2>
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Description</th><th>Priority</th><th>FP Rate</th><th>Key Indicator</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Brute Force</strong></td><td>Many failed logins, single user</td><td>Medium</td><td>Medium</td><td>>10 failures in 5 min</td></tr>
+                        <tr><td><strong>Password Spray</strong></td><td>Few attempts per user, many users</td><td>High</td><td>Low</td><td>Same password across users</td></tr>
+                        <tr><td><strong>Credential Stuffing</strong></td><td>Leaked credentials tested</td><td>High</td><td>Low</td><td>Multiple user/pass combos</td></tr>
+                        <tr><td><strong>Impossible Travel</strong></td><td>Logins from distant locations</td><td>Medium</td><td>Medium</td><td>Geography vs time gap</td></tr>
+                        <tr><td><strong>MFA Fatigue</strong></td><td>Repeated MFA push attempts</td><td>High</td><td>Low</td><td>Multiple MFA denials</td></tr>
+                        <tr><td><strong>New Location</strong></td><td>Login from unusual country/city</td><td>Medium</td><td>High</td><td>First-time location</td></tr>
+                        <tr><td><strong>Legacy Auth</strong></td><td>Non-modern auth protocols</td><td>Medium</td><td>Medium</td><td>IMAP, POP3, SMTP</td></tr>
+                        <tr><td><strong>Tor/VPN Exit</strong></td><td>Anonymous network usage</td><td>Medium</td><td>Medium</td><td>Known anonymizer IPs</td></tr>
+                        <tr><td><strong>After-Hours</strong></td><td>Login outside business hours</td><td>Low</td><td>High</td><td>Unusual timing</td></tr>
+                        <tr><td><strong>Service Account</strong></td><td>Interactive service acct login</td><td>High</td><td>Low</td><td>Should be non-interactive</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="triage-flow">Triage Decision Flow</h2>
+                <div class="step-container">
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Identify Attack Pattern</div>
+                            <table>
+                                <thead><tr><th>Pattern</th><th>Single User</th><th>Multiple Users</th><th>Likely Attack</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Many failures</td><td>Yes</td><td>No</td><td>Brute Force</td></tr>
+                                    <tr><td>Few failures per user</td><td>No</td><td>Yes</td><td>Password Spray</td></tr>
+                                    <tr><td>Same source IP</td><td>Varies</td><td>Yes</td><td>Automated attack</td></tr>
+                                    <tr><td>Different passwords</td><td>Yes</td><td>No</td><td>Credential stuffing</td></tr>
+                                    <tr><td>Same password</td><td>No</td><td>Yes</td><td>Password spray</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Check for Successful Login</div>
+                            <ul>
+                                <li><strong>All failures:</strong> Lower risk, monitor for escalation</li>
+                                <li><strong>Success after failures:</strong> Higher risk, verify legitimacy</li>
+                                <li><strong>Success with no failures:</strong> Check for stolen credentials</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Assess Source Reputation</div>
+                            <table>
+                                <thead><tr><th>Source Type</th><th>Risk Level</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>Corporate IP/VPN</td><td>Low</td><td>Likely legitimate user</td></tr>
+                                    <tr><td>Residential ISP</td><td>Medium</td><td>Could be WFH or attacker</td></tr>
+                                    <tr><td>Cloud/Hosting</td><td>High</td><td>Likely automated attack</td></tr>
+                                    <tr><td>Tor/Anonymous</td><td>High</td><td>Suspicious by nature</td></tr>
+                                    <tr><td>Foreign country</td><td>Medium-High</td><td>Check user's travel</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Verify MFA Status</div>
+                            <ul>
+                                <li><strong>MFA required and passed:</strong> Stronger confidence in legitimacy</li>
+                                <li><strong>MFA bypassed:</strong> Legacy auth or conditional access gap</li>
+                                <li><strong>MFA failed multiple times:</strong> MFA fatigue attack</li>
+                                <li><strong>MFA not required:</strong> Policy gap, higher risk</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
+                        <div class="step-content">
+                            <div class="step-title">Make Triage Decision</div>
+                            <table>
+                                <thead><tr><th>Scenario</th><th>Decision</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>All failures, external IP</td><td>Monitor/Block</td><td>Block IP if persistent</td></tr>
+                                    <tr><td>Success after spray</td><td>Escalate</td><td>Investigate account</td></tr>
+                                    <tr><td>Impossible travel, success</td><td>Investigate</td><td>Contact user</td></tr>
+                                    <tr><td>MFA fatigue accepted</td><td>Escalate</td><td>Assume compromise</td></tr>
+                                    <tr><td>Legacy auth success</td><td>Investigate</td><td>Check user activity</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <h2>Common Authentication Alerts</h2>
-                <table>
-                    <thead><tr><th>Alert Type</th><th>What It Means</th><th>Severity</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Brute Force</strong></td><td>Multiple failed login attempts</td><td>Medium-High</td></tr>
-                        <tr><td><strong>Password Spray</strong></td><td>Same password tried across many accounts</td><td>High</td></tr>
-                        <tr><td><strong>Impossible Travel</strong></td><td>Login from locations that are physically impossible</td><td>High</td></tr>
-                        <tr><td><strong>Risky Sign-in</strong></td><td>Azure AD detected anomalous behavior</td><td>Medium-High</td></tr>
-                        <tr><td><strong>Legacy Auth</strong></td><td>Use of deprecated authentication protocols</td><td>Medium</td></tr>
-                        <tr><td><strong>New Location</strong></td><td>First login from unfamiliar location</td><td>Low-Medium</td></tr>
-                    </tbody>
-                </table>
+                <h2 id="triage-queries">Triage Queries</h2>
 
-                <h2>Step 1: Gather Alert Context</h2>
-                <p>For any authentication alert, immediately gather:</p>
-                <ul>
-                    <li><strong>User:</strong> Who is the account? VIP? Service account? Regular user?</li>
-                    <li><strong>Source IP:</strong> Where did the attempt come from?</li>
-                    <li><strong>Outcome:</strong> Did it succeed or fail?</li>
-                    <li><strong>Timing:</strong> When? Business hours? Weekend?</li>
-                    <li><strong>Volume:</strong> How many attempts?</li>
-                </ul>
-
-                <h2>Step 2: Quick Lookups</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Get full context for the user</span>
-let User = "user@domain.com";
-SigninLogs
-| where TimeGenerated > ago(7d)
-| where UserPrincipalName == User
-| summarize 
-    TotalLogins = count(),
-    SuccessfulLogins = countif(ResultType == 0),
-    FailedLogins = countif(ResultType != 0),
-    UniqueIPs = dcount(IPAddress),
-    UniqueLocations = dcount(Location),
-    Locations = make_set(Location),
-    Apps = make_set(AppDisplayName)
-| extend FailureRate = round(toreal(FailedLogins) / TotalLogins * 100, 2)
-
-<span style="color: #a78bf6;">// KQL: Check if IP is known/corporate</span>
-let AlertIP = "1.2.3.4";
-SigninLogs
-| where TimeGenerated > ago(30d)
-| where IPAddress == AlertIP
-| summarize 
-    TotalUsers = dcount(UserPrincipalName),
-    Users = make_set(UserPrincipalName, 10),
-    FirstSeen = min(TimeGenerated),
-    LastSeen = max(TimeGenerated)
-
-<span style="color: #a78bf6;">// KQL: Recent activity for the user</span>
+                <h3>Azure AD / Entra ID Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Failed login analysis for specific user</span>
+let targetUser = "user@company.com";
 SigninLogs
 | where TimeGenerated > ago(24h)
-| where UserPrincipalName == "user@domain.com"
-| project TimeGenerated, IPAddress, Location, AppDisplayName, 
-    ResultType, ResultDescription, DeviceDetail, RiskLevelDuringSignIn
-| order by TimeGenerated desc</pre>
+| where UserPrincipalName =~ targetUser
+| where ResultType != "0"
+| project TimeGenerated, ResultType, ResultDescription,
+    IPAddress, Location, AppDisplayName, 
+    ClientAppUsed, DeviceDetail, UserAgent
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Brute force detection (single user, many failures)</span>
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType != "0"
+| summarize 
+    FailureCount = count(),
+    DistinctIPs = dcount(IPAddress),
+    IPList = make_set(IPAddress, 5),
+    ErrorCodes = make_set(ResultType, 5)
+    by UserPrincipalName
+| where FailureCount > 10
+| order by FailureCount desc
+
+<span style="color: #6aa3f7;">// KQL - Password spray detection (many users, same errors)</span>
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType in ("50126", "50053", "50055") // Bad password errors
+| summarize 
+    AttemptCount = count(),
+    TargetedUsers = dcount(UserPrincipalName),
+    UserList = make_set(UserPrincipalName, 10)
+    by IPAddress
+| where TargetedUsers > 5
+| order by TargetedUsers desc
+
+<span style="color: #6aa3f7;">// KQL - Successful login after failures</span>
+let failedLogins = SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType != "0"
+| summarize FailureCount = count() by UserPrincipalName, IPAddress;
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == "0"
+| join kind=inner failedLogins on UserPrincipalName, IPAddress
+| where FailureCount > 3
+| project TimeGenerated, UserPrincipalName, IPAddress, 
+    FailureCount, AppDisplayName, Location
+
+<span style="color: #6aa3f7;">// KQL - Impossible travel detection</span>
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where ResultType == "0"
+| project TimeGenerated, UserPrincipalName, IPAddress, 
+    Location, City = tostring(LocationDetails.city),
+    Latitude = todouble(LocationDetails.geoCoordinates.latitude),
+    Longitude = todouble(LocationDetails.geoCoordinates.longitude)
+| order by UserPrincipalName, TimeGenerated asc
+| extend PrevTime = prev(TimeGenerated), 
+    PrevLocation = prev(Location),
+    PrevLat = prev(Latitude), PrevLong = prev(Longitude),
+    PrevUser = prev(UserPrincipalName)
+| where UserPrincipalName == PrevUser
+| extend TimeDiffHours = datetime_diff('hour', TimeGenerated, PrevTime)
+| extend DistanceKm = geo_distance_2points(Longitude, Latitude, PrevLong, PrevLat) / 1000
+| extend SpeedKmH = DistanceKm / TimeDiffHours
+| where SpeedKmH > 500 and TimeDiffHours < 24 // Faster than commercial flight
+| project TimeGenerated, UserPrincipalName, Location, PrevLocation,
+    TimeDiffHours, DistanceKm, SpeedKmH
+
+<span style="color: #6aa3f7;">// KQL - MFA fatigue attack detection</span>
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType in ("50074", "50076") // MFA required/denied
+| summarize 
+    MFAAttempts = count(),
+    TimeSpan = max(TimeGenerated) - min(TimeGenerated)
+    by UserPrincipalName, IPAddress
+| where MFAAttempts > 5
+| extend AttemptsPerMinute = MFAAttempts / (TimeSpan / 1m)
+| where AttemptsPerMinute > 1
+| order by MFAAttempts desc
+
+<span style="color: #6aa3f7;">// KQL - Legacy authentication usage</span>
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ClientAppUsed in ("Exchange ActiveSync", "IMAP4", 
+    "POP3", "SMTP", "Authenticated SMTP", "Other clients")
+| project TimeGenerated, UserPrincipalName, ClientAppUsed,
+    IPAddress, Location, ResultType, AppDisplayName</pre>
                 </div>
 
-                <h2>Step 3: Decision Tree</h2>
-                <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                    <p><strong>Q1: Did the authentication succeed?</strong></p>
-                    <ul>
-                        <li><strong>NO (Failed)</strong> → Check volume. &gt;20 failures = potential brute force. Verify account not locked. Low priority if isolated failures.</li>
-                        <li><strong>YES (Success)</strong> → Continue to Q2</li>
-                    </ul>
-                    <p><strong>Q2: Is the source IP known/expected?</strong></p>
-                    <ul>
-                        <li><strong>YES (Corporate IP/VPN/Known)</strong> → Likely legitimate. Close as benign unless other indicators.</li>
-                        <li><strong>NO (Unknown IP)</strong> → Continue to Q3</li>
-                    </ul>
-                    <p><strong>Q3: Is the location consistent with user's normal pattern?</strong></p>
-                    <ul>
-                        <li><strong>YES</strong> → Possible new ISP/device. Contact user to verify if uncertain.</li>
-                        <li><strong>NO (Impossible travel)</strong> → <span style="color: var(--accent-danger);">HIGH PRIORITY</span> - Escalate to L2, consider account compromise.</li>
-                    </ul>
-                    <p><strong>Q4: Was MFA completed?</strong></p>
-                    <ul>
-                        <li><strong>YES</strong> → Reduces likelihood of compromise. User likely legitimate.</li>
-                        <li><strong>NO (MFA bypassed or not required)</strong> → Higher risk. Investigate legacy auth or conditional access gaps.</li>
-                    </ul>
+                <h3>Windows AD Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Windows failed logins (Event 4625)</span>
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4625
+| extend FailureReason = case(
+    SubStatus == "0xc000006a", "Bad password",
+    SubStatus == "0xc0000064", "User doesn't exist",
+    SubStatus == "0xc000006d", "Bad username or password",
+    SubStatus == "0xc0000072", "Account disabled",
+    SubStatus == "0xc0000234", "Account locked",
+    "Other"
+)
+| summarize FailureCount = count() by TargetUserName, 
+    IpAddress, FailureReason, Computer
+| where FailureCount > 5
+| order by FailureCount desc
+
+<span style="color: #6aa3f7;">// KQL - Account lockouts (Event 4740)</span>
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4740
+| project TimeGenerated, TargetUserName, Computer, 
+    SubjectUserName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Successful logins after failures</span>
+let failures = SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4625
+| summarize FailCount = count() by TargetUserName;
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4624
+| where LogonType in (2, 3, 10) // Interactive, Network, RemoteInteractive
+| join kind=inner failures on $left.TargetUserName == $right.TargetUserName
+| where FailCount > 3
+| project TimeGenerated, TargetUserName, Computer, 
+    IpAddress, LogonType, FailCount
+
+<span style="color: #6aa3f7;">// SPL - Failed login summary</span>
+index=wineventlog EventCode=4625
+| stats count as failures, dc(src_ip) as unique_ips, 
+    values(src_ip) as ip_list by user
+| where failures > 10
+| sort -failures</pre>
                 </div>
 
-                <h2>Step 4: Common False Positive Scenarios</h2>
+                <h2 id="error-codes">Authentication Error Code Reference</h2>
                 <table>
-                    <thead><tr><th>Scenario</th><th>How to Identify</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Code</th><th>Azure AD Description</th><th>Indicates</th><th>Response</th></tr></thead>
                     <tbody>
-                        <tr><td>User traveling</td><td>Check calendar, verify with user</td><td>Document, close if verified</td></tr>
-                        <tr><td>VPN exit node</td><td>IP resolves to known VPN provider</td><td>Check if corporate VPN, close if yes</td></tr>
-                        <tr><td>Mobile carrier IP</td><td>IP resolves to carrier (T-Mobile, AT&T)</td><td>Normal for mobile devices</td></tr>
-                        <tr><td>Password manager autofill</td><td>Multiple rapid attempts, same device</td><td>Usually benign</td></tr>
-                        <tr><td>Cached credentials</td><td>Old device trying saved password</td><td>Advise user, close</td></tr>
+                        <tr><td>50126</td><td>Invalid username or password</td><td>Wrong credentials</td><td>Normal if few attempts</td></tr>
+                        <tr><td>50053</td><td>Account locked</td><td>Too many failures</td><td>Check for attack</td></tr>
+                        <tr><td>50055</td><td>Invalid password</td><td>Password incorrect</td><td>Similar to 50126</td></tr>
+                        <tr><td>50057</td><td>Account disabled</td><td>Account not active</td><td>Verify with HR</td></tr>
+                        <tr><td>50074</td><td>MFA required</td><td>MFA challenge issued</td><td>Check if completed</td></tr>
+                        <tr><td>50076</td><td>MFA denied</td><td>User rejected MFA</td><td>May be MFA fatigue</td></tr>
+                        <tr><td>53003</td><td>Blocked by CA</td><td>Conditional Access block</td><td>Policy working</td></tr>
+                        <tr><td>530032</td><td>Security policy block</td><td>Risk-based block</td><td>High risk detected</td></tr>
+                        <tr><td>50140</td><td>KMSI interrupt</td><td>Keep me signed in</td><td>Usually benign</td></tr>
+                        <tr><td>0</td><td>Success</td><td>Login succeeded</td><td>Verify if expected</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Step 5: Escalation Criteria</h2>
-                <p>Escalate to L2/L3 if:</p>
-                <ul>
-                    <li>Successful login from impossible location AND no MFA</li>
-                    <li>Brute force followed by successful login</li>
-                    <li>VIP/executive account involved</li>
-                    <li>Service account with anomalous activity</li>
-                    <li>Multiple accounts targeted from same source</li>
-                    <li>Login followed by suspicious actions (mailbox rules, forwarding)</li>
-                </ul>
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Successful login after password spray attack</li>
+                        <li>MFA fatigue attack with eventual MFA approval</li>
+                        <li>Privileged account targeted (admin, service account)</li>
+                        <li>Impossible travel with suspicious post-login activity</li>
+                        <li>Legacy auth bypass leading to data access</li>
+                        <li>Multiple users compromised in same attack</li>
+                        <li>Token theft or session hijacking indicators</li>
+                        <li>Post-login activity shows C2 or exfiltration</li>
+                    </ul>
+                </div>
 
-                <h2>Quick Reference: Azure AD Result Codes</h2>
+                <h2 id="containment">Quick Containment Actions</h2>
                 <table>
-                    <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>Method</th><th>Verification</th></tr></thead>
                     <tbody>
-                        <tr><td>0</td><td>Success</td></tr>
-                        <tr><td>50126</td><td>Invalid username or password</td></tr>
-                        <tr><td>50053</td><td>Account locked</td></tr>
-                        <tr><td>50057</td><td>Account disabled</td></tr>
-                        <tr><td>50074</td><td>MFA required</td></tr>
-                        <tr><td>50076</td><td>MFA required (user didn't complete)</td></tr>
-                        <tr><td>53003</td><td>Blocked by Conditional Access</td></tr>
-                        <tr><td>530032</td><td>Blocked due to risk</td></tr>
+                        <tr><td>Account compromise confirmed</td><td>Reset password</td><td>Azure AD/AD</td><td>User confirms reset</td></tr>
+                        <tr><td>Active session theft</td><td>Revoke all sessions</td><td>Azure AD</td><td>User must re-auth</td></tr>
+                        <tr><td>Brute force from IP</td><td>Block source IP</td><td>Firewall/CA policy</td><td>Further attempts blocked</td></tr>
+                        <tr><td>MFA bypass</td><td>Require MFA re-registration</td><td>Azure AD</td><td>User sets up new MFA</td></tr>
+                        <tr><td>Suspicious OAuth app</td><td>Revoke app consent</td><td>Enterprise Apps</td><td>App access removed</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="false-positives">Common False Positives</h2>
+                <table>
+                    <thead><tr><th>Alert Type</th><th>Common FP Cause</th><th>Verification</th><th>Resolution</th></tr></thead>
+                    <tbody>
+                        <tr><td>Brute force</td><td>User forgot password</td><td>Contact user</td><td>Close if confirmed</td></tr>
+                        <tr><td>Impossible travel</td><td>VPN/proxy usage</td><td>Check IP ownership</td><td>Allowlist corporate VPN</td></tr>
+                        <tr><td>New location</td><td>Business travel</td><td>Check with user/manager</td><td>Document if legitimate</td></tr>
+                        <tr><td>Legacy auth</td><td>Old email clients</td><td>Verify application</td><td>Migrate to modern auth</td></tr>
+                        <tr><td>After hours</td><td>Remote workers, travel</td><td>Check user role</td><td>Adjust baseline</td></tr>
                     </tbody>
                 </table>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../../js/main.js"></script>
 </body>

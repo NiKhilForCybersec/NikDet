@@ -9,137 +9,206 @@
 </head>
 <body>
     <nav class="main-nav">
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Insider Threat IR</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Insider IR</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">IR-002</div>
+                <h1>Insider Threat Incident Response</h1>
+                <p class="lead">Comprehensive incident response playbook for insider threat incidents. Covers data theft, sabotage, fraud, and policy violations with HR and Legal coordination requirements.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">Days to Weeks</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Team</span><span class="playbook-meta-value">SOC + HR + Legal</span></div>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-IR-005</div>
-                    <h1>Insider Threat Incident Response</h1>
-                    <p class="lead">Response procedures for suspected malicious or negligent insider activity. Requires close coordination with HR and Legal.</p>
-                </div>
-
                 <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Legal and HR Coordination Required</div>
-                    <p style="margin: 0.5rem 0 0 0;">Insider threat investigations have significant legal and employment implications. Always coordinate with HR and Legal before taking action. Document everything assuming it may be used in court.</p>
+                    <div class="info-box-title"><i class="fas fa-balance-scale"></i> Legal and HR Coordination Required</div>
+                    <p style="margin: 0.3rem 0;">Insider threat investigations have significant legal and employment law implications. ALL actions must be coordinated with HR and Legal. Maintain strict confidentiality. Evidence must be handled properly for potential legal proceedings or termination.</p>
                 </div>
 
-                <h2>Insider Threat Categories</h2>
+                <h2 id="classification">Insider Threat Classification</h2>
                 <table>
-                    <thead><tr><th>Category</th><th>Intent</th><th>Examples</th><th>Response Approach</th></tr></thead>
+                    <thead><tr><th>Type</th><th>Severity</th><th>Key Risk</th><th>Response Approach</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Malicious</strong></td><td>Intentional harm</td><td>Data theft, sabotage, fraud</td><td>Legal/HR first, covert investigation</td></tr>
-                        <tr><td><strong>Negligent</strong></td><td>Unintentional</td><td>Sending data to wrong person, poor security practices</td><td>Education, policy enforcement</td></tr>
-                        <tr><td><strong>Compromised</strong></td><td>Victim of external attack</td><td>Phished credentials, coerced</td><td>Treat as external incident initially</td></tr>
-                        <tr><td><strong>Departing Employee</strong></td><td>Varies</td><td>Taking data before leaving</td><td>Proactive monitoring, exit procedures</td></tr>
+                        <tr><td><strong>Data Theft</strong></td><td>High-Critical</td><td>IP loss, competitive damage</td><td>Covert investigation, preserve evidence</td></tr>
+                        <tr><td><strong>Sabotage</strong></td><td>Critical</td><td>System damage, data destruction</td><td>Immediate containment, legal</td></tr>
+                        <tr><td><strong>Fraud</strong></td><td>High</td><td>Financial loss</td><td>Investigation, legal/finance</td></tr>
+                        <tr><td><strong>Policy Violation</strong></td><td>Medium</td><td>Compliance risk</td><td>HR discipline process</td></tr>
+                        <tr><td><strong>Negligent Insider</strong></td><td>Medium</td><td>Unintentional exposure</td><td>Remediation, training</td></tr>
+                        <tr><td><strong>Departing Employee</strong></td><td>High</td><td>Taking data to competitor</td><td>Exit monitoring, legal hold</td></tr>
+                        <tr><td><strong>Compromised Insider</strong></td><td>High</td><td>External actor using credentials</td><td>Treat as external threat</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Key Stakeholders</h2>
+                <h2 id="phase1">Phase 1: Initial Response (First 4 Hours)</h2>
+
+                <h3>1.1 Coordination and Authorization</h3>
                 <table>
-                    <thead><tr><th>Stakeholder</th><th>Role</th><th>When to Engage</th></tr></thead>
+                    <thead><tr><th>Step</th><th>Action</th><th>Stakeholder</th><th>Documentation</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>HR</strong></td><td>Employment actions, policy enforcement</td><td>Always - before any user-facing action</td></tr>
-                        <tr><td><strong>Legal</strong></td><td>Legal guidance, litigation hold, evidence</td><td>Always - for anything beyond negligence</td></tr>
-                        <tr><td><strong>Employee's Manager</strong></td><td>Context about normal behavior</td><td>With HR approval</td></tr>
-                        <tr><td><strong>Physical Security</strong></td><td>Badge access, building security</td><td>If physical access concern</td></tr>
-                        <tr><td><strong>Law Enforcement</strong></td><td>Criminal investigation</td><td>With Legal guidance for criminal acts</td></tr>
+                        <tr><td>1</td><td>Notify HR</td><td>HR Business Partner</td><td>Verbal, then email</td></tr>
+                        <tr><td>2</td><td>Notify Legal</td><td>Employment counsel</td><td>Privileged communication</td></tr>
+                        <tr><td>3</td><td>Get investigation authorization</td><td>HR + Legal + CISO</td><td>Written approval</td></tr>
+                        <tr><td>4</td><td>Define investigation scope</td><td>IR team + HR + Legal</td><td>Investigation plan</td></tr>
+                        <tr><td>5</td><td>Establish confidentiality</td><td>All involved</td><td>Need-to-know list</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Critical Rules</h2>
-                <ul>
-                    <li>❌ <strong>Never confront the employee directly</strong> - HR handles all communication</li>
-                    <li>❌ <strong>Never discuss with colleagues</strong> - Strict need-to-know only</li>
-                    <li>❌ <strong>Never take punitive action without HR/Legal</strong> - Could create liability</li>
-                    <li>✅ <strong>Document everything</strong> - Assume court review</li>
-                    <li>✅ <strong>Preserve all evidence</strong> - Follow chain of custody</li>
-                    <li>✅ <strong>Be objective</strong> - Facts only, no speculation</li>
-                </ul>
-
-                <h2>Response by Scenario</h2>
+                <h3>1.2 Immediate Assessment Questions</h3>
                 <table>
-                    <thead><tr><th>Scenario</th><th>Urgency</th><th>First Steps</th></tr></thead>
+                    <thead><tr><th>Question</th><th>Source</th><th>Impact</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Active data theft in progress</strong></td><td>Critical</td><td>Covertly contain (revoke access if approved by HR/Legal), preserve evidence</td></tr>
-                        <tr><td><strong>Discovered historical theft</strong></td><td>High</td><td>Engage HR/Legal, assess scope, preserve evidence before any action</td></tr>
-                        <tr><td><strong>Negligent data exposure</strong></td><td>Medium</td><td>Contain the exposure, engage HR for policy discussion</td></tr>
-                        <tr><td><strong>Departing employee data access</strong></td><td>High</td><td>Monitor, restrict access, coordinate exit with HR</td></tr>
-                        <tr><td><strong>Disgruntled employee concerns</strong></td><td>Medium</td><td>Enhanced monitoring, HR engagement, document concerns</td></tr>
+                        <tr><td>Is activity ongoing?</td><td>DLP, monitoring</td><td>Determines containment urgency</td></tr>
+                        <tr><td>What data is at risk?</td><td>File access logs</td><td>Business impact assessment</td></tr>
+                        <tr><td>Employee status?</td><td>HR</td><td>Active, notice period, PIP?</td></tr>
+                        <tr><td>Evidence of intent?</td><td>Investigation</td><td>Malicious vs negligent</td></tr>
+                        <tr><td>External accomplice?</td><td>Communication logs</td><td>Scope of investigation</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Evidence Preservation</h2>
+                <h2 id="phase2">Phase 2: Evidence Collection (With Legal Approval)</h2>
+
+                <h3>2.1 Evidence Sources</h3>
                 <table>
-                    <thead><tr><th>Evidence Type</th><th>Collection Method</th><th>Notes</th></tr></thead>
+                    <thead><tr><th>Source</th><th>Collection Method</th><th>Legal Consideration</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Email</strong></td><td>Legal hold on mailbox, export PST</td><td>Include sent, deleted, drafts</td></tr>
-                        <tr><td><strong>Files</strong></td><td>Forensic image of workstation</td><td>Before any access by subject</td></tr>
-                        <tr><td><strong>Logs</strong></td><td>Export from SIEM, DLP, proxy</td><td>Extended retention</td></tr>
-                        <tr><td><strong>Cloud activity</strong></td><td>Export audit logs from cloud services</td><td>M365, Box, etc.</td></tr>
-                        <tr><td><strong>Physical access</strong></td><td>Badge access logs</td><td>After-hours access patterns</td></tr>
-                        <tr><td><strong>Screenshots/Photos</strong></td><td>Document visual evidence</td><td>Timestamp everything</td></tr>
+                        <tr><td>DLP alerts</td><td>Export from DLP console</td><td>Company data, generally OK</td></tr>
+                        <tr><td>Email</td><td>eDiscovery hold and search</td><td>Legal hold required</td></tr>
+                        <tr><td>File access logs</td><td>SIEM export</td><td>Company systems, generally OK</td></tr>
+                        <tr><td>Endpoint data</td><td>EDR collection, forensic image</td><td>Company device, consent in policy</td></tr>
+                        <tr><td>Badge access</td><td>Physical security export</td><td>Generally OK</td></tr>
+                        <tr><td>Network traffic</td><td>PCAP, flow data</td><td>Company network, generally OK</td></tr>
+                        <tr><td>Cloud activity</td><td>Cloud audit logs</td><td>Company accounts, generally OK</td></tr>
+                        <tr><td>Personal device</td><td>Requires legal review</td><td>BYOD policy dependent</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Investigation Focus Areas</h2>
-                <ul>
-                    <li><strong>What data was accessed?</strong> - File access logs, DLP alerts, email attachments</li>
-                    <li><strong>Where did it go?</strong> - Personal email, cloud storage, USB, print</li>
-                    <li><strong>When did it happen?</strong> - Timeline of activity, before/after key dates</li>
-                    <li><strong>Is there a pattern?</strong> - Ongoing behavior vs. one-time event</li>
-                    <li><strong>What's the motive?</strong> - Departing? Competitor? Personal use?</li>
-                </ul>
-
-                <h2>Investigation Queries</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// User file activity over time</span>
-OfficeActivity
+                <h3>2.2 Evidence Collection Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - User file access activity</span>
+let targetUser = "suspect.user@company.com";
+DeviceFileEvents
 | where TimeGenerated > ago(90d)
-| where UserId == "suspect@company.com"
-| where Operation in ("FileDownloaded", "FileAccessed", "FileSyncDownloadedFull")
-| summarize DownloadCount = count() by bin(TimeGenerated, 1d)
+| where InitiatingProcessAccountName =~ targetUser
+| where ActionType in ("FileRead", "FileCopied", "FileCreated")
+| summarize 
+    FileCount = count(),
+    TotalSize = sum(FileSize),
+    UniqueFiles = dcount(FileName)
+    by bin(TimeGenerated, 1d)
 | render timechart
 
-<span style="color: #6aa3f7;">// Emails to personal domains</span>
-EmailEvents
-| where TimeGenerated > ago(30d)
-| where SenderFromAddress == "suspect@company.com"
-| where RecipientEmailAddress endswith "gmail.com" or RecipientEmailAddress endswith "yahoo.com"
-| project TimeGenerated, RecipientEmailAddress, Subject, AttachmentCount
+<span style="color: #6aa3f7;">// KQL - Sensitive data access</span>
+DeviceFileEvents
+| where InitiatingProcessAccountName =~ "suspect.user"
+| where FolderPath has_any ("Confidential", "Restricted", 
+    "HR", "Finance", "Legal", "Executive", "Source")
+| project TimeGenerated, FileName, FolderPath, ActionType, FileSize
+| order by TimeGenerated desc
 
-<span style="color: #6aa3f7;">// USB/Removable device usage</span>
+<span style="color: #6aa3f7;">// KQL - External transfers</span>
+DeviceNetworkEvents
+| where InitiatingProcessAccountName =~ "suspect.user"
+| where RemoteUrl has_any ("dropbox", "drive.google", 
+    "onedrive.live", "wetransfer", "mega.nz")
+| where SentBytes > 1048576
+| project TimeGenerated, RemoteUrl, SentBytes, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - USB activity</span>
 DeviceEvents
-| where TimeGenerated > ago(30d)
-| where DeviceName == "SUSPECT-PC"
-| where ActionType == "UsbDriveMounted"
-| project TimeGenerated, DeviceName, AdditionalFields</pre>
+| where AccountName =~ "suspect.user"
+| where ActionType == "PnpDeviceConnected"
+| where DeviceDescription has_any ("USB", "Removable")
+| project TimeGenerated, DeviceName, DeviceDescription, DeviceId
+
+<span style="color: #6aa3f7;">// KQL - Email to personal/competitor</span>
+EmailEvents
+| where SenderFromAddress =~ "suspect.user@company.com"
+| where RecipientEmailAddress !endswith "@company.com"
+| summarize EmailCount = count(), WithAttachments = countif(AttachmentCount > 0)
+    by RecipientEmailAddress
+| order by WithAttachments desc</pre>
                 </div>
 
-                <h2>Containment Options</h2>
+                <h2 id="phase3">Phase 3: Containment (With HR/Legal Approval)</h2>
+
+                <h3>3.1 Containment Options</h3>
                 <table>
-                    <thead><tr><th>Action</th><th>When to Use</th><th>Requires Approval From</th></tr></thead>
+                    <thead><tr><th>Action</th><th>Visibility</th><th>When to Use</th><th>Approval Required</th></tr></thead>
                     <tbody>
-                        <tr><td>Enhanced monitoring</td><td>Suspected but not confirmed</td><td>Legal/HR awareness</td></tr>
-                        <tr><td>Restrict access to sensitive data</td><td>Confirmed or high confidence</td><td>HR approval</td></tr>
-                        <tr><td>Disable remote access (VPN)</td><td>Active threat, after-hours</td><td>HR approval</td></tr>
-                        <tr><td>Disable account entirely</td><td>Immediate threat or termination</td><td>HR/Legal with executive</td></tr>
-                        <tr><td>Physical access revocation</td><td>Termination or immediate threat</td><td>HR with security</td></tr>
+                        <tr><td>Enhanced monitoring</td><td>Covert</td><td>Building case</td><td>Legal</td></tr>
+                        <tr><td>Restrict data access</td><td>Visible to user</td><td>Limit damage</td><td>HR + Legal</td></tr>
+                        <tr><td>Disable external email</td><td>Visible</td><td>Active exfil</td><td>HR + Legal</td></tr>
+                        <tr><td>Block USB</td><td>Visible</td><td>Physical exfil</td><td>HR + Legal</td></tr>
+                        <tr><td>Revoke VPN</td><td>Visible</td><td>Remote threat</td><td>HR + Legal</td></tr>
+                        <tr><td>Suspend account</td><td>Very visible</td><td>Immediate threat</td><td>HR + Legal + Exec</td></tr>
+                        <tr><td>Administrative leave</td><td>Employment action</td><td>Active investigation</td><td>HR + Legal + Exec</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Documentation Requirements</h2>
-                <p>Every action must be documented assuming legal review:</p>
-                <ul>
-                    <li>Date and time of all findings and actions</li>
-                    <li>Who made the finding or took the action</li>
-                    <li>What evidence was collected and where it's stored</li>
-                    <li>Chain of custody for all evidence</li>
-                    <li>All communications with HR and Legal</li>
-                    <li>Rationale for all decisions</li>
-                </ul>
+                <h2 id="phase4">Phase 4: Resolution</h2>
+
+                <h3>4.1 Resolution Paths</h3>
+                <table>
+                    <thead><tr><th>Finding</th><th>Action</th><th>Lead</th><th>Documentation</th></tr></thead>
+                    <tbody>
+                        <tr><td>No policy violation</td><td>Close investigation</td><td>Security</td><td>Findings report</td></tr>
+                        <tr><td>Minor policy violation</td><td>Warning, training</td><td>HR</td><td>HR record</td></tr>
+                        <tr><td>Significant violation</td><td>Discipline</td><td>HR</td><td>Disciplinary action</td></tr>
+                        <tr><td>Serious misconduct</td><td>Termination</td><td>HR + Legal</td><td>Full package</td></tr>
+                        <tr><td>Criminal activity</td><td>Law enforcement</td><td>Legal</td><td>Evidence package</td></tr>
+                        <tr><td>Civil action potential</td><td>Litigation prep</td><td>Legal</td><td>Litigation hold</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>4.2 Evidence Preservation for Legal Action</h3>
+                <table>
+                    <thead><tr><th>Evidence Type</th><th>Preservation Method</th><th>Retention</th></tr></thead>
+                    <tbody>
+                        <tr><td>Endpoint forensic image</td><td>Write-blocked copy, hash verification</td><td>Until legal clearance</td></tr>
+                        <tr><td>Email archive</td><td>Legal hold, PST export</td><td>Per litigation hold</td></tr>
+                        <tr><td>Log exports</td><td>Timestamped export, signed</td><td>7+ years</td></tr>
+                        <tr><td>DLP alerts</td><td>Console export</td><td>7+ years</td></tr>
+                        <tr><td>Investigation notes</td><td>Contemporaneous documentation</td><td>Per legal</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Confirmed data theft in progress</li>
+                        <li>Trade secrets or source code involved</li>
+                        <li>Evidence of competitor involvement</li>
+                        <li>System sabotage or data destruction</li>
+                        <li>Financial fraud detected</li>
+                        <li>Multiple insiders colluding</li>
+                        <li>Executive-level employee involved</li>
+                        <li>Subject becomes aware of investigation</li>
+                    </ul>
+                </div>
+
+                <h2 id="confidentiality">Confidentiality Requirements</h2>
+                <table>
+                    <thead><tr><th>Principle</th><th>Requirement</th><th>Consequence of Breach</th></tr></thead>
+                    <tbody>
+                        <tr><td>Need-to-know</td><td>Only essential personnel</td><td>Investigation compromise</td></tr>
+                        <tr><td>Secure communication</td><td>Not corporate email</td><td>Subject notification</td></tr>
+                        <tr><td>Document security</td><td>Restricted access</td><td>Evidence tampering</td></tr>
+                        <tr><td>No discussion</td><td>Do not discuss with colleagues</td><td>Defamation risk</td></tr>
+                        <tr><td>Legal privilege</td><td>Maintain attorney-client</td><td>Loss of privilege</td></tr>
+                    </tbody>
+                </table>
 
             </div>
         </div>

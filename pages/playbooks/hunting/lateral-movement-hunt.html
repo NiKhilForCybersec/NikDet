@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lateral Movement Hunt | SOC Compendium</title>
+    <title>Lateral Movement Hunt Playbook | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
@@ -14,155 +13,412 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Lateral Movement Hunt</span></div>
-            <div class="content">
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Lateral Movement Hunt</span>
+            </div>
+
             <div class="playbook-header">
-                <div class="playbook-id">PB-TH-004</div>
-                <h1>Lateral Movement Hunt</h1>
-                <p class="lead">Hunting for lateral movement including SMB/WMI/WinRM abuse, remote service exploitation, and pass-the-hash.</p>
+                <div class="playbook-id">HUNT-TA0008</div>
+                <h1>Lateral Movement Hunt Playbook</h1>
+                <p class="lead">Hunt for adversary movement through the network. Covers RDP, SMB, WinRM, PsExec, WMI, SSH, and pass-the-hash techniques.</p>
                 <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-medium">Medium</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L3/Hunt</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">2-4 hours</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">MITRE Tactic</span><span class="playbook-meta-value">TA0008</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Difficulty</span><span class="playbook-meta-value">Advanced</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">3-5 hours</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Data Sources</span><span class="playbook-meta-value">Auth, Network, Process</span></div>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;"><span class="mitre-tag">TA0008</span></div>
-            </div>
-
-            <h2>Overview</h2>
-            <p>Hunting for lateral movement including SMB/WMI/WinRM abuse, remote service exploitation, and pass-the-hash. This playbook provides systematic procedures applicable across any security environment.</p>
-
-            <h2>When to Use This Playbook</h2>
-            <p>Use this playbook when you encounter alerts or incidents matching the description above. It provides step-by-step guidance for efficient handling.</p>
-
-            <h2>Prerequisites</h2>
-            <h3>Required Access</h3>
-            <ul>
-                <li><strong>SIEM</strong> - Microsoft Sentinel or Splunk for log analysis</li>
-                <li><strong>EDR</strong> - Endpoint detection and response platform</li>
-                <li><strong>Identity</strong> - Azure AD / Active Directory access</li>
-                <li><strong>Network</strong> - Firewall, proxy, DNS logs</li>
-            </ul>
-
-            <h2>Procedure</h2>
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Initial Assessment</div>
-                        <div class="step-description">Gather context about the alert or incident:</div>
-                        <ul>
-                            <li>Review alert details and severity</li>
-                            <li>Identify affected users, hosts, or systems</li>
-                            <li>Determine timeline of events</li>
-                            <li>Check for related alerts</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Evidence Collection</div>
-                        <div class="step-description">Gather relevant data for analysis:</div>
-                        <ul>
-                            <li>Query SIEM for related events</li>
-                            <li>Pull endpoint telemetry from EDR</li>
-                            <li>Collect network flow data if applicable</li>
-                            <li>Preserve volatile evidence if needed</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Analysis</div>
-                        <div class="step-description">Analyze collected evidence to determine:</div>
-                        <ul>
-                            <li>Is this a true positive or false positive?</li>
-                            <li>What is the full scope of impact?</li>
-                            <li>What was the attack vector/technique?</li>
-                            <li>Are there additional indicators of compromise?</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Containment</div>
-                        <div class="step-description">If confirmed malicious, execute containment:</div>
-                        <ul>
-                            <li>Isolate affected systems if needed</li>
-                            <li>Block malicious indicators</li>
-                            <li>Disable compromised accounts</li>
-                            <li>Prevent further spread</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Documentation & Closure</div>
-                        <div class="step-description">Complete the investigation:</div>
-                        <ul>
-                            <li>Document all findings</li>
-                            <li>Record IOCs for threat intel</li>
-                            <li>Update ticket with timeline</li>
-                            <li>Determine final classification</li>
-                        </ul>
-                    </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                    <span class="mitre-tag">T1021</span>
+                    <span class="mitre-tag">T1047</span>
+                    <span class="mitre-tag">T1570</span>
+                    <span class="mitre-tag">T1550</span>
+                    <span class="mitre-tag">T1563</span>
                 </div>
             </div>
 
-            <h2>Decision Tree</h2>
-            <div class="decision-tree">
-                <div class="decision-node question"><strong>Is this a confirmed security incident?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Close as False Positive with documentation</div>
-                    <div class="decision-node action"><strong>YES →</strong> Execute containment, continue investigation</div>
-                </div>
-                <div class="decision-node question"><strong>Is escalation required?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Complete remediation, close incident</div>
-                    <div class="decision-node escalate"><strong>YES →</strong> Escalate to IR team with all findings</div>
-                </div>
-            </div>
+            <div class="content">
+                <h2 id="overview">Hunt Overview</h2>
+                <p>Lateral movement is how attackers spread through your network after gaining initial access. By moving from system to system, they can access more resources, find sensitive data, and reach their ultimate targets. Detecting lateral movement early limits the scope of a breach.</p>
 
-            <h2>Investigation Queries</h2>
-            <h3>KQL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>// Investigate related events
-let TimeRange = ago(24h);
-let Target = "entity-to-investigate";
-search in (SecurityEvent, SigninLogs, DeviceEvents)
-| where TimeGenerated > TimeRange
-| where * contains Target
-| project TimeGenerated, Type, Activity
-| order by TimeGenerated desc</code></pre>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-crosshairs"></i> Hunt Objectives</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Identify unauthorized RDP connections</li>
+                        <li>Detect SMB/admin share abuse</li>
+                        <li>Find PsExec and remote service creation</li>
+                        <li>Discover WMI-based remote execution</li>
+                        <li>Detect WinRM/PowerShell remoting</li>
+                        <li>Identify pass-the-hash and pass-the-ticket</li>
+                    </ul>
                 </div>
-            </div>
 
-            <h3>SPL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>index=* earliest=-24h "entity-to-investigate"
-| stats count by index sourcetype _time
-| sort - _time</code></pre>
+                <h3>Techniques Covered</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Key Indicators</th></tr></thead>
+                    <tbody>
+                        <tr><td>Remote Desktop Protocol</td><td>T1021.001</td><td>RDP connections</td><td>Event 4624 Type 10, Port 3389</td></tr>
+                        <tr><td>SMB/Windows Admin Shares</td><td>T1021.002</td><td>C$, ADMIN$, IPC$ access</td><td>Event 5140, Port 445</td></tr>
+                        <tr><td>Windows Remote Management</td><td>T1021.006</td><td>WinRM/PSRemoting</td><td>Port 5985/5986, wsmprovhost.exe</td></tr>
+                        <tr><td>SSH</td><td>T1021.004</td><td>SSH connections</td><td>Port 22, sshd process</td></tr>
+                        <tr><td>Windows Management Instrumentation</td><td>T1047</td><td>WMI remote execution</td><td>wmiprvse.exe, Event 5857</td></tr>
+                        <tr><td>Lateral Tool Transfer</td><td>T1570</td><td>Moving tools between systems</td><td>File copy over SMB</td></tr>
+                        <tr><td>Pass the Hash</td><td>T1550.002</td><td>NTLM hash reuse</td><td>NTLM auth from unusual source</td></tr>
+                        <tr><td>Pass the Ticket</td><td>T1550.003</td><td>Kerberos ticket reuse</td><td>TGS without TGT</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="hunt1">Hunt 1: RDP Lateral Movement</h2>
+                
+                <h3>1.1 RDP Connections Between Workstations</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - RDP logons (Type 10)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4624
+| where LogonType == 10 // RemoteInteractive (RDP)
+| project TimeGenerated, Computer, Account=TargetUserName,
+    SourceIP=IpAddress, SourceHost=WorkstationName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - RDP from workstation to workstation (suspicious)</span>
+SecurityEvent
+| where EventID == 4624 and LogonType == 10
+| where Computer !contains "SERVER" and Computer !contains "DC"
+| where WorkstationName !contains "SERVER" and WorkstationName !contains "DC"
+| project TimeGenerated, TargetHost=Computer, SourceHost=WorkstationName,
+    Account=TargetUserName, SourceIP=IpAddress
+| summarize Connections=count(), FirstSeen=min(TimeGenerated)
+    by TargetHost, SourceHost, Account
+| order by Connections desc
+
+<span style="color: #6aa3f7;">// KQL - RDP from external/unusual IPs</span>
+SecurityEvent
+| where EventID == 4624 and LogonType == 10
+| where IpAddress !startswith "10." 
+    and IpAddress !startswith "192.168."
+    and IpAddress !startswith "172.16."
+    and IpAddress != "-" and IpAddress != "127.0.0.1"
+| project TimeGenerated, Computer, Account=TargetUserName, IpAddress
+
+<span style="color: #6aa3f7;">// KQL - Network connections on RDP port</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(7d)
+| where RemotePort == 3389 or LocalPort == 3389
+| where ActionType == "ConnectionSuccess"
+| project TimeGenerated, DeviceName, RemoteIP, Direction=ActionType,
+    InitiatingProcessFileName
+| summarize Connections=count() by DeviceName, RemoteIP
+| order by Connections desc
+
+<span style="color: #6aa3f7;">// SPL - RDP lateral movement</span>
+index=windows sourcetype="WinEventLog:Security" EventCode=4624 LogonType=10
+| stats count as rdp_sessions, values(IpAddress) as source_ips 
+    by Computer, TargetUserName
+| sort -rdp_sessions</pre>
                 </div>
-            </div>
 
-            <h2>MITRE ATT&CK Mapping</h2>
-            <table>
-                <thead><tr><th>Technique</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><span class="mitre-tag">TA0008</span></td><td>Relevant technique for this playbook</td></tr>
-                </tbody>
-            </table>
-</div>
+                <h3>1.2 RDP Brute Force Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - RDP brute force attempts</span>
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4625 // Failed logon
+| where LogonType == 10
+| summarize 
+    FailedAttempts=count(),
+    TargetAccounts=dcount(TargetUserName),
+    Accounts=make_set(TargetUserName, 10)
+    by IpAddress, Computer
+| where FailedAttempts > 10
+| order by FailedAttempts desc
+
+<span style="color: #6aa3f7;">// KQL - RDP brute force followed by success</span>
+let bruteForce = SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4625 and LogonType == 10
+| summarize Failures=count() by IpAddress, Computer
+| where Failures > 5;
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4624 and LogonType == 10
+| join kind=inner (bruteForce) on IpAddress, Computer
+| project TimeGenerated, Computer, Account=TargetUserName, 
+    IpAddress, PriorFailures=Failures</pre>
+                </div>
+
+                <h2 id="hunt2">Hunt 2: SMB/Admin Share Abuse</h2>
+                
+                <h3>2.1 Admin Share Access</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Access to admin shares (C$, ADMIN$)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 5140 // Network share accessed
+| where ShareName in ("\\\\*\\C$", "\\\\*\\ADMIN$", "\\\\*\\IPC$")
+| project TimeGenerated, Computer, Account=SubjectUserName,
+    SourceIP=IpAddress, ShareName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Detailed file access on shares (5145)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 5145
+| where ShareName has_any ("C$", "ADMIN$")
+| project TimeGenerated, Computer, Account=SubjectUserName,
+    ShareName, RelativeTargetName, AccessMask, IpAddress
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - SMB connections to multiple hosts from single source</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(24h)
+| where RemotePort == 445
+| where ActionType == "ConnectionSuccess"
+| summarize 
+    TargetHosts=dcount(RemoteIP),
+    Hosts=make_set(RemoteIP, 20),
+    Connections=count()
+    by DeviceName
+| where TargetHosts > 5 // Accessing many systems
+| order by TargetHosts desc
+
+<span style="color: #6aa3f7;">// SPL - Admin share access</span>
+index=windows sourcetype="WinEventLog:Security" EventCode=5140
+ShareName IN ("*C$*", "*ADMIN$*", "*IPC$*")
+| stats count as accesses, dc(Computer) as target_systems,
+    values(Computer) as systems by SubjectUserName, IpAddress
+| sort -target_systems</pre>
+                </div>
+
+                <h3>2.2 File Copy Over SMB</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Executables written to remote shares</span>
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "FileCreated"
+| where FolderPath startswith "\\\\" // UNC path
+| where FileName endswith ".exe" or FileName endswith ".dll"
+    or FileName endswith ".ps1" or FileName endswith ".bat"
+| project TimeGenerated, DeviceName, FileName, FolderPath,
+    InitiatingProcessFileName, InitiatingProcessAccountName
+
+<span style="color: #6aa3f7;">// KQL - Copy command to remote system</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("xcopy.exe", "robocopy.exe", "copy.exe", "cmd.exe")
+| where ProcessCommandLine has "\\\\"
+| where ProcessCommandLine has_any (".exe", ".dll", ".ps1", ".bat")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
+                </div>
+
+                <h2 id="hunt3">Hunt 3: PsExec and Remote Services</h2>
+                
+                <h3>3.1 PsExec Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - PsExec service installation</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 7045 // Service installed
+| where ServiceName has "PSEXE" or ServiceFileName has "psexe"
+| project TimeGenerated, Computer, ServiceName, 
+    ServiceFileName, Account
+
+<span style="color: #6aa3f7;">// KQL - PsExec execution patterns</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("psexec.exe", "psexec64.exe", "paexec.exe")
+| project TimeGenerated, DeviceName, ProcessCommandLine, 
+    AccountName, InitiatingProcessFileName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Remote service creation (4697)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4697
+| extend ServiceFileName = tostring(EventData.ServiceFileName)
+| where ServiceFileName has_any ("cmd", "powershell", "\\\\", 
+    "\\Temp\\", "\\AppData\\")
+| project TimeGenerated, Computer, ServiceName=tostring(EventData.ServiceName),
+    ServiceFileName, Account=SubjectUserName
+
+<span style="color: #6aa3f7;">// KQL - Explicit credential logon (RunAs, PsExec with -u)</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4648 // Explicit credentials
+| where TargetServerName != "-"
+| project TimeGenerated, Computer, RunningAs=SubjectUserName,
+    RunAs=TargetUserName, TargetServer=TargetServerName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// SPL - PsExec detection</span>
+index=windows (sourcetype="WinEventLog:System" EventCode=7045 
+    ServiceName="*PSEXE*") OR
+(sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational" 
+    EventCode=1 Image="*psexec*")
+| table _time, host, EventCode, ServiceName, Image, CommandLine</pre>
+                </div>
+
+                <h2 id="hunt4">Hunt 4: WMI Remote Execution</h2>
+                
+                <h3>4.1 WMI Process Creation</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Processes spawned by WMI</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where InitiatingProcessFileName =~ "WmiPrvSE.exe"
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine,
+    AccountName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - wmic process call create (remote execution)</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "wmic.exe"
+| where ProcessCommandLine has "process" and ProcessCommandLine has "call"
+    and ProcessCommandLine has "create"
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - WMI connections to remote hosts</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(7d)
+| where RemotePort in (135, 445) // WMI uses RPC
+| where InitiatingProcessFileName =~ "WmiPrvSE.exe"
+| summarize Connections=count(), Targets=dcount(RemoteIP)
+    by DeviceName
+| where Targets > 3
+
+<span style="color: #6aa3f7;">// SPL - WMI remote execution</span>
+index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
+EventCode=1 ParentImage="*\\WmiPrvSE.exe"
+| table _time, host, ParentImage, Image, CommandLine, User</pre>
+                </div>
+
+                <h2 id="hunt5">Hunt 5: WinRM/PowerShell Remoting</h2>
+                
+                <h3>5.1 WinRM Connections</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - WinRM network connections</span>
+DeviceNetworkEvents
+| where TimeGenerated > ago(7d)
+| where RemotePort in (5985, 5986) // WinRM HTTP/HTTPS
+| where ActionType == "ConnectionSuccess"
+| project TimeGenerated, DeviceName, RemoteIP, RemotePort,
+    InitiatingProcessFileName
+| summarize Connections=count(), Targets=make_set(RemoteIP, 10)
+    by DeviceName
+| where Connections > 1
+
+<span style="color: #6aa3f7;">// KQL - PowerShell remoting commands</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any (
+    "Invoke-Command", "Enter-PSSession", "New-PSSession",
+    "-ComputerName", "Invoke-WmiMethod", "Get-WmiObject"
+)
+| where ProcessCommandLine has_any ("\\\\", ".", "-ComputerName")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - wsmprovhost.exe (WinRM host process)</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where InitiatingProcessFileName =~ "wsmprovhost.exe"
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine,
+    AccountName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// SPL - PowerShell remoting</span>
+index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
+EventCode=1
+(CommandLine="*Invoke-Command*" OR CommandLine="*Enter-PSSession*"
+ OR CommandLine="*-ComputerName*")
+| table _time, host, User, Image, CommandLine</pre>
+                </div>
+
+                <h2 id="hunt6">Hunt 6: Pass-the-Hash and Pass-the-Ticket</h2>
+                
+                <h3>6.1 Pass-the-Hash Indicators</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - NTLM authentication from unusual sources</span>
+SecurityEvent
+| where TimeGenerated > ago(7d)
+| where EventID == 4624
+| where LogonType == 3 // Network
+| where AuthenticationPackageName == "NTLM"
+| summarize 
+    FirstSeen=min(TimeGenerated),
+    Logons=count()
+    by TargetUserName, WorkstationName, Computer
+| join kind=leftanti (
+    // Baseline: normal NTLM auth patterns (last 30 days)
+    SecurityEvent
+    | where TimeGenerated between (ago(30d) .. ago(7d))
+    | where EventID == 4624 and LogonType == 3
+    | where AuthenticationPackageName == "NTLM"
+    | summarize by TargetUserName, WorkstationName, Computer
+) on TargetUserName, WorkstationName, Computer
+| order by FirstSeen desc
+
+<span style="color: #6aa3f7;">// KQL - NTLM v1 usage (weaker, often abused)</span>
+SecurityEvent
+| where EventID == 4624
+| where LmPackageName == "NTLM V1"
+| project TimeGenerated, Computer, Account=TargetUserName,
+    SourceHost=WorkstationName, IpAddress
+| summarize Count=count() by Account, SourceHost
+| order by Count desc</pre>
+                </div>
+
+                <h3>6.2 Pass-the-Ticket Indicators</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Service ticket without prior TGT (potential PtT)</span>
+let tgtRequests = SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4768 // TGT request
+| project TGTUser=TargetUserName, TGTClient=IpAddress, TGTTime=TimeGenerated;
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4769 // Service ticket
+| join kind=leftanti (tgtRequests) 
+    on $left.TargetUserName == $right.TGTUser, $left.IpAddress == $right.TGTClient
+| project TimeGenerated, TargetUserName, ServiceName, IpAddress, Computer
+
+<span style="color: #6aa3f7;">// KQL - Mimikatz ticket commands in process</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any (
+    "kerberos::ptt", "kerberos::golden", "kerberos::silver",
+    "sekurlsa::tickets", "lsadump::dcsync"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
+                </div>
+
+                <h2 id="analysis">Analysis Guidance</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Risk Level</th><th>Next Steps</th></tr></thead>
+                    <tbody>
+                        <tr><td>RDP workstation to workstation</td><td>High</td><td>Verify legitimacy, check user</td></tr>
+                        <tr><td>Admin share access from workstation</td><td>High</td><td>Investigate source, check tools</td></tr>
+                        <tr><td>PsExec service detected</td><td>High</td><td>Check if authorized, investigate</td></tr>
+                        <tr><td>WMI spawning shells</td><td>Critical</td><td>Likely compromise, investigate</td></tr>
+                        <tr><td>Pass-the-Hash indicators</td><td>Critical</td><td>Credential compromise, contain</td></tr>
+                        <tr><td>Unusual NTLM auth</td><td>Medium-High</td><td>Verify source and destination</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="response">Response Actions</h2>
+                <ol>
+                    <li><strong>RDP abuse:</strong> Disable RDP → Reset password → Check for persistence</li>
+                    <li><strong>SMB lateral movement:</strong> Block SMB between workstations → Investigate source</li>
+                    <li><strong>PsExec/WMI:</strong> Isolate source and target → Full investigation</li>
+                    <li><strong>Pass-the-Hash:</strong> Reset compromised account → Check all systems accessed → Consider KRBTGT reset</li>
+                </ol>
+
+            </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
-    <script src="../../../../../js/main.js"></script>
+    <script src="../../../js/main.js"></script>
 </body>
 </html>

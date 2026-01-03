@@ -6,211 +6,446 @@
     <title>C2 Detection Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>C2 Detection</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>C2 Detection</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">INV-007</div>
+                <h1>Command & Control Detection Investigation</h1>
+                <p class="lead">Comprehensive investigation procedure for suspected C2 communication. Covers beaconing analysis, DNS tunneling, encrypted channels, protocol abuse, and framework identification including Cobalt Strike, Sliver, and other attack tools.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">Critical</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">MITRE Tactic</span><span class="playbook-meta-value">TA0011</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">1-3 hours</span></div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                    <span class="mitre-tag">T1071.001</span>
+                    <span class="mitre-tag">T1071.004</span>
+                    <span class="mitre-tag">T1571</span>
+                    <span class="mitre-tag">T1573</span>
+                    <span class="mitre-tag">T1572</span>
+                    <span class="mitre-tag">T1090</span>
+                    <span class="mitre-tag">T1102</span>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-INV-007</div>
-                    <h1>Command & Control (C2) Investigation</h1>
-                    <p class="lead">Identify, investigate, and disrupt attacker command and control communications from compromised systems.</p>
-                    <div class="playbook-meta">
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-critical">CRITICAL</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2/L3</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">30-90 min</span></div>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
-                        <span class="mitre-tag">T1071 - Application Layer Protocol</span>
-                        <span class="mitre-tag">T1095 - Non-Application Layer Protocol</span>
-                        <span class="mitre-tag">T1573 - Encrypted Channel</span>
-                        <span class="mitre-tag">T1568 - Dynamic Resolution</span>
-                    </div>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Active Threat Indicator</div>
+                    <p style="margin: 0.3rem 0;">C2 communication indicates an active compromise with an attacker controlling your systems. They can issue commands, exfiltrate data, deploy ransomware, or pivot to other systems at any time. Time is critical - every minute the C2 channel remains open increases risk.</p>
                 </div>
 
-                <h2>What is C2?</h2>
-                <p>Command and Control (C2) is how attackers communicate with compromised systems. Detecting C2 means you've found an active compromise - the attacker can still issue commands and exfiltrate data.</p>
-
-                <h2>Part 1: C2 Communication Types</h2>
+                <h2 id="overview">C2 Techniques Overview</h2>
                 <table>
-                    <thead><tr><th>C2 Type</th><th>How It Works</th><th>Detection Approach</th></tr></thead>
+                    <thead><tr><th>Technique</th><th>MITRE ID</th><th>Description</th><th>Detection Method</th><th>Difficulty</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td><strong>HTTP/HTTPS Beaconing</strong></td>
-                            <td>Regular callbacks to C2 server disguised as web traffic</td>
-                            <td>Periodic connections, JA3/JA3S fingerprints, unusual User-Agents</td>
-                        </tr>
-                        <tr>
-                            <td><strong>DNS Tunneling</strong></td>
-                            <td>Commands/data encoded in DNS queries</td>
-                            <td>Long subdomains, high query volume, TXT records</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Domain Generation Algorithms (DGA)</strong></td>
-                            <td>Algorithmically generated domains for resilience</td>
-                            <td>High entropy domains, random-looking strings</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Cloud Services</strong></td>
-                            <td>Using legitimate services (Slack, Teams, Dropbox)</td>
-                            <td>Unusual API calls, data patterns</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Custom Protocols</strong></td>
-                            <td>Non-standard ports or protocols</td>
-                            <td>Traffic on unusual ports, protocol anomalies</td>
-                        </tr>
+                        <tr><td>HTTP/HTTPS</td><td>T1071.001</td><td>Web protocol C2</td><td>Beaconing, user agents, JA3</td><td>Medium</td></tr>
+                        <tr><td>DNS</td><td>T1071.004</td><td>DNS tunneling/beaconing</td><td>Query patterns, subdomain length</td><td>Medium</td></tr>
+                        <tr><td>Non-Standard Port</td><td>T1571</td><td>C2 on unusual ports</td><td>Port/protocol mismatch</td><td>Easy</td></tr>
+                        <tr><td>Encrypted Channel</td><td>T1573</td><td>Custom encryption</td><td>JA3/JA3S, certificate analysis</td><td>Hard</td></tr>
+                        <tr><td>Protocol Tunneling</td><td>T1572</td><td>Hiding in allowed protocols</td><td>Traffic volume anomalies</td><td>Hard</td></tr>
+                        <tr><td>Proxy/Redirector</td><td>T1090</td><td>Using intermediaries</td><td>Multi-hop analysis, reputation</td><td>Medium</td></tr>
+                        <tr><td>Web Service</td><td>T1102</td><td>Legitimate services for C2</td><td>API patterns, cloud traffic</td><td>Hard</td></tr>
+                        <tr><td>Domain Fronting</td><td>T1090.004</td><td>CDN abuse</td><td>SNI vs Host header mismatch</td><td>Very Hard</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Part 2: Beaconing Detection</h2>
-                <p>Beaconing is the most common C2 pattern - regular "check-ins" to the attacker's server.</p>
+                <h2 id="step1">Step 1: Initial Triage (15 min)</h2>
 
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Find regular interval connections (beaconing)</span>
+                <h3>1.1 Alert Context Analysis</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Where to Find</th><th>Why It Matters</th></tr></thead>
+                    <tbody>
+                        <tr><td>What triggered the alert?</td><td>Alert details</td><td>Signature, behavioral, threat intel match</td></tr>
+                        <tr><td>Source host details</td><td>Asset inventory</td><td>Criticality, user, business function</td></tr>
+                        <tr><td>Destination IP/domain</td><td>Alert, network logs</td><td>Known C2? Reputation? Hosting?</td></tr>
+                        <tr><td>Connection status</td><td>Firewall/proxy logs</td><td>Blocked or allowed?</td></tr>
+                        <tr><td>Connection frequency</td><td>Network logs</td><td>Single event or ongoing?</td></tr>
+                        <tr><td>Data volume</td><td>Network logs</td><td>Command traffic vs data exfil</td></tr>
+                        <tr><td>Process making connection</td><td>EDR</td><td>Legitimate or suspicious binary</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>1.2 Quick Reputation Check</h3>
+                <table>
+                    <thead><tr><th>Tool</th><th>URL</th><th>Best For</th><th>Key Indicators</th></tr></thead>
+                    <tbody>
+                        <tr><td>VirusTotal</td><td>virustotal.com</td><td>Multi-source reputation</td><td>Detections, relations, WHOIS</td></tr>
+                        <tr><td>URLhaus</td><td>urlhaus.abuse.ch</td><td>Malware URLs</td><td>Malware family, tags</td></tr>
+                        <tr><td>ThreatFox</td><td>threatfox.abuse.ch</td><td>IOC database</td><td>C2 server listings</td></tr>
+                        <tr><td>AbuseIPDB</td><td>abuseipdb.com</td><td>IP abuse reports</td><td>Abuse confidence score</td></tr>
+                        <tr><td>Shodan</td><td>shodan.io</td><td>Infrastructure intel</td><td>Open ports, services, hosting</td></tr>
+                        <tr><td>GreyNoise</td><td>greynoise.io</td><td>Internet scanners</td><td>Benign scanner vs targeted</td></tr>
+                        <tr><td>AlienVault OTX</td><td>otx.alienvault.com</td><td>Threat intel</td><td>Pulses, related IOCs</td></tr>
+                        <tr><td>Joe Sandbox</td><td>joesandbox.com</td><td>Sandbox reports</td><td>Behavioral analysis</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="step2">Step 2: Network Traffic Analysis (30 min)</h2>
+
+                <h3>2.1 Connection Pattern Analysis</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - All connections to suspicious destination</span>
+let suspiciousIP = "DESTINATION_IP";
+let suspiciousDomain = "suspicious.domain.com";
+DeviceNetworkEvents
+| where TimeGenerated > ago(7d)
+| where RemoteIP == suspiciousIP 
+    or RemoteUrl has suspiciousDomain
+| project TimeGenerated, DeviceName, LocalIP, RemoteIP, RemotePort,
+    RemoteUrl, InitiatingProcessFileName, 
+    InitiatingProcessCommandLine, InitiatingProcessSHA256,
+    SentBytes, ReceivedBytes
+| order by TimeGenerated asc
+
+<span style="color: #6aa3f7;">// KQL - Beaconing pattern detection (jitter analysis)</span>
+let targetIP = "SUSPICIOUS_IP";
 DeviceNetworkEvents
 | where TimeGenerated > ago(24h)
-| where RemoteIPType == "Public"
+| where RemoteIP == targetIP
+| project TimeGenerated, DeviceName
+| sort by TimeGenerated asc
+| extend TimeDiff = datetime_diff('second', TimeGenerated, prev(TimeGenerated))
+| where isnotnull(TimeDiff)
 | summarize 
-    ConnectionCount = count(),
-    Timestamps = make_list(TimeGenerated, 1000)
-  by DeviceName, RemoteIP, RemotePort
-| where ConnectionCount > 20  <span style="color: #6aa3f7;">// Minimum connections</span>
-| extend Intervals = series_diff(Timestamps, 1, false)
-| mv-expand Intervals
-| summarize 
-    AvgInterval = avg(toint(Intervals) / 10000000),  <span style="color: #6aa3f7;">// Convert to seconds</span>
-    StdDev = stdev(toint(Intervals) / 10000000)
-  by DeviceName, RemoteIP, RemotePort
-| where StdDev < 60 and AvgInterval between (30 .. 3600)  <span style="color: #6aa3f7;">// Low variance = beaconing</span>
-| order by StdDev asc
+    Connections=count(),
+    AvgInterval=avg(TimeDiff),
+    StdDevInterval=stdev(TimeDiff),
+    MinInterval=min(TimeDiff),
+    MaxInterval=max(TimeDiff),
+    MedianInterval=percentile(TimeDiff, 50)
+| extend JitterRatio = StdDevInterval / AvgInterval
+| extend Assessment = case(
+    JitterRatio < 0.1, "Very Low Jitter - Likely C2 Beaconing",
+    JitterRatio < 0.3, "Low Jitter - Possible C2",
+    JitterRatio < 0.5, "Moderate Jitter - Investigate",
+    "High Jitter - Less Likely C2"
+)
 
-<span style="color: #a78bf6;">// KQL: Simplified beaconing detection</span>
+<span style="color: #6aa3f7;">// KQL - Data transfer ratio analysis</span>
 DeviceNetworkEvents
 | where TimeGenerated > ago(24h)
-| where ActionType == "ConnectionSuccess"
-| where RemoteIPType == "Public"
+| where RemoteIP == "SUSPICIOUS_IP"
 | summarize 
-    TotalConnections = count(),
-    UniqueHours = dcount(bin(TimeGenerated, 1h)),
-    BytesSent = sum(SentBytes)
-  by DeviceName, RemoteIP, RemoteUrl
-| where TotalConnections > 50 and UniqueHours > 12  <span style="color: #6aa3f7;">// Active over many hours</span>
-| order by TotalConnections desc</pre>
+    TotalBytesSent=sum(SentBytes),
+    TotalBytesReceived=sum(ReceivedBytes),
+    Connections=count()
+| extend SentMB = TotalBytesSent / 1048576.0
+| extend ReceivedMB = TotalBytesReceived / 1048576.0
+| extend UploadRatio = todouble(TotalBytesSent) / todouble(TotalBytesReceived)
+| extend Assessment = case(
+    UploadRatio > 10, "Very High Upload - Likely Exfiltration",
+    UploadRatio > 5, "High Upload - Possible Exfiltration",
+    UploadRatio < 0.1, "High Download - Possible Staging",
+    "Balanced - Typical C2 Command Traffic"
+)
+
+<span style="color: #6aa3f7;">// KQL - Time-of-day analysis</span>
+DeviceNetworkEvents
+| where RemoteIP == "SUSPICIOUS_IP"
+| extend Hour = hourofday(TimeGenerated)
+| extend DayOfWeek = dayofweek(TimeGenerated)
+| summarize Connections=count() by Hour, DayOfWeek
+| order by DayOfWeek asc, Hour asc
+// C2 often runs 24/7, legitimate traffic follows business hours
+
+<span style="color: #6aa3f7;">// SPL - Connection timeline with statistics</span>
+index=firewall dest_ip="SUSPICIOUS_IP"
+| timechart span=1m count as connections
+| streamstats window=10 avg(connections) as avg_conn stdev(connections) as stdev_conn
+| eval jitter_ratio = stdev_conn / avg_conn</pre>
                 </div>
 
-                <h2>Part 3: DNS Tunneling Detection</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Long DNS subdomain queries (potential tunneling)</span>
+                <h3>2.2 Beaconing Characteristics Reference</h3>
+                <table>
+                    <thead><tr><th>Characteristic</th><th>Legitimate Traffic</th><th>C2 Beaconing</th><th>Detection Notes</th></tr></thead>
+                    <tbody>
+                        <tr><td>Interval</td><td>Variable, user-driven</td><td>Regular with slight jitter (1-10%)</td><td>Calculate standard deviation</td></tr>
+                        <tr><td>Timing</td><td>Business hours mostly</td><td>24/7, nights, weekends</td><td>Check off-hours activity</td></tr>
+                        <tr><td>Packet size</td><td>Variable by content</td><td>Consistent small packets</td><td>Check for size uniformity</td></tr>
+                        <tr><td>Duration</td><td>Task-based, ends</td><td>Persistent days/weeks</td><td>Track connection persistence</td></tr>
+                        <tr><td>Destination</td><td>Known services</td><td>Unknown/suspicious IPs</td><td>Reputation check</td></tr>
+                        <tr><td>User agent</td><td>Standard browsers</td><td>Custom, empty, or spoofed</td><td>Compare to baseline</td></tr>
+                        <tr><td>TLS cert</td><td>Valid CA-signed</td><td>Self-signed, anomalous</td><td>Certificate analysis</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="step3">Step 3: Endpoint Investigation (30 min)</h2>
+
+                <h3>3.1 Identify the Malicious Process</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Process making C2 connections</span>
+DeviceNetworkEvents
+| where RemoteIP == "C2_IP"
+| project TimeGenerated, DeviceName, 
+    ProcessName = InitiatingProcessFileName,
+    ProcessPath = InitiatingProcessFolderPath,
+    CommandLine = InitiatingProcessCommandLine,
+    ProcessHash = InitiatingProcessSHA256,
+    ParentProcess = InitiatingProcessParentFileName,
+    User = InitiatingProcessAccountName
+| distinct ProcessName, ProcessPath, ProcessHash, ParentProcess
+
+<span style="color: #6aa3f7;">// KQL - Full process tree analysis</span>
+let c2Process = "suspicious.exe";
+let affectedHost = "HOSTNAME";
+DeviceProcessEvents
+| where DeviceName =~ affectedHost
+| where FileName =~ c2Process or InitiatingProcessFileName =~ c2Process
+| project TimeGenerated, 
+    Process = FileName,
+    CommandLine = ProcessCommandLine,
+    Parent = InitiatingProcessFileName,
+    ParentCmdLine = InitiatingProcessCommandLine,
+    User = AccountName,
+    PID = ProcessId,
+    ParentPID = InitiatingProcessId
+| order by TimeGenerated asc
+
+<span style="color: #6aa3f7;">// KQL - Hash prevalence analysis</span>
+let malwareHash = "SHA256_HASH";
+DeviceFileEvents
+| where SHA256 == malwareHash
+| summarize 
+    AffectedDevices = dcount(DeviceName),
+    DeviceList = make_set(DeviceName, 20),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+| extend Prevalence = case(
+    AffectedDevices > 100, "Common - Likely FP or Widespread",
+    AffectedDevices > 10, "Moderate - Investigate Spread",
+    AffectedDevices > 1, "Limited - Targeted Attack",
+    "Single System - Initial Compromise"
+)
+
+<span style="color: #6aa3f7;">// KQL - Process injection detection</span>
+DeviceEvents
+| where DeviceName =~ "AFFECTED_HOST"
+| where ActionType in ("CreateRemoteThreadApiCall", 
+    "QueueUserApcRemoteApiCall", "SetThreadContextRemoteApiCall",
+    "WriteProcessMemoryApiCall", "NtMapViewOfSectionRemoteApiCall")
+| project TimeGenerated, ActionType, 
+    SourceProcess = InitiatingProcessFileName,
+    TargetProcess = FileName,
+    TargetPID = ProcessId</pre>
+                </div>
+
+                <h3>3.2 Persistence Mechanism Check</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Registry persistence on affected host</span>
+let affectedHost = "HOSTNAME";
+DeviceRegistryEvents
+| where DeviceName =~ affectedHost
+| where RegistryKey has_any (
+    "\\CurrentVersion\\Run",
+    "\\CurrentVersion\\RunOnce",
+    "\\CurrentVersion\\RunServices",
+    "\\Winlogon\\Shell",
+    "\\Winlogon\\Userinit",
+    "\\Explorer\\Shell Folders",
+    "\\Image File Execution Options"
+)
+| project TimeGenerated, RegistryKey, RegistryValueName, 
+    RegistryValueData, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - Scheduled tasks</span>
+DeviceProcessEvents
+| where DeviceName =~ "AFFECTED_HOST"
+| where FileName =~ "schtasks.exe" and ProcessCommandLine has "/create"
+| project TimeGenerated, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Service installations</span>
+DeviceRegistryEvents
+| where DeviceName =~ "AFFECTED_HOST"
+| where RegistryKey has "\\Services\\" 
+    and RegistryValueName == "ImagePath"
+| project TimeGenerated, ServiceName = extract("Services\\\\([^\\\\]+)", 1, RegistryKey),
+    ImagePath = RegistryValueData
+
+<span style="color: #6aa3f7;">// KQL - WMI event subscriptions</span>
+DeviceEvents
+| where DeviceName =~ "AFFECTED_HOST"
+| where ActionType == "WmiBindEventFilter"
+| project TimeGenerated, FilterName = FileName, Consumer = ProcessCommandLine</pre>
+                </div>
+
+                <h2 id="step4">Step 4: C2 Framework Identification</h2>
+
+                <h3>4.1 Common C2 Framework Signatures</h3>
+                <table>
+                    <thead><tr><th>Framework</th><th>Network Indicators</th><th>Endpoint Indicators</th><th>JA3 Hash</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Cobalt Strike</strong></td><td>Named pipes (msagent_, postex_), malleable C2 profiles</td><td>beacon.dll, rundll32 injection, spawns process</td><td>72a589da586844d7f0818ce684948eea</td></tr>
+                        <tr><td><strong>Metasploit</strong></td><td>Meterpreter staging, reverse_tcp/http</td><td>Reflective DLL injection, migrate command</td><td>3b5074b1b5d032e5620f69f9f700ff0e</td></tr>
+                        <tr><td><strong>Sliver</strong></td><td>mTLS, HTTP(S), DNS, WireGuard</td><td>Go binary implant, beacon behavior</td><td>Variable</td></tr>
+                        <tr><td><strong>Havoc</strong></td><td>Custom HTTP headers, sleep obfuscation</td><td>Demon agent, indirect syscalls</td><td>Variable</td></tr>
+                        <tr><td><strong>Brute Ratel</strong></td><td>Sleep obfuscation, indirect syscalls</td><td>Badger implant, EDR evasion</td><td>Variable</td></tr>
+                        <tr><td><strong>Covenant</strong></td><td>HTTP/HTTPS beaconing</td><td>.NET implant (Grunt)</td><td>Variable</td></tr>
+                        <tr><td><strong>Empire</strong></td><td>PowerShell web requests</td><td>Encoded PowerShell, staging</td><td>Variable</td></tr>
+                        <tr><td><strong>PoshC2</strong></td><td>HTTP(S), DNS</td><td>PowerShell implant</td><td>Variable</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>4.2 Cobalt Strike Specific Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Cobalt Strike named pipe detection</span>
+DeviceEvents
+| where ActionType == "NamedPipeEvent"
+| where PipeName matches regex @"\\\\\.\\pipe\\(msagent_|postex_|status_|msse-|MSSE-)"
+| project TimeGenerated, DeviceName, PipeName, 
+    InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - Cobalt Strike spawn patterns</span>
+DeviceProcessEvents
+| where InitiatingProcessFileName =~ "rundll32.exe"
+| where InitiatingProcessCommandLine == "" or 
+    InitiatingProcessCommandLine matches regex @"^rundll32(\.exe)?$"
+| where FileName in~ ("cmd.exe", "powershell.exe", "whoami.exe",
+    "net.exe", "ipconfig.exe", "systeminfo.exe")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine
+
+<span style="color: #6aa3f7;">// KQL - Beacon sleep/jitter patterns</span>
+// Look for connections at regular intervals with slight variation
+DeviceNetworkEvents
+| where RemoteIP == "SUSPECT_IP"
+| project TimeGenerated
+| sort by TimeGenerated asc
+| extend Interval = datetime_diff('second', TimeGenerated, prev(TimeGenerated))
+| where Interval between (55 .. 65) // ~60 second beacon with jitter
+| count
+
+<span style="color: #6aa3f7;">// SPL - Cobalt Strike watermark detection</span>
+index=proxy cs_host="*"
+| rex field=cs_user_agent "(?<watermark>MSIE \d+\.\d+)"
+| stats count by watermark, dest_ip</pre>
+                </div>
+
+                <h2 id="step5">Step 5: DNS-Based C2 Analysis</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - DNS tunneling detection</span>
 DnsEvents
 | where TimeGenerated > ago(24h)
 | extend SubdomainLength = strlen(tostring(split(Name, ".")[0]))
-| where SubdomainLength > 30  <span style="color: #6aa3f7;">// Unusually long subdomain</span>
-| summarize QueryCount = count() by Name, ClientIP
-| order by QueryCount desc
-
-<span style="color: #a78bf6;">// KQL: High volume DNS to single domain</span>
-DnsEvents
-| where TimeGenerated > ago(24h)
-| extend Domain = strcat(tostring(split(Name, ".")[-2]), ".", tostring(split(Name, ".")[-1]))
+| extend TotalQueryLength = strlen(Name)
+| where SubdomainLength > 40 or TotalQueryLength > 100
 | summarize 
-    TotalQueries = count(),
-    UniqueSubdomains = dcount(Name)
-  by Domain, ClientIP
-| where TotalQueries > 500 and UniqueSubdomains > 100
-| order by TotalQueries desc
-
-<span style="color: #a78bf6;">// KQL: TXT record queries (often used for tunneling)</span>
-DnsEvents
-| where TimeGenerated > ago(24h)
-| where QueryType == "TXT"
-| summarize QueryCount = count() by Name, ClientIP
-| where QueryCount > 10
-| order by QueryCount desc</pre>
-                </div>
-
-                <h2>Part 4: DGA Domain Detection</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: High-entropy domain names (DGA indicator)</span>
-DnsEvents
-| where TimeGenerated > ago(24h)
-| extend Domain = tostring(split(Name, ".")[-2])
-| extend DomainLength = strlen(Domain)
-| where DomainLength > 10
-| extend ConsonantRatio = countof(Domain, "[bcdfghjklmnpqrstvwxyz]") / toreal(DomainLength)
-| where ConsonantRatio > 0.7  <span style="color: #6aa3f7;">// High consonant ratio = likely random</span>
-| summarize QueryCount = count() by Name, ClientIP
+    QueryCount = count(),
+    AvgSubdomainLength = avg(SubdomainLength),
+    UniqueSubdomains = dcount(Name),
+    SampleQueries = make_set(Name, 5)
+    by ClientIP, tostring(split(Name, ".")[-2])
+| where QueryCount > 50 or AvgSubdomainLength > 30
 | order by QueryCount desc
 
-<span style="color: #a78bf6;">// KQL: Many NXDomain responses (DGA trying to find active C2)</span>
+<span style="color: #6aa3f7;">// KQL - High-frequency DNS to single domain</span>
 DnsEvents
 | where TimeGenerated > ago(24h)
-| where ResultCode == "NXDomain"
-| summarize NXDomainCount = count() by ClientIP
-| where NXDomainCount > 100  <span style="color: #6aa3f7;">// High failure rate</span>
-| order by NXDomainCount desc</pre>
+| extend BaseDomain = strcat(tostring(split(Name, ".")[-2]), ".", 
+    tostring(split(Name, ".")[-1]))
+| summarize 
+    Queries = count(),
+    UniqueSubdomains = dcount(Name)
+    by ClientIP, BaseDomain
+| where Queries > 1000 or UniqueSubdomains > 100
+| order by Queries desc
+
+<span style="color: #6aa3f7;">// KQL - TXT record abuse (common for C2)</span>
+DnsEvents
+| where QueryType == "TXT"
+| summarize Queries = count() by ClientIP, Name
+| where Queries > 10
+| order by Queries desc
+
+<span style="color: #6aa3f7;">// KQL - DNS query entropy analysis</span>
+DnsEvents
+| extend Subdomain = tostring(split(Name, ".")[0])
+| extend CharCount = strlen(Subdomain)
+| extend UniqueChars = array_length(make_set(split(Subdomain, "")))
+| extend EntropyProxy = todouble(UniqueChars) / todouble(CharCount)
+| where CharCount > 20 and EntropyProxy > 0.7
+| project TimeGenerated, ClientIP, Name, EntropyProxy</pre>
                 </div>
 
-                <h2>Part 5: Known C2 Frameworks</h2>
-                <table>
-                    <thead><tr><th>Framework</th><th>Common Indicators</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Cobalt Strike</strong></td><td>Default malleable C2 profiles, named pipes, JA3 fingerprints</td></tr>
-                        <tr><td><strong>Meterpreter</strong></td><td>TCP 4444, reverse shells, staged payloads</td></tr>
-                        <tr><td><strong>Empire/Covenant</strong></td><td>PowerShell stagers, encoded commands</td></tr>
-                        <tr><td><strong>Sliver</strong></td><td>mTLS, HTTP/DNS C2, WireGuard tunnels</td></tr>
-                        <tr><td><strong>Brute Ratel</strong></td><td>Advanced evasion, DOH/DOT channels</td></tr>
-                    </tbody>
-                </table>
-
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Cobalt Strike named pipe indicators</span>
-DeviceEvents
-| where TimeGenerated > ago(7d)
-| where ActionType == "NamedPipeEvent"
-| where PipeName matches regex @"\\\\\.\\pipe\\(msagent_|MSSE-|postex_|status_|mojo\.|)"
-| project TimeGenerated, DeviceName, PipeName, InitiatingProcessFileName
-
-<span style="color: #a78bf6;">// KQL: Processes connecting to known bad ports</span>
+                <h2 id="step6">Step 6: Scope Assessment</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - All systems contacting C2 infrastructure</span>
+let c2Indicators = dynamic(["IP1", "IP2", "domain1.com", "domain2.com"]);
 DeviceNetworkEvents
-| where TimeGenerated > ago(24h)
-| where RemotePort in (4444, 5555, 8080, 8443, 9001, 1234)  <span style="color: #6aa3f7;">// Common C2 ports</span>
-| where RemoteIPType == "Public"
-| project TimeGenerated, DeviceName, InitiatingProcessFileName, RemoteIP, RemotePort</pre>
+| where TimeGenerated > ago(30d)
+| where RemoteIP in (c2Indicators) or RemoteUrl has_any (c2Indicators)
+| summarize 
+    FirstContact = min(TimeGenerated),
+    LastContact = max(TimeGenerated),
+    Connections = count(),
+    DataSent = sum(SentBytes),
+    DataReceived = sum(ReceivedBytes)
+    by DeviceName
+| extend DurationDays = datetime_diff('day', LastContact, FirstContact)
+| order by FirstContact asc
+
+<span style="color: #6aa3f7;">// KQL - Systems with same malware hash</span>
+let malwareHash = "SHA256";
+DeviceFileEvents
+| where SHA256 == malwareHash
+| summarize FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated) 
+    by DeviceName
+| order by FirstSeen asc
+
+<span style="color: #6aa3f7;">// KQL - Lateral movement from patient zero</span>
+let patientZero = "FIRST_COMPROMISED_HOST";
+let compromiseTime = datetime(2025-01-01T00:00:00Z);
+DeviceNetworkEvents
+| where TimeGenerated > compromiseTime
+| where DeviceName =~ patientZero
+| where RemoteIP startswith "10." or RemoteIP startswith "192.168."
+| where RemotePort in (445, 135, 139, 3389, 22, 5985, 5986)
+| summarize Connections = count() by RemoteIP, RemotePort
+| order by Connections desc</pre>
                 </div>
 
-                <h2>Part 6: Containment</h2>
+                <h2 id="containment">Containment Actions</h2>
                 <table>
-                    <thead><tr><th>Finding</th><th>Immediate Action</th></tr></thead>
+                    <thead><tr><th>Priority</th><th>Action</th><th>Method</th><th>Verification</th></tr></thead>
                     <tbody>
-                        <tr><td>Active C2 communication</td><td>Network isolate endpoint via EDR</td></tr>
-                        <tr><td>C2 IP/domain identified</td><td>Block at firewall and DNS</td></tr>
-                        <tr><td>Beaconing process found</td><td>Kill process, collect memory dump first</td></tr>
-                        <tr><td>Multiple systems beaconing</td><td>Coordinate simultaneous isolation</td></tr>
+                        <tr><td>1</td><td>Network isolate infected systems</td><td>EDR isolation, switch port disable</td><td>Verify no network connectivity</td></tr>
+                        <tr><td>2</td><td>Block C2 IPs at firewall</td><td>Firewall rule deny</td><td>Test connection blocked</td></tr>
+                        <tr><td>3</td><td>Sinkhole C2 domains</td><td>DNS block/redirect</td><td>DNS resolution fails</td></tr>
+                        <tr><td>4</td><td>Block at proxy</td><td>URL/category block</td><td>Proxy denies connection</td></tr>
+                        <tr><td>5</td><td>Kill malicious processes</td><td>EDR remote kill</td><td>Process no longer running</td></tr>
+                        <tr><td>6</td><td>Quarantine malware files</td><td>EDR quarantine</td><td>File removed from disk</td></tr>
+                        <tr><td>7</td><td>Disable compromised accounts</td><td>AD account disable</td><td>Account cannot authenticate</td></tr>
+                        <tr><td>8</td><td>Preserve evidence</td><td>Memory dump, disk image</td><td>Forensic copies created</td></tr>
                     </tbody>
                 </table>
 
-                <h2>MITRE ATT&CK Mapping</h2>
-                <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Detection</th></tr></thead>
-                    <tbody>
-                        <tr><td>Web Protocols</td><td>T1071.001</td><td>HTTP/S beaconing patterns</td></tr>
-                        <tr><td>DNS</td><td>T1071.004</td><td>DNS tunneling, TXT queries</td></tr>
-                        <tr><td>Dynamic Resolution</td><td>T1568</td><td>DGA domains, Fast Flux</td></tr>
-                        <tr><td>Encrypted Channel</td><td>T1573</td><td>TLS to unusual destinations</td></tr>
-                        <tr><td>Protocol Tunneling</td><td>T1572</td><td>DNS/ICMP/HTTP tunneling</td></tr>
-                    </tbody>
-                </table>
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Multiple systems infected (widespread compromise)</li>
+                        <li>Server or domain controller compromised</li>
+                        <li>Known APT-associated infrastructure detected</li>
+                        <li>Evidence of data exfiltration</li>
+                        <li>C2 actively receiving and executing commands</li>
+                        <li>Ransomware precursor activity observed</li>
+                        <li>Cobalt Strike or similar commercial framework detected</li>
+                        <li>Persistence mechanisms established</li>
+                    </ul>
+                </div>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../../js/main.js"></script>
 </body>

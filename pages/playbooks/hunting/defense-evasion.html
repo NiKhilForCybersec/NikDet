@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Defense Evasion Hunt | SOC Compendium</title>
+    <title>Defense Evasion Hunt Playbook | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
@@ -14,155 +13,468 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Defense Evasion Hunt</span></div>
-            <div class="content">
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Defense Evasion Hunt</span>
+            </div>
+
             <div class="playbook-header">
-                <div class="playbook-id">PB-TH-006</div>
-                <h1>Defense Evasion Hunt</h1>
-                <p class="lead">Hunting for defense evasion techniques including log tampering, security tool disabling, and obfuscation.</p>
+                <div class="playbook-id">HUNT-TA0005</div>
+                <h1>Defense Evasion Hunt Playbook</h1>
+                <p class="lead">Hunt for techniques adversaries use to avoid detection. Covers process injection, AMSI bypass, log tampering, masquerading, and security tool disabling.</p>
                 <div class="playbook-meta">
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-medium">Medium</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L3/Hunt</span></div>
-                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">2-4 hours</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">MITRE Tactic</span><span class="playbook-meta-value">TA0005</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Difficulty</span><span class="playbook-meta-value">Advanced</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">3-5 hours</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Data Sources</span><span class="playbook-meta-value">Process, Registry, File, Service</span></div>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;"><span class="mitre-tag">TA0005</span></div>
-            </div>
-
-            <h2>Overview</h2>
-            <p>Hunting for defense evasion techniques including log tampering, security tool disabling, and obfuscation. This playbook provides systematic procedures applicable across any security environment.</p>
-
-            <h2>When to Use This Playbook</h2>
-            <p>Use this playbook when you encounter alerts or incidents matching the description above. It provides step-by-step guidance for efficient handling.</p>
-
-            <h2>Prerequisites</h2>
-            <h3>Required Access</h3>
-            <ul>
-                <li><strong>SIEM</strong> - Microsoft Sentinel or Splunk for log analysis</li>
-                <li><strong>EDR</strong> - Endpoint detection and response platform</li>
-                <li><strong>Identity</strong> - Azure AD / Active Directory access</li>
-                <li><strong>Network</strong> - Firewall, proxy, DNS logs</li>
-            </ul>
-
-            <h2>Procedure</h2>
-            <div class="step-container">
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Initial Assessment</div>
-                        <div class="step-description">Gather context about the alert or incident:</div>
-                        <ul>
-                            <li>Review alert details and severity</li>
-                            <li>Identify affected users, hosts, or systems</li>
-                            <li>Determine timeline of events</li>
-                            <li>Check for related alerts</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Evidence Collection</div>
-                        <div class="step-description">Gather relevant data for analysis:</div>
-                        <ul>
-                            <li>Query SIEM for related events</li>
-                            <li>Pull endpoint telemetry from EDR</li>
-                            <li>Collect network flow data if applicable</li>
-                            <li>Preserve volatile evidence if needed</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Analysis</div>
-                        <div class="step-description">Analyze collected evidence to determine:</div>
-                        <ul>
-                            <li>Is this a true positive or false positive?</li>
-                            <li>What is the full scope of impact?</li>
-                            <li>What was the attack vector/technique?</li>
-                            <li>Are there additional indicators of compromise?</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Containment</div>
-                        <div class="step-description">If confirmed malicious, execute containment:</div>
-                        <ul>
-                            <li>Isolate affected systems if needed</li>
-                            <li>Block malicious indicators</li>
-                            <li>Disable compromised accounts</li>
-                            <li>Prevent further spread</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                    <div class="step-content">
-                        <div class="step-title">Documentation & Closure</div>
-                        <div class="step-description">Complete the investigation:</div>
-                        <ul>
-                            <li>Document all findings</li>
-                            <li>Record IOCs for threat intel</li>
-                            <li>Update ticket with timeline</li>
-                            <li>Determine final classification</li>
-                        </ul>
-                    </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                    <span class="mitre-tag">T1055</span>
+                    <span class="mitre-tag">T1562</span>
+                    <span class="mitre-tag">T1070</span>
+                    <span class="mitre-tag">T1036</span>
+                    <span class="mitre-tag">T1027</span>
+                    <span class="mitre-tag">T1218</span>
+                    <span class="mitre-tag">T1112</span>
                 </div>
             </div>
 
-            <h2>Decision Tree</h2>
-            <div class="decision-tree">
-                <div class="decision-node question"><strong>Is this a confirmed security incident?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Close as False Positive with documentation</div>
-                    <div class="decision-node action"><strong>YES →</strong> Execute containment, continue investigation</div>
-                </div>
-                <div class="decision-node question"><strong>Is escalation required?</strong></div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin: 0.5rem 0;">
-                    <div class="decision-node close"><strong>NO →</strong> Complete remediation, close incident</div>
-                    <div class="decision-node escalate"><strong>YES →</strong> Escalate to IR team with all findings</div>
-                </div>
-            </div>
+            <div class="content">
+                <h2 id="overview">Hunt Overview</h2>
+                <p>Defense evasion is one of the most important tactics to hunt for. Attackers who successfully evade your defenses can operate undetected for extended periods. By hunting for evasion techniques, you can find sophisticated threats that bypassed preventive controls.</p>
 
-            <h2>Investigation Queries</h2>
-            <h3>KQL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>// Investigate related events
-let TimeRange = ago(24h);
-let Target = "entity-to-investigate";
-search in (SecurityEvent, SigninLogs, DeviceEvents)
-| where TimeGenerated > TimeRange
-| where * contains Target
-| project TimeGenerated, Type, Activity
-| order by TimeGenerated desc</code></pre>
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-crosshairs"></i> Hunt Objectives</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Identify process injection and hollowing techniques</li>
+                        <li>Detect security tool tampering and disabling</li>
+                        <li>Find log clearing and evidence destruction</li>
+                        <li>Discover masquerading and renamed binaries</li>
+                        <li>Identify AMSI and ETW bypasses</li>
+                        <li>Detect timestomping and indicator removal</li>
+                    </ul>
                 </div>
-            </div>
 
-            <h3>SPL Example</h3>
-            <div class="query-example">
-                <div class="query-header"><span class="query-platform"><i class="fas fa-search-dollar"></i> Splunk</span><button class="query-copy-btn"><i class="fas fa-copy"></i></button></div>
-                <div class="query-body">
-<pre class="code-block"><code>index=* earliest=-24h "entity-to-investigate"
-| stats count by index sourcetype _time
-| sort - _time</code></pre>
+                <h3>Techniques Covered</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Data Sources</th></tr></thead>
+                    <tbody>
+                        <tr><td>Process Injection</td><td>T1055</td><td>Injecting code into processes</td><td>Sysmon 8, 10, Process events</td></tr>
+                        <tr><td>Impair Defenses</td><td>T1562</td><td>Disabling security tools</td><td>Service events, Registry</td></tr>
+                        <tr><td>Indicator Removal</td><td>T1070</td><td>Clearing logs, timestomping</td><td>Security events, File events</td></tr>
+                        <tr><td>Masquerading</td><td>T1036</td><td>Disguising as legitimate</td><td>Process events, File events</td></tr>
+                        <tr><td>Obfuscated Files</td><td>T1027</td><td>Encoding/encrypting payloads</td><td>Process command lines</td></tr>
+                        <tr><td>System Binary Proxy</td><td>T1218</td><td>LOLBAS abuse</td><td>Process events</td></tr>
+                        <tr><td>Modify Registry</td><td>T1112</td><td>Registry-based evasion</td><td>Registry events</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="hunt1">Hunt 1: Process Injection</h2>
+                
+                <h3>1.1 CreateRemoteThread Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - CreateRemoteThread (Sysmon 8)</span>
+Event
+| where Source == "Microsoft-Windows-Sysmon"
+| where EventID == 8 // CreateRemoteThread
+| extend SourceImage = extract("SourceImage:\\s+(.*?)\\s+", 1, RenderedDescription)
+| extend TargetImage = extract("TargetImage:\\s+(.*?)\\s+", 1, RenderedDescription)
+| where SourceImage != TargetImage // Not self-injection
+| where TargetImage !has SourceImage
+| where SourceImage !in (
+    "C:\\Windows\\System32\\csrss.exe",
+    "C:\\Windows\\System32\\wininit.exe",
+    "C:\\Windows\\System32\\services.exe"
+)
+| project TimeGenerated, Computer, SourceImage, TargetImage
+| summarize Count=count() by SourceImage, TargetImage
+| order by Count desc
+
+<span style="color: #6aa3f7;">// KQL - Process injection via MDE</span>
+DeviceEvents
+| where TimeGenerated > ago(7d)
+| where ActionType in ("CreateRemoteThreadApiCall", 
+    "QueueUserApcRemoteApiCall", "SetThreadContextRemoteApiCall")
+| project TimeGenerated, DeviceName, ActionType,
+    InitiatingProcessFileName, FileName, 
+    InitiatingProcessCommandLine
+
+<span style="color: #6aa3f7;">// SPL - CreateRemoteThread detection</span>
+index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
+EventCode=8
+| eval injection=if(SourceImage!=TargetImage, "cross-process", "self")
+| where injection="cross-process"
+| stats count by SourceImage, TargetImage
+| sort -count</pre>
                 </div>
-            </div>
 
-            <h2>MITRE ATT&CK Mapping</h2>
-            <table>
-                <thead><tr><th>Technique</th><th>Description</th></tr></thead>
-                <tbody>
-                    <tr><td><span class="mitre-tag">TA0005</span></td><td>Relevant technique for this playbook</td></tr>
-                </tbody>
-            </table>
-</div>
+                <h3>1.2 Process Hollowing Indicators</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Sysmon 25 Process Tampering</span>
+Event
+| where Source == "Microsoft-Windows-Sysmon"
+| where EventID == 25 // Process Tampering
+| extend Image = extract("Image:\\s+(.*?)\\s+", 1, RenderedDescription)
+| extend Type = extract("Type:\\s+(.*?)\\s+", 1, RenderedDescription)
+| project TimeGenerated, Computer, Image, Type
+
+<span style="color: #6aa3f7;">// KQL - Suspicious process creation patterns</span>
+// Process created in suspended state then resumed
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where InitiatingProcessFileName in~ ("cmd.exe", "powershell.exe", 
+    "wscript.exe", "cscript.exe", "mshta.exe")
+| where FileName in~ ("svchost.exe", "explorer.exe", "notepad.exe",
+    "RuntimeBroker.exe", "dllhost.exe")
+| where FolderPath !startswith "C:\\Windows\\"
+| project TimeGenerated, DeviceName, InitiatingProcessFileName,
+    FileName, FolderPath, ProcessCommandLine</pre>
+                </div>
+
+                <h3>1.3 DLL Injection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Suspicious DLL loads (Sysmon 7)</span>
+Event
+| where Source == "Microsoft-Windows-Sysmon"
+| where EventID == 7 // Image Loaded
+| extend ImageLoaded = extract("ImageLoaded:\\s+(.*?)\\s+", 1, RenderedDescription)
+| extend Image = extract("Image:\\s+(.*?)\\s+", 1, RenderedDescription)
+| where ImageLoaded has_any ("\\Temp\\", "\\AppData\\", "\\Users\\Public\\",
+    "\\Downloads\\")
+| where ImageLoaded endswith ".dll"
+| project TimeGenerated, Computer, Image, ImageLoaded
+
+<span style="color: #6aa3f7;">// KQL - Unsigned DLL in sensitive process</span>
+DeviceImageLoadEvents
+| where TimeGenerated > ago(7d)
+| where InitiatingProcessFileName in~ ("lsass.exe", "svchost.exe", 
+    "services.exe", "winlogon.exe")
+| where FolderPath !startswith "C:\\Windows\\"
+    and FolderPath !startswith "C:\\Program Files"
+| join kind=leftouter (
+    DeviceFileCertificateInfo
+    | project SHA256, Signer, IsTrusted
+) on SHA256
+| where isempty(Signer) or IsTrusted == false
+| project TimeGenerated, DeviceName, InitiatingProcessFileName,
+    FileName, FolderPath, Signer</pre>
+                </div>
+
+                <h2 id="hunt2">Hunt 2: Security Tool Tampering</h2>
+                
+                <h3>2.1 AV/EDR Service Tampering</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Stopping security services</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("net.exe", "net1.exe", "sc.exe", "taskkill.exe")
+| where ProcessCommandLine has_any (
+    "stop", "delete", "disable", "/f", "kill"
+) and ProcessCommandLine has_any (
+    "defender", "sense", "mssense", "windefend", "msmpsvc",
+    "crowdstrike", "falcon", "carbon", "sentinel", "cylance",
+    "sophos", "symantec", "mcafee", "eset", "kaspersky",
+    "malwarebytes", "sysmon", "splunk", "qualys"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, 
+    AccountName, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - PowerShell disabling Defender</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any (
+    "Set-MpPreference", "DisableRealtimeMonitoring",
+    "DisableBehaviorMonitoring", "DisableBlockAtFirstSeen",
+    "DisableIOAVProtection", "DisablePrivacyMode",
+    "DisableScriptScanning", "Add-MpPreference", "-ExclusionPath"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// SPL - Security service tampering</span>
+index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
+EventCode=1 
+(Image="*\\net.exe" OR Image="*\\net1.exe" OR Image="*\\sc.exe")
+CommandLine="*stop*" OR CommandLine="*delete*" OR CommandLine="*disable*"
+(CommandLine="*defender*" OR CommandLine="*sense*" OR CommandLine="*falcon*")
+| table _time, host, User, Image, CommandLine</pre>
+                </div>
+
+                <h3>2.2 Registry-Based Security Disabling</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Disabling Defender via registry</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(7d)
+| where RegistryKey has "Windows Defender"
+| where RegistryValueName in ("DisableAntiSpyware", "DisableAntiVirus",
+    "DisableRealtimeMonitoring", "DisableBehaviorMonitoring")
+| where RegistryValueData == "1"
+| project TimeGenerated, DeviceName, RegistryKey, RegistryValueName,
+    InitiatingProcessFileName, InitiatingProcessAccountName
+
+<span style="color: #6aa3f7;">// KQL - UAC bypass via registry</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(7d)
+| where RegistryKey has_any (
+    "\\Software\\Classes\\ms-settings\\shell\\open\\command",
+    "\\Software\\Classes\\mscfile\\shell\\open\\command",
+    "\\Environment\\windir",
+    "\\Environment\\ComSpec"
+)
+| where ActionType == "RegistryValueSet"
+| project TimeGenerated, DeviceName, RegistryKey, RegistryValueName,
+    RegistryValueData, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - Disabling security logging</span>
+DeviceRegistryEvents
+| where RegistryKey has_any (
+    "\\System\\CurrentControlSet\\Services\\EventLog\\Security",
+    "\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\Audit"
+)
+| where RegistryValueName in ("Start", "MaxSize", "Retention")
+| project TimeGenerated, DeviceName, RegistryKey, RegistryValueName,
+    RegistryValueData, InitiatingProcessFileName</pre>
+                </div>
+
+                <h3>2.3 AMSI and ETW Bypass</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - AMSI bypass patterns in PowerShell</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any (
+    "AmsiInitFailed", "amsi.dll", "AmsiScanBuffer",
+    "AmsiUtils", "amsiContext", "Reflection.Assembly",
+    "System.Management.Automation.AmsiUtils"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - ETW tampering</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any (
+    "EtwEventWrite", "NtTraceEvent", "logman stop",
+    "wevtutil cl", "Remove-EtwTraceProvider"
+)
+| project TimeGenerated, DeviceName, FileName, 
+    ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Patching AMSI in memory</span>
+DeviceEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "AmsiCopyBuffer"
+| project TimeGenerated, DeviceName, FileName, 
+    InitiatingProcessFileName, AdditionalFields</pre>
+                </div>
+
+                <h2 id="hunt3">Hunt 3: Log Tampering and Indicator Removal</h2>
+                
+                <h3>3.1 Event Log Clearing</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Security log cleared (1102)</span>
+SecurityEvent
+| where EventID == 1102 // Security log cleared
+| project TimeGenerated, Computer, Account, Activity
+
+<span style="color: #6aa3f7;">// KQL - Any event log cleared</span>
+Event
+| where Source == "Microsoft-Windows-Eventlog"
+| where EventID == 104 // Log cleared
+| project TimeGenerated, Computer, EventLog, UserName
+
+<span style="color: #6aa3f7;">// KQL - wevtutil clear-log commands</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "wevtutil.exe"
+| where ProcessCommandLine has_any ("cl", "clear-log", "clear")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - PowerShell log clearing</span>
+DeviceProcessEvents
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any (
+    "Clear-EventLog", "Remove-EventLog", "wevtutil",
+    "Limit-EventLog", "[System.Diagnostics.Eventing"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// SPL - Log clearing detection</span>
+index=windows (sourcetype="WinEventLog:Security" EventCode=1102)
+    OR (sourcetype="WinEventLog:System" EventCode=104)
+    OR (sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational" 
+        EventCode=1 Image="*wevtutil*" CommandLine="*cl*")
+| table _time, host, EventCode, User, CommandLine</pre>
+                </div>
+
+                <h3>3.2 Timestomping Detection</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Timestomping tools</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any (
+    "timestomp", "SetFileTime", "touch.exe", "nircmd setfiletime",
+    "[System.IO.File]::SetCreationTime", "SetCreationTime"
+)
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Files with creation time after modification time</span>
+// Requires file forensics or MFT analysis
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "FileModified"
+| extend FileAge = datetime_diff('day', TimeGenerated, FileCreatedTime)
+| where FileAge < 0 // Creation time is in the future (anomaly)
+| project TimeGenerated, DeviceName, FileName, FolderPath,
+    FileCreatedTime</pre>
+                </div>
+
+                <h3>3.3 File Deletion for Evidence Removal</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Secure deletion tools</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("sdelete.exe", "sdelete64.exe", "cipher.exe",
+    "eraser.exe", "wipe.exe", "bleachbit.exe")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine,
+    AccountName, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - Mass file deletion</span>
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "FileDeleted"
+| summarize DeletedFiles=count() by DeviceName, 
+    InitiatingProcessFileName, bin(TimeGenerated, 5m)
+| where DeletedFiles > 100
+| order by DeletedFiles desc
+
+<span style="color: #6aa3f7;">// KQL - Deletion of specific evidence files</span>
+DeviceFileEvents
+| where ActionType == "FileDeleted"
+| where FileName has_any (
+    ".evtx", ".log", "prefetch", ".pf", "console.history",
+    "psreadline", ".bash_history", "ntuser.dat"
+)
+| project TimeGenerated, DeviceName, FileName, FolderPath,
+    InitiatingProcessFileName</pre>
+                </div>
+
+                <h2 id="hunt4">Hunt 4: Masquerading</h2>
+                
+                <h3>4.1 Renamed System Binaries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - System binary running from wrong location</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("cmd.exe", "powershell.exe", "svchost.exe",
+    "explorer.exe", "lsass.exe", "csrss.exe", "services.exe")
+| where FolderPath !startswith "C:\\Windows\\System32"
+    and FolderPath !startswith "C:\\Windows\\SysWOW64"
+| project TimeGenerated, DeviceName, FileName, FolderPath,
+    ProcessCommandLine, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - Processes with mismatched names and descriptions</span>
+// Using process metadata to detect renamed binaries
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| extend OriginalFileName = tostring(parse_json(AdditionalFields).OriginalFileName)
+| where isnotempty(OriginalFileName)
+| where OriginalFileName != FileName
+| project TimeGenerated, DeviceName, FileName, OriginalFileName,
+    FolderPath, ProcessCommandLine
+
+<span style="color: #6aa3f7;">// SPL - System binary from unusual path</span>
+index=windows sourcetype="WinEventLog:Microsoft-Windows-Sysmon/Operational"
+EventCode=1
+(OriginalFileName="cmd.exe" OR OriginalFileName="powershell.exe"
+ OR OriginalFileName="svchost.exe")
+NOT Image="C:\\Windows\\System32*" NOT Image="C:\\Windows\\SysWOW64*"
+| table _time, host, Image, OriginalFileName, CommandLine</pre>
+                </div>
+
+                <h3>4.2 Double Extension and Right-to-Left Override</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Double file extensions</span>
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where ActionType == "FileCreated"
+| where FileName matches regex @"\.(pdf|doc|docx|xls|xlsx|txt|jpg|png)\.(exe|scr|bat|cmd|ps1|vbs|js)$"
+| project TimeGenerated, DeviceName, FileName, FolderPath,
+    InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - Right-to-Left Override character</span>
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where FileName contains "\u202e" // RTLO character
+| project TimeGenerated, DeviceName, FileName, FolderPath
+
+<span style="color: #6aa3f7;">// KQL - Executables with document icons (based on known patterns)</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName matches regex @"(?i)\.(pdf|doc|docx|xls)\.exe$"
+    or FileName matches regex @"(?i)invoice|receipt|document|scan"
+| where FolderPath has_any ("\\Downloads\\", "\\Temp\\", "\\AppData\\")
+| project TimeGenerated, DeviceName, FileName, FolderPath</pre>
+                </div>
+
+                <h2 id="hunt5">Hunt 5: Obfuscation</h2>
+                
+                <h3>5.1 Encoded PowerShell</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Base64 encoded PowerShell</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine has_any ("-enc", "-e ", "-EncodedCommand",
+    "-ec ", "FromBase64String", "[Convert]::FromBase64")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName,
+    InitiatingProcessFileName
+| extend EncodedPart = extract(@"-[eE][nN]?[cC]?\s+(\S+)", 1, ProcessCommandLine)
+
+<span style="color: #6aa3f7;">// KQL - Heavily obfuscated command lines</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("powershell.exe", "pwsh.exe", "cmd.exe")
+| extend SpecialChars = countof(ProcessCommandLine, "`") +
+    countof(ProcessCommandLine, "^") + countof(ProcessCommandLine, "$")
+| where SpecialChars > 10 or ProcessCommandLine matches regex @"\^.\^.\^"
+| project TimeGenerated, DeviceName, ProcessCommandLine, SpecialChars
+
+<span style="color: #6aa3f7;">// KQL - String concatenation obfuscation</span>
+DeviceProcessEvents
+| where ProcessCommandLine has_any (
+    "'++'", "' + '", '"+"', "\"+ \"",
+    "-join", "-split", "[char]", "-replace"
+)
+| where ProcessCommandLine has "powershell" or ProcessCommandLine has "cmd"
+| project TimeGenerated, DeviceName, ProcessCommandLine</pre>
+                </div>
+
+                <h2 id="analysis">Analysis Guidance</h2>
+                <table>
+                    <thead><tr><th>Finding</th><th>Risk Level</th><th>Next Steps</th></tr></thead>
+                    <tbody>
+                        <tr><td>Process injection detected</td><td>Critical</td><td>Isolate, memory forensics</td></tr>
+                        <tr><td>Security tool disabled</td><td>Critical</td><td>Re-enable, investigate source</td></tr>
+                        <tr><td>Security log cleared</td><td>High</td><td>Assume compromise, full investigation</td></tr>
+                        <tr><td>AMSI bypass detected</td><td>High</td><td>Investigate PowerShell activity</td></tr>
+                        <tr><td>Renamed system binary</td><td>High</td><td>Analyze file, check hash</td></tr>
+                        <tr><td>Heavily obfuscated commands</td><td>Medium-High</td><td>Decode and analyze payload</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="response">Response Actions</h2>
+                <ol>
+                    <li><strong>Process injection:</strong> Network isolate → Memory capture → Full endpoint forensics</li>
+                    <li><strong>Security tool tampering:</strong> Re-enable protections → Investigate how it was disabled → Check for other compromise</li>
+                    <li><strong>Log clearing:</strong> Assume compromise → Check backup logs → Full investigation</li>
+                    <li><strong>Masquerading:</strong> Block file → Analyze hash → Hunt for related IOCs</li>
+                </ol>
+
+            </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
-    <script src="../../../../../js/main.js"></script>
+    <script src="../../../js/main.js"></script>
 </body>
 </html>

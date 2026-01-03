@@ -6,185 +6,430 @@
     <title>Privilege Escalation Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="../../../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <nav class="main-nav">
-        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
-        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="../../../index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="../../../index.html">Home</a><span class="separator">/</span><a href="../index.html">Playbooks</a><span class="separator">/</span><span>Privilege Escalation</span></div>
+            <div class="breadcrumb">
+                <a href="../../../index.html">Home</a><span class="separator">/</span>
+                <a href="../index.html">Playbooks</a><span class="separator">/</span>
+                <span>Privilege Escalation</span>
+            </div>
+
+            <div class="playbook-header">
+                <div class="playbook-id">INV-006</div>
+                <h1>Privilege Escalation Investigation</h1>
+                <p class="lead">Comprehensive investigation procedure for suspected privilege escalation attacks. Covers UAC bypass, token manipulation, exploitation, credential theft, group changes, service abuse, and Kerberos attacks.</p>
+                <div class="playbook-meta">
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">High</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">MITRE Tactic</span><span class="playbook-meta-value">TA0004</span></div>
+                    <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">1-2 hours</span></div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
+                    <span class="mitre-tag">T1548</span>
+                    <span class="mitre-tag">T1134</span>
+                    <span class="mitre-tag">T1068</span>
+                    <span class="mitre-tag">T1078</span>
+                    <span class="mitre-tag">T1053</span>
+                    <span class="mitre-tag">T1543</span>
+                    <span class="mitre-tag">T1558</span>
+                </div>
+            </div>
+
             <div class="content">
-                <div class="playbook-header">
-                    <div class="playbook-id">PB-INV-010</div>
-                    <h1>Privilege Escalation Investigation</h1>
-                    <p class="lead">Investigate unauthorized elevation of privileges from standard user to administrator or SYSTEM level access.</p>
-                    <div class="playbook-meta">
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Severity</span><span class="severity-badge severity-high">HIGH</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Tier</span><span class="playbook-meta-value">L2/L3</span></div>
-                        <div class="playbook-meta-item"><span class="playbook-meta-label">Time</span><span class="playbook-meta-value">30-90 min</span></div>
-                    </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem;">
-                        <span class="mitre-tag">T1068 - Exploitation for Privilege Escalation</span>
-                        <span class="mitre-tag">T1548 - Abuse Elevation Control Mechanism</span>
-                        <span class="mitre-tag">T1134 - Access Token Manipulation</span>
-                    </div>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Attack Progression Indicator</div>
+                    <p style="margin: 0.3rem 0;">Privilege escalation typically follows initial access and indicates an attacker is attempting to gain higher-level permissions. This is a critical attack stage - successful escalation enables lateral movement, persistence, data access, and domain compromise.</p>
                 </div>
 
-                <h2>Privilege Escalation Techniques</h2>
+                <h2 id="overview">Privilege Escalation Techniques</h2>
                 <table>
-                    <thead><tr><th>Technique</th><th>Description</th><th>Detection</th></tr></thead>
+                    <thead><tr><th>Technique</th><th>ID</th><th>Description</th><th>Detection Difficulty</th><th>Impact</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Credential Theft</strong></td><td>Steal admin credentials (Mimikatz, LSASS dump)</td><td>LSASS access, credential dumping tools</td></tr>
-                        <tr><td><strong>Local Exploit</strong></td><td>Exploit vulnerability for SYSTEM</td><td>Known exploit patterns, unusual process chains</td></tr>
-                        <tr><td><strong>UAC Bypass</strong></td><td>Bypass User Account Control</td><td>UAC bypass techniques, auto-elevate abuse</td></tr>
-                        <tr><td><strong>Service Manipulation</strong></td><td>Modify services to run as SYSTEM</td><td>Service creation/modification events</td></tr>
-                        <tr><td><strong>Scheduled Task</strong></td><td>Create task running as SYSTEM</td><td>Task creation with elevated privileges</td></tr>
-                        <tr><td><strong>Token Manipulation</strong></td><td>Impersonate higher-privileged token</td><td>Token impersonation, SeDebugPrivilege use</td></tr>
-                        <tr><td><strong>DLL Hijacking</strong></td><td>Replace DLL loaded by privileged process</td><td>DLL loads from unusual paths</td></tr>
-                        <tr><td><strong>Group Modification</strong></td><td>Add user to admin groups</td><td>Event 4728, 4732, 4756</td></tr>
+                        <tr><td>UAC Bypass</td><td>T1548.002</td><td>Bypass User Account Control</td><td>Medium</td><td>Local admin</td></tr>
+                        <tr><td>Token Manipulation</td><td>T1134</td><td>Impersonate/steal tokens</td><td>Hard</td><td>Any privilege</td></tr>
+                        <tr><td>Exploitation</td><td>T1068</td><td>Exploit vulnerability</td><td>Medium</td><td>SYSTEM/root</td></tr>
+                        <tr><td>Valid Accounts</td><td>T1078</td><td>Use stolen credentials</td><td>Hard</td><td>Account level</td></tr>
+                        <tr><td>Scheduled Task</td><td>T1053</td><td>Task as SYSTEM</td><td>Easy</td><td>SYSTEM</td></tr>
+                        <tr><td>Service Abuse</td><td>T1543</td><td>Modify service config</td><td>Medium</td><td>SYSTEM</td></tr>
+                        <tr><td>Group Modification</td><td>T1098</td><td>Add to privileged group</td><td>Easy</td><td>Group level</td></tr>
+                        <tr><td>Kerberoasting</td><td>T1558.003</td><td>Crack service tickets</td><td>Medium</td><td>Service accounts</td></tr>
+                        <tr><td>AS-REP Roasting</td><td>T1558.004</td><td>Attack no-preauth accounts</td><td>Medium</td><td>Target accounts</td></tr>
+                        <tr><td>DLL Hijacking</td><td>T1574.001</td><td>Replace DLLs</td><td>Medium</td><td>Process level</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Part 1: Detect Credential Theft</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: LSASS access (credential dumping)</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where FileName =~ "lsass.exe"
-| where ActionType == "ProcessAccessed"
-| where InitiatingProcessFileName !in~ ("csrss.exe", "services.exe", "svchost.exe", "wininit.exe")
-| project TimeGenerated, DeviceName, InitiatingProcessFileName, 
-    InitiatingProcessCommandLine, AccountName
+                <h2 id="step1">Step 1: Initial Triage (15 min)</h2>
 
-<span style="color: #a78bf6;">// KQL: Mimikatz and credential dumping tools</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where ProcessCommandLine has_any ("sekurlsa", "logonpasswords", "lsadump", 
-    "kerberos::list", "crypto::capi", "privilege::debug", "mimikatz")
-    or FileName in~ ("mimikatz.exe", "procdump.exe", "lazagne.exe")
-| project TimeGenerated, DeviceName, AccountName, FileName, ProcessCommandLine
+                <h3>1.1 Alert Context</h3>
+                <table>
+                    <thead><tr><th>Question</th><th>Where to Find</th><th>Why It Matters</th></tr></thead>
+                    <tbody>
+                        <tr><td>What triggered the alert?</td><td>Alert details</td><td>Signature, behavioral, or anomaly detection</td></tr>
+                        <tr><td>Which system is affected?</td><td>Alert source</td><td>Workstation, server, DC - criticality varies</td></tr>
+                        <tr><td>Which user/process?</td><td>Alert/EDR</td><td>Standard user, service account, admin</td></tr>
+                        <tr><td>Was escalation successful?</td><td>Event logs, EDR</td><td>Attempted vs achieved determines urgency</td></tr>
+                        <tr><td>What privilege was gained?</td><td>Investigation</td><td>Local admin, SYSTEM, domain admin</td></tr>
+                        <tr><td>Timeline of events?</td><td>Logs</td><td>Part of larger attack chain?</td></tr>
+                    </tbody>
+                </table>
 
-<span style="color: #a78bf6;">// KQL: Comsvcs.dll LSASS dump (LOLBin)</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where ProcessCommandLine has "comsvcs.dll" and ProcessCommandLine has "MiniDump"
-| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine</pre>
-                </div>
+                <h3>1.2 Escalation Level Risk Assessment</h3>
+                <table>
+                    <thead><tr><th>Escalation Path</th><th>Risk Level</th><th>Urgency</th><th>Response</th></tr></thead>
+                    <tbody>
+                        <tr><td>Standard → Local Admin</td><td>High</td><td>Same day</td><td>Investigate, contain if confirmed</td></tr>
+                        <tr><td>Local Admin → SYSTEM</td><td>High</td><td>Immediate</td><td>Investigate, likely contain</td></tr>
+                        <tr><td>Any → Domain Admin</td><td>Critical</td><td>Emergency</td><td>Assume breach, full IR</td></tr>
+                        <tr><td>Service Account abuse</td><td>High-Critical</td><td>Based on account</td><td>Depends on account privileges</td></tr>
+                        <tr><td>Domain Controller compromise</td><td>Critical</td><td>Emergency</td><td>Full domain compromise assumed</td></tr>
+                    </tbody>
+                </table>
 
-                <h2>Part 2: Detect UAC Bypass</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Common UAC bypass techniques</span>
-DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where InitiatingProcessFileName in~ ("fodhelper.exe", "eventvwr.exe", 
-    "sdclt.exe", "slui.exe", "computerdefaults.exe")
-| where InitiatingProcessIntegrityLevel == "High"  <span style="color: #6aa3f7;">// Auto-elevated</span>
-| where FileName !in~ ("mmc.exe", "control.exe")  <span style="color: #6aa3f7;">// Expected children</span>
-| project TimeGenerated, DeviceName, AccountName, 
-    InitiatingProcessFileName, FileName, ProcessCommandLine
+                <h2 id="step2">Step 2: UAC Bypass Investigation (20 min)</h2>
 
-<span style="color: #a78bf6;">// KQL: Environment variable hijacking for UAC bypass</span>
+                <h3>2.1 Common UAC Bypass Techniques</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>Binary Abused</th><th>Registry Key</th><th>Detection Method</th></tr></thead>
+                    <tbody>
+                        <tr><td>Fodhelper</td><td>fodhelper.exe</td><td>ms-settings\shell\open\command</td><td>Registry + process spawn</td></tr>
+                        <tr><td>Eventvwr</td><td>eventvwr.exe</td><td>mscfile\shell\open\command</td><td>Registry + process spawn</td></tr>
+                        <tr><td>ComputerDefaults</td><td>computerdefaults.exe</td><td>ms-settings\shell\open\command</td><td>Registry + process spawn</td></tr>
+                        <tr><td>Sdclt</td><td>sdclt.exe</td><td>App Paths, exefile</td><td>Registry + process spawn</td></tr>
+                        <tr><td>CMSTP</td><td>cmstp.exe</td><td>N/A (INF file)</td><td>/ni /au flags</td></tr>
+                        <tr><td>WSReset</td><td>wsreset.exe</td><td>AppX\...\shell\open\command</td><td>Registry + process spawn</td></tr>
+                        <tr><td>SilentCleanup</td><td>cleanmgr.exe</td><td>Environment variable</td><td>Env var modification</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>2.2 UAC Bypass Detection Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Registry-based UAC bypass detection</span>
 DeviceRegistryEvents
-| where TimeGenerated > ago(7d)
-| where RegistryKey has @"Environment\windir" 
-    or RegistryKey has @"Environment\systemroot"
-| project TimeGenerated, DeviceName, AccountName, RegistryKey, RegistryValueData</pre>
+| where TimeGenerated > ago(24h)
+| where RegistryKey has_any (
+    "ms-settings\\shell\\open\\command",
+    "mscfile\\shell\\open\\command",
+    "Classes\\Folder\\shell\\open\\command",
+    "Classes\\exefile\\shell\\open\\command",
+    "Software\\Classes\\AppX"
+)
+| project TimeGenerated, DeviceName, RegistryKey, 
+    RegistryValueName, RegistryValueData,
+    InitiatingProcessFileName, InitiatingProcessAccountName
+| order by TimeGenerated desc
+
+<span style="color: #6aa3f7;">// KQL - Auto-elevate binary spawning shell</span>
+let autoElevateBinaries = dynamic([
+    "fodhelper.exe", "eventvwr.exe", "computerdefaults.exe",
+    "sdclt.exe", "slui.exe", "wsreset.exe", "cmstp.exe",
+    "mmc.exe", "pkgmgr.exe", "spinstall.exe", "sysprep.exe"
+]);
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where InitiatingProcessFileName in~ (autoElevateBinaries)
+| where FileName in~ ("cmd.exe", "powershell.exe", "pwsh.exe",
+    "wscript.exe", "cscript.exe", "mshta.exe")
+| project TimeGenerated, DeviceName, 
+    ParentProcess = InitiatingProcessFileName,
+    ChildProcess = FileName,
+    CommandLine = ProcessCommandLine,
+    User = AccountName
+
+<span style="color: #6aa3f7;">// KQL - CMSTP UAC bypass</span>
+DeviceProcessEvents
+| where FileName =~ "cmstp.exe"
+| where ProcessCommandLine has_any ("/ni", "/au", "/s", ".inf")
+| project TimeGenerated, DeviceName, ProcessCommandLine, 
+    AccountName, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - Environment variable UAC bypass</span>
+DeviceRegistryEvents
+| where RegistryKey has "Environment"
+| where RegistryValueName in ("windir", "systemroot", "comspec")
+| project TimeGenerated, DeviceName, RegistryValueName, 
+    RegistryValueData, InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// SPL - UAC bypass via registry</span>
+index=sysmon EventCode=13
+| search TargetObject="*\\shell\\open\\command*"
+| table _time, Computer, User, TargetObject, Details, Image</pre>
                 </div>
 
-                <h2>Part 3: Detect Service/Scheduled Task Abuse</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: Service creation (Event 7045)</span>
+                <h2 id="step3">Step 3: Token Manipulation Investigation (20 min)</h2>
+
+                <h3>3.1 Token Manipulation Techniques</h3>
+                <table>
+                    <thead><tr><th>Technique</th><th>Method</th><th>Tools Used</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td>Token Impersonation</td><td>Steal token from privileged process</td><td>Incognito, Mimikatz</td><td>Event 4673, API calls</td></tr>
+                        <tr><td>Token Duplication</td><td>Duplicate and use token</td><td>Windows API</td><td>API monitoring</td></tr>
+                        <tr><td>Named Pipe Impersonation</td><td>Create pipe, impersonate client</td><td>Custom tools</td><td>Sysmon Event 17/18</td></tr>
+                        <tr><td>Potato Attacks</td><td>NTLM relay to local service</td><td>JuicyPotato, PrintSpoofer</td><td>Process patterns</td></tr>
+                        <tr><td>Token Theft</td><td>Dump and inject tokens</td><td>Mimikatz, Cobalt Strike</td><td>Privilege use events</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>3.2 Token Manipulation Detection Queries</h3>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Sensitive privilege use</span>
+SecurityEvent
+| where TimeGenerated > ago(24h)
+| where EventID == 4673
+| extend PrivList = tostring(PrivilegeList)
+| where PrivList has_any (
+    "SeDebugPrivilege", "SeTcbPrivilege", 
+    "SeAssignPrimaryTokenPrivilege", "SeImpersonatePrivilege",
+    "SeLoadDriverPrivilege", "SeBackupPrivilege",
+    "SeRestorePrivilege", "SeTakeOwnershipPrivilege"
+)
+| project TimeGenerated, Computer, SubjectUserName, 
+    ProcessName, PrivilegeList
+| summarize Count = count(), 
+    Processes = make_set(ProcessName, 5) 
+    by Computer, SubjectUserName, PrivilegeList
+
+<span style="color: #6aa3f7;">// KQL - Token manipulation tool signatures</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where ProcessCommandLine has_any (
+    "token::elevate", "token::duplicate", "token::revert",
+    "Invoke-TokenManipulation", "Get-System", "getsystem",
+    "incognito", "impersonate_token", "steal_token",
+    "ImpersonateLoggedOnUser", "DuplicateTokenEx"
+)
+| project TimeGenerated, DeviceName, FileName, 
+    ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Potato exploit detection</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where FileName has_any (
+    "juicypotato", "sweetpotato", "godpotato", "roguepotato",
+    "hotpotato", "rottenpotato", "printspoofer", "efspotato"
+) or ProcessCommandLine has_any (
+    "JuicyPotato", "SweetPotato", "GodPotato", "PrintSpoofer"
+)
+| project TimeGenerated, DeviceName, FileName, 
+    ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Named pipe impersonation</span>
+DeviceEvents
+| where ActionType == "NamedPipeEvent"
+| where AdditionalFields has "Created"
+| where PipeName !startswith "\\Device\\NamedPipe\\MSSE"
+    and PipeName !startswith "\\Device\\NamedPipe\\wkssvc"
+| project TimeGenerated, DeviceName, PipeName, 
+    InitiatingProcessFileName, InitiatingProcessAccountName
+
+<span style="color: #6aa3f7;">// KQL - Process running as SYSTEM spawned by user</span>
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where InitiatingProcessAccountName !in ("SYSTEM", 
+    "LOCAL SERVICE", "NETWORK SERVICE")
+| where AccountName == "SYSTEM"
+| project TimeGenerated, DeviceName, FileName, 
+    ProcessCommandLine, InitiatingProcessFileName,
+    InitiatingProcessAccountName, AccountName</pre>
+                </div>
+
+                <h2 id="step4">Step 4: Group Membership Changes (15 min)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - User added to privileged groups</span>
+let privilegedGroups = dynamic([
+    "Domain Admins", "Enterprise Admins", "Schema Admins",
+    "Administrators", "Account Operators", "Backup Operators",
+    "Server Operators", "Print Operators", "DnsAdmins",
+    "Group Policy Creator Owners"
+]);
 SecurityEvent
 | where TimeGenerated > ago(7d)
-| where EventID == 7045  <span style="color: #6aa3f7;">// Service installed</span>
-| where ServiceAccount in ("LocalSystem", "NT AUTHORITY\\SYSTEM")
-| project TimeGenerated, Computer, ServiceName, ServiceFileName, ServiceAccount
+| where EventID in (4728, 4732, 4756) // Member added to group
+| where TargetUserName has_any (privilegedGroups)
+| project TimeGenerated, Computer, 
+    AddedBy = SubjectUserName,
+    AddedUser = MemberName,
+    Group = TargetUserName,
+    EventID
 
-<span style="color: #a78bf6;">// KQL: Scheduled task creation with SYSTEM privileges</span>
-DeviceProcessEvents
+<span style="color: #6aa3f7;">// KQL - User rights assignment</span>
+SecurityEvent
 | where TimeGenerated > ago(7d)
+| where EventID == 4704 // User right assigned
+| project TimeGenerated, Computer, SubjectUserName, 
+    TargetUserName, PrivilegeList
+
+<span style="color: #6aa3f7;">// KQL - AdminSDHolder protected groups</span>
+SecurityEvent
+| where EventID in (4728, 4732, 4756)
+| where TargetUserName has_any (
+    "Domain Admins", "Enterprise Admins", "Administrators",
+    "Schema Admins", "Account Operators", "Backup Operators"
+)
+| project TimeGenerated, AddedBy = SubjectUserName,
+    AddedUser = MemberName, Group = TargetUserName
+
+<span style="color: #6aa3f7;">// KQL - net commands adding to groups</span>
+DeviceProcessEvents
+| where FileName in~ ("net.exe", "net1.exe")
+| where ProcessCommandLine has "localgroup" 
+    and ProcessCommandLine has "/add"
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
+                </div>
+
+                <h2 id="step5">Step 5: Service and Scheduled Task Abuse (20 min)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// KQL - Service binary path modification</span>
+DeviceRegistryEvents
+| where TimeGenerated > ago(24h)
+| where RegistryKey has "\\Services\\" 
+    and RegistryValueName == "ImagePath"
+| where RegistryValueData has_any (
+    "cmd", "powershell", "\\Temp\\", "\\Users\\", 
+    "\\AppData\\", "\\Downloads\\", "nc.exe", "nc64.exe"
+)
+| project TimeGenerated, DeviceName, 
+    ServiceKey = RegistryKey, NewPath = RegistryValueData,
+    ModifiedBy = InitiatingProcessFileName
+
+<span style="color: #6aa3f7;">// KQL - sc.exe service configuration changes</span>
+DeviceProcessEvents
+| where FileName =~ "sc.exe"
+| where ProcessCommandLine has "config" 
+    and ProcessCommandLine has_any ("binpath", "obj=", "start=")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - New service with suspicious path</span>
+SecurityEvent
+| where EventID == 7045 // Service installed
+| where ServiceFileName has_any (
+    "cmd", "powershell", "\\Temp\\", "\\Users\\", 
+    "\\AppData\\", "-enc", "-e ", "IEX"
+)
+| project TimeGenerated, Computer, ServiceName, 
+    ServiceFileName, ServiceStartType, SubjectUserName
+
+<span style="color: #6aa3f7;">// KQL - Scheduled task running as SYSTEM by non-admin</span>
+SecurityEvent
+| where EventID == 4698 // Task created
+| where TaskContent has "SYSTEM" or TaskContent has "S-1-5-18"
+| where SubjectUserName !in ("SYSTEM", "Administrator")
+| project TimeGenerated, Computer, SubjectUserName, TaskName,
+    TaskContent
+
+<span style="color: #6aa3f7;">// KQL - schtasks.exe creating privileged task</span>
+DeviceProcessEvents
 | where FileName =~ "schtasks.exe"
-| where ProcessCommandLine has_any ("/ru system", "/ru \"system\"", 
-    "highest", "SYSTEM")
-| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine
-
-<span style="color: #a78bf6;">// KQL: Service binary path modification</span>
-DeviceRegistryEvents
-| where TimeGenerated > ago(7d)
-| where RegistryKey has @"SYSTEM\CurrentControlSet\Services\"
-| where RegistryValueName == "ImagePath"
-| project TimeGenerated, DeviceName, AccountName, RegistryKey, RegistryValueData</pre>
+| where ProcessCommandLine has "/create"
+| where ProcessCommandLine has_any ("/ru SYSTEM", 
+    "/ru \"NT AUTHORITY\\SYSTEM\"", "/rl highest")
+| project TimeGenerated, DeviceName, ProcessCommandLine, AccountName</pre>
                 </div>
 
-                <h2>Part 4: Detect Group Membership Changes</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: User added to privileged groups</span>
-SecurityEvent
-| where TimeGenerated > ago(7d)
-| where EventID in (4728, 4732, 4756)  <span style="color: #6aa3f7;">// Member added to security groups</span>
-| where TargetUserName has_any ("Admin", "Domain Admins", "Enterprise Admins",
-    "Schema Admins", "Backup Operators", "Account Operators")
-| project TimeGenerated, Computer, SubjectUserName, MemberName, TargetUserName
+                <h2 id="step6">Step 6: Exploitation Detection (15 min)</h2>
+                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 0.5rem 0;">
+<pre style="margin: 0;"><span style="color: #6aa3f7;">// Common privesc exploits reference:</span>
+// PrintNightmare - CVE-2021-34527 (Print Spooler)
+// ZeroLogon - CVE-2020-1472 (Netlogon)
+// PetitPotam - CVE-2021-36942 (LSARPC)
+// HiveNightmare - CVE-2021-36934 (SAM/SYSTEM hives)
+// EternalBlue - CVE-2017-0144 (SMBv1)
 
-<span style="color: #a78bf6;">// KQL: Azure AD role assignment</span>
-AuditLogs
-| where TimeGenerated > ago(7d)
-| where OperationName has "Add member to role"
-| where TargetResources[0].displayName has_any ("Global Administrator", 
-    "Privileged Role Administrator", "Security Administrator")
-| project TimeGenerated, InitiatedBy.user.userPrincipalName, 
-    TargetResources[0].displayName, TargetResources[0].userPrincipalName</pre>
-                </div>
-
-                <h2>Part 5: Token Manipulation</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">// KQL: SeDebugPrivilege use (required for token theft)</span>
-SecurityEvent
-| where TimeGenerated > ago(7d)
-| where EventID == 4673  <span style="color: #6aa3f7;">// Privileged service called</span>
-| where PrivilegeList has "SeDebugPrivilege"
-| where ProcessName !has "lsass.exe"  <span style="color: #6aa3f7;">// Expected</span>
-| project TimeGenerated, Computer, SubjectUserName, ProcessName, PrivilegeList
-
-<span style="color: #a78bf6;">// KQL: Token impersonation indicators</span>
+<span style="color: #6aa3f7;">// KQL - PrintNightmare detection</span>
 DeviceProcessEvents
-| where TimeGenerated > ago(7d)
-| where ProcessCommandLine has_any ("token::", "getsystem", "incognito", 
-    "impersonate", "steal_token")
-| project TimeGenerated, DeviceName, AccountName, ProcessCommandLine</pre>
+| where InitiatingProcessFileName =~ "spoolsv.exe"
+| where FileName in~ ("cmd.exe", "powershell.exe", 
+    "rundll32.exe", "regsvr32.exe")
+| project TimeGenerated, DeviceName, FileName, 
+    ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Suspicious DLL load by spooler</span>
+DeviceImageLoadEvents
+| where InitiatingProcessFileName =~ "spoolsv.exe"
+| where FolderPath startswith "\\\\" // UNC path
+| project TimeGenerated, DeviceName, FileName, FolderPath
+
+<span style="color: #6aa3f7;">// KQL - Known exploit tool detection</span>
+DeviceProcessEvents
+| where FileName has_any (
+    "printnightmare", "zerologon", "petitpotam",
+    "CVE-", "exploit", "poc", "mimikatz", "rubeus"
+)
+| project TimeGenerated, DeviceName, FileName, 
+    ProcessCommandLine, AccountName
+
+<span style="color: #6aa3f7;">// KQL - Kernel driver load (potential exploit)</span>
+DeviceEvents
+| where ActionType == "DriverLoad"
+| where FolderPath has_any ("\\Temp\\", "\\Users\\", 
+    "\\AppData\\", "\\Downloads\\")
+| project TimeGenerated, DeviceName, FileName, 
+    FolderPath, SHA256</pre>
                 </div>
 
-                <h2>Containment Actions</h2>
+                <h2 id="containment">Containment Actions</h2>
                 <table>
-                    <thead><tr><th>Finding</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Action</th><th>Method</th><th>Priority</th></tr></thead>
                     <tbody>
-                        <tr><td>Credential theft confirmed</td><td>Reset all affected credentials, rotate service accounts</td></tr>
-                        <tr><td>Admin group modification</td><td>Remove unauthorized members, investigate who added them</td></tr>
-                        <tr><td>Malicious service created</td><td>Stop service, remove binary, delete service</td></tr>
-                        <tr><td>UAC bypass successful</td><td>Isolate system, investigate what was executed</td></tr>
+                        <tr><td>UAC bypass confirmed</td><td>Investigate source, check persistence</td><td>EDR investigation</td><td>High</td></tr>
+                        <tr><td>Token manipulation</td><td>Isolate system, full investigation</td><td>Network isolation</td><td>High</td></tr>
+                        <tr><td>Unauthorized group change</td><td>Revert change immediately</td><td>AD admin</td><td>Critical</td></tr>
+                        <tr><td>Service abuse</td><td>Stop service, restore config</td><td>sc.exe, services.msc</td><td>High</td></tr>
+                        <tr><td>Domain Admin compromise</td><td>Reset password, KRBTGT if needed</td><td>AD admin</td><td>Critical</td></tr>
+                        <tr><td>Exploitation confirmed</td><td>Isolate, patch vulnerability</td><td>Network isolation, WSUS</td><td>High</td></tr>
                     </tbody>
                 </table>
 
-                <h2>MITRE ATT&CK Mapping</h2>
-                <table>
-                    <thead><tr><th>Technique</th><th>ID</th><th>Detection</th></tr></thead>
-                    <tbody>
-                        <tr><td>Exploitation for Privilege Escalation</td><td>T1068</td><td>Known exploit patterns</td></tr>
-                        <tr><td>Bypass UAC</td><td>T1548.002</td><td>Auto-elevate binary abuse</td></tr>
-                        <tr><td>Access Token Manipulation</td><td>T1134</td><td>Token theft/impersonation</td></tr>
-                        <tr><td>Create or Modify System Process</td><td>T1543</td><td>Service creation/modification</td></tr>
-                        <tr><td>Scheduled Task/Job</td><td>T1053</td><td>Task creation with SYSTEM</td></tr>
-                        <tr><td>Valid Accounts: Local</td><td>T1078.003</td><td>Admin credential use</td></tr>
-                    </tbody>
-                </table>
+                <h2 id="escalation">Escalation Criteria</h2>
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-arrow-up"></i> Escalate Immediately If:</div>
+                    <ul style="margin: 0.5rem 0 0 1rem;">
+                        <li>Domain Admin or Enterprise Admin privileges gained</li>
+                        <li>Domain Controller compromised</li>
+                        <li>Multiple systems show privilege escalation activity</li>
+                        <li>Known APT techniques observed</li>
+                        <li>Service accounts with domain-wide access compromised</li>
+                        <li>Evidence of Kerberos ticket manipulation (Golden/Silver ticket)</li>
+                        <li>AdminSDHolder or KRBTGT account modified</li>
+                    </ul>
+                </div>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="../../../js/main.js"></script>
 </body>
 </html>
+
+                <h2 id="what-to-look-for">What to Look For - Red Flags</h2>
+                <table>
+                    <thead><tr><th>Observation</th><th>Significance</th><th>Next Step</th></tr></thead>
+                    <tbody>
+                        <tr><td>User suddenly in Domain Admins</td><td>Unauthorized privilege escalation</td><td>Check who added, when, revert</td></tr>
+                        <tr><td>Service running as SYSTEM that shouldn't</td><td>Service abuse or exploitation</td><td>Check service creation time, creator</td></tr>
+                        <tr><td>UAC bypass registry keys modified</td><td>Active exploitation attempt</td><td>Investigate process that modified</td></tr>
+                        <tr><td>SeDebugPrivilege in non-admin process</td><td>Token manipulation</td><td>Check for Mimikatz/similar tools</td></tr>
+                        <tr><td>Scheduled task running as SYSTEM</td><td>Persistence + privilege</td><td>Review task content and creator</td></tr>
+                        <tr><td>New local admin on multiple systems</td><td>Lateral movement + privesc</td><td>Determine spread, source</td></tr>
+                        <tr><td>KRBTGT password change</td><td>Domain compromise</td><td>Assume full compromise, IR</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="documentation">Documentation Requirements</h2>
+                <table>
+                    <thead><tr><th>Item</th><th>What to Capture</th><th>Why It Matters</th></tr></thead>
+                    <tbody>
+                        <tr><td>Timeline</td><td>All privilege changes with timestamps</td><td>Establishes attack sequence</td></tr>
+                        <tr><td>Actor identification</td><td>User/process that made changes</td><td>Attribution, scope</td></tr>
+                        <tr><td>Technique used</td><td>Specific escalation method</td><td>Detection improvement</td></tr>
+                        <tr><td>Systems affected</td><td>All systems with elevated access</td><td>Containment scope</td></tr>
+                        <tr><td>Data accessed</td><td>What was accessed with new privileges</td><td>Impact assessment</td></tr>
+                        <tr><td>IOCs</td><td>Hashes, IPs, domains, tools used</td><td>Detection rules, intel sharing</td></tr>
+                        <tr><td>Remediation actions</td><td>All containment steps taken</td><td>Audit trail</td></tr>
+                    </tbody>
+                </table>
+

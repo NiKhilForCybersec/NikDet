@@ -84,6 +84,7 @@ function injectSidebar() {
                 <div class="sidebar-section-header"><i class="fas fa-clipboard-check section-icon"></i><span>Triage Playbooks</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
                     <li><a href="pages/playbooks/index.html">All Playbooks</a></li>
+                    <li><a href="pages/playbooks/triage/index.html">Triage Overview</a></li>
                     <li><a href="pages/playbooks/triage/endpoint.html">Endpoint Triage</a></li>
                     <li><a href="pages/playbooks/triage/email.html">Email Triage</a></li>
                     <li><a href="pages/playbooks/triage/network.html">Network Triage</a></li>
@@ -98,6 +99,7 @@ function injectSidebar() {
             <div class="sidebar-section">
                 <div class="sidebar-section-header"><i class="fas fa-search section-icon"></i><span>Investigation Playbooks</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
+                    <li><a href="pages/playbooks/investigation/index.html">Investigation Overview</a></li>
                     <li><a href="pages/playbooks/investigation/phishing.html">Phishing</a></li>
                     <li><a href="pages/playbooks/investigation/malware.html">Malware</a></li>
                     <li><a href="pages/playbooks/investigation/ransomware.html">Ransomware</a></li>
@@ -114,6 +116,7 @@ function injectSidebar() {
             <div class="sidebar-section">
                 <div class="sidebar-section-header"><i class="fas fa-fire-extinguisher section-icon"></i><span>Incident Response</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
+                    <li><a href="pages/playbooks/incident-response/index.html">IR Overview</a></li>
                     <li><a href="pages/playbooks/incident-response/ransomware-ir.html">Ransomware IR</a></li>
                     <li><a href="pages/playbooks/incident-response/phishing-ir.html">Phishing IR</a></li>
                     <li><a href="pages/playbooks/incident-response/malware-ir.html">Malware IR</a></li>
@@ -126,6 +129,7 @@ function injectSidebar() {
             <div class="sidebar-section">
                 <div class="sidebar-section-header"><i class="fas fa-shield section-icon"></i><span>Containment</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
+                    <li><a href="pages/playbooks/containment/index.html">Containment Overview</a></li>
                     <li><a href="pages/playbooks/containment/endpoint-isolation.html">Endpoint Isolation</a></li>
                     <li><a href="pages/playbooks/containment/account-actions.html">Account Actions</a></li>
                     <li><a href="pages/playbooks/containment/network-actions.html">Network Actions</a></li>
@@ -141,6 +145,7 @@ function injectSidebar() {
                     <li><a href="pages/threat-hunting/methodology.html">Methodology</a></li>
                     <li><a href="pages/threat-hunting/hypothesis.html">Hypothesis Development</a></li>
                     <li><a href="pages/threat-hunting/hunt-playbooks.html">Hunt Playbooks</a></li>
+                    <li><a href="pages/playbooks/hunting/index.html">ATT&CK Hunt Index</a></li>
                     <li><a href="pages/playbooks/hunting/initial-access.html">Initial Access Hunt</a></li>
                     <li><a href="pages/playbooks/hunting/persistence.html">Persistence Hunt</a></li>
                     <li><a href="pages/playbooks/hunting/privilege-escalation-hunt.html">Priv Esc Hunt</a></li>

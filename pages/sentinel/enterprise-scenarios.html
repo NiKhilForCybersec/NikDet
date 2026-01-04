@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Enterprise Scenarios | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #0078d4; }
+        .scenario-card h3 { margin-top: 0; color: #0078d4; display: flex; align-items: center; gap: 0.5rem; }
+        .scenario-card .difficulty { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: auto; }
+        .scenario-card .difficulty.easy { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .scenario-card .difficulty.medium { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .scenario-card .difficulty.hard { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .code-block { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; }
+        .step-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+        .step-box h4 { margin: 0 0 0.5rem 0; color: var(--accent-primary); font-size: 0.95rem; }
+        .warning-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .tip-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .info-callout { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0; }
+        .compliance-table { width: 100%; margin: 1rem 0; }
+        .compliance-table th { background: var(--card-bg); text-align: left; }
+        .retention-visual { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .retention-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; text-align: center; }
+        .retention-box .days { font-size: 1.5rem; font-weight: bold; color: var(--accent-primary); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/sentinel/index.html">Sentinel</a><span class="separator">/</span>
+                <span>Enterprise Scenarios</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-building" style="color: #0078d4;"></i> Sentinel Enterprise Scenarios</h1>
+                <p class="lead">Real-world scenarios you'll encounter: multi-line logs, XDR retention, compliance requirements, custom applications, and edge cases.</p>
+
+                <!-- TABLE OF CONTENTS -->
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> Scenarios Covered</div>
+                    <ol>
+                        <li><a href="#multiline">Multi-Line Log Ingestion (30+ lines per event)</a></li>
+                        <li><a href="#xdr-retention">XDR/MDE Data Retention & Compliance</a></li>
+                        <li><a href="#custom-json">Custom JSON Application Logs</a></li>
+                        <li><a href="#custom-xml">Custom XML Logs</a></li>
+                        <li><a href="#syslog-cef">Syslog/CEF from Network Devices</a></li>
+                        <li><a href="#cloud-logs">Multi-Cloud Log Ingestion (AWS/GCP)</a></li>
+                        <li><a href="#legacy">Legacy System Integration</a></li>
+                        <li><a href="#compliance">Compliance & Long-Term Retention</a></li>
+                        <li><a href="#cost">Cost Optimization Scenarios</a></li>
+                    </ol>
+                </div>
+
+                <!-- SCENARIO 1: MULTI-LINE LOGS -->
+                <div id="multiline" class="scenario-card">
+                    <h3><i class="fas fa-align-left"></i> Scenario 1: Multi-Line Log Ingestion <span class="difficulty medium">Common</span></h3>
+                    
+                    <p><strong>Problem:</strong> Your application produces multi-line events (typically 3-4 lines). Each logical event should be ONE event, not multiple separate events.</p>
+
+                    <h4>Example: Application Error Log (3-4 lines)</h4>
+                    <div class="code-block">
+<pre>2025-01-04 10:23:45.123 ERROR [PaymentService]
+  Transaction ID: TXN-789456
+  Error: Payment gateway timeout after 30s
+  User: john.doe@company.com</pre>
+                    </div>
+
+                    <h4>Example: Windows Event with Description (Multi-line)</h4>
+                    <div class="code-block">
+<pre>Jan 04 10:23:45 server01 Application[1234]: Service failed to start
+  Service Name: CustomAppService
+  Error Code: 0x80070005
+  Description: Access is denied</pre>
+                    </div>
+
+                    <h4>Example: Syslog with Continuation</h4>
+                    <div class="code-block">
+<pre>Jan 04 10:23:45 firewall01 kernel: [UFW BLOCK] IN=eth0 OUT=
+  SRC=192.168.1.100 DST=10.0.0.50 PROTO=TCP
+  SPT=54321 DPT=22 LEN=60</pre>
+                    </div>
+
+                    <h4>Solution: Custom Table with DCR Transformation</h4>
+
+                    <div class="step-box">
+                        <h4>Step 1: Configure Log Collection to Merge Lines</h4>
+                        <p>When using Azure Monitor Agent (AMA) for custom logs, configure the DCR to recognize event boundaries:</p>
+                        <div class="code-block">
+<pre>// In the DCR data source configuration:
+// Events start with timestamp pattern, so break BEFORE new timestamps
+{
+  "streams": ["Custom-AppLogs_CL"],
+  "configuration": {
+    "recordDelimiter": "\\n(?=\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})"
+  }
+}</pre>
+                        </div>
+                        <p>This regex uses lookahead <code>(?=...)</code> to break BEFORE lines starting with a timestamp, keeping the multi-line event together.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Create Custom Table Schema</h4>
+                        <div class="code-block">
+<pre>// Table: AppLogs_CL
+{
+  "columns": [
+    {"name": "TimeGenerated", "type": "datetime"},
+    {"name": "LogLevel", "type": "string"},
+    {"name": "Service", "type": "string"},
+    {"name": "TransactionId", "type": "string"},
+    {"name": "ErrorMessage", "type": "string"},
+    {"name": "User", "type": "string"},
+    {"name": "RawMessage", "type": "string"}
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: DCR Transformation to Parse Multi-Line</h4>
+                        <div class="code-block">
+<pre>// Transformation query in DCR
+source
+| extend RawMessage = RawData
+// Extract timestamp from first line
+| extend TimeGenerated = todatetime(extract(@"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})", 1, RawData))
+// Extract log level
+| extend LogLevel = extract(@"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} (\w+)", 1, RawData)
+// Extract service name
+| extend Service = extract(@"\[(\w+)\]", 1, RawData)
+// Extract transaction ID
+| extend TransactionId = extract(@"Transaction ID:\s*(\S+)", 1, RawData)
+// Extract error message
+| extend ErrorMessage = extract(@"Error:\s*(.+?)(?:\r?\n|$)", 1, RawData)
+// Extract user
+| extend User = extract(@"User:\s*(\S+)", 1, RawData)
+| project TimeGenerated, LogLevel, Service, TransactionId, ErrorMessage, User, RawMessage</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Query Parsed Events</h4>
+                        <div class="code-block">
+<pre>// Find all errors by service
+AppLogs_CL
+| where TimeGenerated > ago(24h)
+| where LogLevel == "ERROR"
+| summarize ErrorCount = count() by Service
+| order by ErrorCount desc
+
+// Search for specific transaction
+AppLogs_CL
+| where TransactionId == "TXN-789456"
+| project TimeGenerated, Service, ErrorMessage, User</pre>
+                        </div>
+                    </div>
+
+                    <div class="tip-box">
+                        <strong><i class="fas fa-lightbulb"></i> When Events Are Already Single-Line JSON</strong>
+                        <p>If your application can output structured JSON (one JSON object per line), that's the easiest approach - no multi-line handling needed. Example:</p>
+                        <div class="code-block" style="margin-top: 0.5rem;">
+<pre>{"timestamp":"2025-01-04T10:23:45","level":"ERROR","service":"PaymentService","txn_id":"TXN-789456","error":"Timeout","user":"john.doe@company.com"}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 2: XDR RETENTION -->
+                <div id="xdr-retention" class="scenario-card">
+                    <h3><i class="fas fa-clock"></i> Scenario 2: XDR/MDE Data Retention & Compliance <span class="difficulty medium">Important</span></h3>
+
+                    <p><strong>Challenge:</strong> Microsoft Defender for Endpoint (MDE) retains data for only 180 days. Many compliance frameworks require 1-7 years. How do you handle this gap?</p>
+
+                    <h4>MDE Default Retention</h4>
+                    <div class="retention-visual">
+                        <div class="retention-box">
+                            <div class="days">180</div>
+                            <div>Days in MDE Portal</div>
+                        </div>
+                        <div class="retention-box">
+                            <div class="days">30</div>
+                            <div>Days Advanced Hunting</div>
+                        </div>
+                        <div class="retention-box">
+                            <div class="days">30</div>
+                            <div>Days in Sentinel (Default)</div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box">
+                        <strong><i class="fas fa-exclamation-triangle"></i> The Problem</strong>
+                        <p>If you only rely on MDE's built-in retention, after 180 days you lose ALL endpoint telemetry. For compliance (SOX, HIPAA, PCI-DSS), you need 1-7 years of security logs.</p>
+                    </div>
+
+                    <h4>Solution: Stream MDE Data to Sentinel with Extended Retention</h4>
+
+                    <div class="step-box">
+                        <h4>Step 1: Enable MDE Data Connector in Sentinel</h4>
+                        <p>Data Connectors → Microsoft Defender for Endpoint → Connect</p>
+                        <p>This streams MDE data to these Sentinel tables:</p>
+                        <ul>
+                            <li><code>DeviceProcessEvents</code> - Process execution</li>
+                            <li><code>DeviceNetworkEvents</code> - Network connections</li>
+                            <li><code>DeviceFileEvents</code> - File operations</li>
+                            <li><code>DeviceLogonEvents</code> - Authentication</li>
+                            <li><code>DeviceRegistryEvents</code> - Registry changes</li>
+                            <li><code>DeviceImageLoadEvents</code> - DLL loads</li>
+                            <li><code>DeviceEvents</code> - Misc events</li>
+                            <li><code>DeviceInfo</code> - Device inventory</li>
+                        </ul>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Configure Extended Retention</h4>
+                        <div class="code-block">
+<pre># Set retention for MDE tables
+# Interactive retention: 90 days (can query normally)
+# Total retention: 2 years (archived, can restore)
+
+az monitor log-analytics workspace table update \
+  --resource-group "SOC-RG" \
+  --workspace-name "Sentinel-Workspace" \
+  --name "DeviceProcessEvents" \
+  --retention-time 90 \
+  --total-retention-time 730
+
+# Repeat for other Device* tables
+for table in DeviceNetworkEvents DeviceFileEvents DeviceLogonEvents DeviceRegistryEvents DeviceEvents; do
+  az monitor log-analytics workspace table update \
+    --resource-group "SOC-RG" \
+    --workspace-name "Sentinel-Workspace" \
+    --name "$table" \
+    --retention-time 90 \
+    --total-retention-time 730
+done</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: For 7+ Year Compliance - Export to Storage</h4>
+                        <p>For very long retention (7+ years for some regulations), export to Azure Storage:</p>
+                        <div class="code-block">
+<pre># Create Data Export Rule
+az monitor log-analytics workspace data-export create \
+  --resource-group "SOC-RG" \
+  --workspace-name "Sentinel-Workspace" \
+  --name "MDE-Compliance-Export" \
+  --tables DeviceProcessEvents DeviceNetworkEvents DeviceFileEvents \
+  --destination "/subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Storage/storageAccounts/compliancestorage"</pre>
+                        </div>
+                        <p>Data is exported to Azure Blob Storage in JSON format. Set storage lifecycle policy for 7-year retention.</p>
+                    </div>
+
+                    <h4>Compliance Requirements Reference</h4>
+                    <table class="compliance-table">
+                        <thead>
+                            <tr><th>Framework</th><th>Log Retention Required</th><th>Recommended Sentinel Config</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>PCI-DSS</strong></td>
+                                <td>1 year (3 months immediately accessible)</td>
+                                <td>90 days interactive + 1 year total retention</td>
+                            </tr>
+                            <tr>
+                                <td><strong>HIPAA</strong></td>
+                                <td>6 years</td>
+                                <td>90 days interactive + export to storage for 6 years</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOX</strong></td>
+                                <td>7 years</td>
+                                <td>90 days interactive + export to storage for 7 years</td>
+                            </tr>
+                            <tr>
+                                <td><strong>GDPR</strong></td>
+                                <td>As long as necessary (minimize)</td>
+                                <td>Based on business need, typically 1-2 years</td>
+                            </tr>
+                            <tr>
+                                <td><strong>NIST 800-53</strong></td>
+                                <td>As defined by org (usually 1 year)</td>
+                                <td>90 days interactive + 1-2 years total</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="info-callout">
+                        <strong><i class="fas fa-info-circle"></i> What About Other XDR Components?</strong>
+                        <ul>
+                            <li><strong>Microsoft Defender for Identity (MDI):</strong> Data flows to IdentityLogonEvents, IdentityQueryEvents tables</li>
+                            <li><strong>Microsoft Defender for Office 365 (MDO):</strong> EmailEvents, EmailAttachmentInfo, EmailUrlInfo tables</li>
+                            <li><strong>Microsoft Defender for Cloud Apps (MCAS):</strong> CloudAppEvents table</li>
+                        </ul>
+                        <p>All follow the same pattern: Enable connector → Set retention → Export for long-term compliance</p>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 3: CUSTOM JSON -->
+                <div id="custom-json" class="scenario-card">
+                    <h3><i class="fas fa-code"></i> Scenario 3: Custom JSON Application Logs <span class="difficulty easy">Common</span></h3>
+
+                    <p><strong>Situation:</strong> Your microservices produce structured JSON logs. You want to ingest them with all fields parsed.</p>
+
+                    <h4>Example JSON Log</h4>
+                    <div class="code-block">
+<pre>{
+  "timestamp": "2025-01-04T10:23:45.123Z",
+  "level": "ERROR",
+  "service": "payment-service",
+  "traceId": "abc123def456",
+  "spanId": "span789",
+  "userId": "user_12345",
+  "action": "process_payment",
+  "amount": 150.00,
+  "currency": "USD",
+  "status": "failed",
+  "error": {
+    "code": "INSUFFICIENT_FUNDS",
+    "message": "Account balance too low"
+  },
+  "metadata": {
+    "ip": "192.168.1.100",
+    "userAgent": "Mozilla/5.0...",
+    "region": "us-east-1"
+  }
+}</pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Create Custom Table</h4>
+                        <div class="code-block">
+<pre>// Table: MicroserviceLogs_CL
+{
+  "columns": [
+    {"name": "TimeGenerated", "type": "datetime"},
+    {"name": "Level", "type": "string"},
+    {"name": "Service", "type": "string"},
+    {"name": "TraceId", "type": "string"},
+    {"name": "UserId", "type": "string"},
+    {"name": "Action", "type": "string"},
+    {"name": "Status", "type": "string"},
+    {"name": "ErrorCode", "type": "string"},
+    {"name": "ErrorMessage", "type": "string"},
+    {"name": "ClientIP", "type": "string"},
+    {"name": "Amount", "type": "real"},
+    {"name": "Currency", "type": "string"}
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: DCR Transformation for JSON</h4>
+                        <div class="code-block">
+<pre>// Transformation query
+source
+| extend JsonData = parse_json(RawData)
+| extend TimeGenerated = todatetime(JsonData.timestamp)
+| extend Level = tostring(JsonData.level)
+| extend Service = tostring(JsonData.service)
+| extend TraceId = tostring(JsonData.traceId)
+| extend UserId = tostring(JsonData.userId)
+| extend Action = tostring(JsonData.action)
+| extend Status = tostring(JsonData.status)
+| extend ErrorCode = tostring(JsonData.error.code)
+| extend ErrorMessage = tostring(JsonData.error.message)
+| extend ClientIP = tostring(JsonData.metadata.ip)
+| extend Amount = todouble(JsonData.amount)
+| extend Currency = tostring(JsonData.currency)
+| project TimeGenerated, Level, Service, TraceId, UserId, Action, Status, ErrorCode, ErrorMessage, ClientIP, Amount, Currency</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Send via Logs Ingestion API</h4>
+                        <div class="code-block">
+<pre># From your application or log shipper
+curl -X POST "https://&lt;DCE&gt;.ingest.monitor.azure.com/dataCollectionRules/&lt;DCR-ID&gt;/streams/Custom-MicroserviceLogs_CL?api-version=2023-01-01" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[{"RawData": "{\"timestamp\":\"2025-01-04T10:23:45.123Z\",\"level\":\"ERROR\",...}"}]'</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Query and Alert</h4>
+                        <div class="code-block">
+<pre>// Find payment failures by error code
+MicroserviceLogs_CL
+| where TimeGenerated > ago(1h)
+| where Service == "payment-service"
+| where Status == "failed"
+| summarize FailureCount = count(), TotalAmount = sum(Amount) by ErrorCode
+| order by FailureCount desc
+
+// Alert: More than 10 payment failures in 5 minutes
+MicroserviceLogs_CL
+| where TimeGenerated > ago(5m)
+| where Service == "payment-service" and Status == "failed"
+| summarize FailureCount = count() by bin(TimeGenerated, 5m)
+| where FailureCount > 10</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 4: CUSTOM XML -->
+                <div id="custom-xml" class="scenario-card">
+                    <h3><i class="fas fa-file-code"></i> Scenario 4: Custom XML Logs <span class="difficulty medium">Legacy Systems</span></h3>
+
+                    <p><strong>Situation:</strong> Legacy systems (ERP, mainframe interfaces) produce XML-formatted logs.</p>
+
+                    <h4>Example XML Log</h4>
+                    <div class="code-block">
+<pre>&lt;LogEntry&gt;
+  &lt;Timestamp&gt;2025-01-04T10:23:45&lt;/Timestamp&gt;
+  &lt;Severity&gt;WARNING&lt;/Severity&gt;
+  &lt;Source&gt;SAP-Interface&lt;/Source&gt;
+  &lt;User&gt;BATCH_USER&lt;/User&gt;
+  &lt;Transaction&gt;
+    &lt;ID&gt;TXN123456&lt;/ID&gt;
+    &lt;Type&gt;MATERIAL_TRANSFER&lt;/Type&gt;
+    &lt;Status&gt;FAILED&lt;/Status&gt;
+  &lt;/Transaction&gt;
+  &lt;ErrorDetails&gt;
+    &lt;Code&gt;MAT_001&lt;/Code&gt;
+    &lt;Description&gt;Material not found in plant&lt;/Description&gt;
+  &lt;/ErrorDetails&gt;
+&lt;/LogEntry&gt;</pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>DCR Transformation for XML</h4>
+                        <div class="code-block">
+<pre>// Transformation query for XML
+source
+| extend XmlData = parse_xml(RawData)
+| extend TimeGenerated = todatetime(XmlData.LogEntry.Timestamp)
+| extend Severity = tostring(XmlData.LogEntry.Severity)
+| extend Source = tostring(XmlData.LogEntry.Source)
+| extend User = tostring(XmlData.LogEntry.User)
+| extend TransactionId = tostring(XmlData.LogEntry.Transaction.ID)
+| extend TransactionType = tostring(XmlData.LogEntry.Transaction.Type)
+| extend TransactionStatus = tostring(XmlData.LogEntry.Transaction.Status)
+| extend ErrorCode = tostring(XmlData.LogEntry.ErrorDetails.Code)
+| extend ErrorDescription = tostring(XmlData.LogEntry.ErrorDetails.Description)
+| project TimeGenerated, Severity, Source, User, TransactionId, TransactionType, TransactionStatus, ErrorCode, ErrorDescription</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 5: SYSLOG/CEF -->
+                <div id="syslog-cef" class="scenario-card">
+                    <h3><i class="fas fa-network-wired"></i> Scenario 5: Syslog/CEF from Network Devices <span class="difficulty medium">Common</span></h3>
+
+                    <p><strong>Situation:</strong> Firewalls, IDS/IPS, proxies send logs via Syslog or CEF format.</p>
+
+                    <h4>Architecture</h4>
+                    <div class="code-block">
+<pre>┌─────────────┐     ┌─────────────────┐     ┌──────────────┐
+│  Firewall   │────▶│  Log Forwarder  │────▶│   Sentinel   │
+│  (Syslog)   │     │  (Linux + AMA)  │     │              │
+└─────────────┘     └─────────────────┘     └──────────────┘
+                           │
+                    ┌──────┴──────┐
+                    │ DCR Config  │
+                    │ - Facility  │
+                    │ - Severity  │
+                    └─────────────┘</pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Deploy Linux Log Forwarder with AMA</h4>
+                        <div class="code-block">
+<pre># Deploy Azure Monitor Agent on Linux VM
+az vm extension set \
+  --resource-group "SOC-RG" \
+  --vm-name "log-forwarder-vm" \
+  --name AzureMonitorLinuxAgent \
+  --publisher Microsoft.Azure.Monitor</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Create DCR for Syslog Collection</h4>
+                        <div class="code-block">
+<pre>{
+  "dataSources": {
+    "syslog": [
+      {
+        "name": "syslogDataSource",
+        "streams": ["Microsoft-Syslog"],
+        "facilityNames": [
+          "auth", "authpriv", "local0", "local1", "local2", "local3"
+        ],
+        "logLevels": ["Warning", "Error", "Critical", "Alert", "Emergency"]
+      }
+    ]
+  },
+  "destinations": {
+    "logAnalytics": [
+      {
+        "workspaceResourceId": "/subscriptions/.../workspaces/Sentinel-Workspace",
+        "name": "sentinelDestination"
+      }
+    ]
+  }
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Configure Firewall to Send Syslog</h4>
+                        <p><strong>Palo Alto:</strong></p>
+                        <div class="code-block">
+<pre>Device → Server Profiles → Syslog
+  Name: AzureSentinel
+  Server: &lt;Log-Forwarder-IP&gt;
+  Port: 514
+  Facility: LOCAL0</pre>
+                        </div>
+                        <p><strong>Fortinet:</strong></p>
+                        <div class="code-block">
+<pre>config log syslogd setting
+  set status enable
+  set server "&lt;Log-Forwarder-IP&gt;"
+  set port 514
+  set facility local0
+end</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 4: Query Firewall Logs</h4>
+                        <div class="code-block">
+<pre>// For CEF logs (CommonSecurityLog table)
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| where DeviceVendor == "Palo Alto Networks"
+| where Activity == "TRAFFIC"
+| summarize Count = count() by DeviceAction, DestinationPort
+| order by Count desc
+
+// For raw Syslog
+Syslog
+| where TimeGenerated > ago(1h)
+| where Facility == "local0"
+| where SeverityLevel in ("err", "warning", "crit")
+| project TimeGenerated, Computer, SyslogMessage</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 6: MULTI-CLOUD -->
+                <div id="cloud-logs" class="scenario-card">
+                    <h3><i class="fas fa-cloud"></i> Scenario 6: Multi-Cloud Log Ingestion <span class="difficulty hard">Enterprise</span></h3>
+
+                    <p><strong>Situation:</strong> Your organization uses Azure + AWS + GCP. You need all cloud logs in Sentinel.</p>
+
+                    <h4>AWS CloudTrail to Sentinel</h4>
+                    <div class="step-box">
+                        <h4>Option A: Native AWS S3 Connector</h4>
+                        <ol>
+                            <li>Configure CloudTrail to send logs to S3 bucket</li>
+                            <li>In Sentinel: Data Connectors → Amazon Web Services S3</li>
+                            <li>Provide S3 bucket details and IAM role</li>
+                            <li>Logs appear in <code>AWSCloudTrail</code> table</li>
+                        </ol>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Option B: Via AWS EventBridge to Azure</h4>
+                        <div class="code-block">
+<pre># CloudTrail → EventBridge → API Destination → Logs Ingestion API
+# More real-time than S3 polling</pre>
+                        </div>
+                    </div>
+
+                    <h4>GCP Logs to Sentinel</h4>
+                    <div class="step-box">
+                        <h4>Using Pub/Sub Export</h4>
+                        <div class="code-block">
+<pre># 1. Create log sink in GCP
+gcloud logging sinks create sentinel-sink \
+  pubsub.googleapis.com/projects/PROJECT/topics/sentinel-logs \
+  --log-filter='resource.type="gce_instance"'
+
+# 2. Create Azure Function to receive from Pub/Sub
+# 3. Function sends to Logs Ingestion API</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Query Multi-Cloud Data</h4>
+                        <div class="code-block">
+<pre>// Unified cloud admin activity view
+let AzureAdmin = AzureActivity
+| where CategoryValue == "Administrative"
+| project TimeGenerated, Cloud="Azure", User=Caller, Action=OperationNameValue, Resource=Resource;
+
+let AWSAdmin = AWSCloudTrail
+| where EventSource contains "iam" or EventSource contains "ec2"
+| project TimeGenerated, Cloud="AWS", User=UserIdentityUserName, Action=EventName, Resource=tostring(Resources);
+
+union AzureAdmin, AWSAdmin
+| order by TimeGenerated desc</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 7: LEGACY SYSTEMS -->
+                <div id="legacy" class="scenario-card">
+                    <h3><i class="fas fa-server"></i> Scenario 7: Legacy System Integration <span class="difficulty hard">Complex</span></h3>
+
+                    <p><strong>Situation:</strong> Legacy systems (AS/400, mainframes, old databases) can't run modern agents. They output to flat files or proprietary formats.</p>
+
+                    <h4>Solution: File-Based Collection</h4>
+                    <div class="step-box">
+                        <h4>Architecture for Legacy Integration</h4>
+                        <div class="code-block">
+<pre>┌──────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌──────────────┐
+│   Mainframe  │────▶│  File Share     │────▶│  Collector VM   │────▶│   Sentinel   │
+│   (Logs)     │     │  (SMB/NFS)      │     │  (AMA + DCR)    │     │              │
+└──────────────┘     └─────────────────┘     └─────────────────┘     └──────────────┘</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Configure AMA to Monitor File Share</h4>
+                        <div class="code-block">
+<pre>// DCR for file-based collection
+{
+  "dataSources": {
+    "logFiles": [
+      {
+        "name": "mainframeLogs",
+        "streams": ["Custom-MainframeLogs_CL"],
+        "filePatterns": ["/mnt/legacy-share/logs/*.log"],
+        "format": "text",
+        "settings": {
+          "text": {
+            "recordStartTimestampFormat": "yyyy-MM-dd HH:mm:ss"
+          }
+        }
+      }
+    ]
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 8: COMPLIANCE -->
+                <div id="compliance" class="scenario-card">
+                    <h3><i class="fas fa-balance-scale"></i> Scenario 8: Compliance & Long-Term Retention <span class="difficulty medium">Required</span></h3>
+
+                    <h4>Complete Compliance Architecture</h4>
+                    <div class="code-block">
+<pre>┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                              DATA RETENTION ARCHITECTURE                                 │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                        SENTINEL WORKSPACE                                         │  │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                   │  │
+│  │  │ Analytics Tier  │  │  Basic Tier     │  │  Archive Tier   │                   │  │
+│  │  │ (Hot Data)      │  │ (Warm Data)     │  │ (Cold Data)     │                   │  │
+│  │  │ • Full KQL      │  │ • Limited KQL   │  │ • Restore req   │                   │  │
+│  │  │ • 30-90 days    │  │ • 30 days       │  │ • Up to 12 yrs  │                   │  │
+│  │  └─────────────────┘  └─────────────────┘  └─────────────────┘                   │  │
+│  └──────────────────────────────────────────────────────────────────────────────────┘  │
+│                                         │                                               │
+│                                         ▼                                               │
+│  ┌──────────────────────────────────────────────────────────────────────────────────┐  │
+│  │                     DATA EXPORT (For 7+ Year Retention)                          │  │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐                   │  │
+│  │  │ Azure Storage   │  │ Event Hub       │  │ Azure Data      │                   │  │
+│  │  │ (Blob Archive)  │  │ (Stream)        │  │ Explorer        │                   │  │
+│  │  │ • 7+ years      │  │ • Real-time     │  │ • Analytics     │                   │  │
+│  │  │ • Low cost      │  │ • SIEM forward  │  │ • Long-term     │                   │  │
+│  │  └─────────────────┘  └─────────────────┘  └─────────────────┘                   │  │
+│  └──────────────────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────┘</pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Setting Up Compliance Export</h4>
+                        <div class="code-block">
+<pre># Create storage account for compliance data
+az storage account create \
+  --name "compliancelogs" \
+  --resource-group "SOC-RG" \
+  --location "eastus" \
+  --sku Standard_GRS \
+  --access-tier Archive
+
+# Create container
+az storage container create \
+  --name "security-logs" \
+  --account-name "compliancelogs"
+
+# Create data export rule
+az monitor log-analytics workspace data-export create \
+  --resource-group "SOC-RG" \
+  --workspace-name "Sentinel-Workspace" \
+  --name "Compliance-Export-7Year" \
+  --tables SigninLogs AuditLogs SecurityEvent DeviceProcessEvents \
+  --destination "/subscriptions/xxx/resourceGroups/SOC-RG/providers/Microsoft.Storage/storageAccounts/compliancelogs"
+
+# Set lifecycle policy for 7-year retention
+az storage account management-policy create \
+  --account-name "compliancelogs" \
+  --policy @lifecycle-policy.json</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Lifecycle Policy (lifecycle-policy.json)</h4>
+                        <div class="code-block">
+<pre>{
+  "rules": [
+    {
+      "name": "compliance-retention",
+      "enabled": true,
+      "type": "Lifecycle",
+      "definition": {
+        "filters": {
+          "blobTypes": ["blockBlob"],
+          "prefixMatch": ["security-logs/"]
+        },
+        "actions": {
+          "baseBlob": {
+            "tierToArchive": {"daysAfterModificationGreaterThan": 90},
+            "delete": {"daysAfterModificationGreaterThan": 2555}
+          }
+        }
+      }
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 9: COST OPTIMIZATION -->
+                <div id="cost" class="scenario-card">
+                    <h3><i class="fas fa-dollar-sign"></i> Scenario 9: Cost Optimization <span class="difficulty medium">Important</span></h3>
+
+                    <h4>Cost Reduction Strategies</h4>
+
+                    <div class="step-box">
+                        <h4>Strategy 1: Move High-Volume Tables to Basic Tier</h4>
+                        <div class="code-block">
+<pre># Identify high-volume tables
+// Run this query to see ingestion by table
+Usage
+| where TimeGenerated > ago(30d)
+| summarize TotalGB = sum(Quantity)/1024 by DataType
+| order by TotalGB desc
+
+# Move verbose tables to Basic tier (76% cost reduction)
+az monitor log-analytics workspace table update \
+  --resource-group "SOC-RG" \
+  --workspace-name "Sentinel-Workspace" \
+  --name "Heartbeat" \
+  --plan Basic
+
+az monitor log-analytics workspace table update \
+  --resource-group "SOC-RG" \
+  --workspace-name "Sentinel-Workspace" \
+  --name "Perf" \
+  --plan Basic</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Strategy 2: Filter at Ingestion with DCR</h4>
+                        <div class="code-block">
+<pre>// DCR transformation to drop noisy events
+source
+| where not(EventID in (4656, 4658, 4660, 4663))  // Drop verbose object access events
+| where not(ProcessName == "MsMpEng.exe" and EventType == "ProcessCreate")  // Drop AV noise
+| project-away RawData  // Remove raw data to save space</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Strategy 3: Commitment Tiers</h4>
+                        <p>For predictable workloads, use commitment tiers for up to 30% discount:</p>
+                        <ul>
+                            <li>100 GB/day commitment: ~$196/day instead of $276</li>
+                            <li>500 GB/day commitment: ~$882/day instead of $1,380</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+                <div class="card-grid">
+                    <a href="pages/sentinel/data-ingestion.html" class="card"><div class="card-icon"><i class="fas fa-database"></i></div><h3>Data Ingestion Basics</h3><p>DCRs, tables, storage tiers</p></a>
+                    <a href="pages/sentinel/analytics-rules.html" class="card"><div class="card-icon"><i class="fas fa-bell"></i></div><h3>Analytics Rules</h3><p>Create detections</p></a>
+                    <a href="pages/sentinel/kql-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Fundamentals</h3><p>Query your data</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

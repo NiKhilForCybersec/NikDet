@@ -192,6 +192,7 @@ function injectSidebar() {
                     <li><a href="pages/sentinel/architecture.html">Architecture</a></li>
                     <li><a href="pages/sentinel/data-connectors.html">Data Connectors</a></li>
                     <li><a href="pages/sentinel/data-ingestion.html">Data Ingestion & Parsing</a></li>
+                    <li><a href="pages/sentinel/enterprise-scenarios.html">Enterprise Scenarios</a></li>
                     <li><a href="pages/sentinel/analytics-rules.html">Analytics Rules</a></li>
                     <li><a href="pages/sentinel/workbooks.html">Workbooks</a></li>
                     <li><a href="pages/sentinel/automation.html">Automation</a></li>
@@ -207,6 +208,7 @@ function injectSidebar() {
                 <ul class="sidebar-links">
                     <li><a href="pages/splunk/index.html">Splunk Overview</a></li>
                     <li><a href="pages/splunk/data-ingestion.html">Data Ingestion & Parsing</a></li>
+                    <li><a href="pages/splunk/enterprise-scenarios.html">Enterprise Scenarios</a></li>
                     <li><a href="pages/splunk/spl-fundamentals.html">SPL Fundamentals</a></li>
                     <li><a href="pages/splunk/spl-intermediate.html">SPL Intermediate</a></li>
                     <li><a href="pages/splunk/spl-advanced.html">SPL Advanced</a></li>

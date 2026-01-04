@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splunk Enterprise Scenarios | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #65a637; }
+        .scenario-card h3 { margin-top: 0; color: #65a637; display: flex; align-items: center; gap: 0.5rem; }
+        .scenario-card .difficulty { font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px; margin-left: auto; }
+        .scenario-card .difficulty.easy { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .scenario-card .difficulty.medium { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .scenario-card .difficulty.hard { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .code-block { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; overflow-x: auto; font-family: var(--font-mono); font-size: 0.8rem; }
+        .file-block { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; margin: 1rem 0; overflow: hidden; }
+        .file-block .header { background: var(--card-bg); padding: 0.5rem 1rem; font-family: var(--font-mono); font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: #65a637; }
+        .file-block pre { margin: 0; padding: 1rem; font-size: 0.8rem; }
+        .step-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+        .step-box h4 { margin: 0 0 0.5rem 0; color: #65a637; font-size: 0.95rem; }
+        .warning-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .tip-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .info-callout { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0; }
+        .retention-visual { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin: 1rem 0; }
+        .retention-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; text-align: center; }
+        .retention-box .days { font-size: 1.25rem; font-weight: bold; color: #65a637; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/splunk/index.html">Splunk</a><span class="separator">/</span>
+                <span>Enterprise Scenarios</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-building" style="color: #65a637;"></i> Splunk Enterprise Scenarios</h1>
+                <p class="lead">Real-world scenarios: multi-line logs, EDR integration, compliance retention, custom applications, and enterprise edge cases.</p>
+
+                <!-- TABLE OF CONTENTS -->
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> Scenarios Covered</div>
+                    <ol>
+                        <li><a href="#multiline">Multi-Line Log Ingestion (30+ lines per event)</a></li>
+                        <li><a href="#edr-retention">EDR Data Retention & Compliance</a></li>
+                        <li><a href="#custom-json">Custom JSON Application Logs</a></li>
+                        <li><a href="#custom-xml">Custom XML Logs</a></li>
+                        <li><a href="#syslog-cef">Syslog/CEF from Network Devices</a></li>
+                        <li><a href="#cloud-logs">Multi-Cloud Log Ingestion</a></li>
+                        <li><a href="#legacy">Legacy System Integration</a></li>
+                        <li><a href="#compliance">Compliance & Long-Term Retention</a></li>
+                        <li><a href="#smartstore">SmartStore & Index Optimization</a></li>
+                    </ol>
+                </div>
+
+                <!-- SCENARIO 1: MULTI-LINE LOGS -->
+                <div id="multiline" class="scenario-card">
+                    <h3><i class="fas fa-align-left"></i> Scenario 1: Multi-Line Log Ingestion <span class="difficulty medium">Common</span></h3>
+                    
+                    <p><strong>Problem:</strong> Applications produce multi-line events (typically 3-4 lines). Splunk needs to treat the entire event as ONE record, not multiple separate events.</p>
+
+                    <h4>Example: Application Error Log (3-4 lines)</h4>
+                    <div class="code-block">
+<pre>2025-01-04 10:23:45.123 ERROR [PaymentService]
+  Transaction ID: TXN-789456
+  Error: Payment gateway timeout after 30s
+  User: john.doe@company.com</pre>
+                    </div>
+
+                    <h4>Example: Windows Service Log</h4>
+                    <div class="code-block">
+<pre>Jan 04 10:23:45 server01 CustomApp[1234]: Service failed to start
+  Service Name: PaymentProcessor
+  Error Code: 0x80070005
+  Description: Access is denied</pre>
+                    </div>
+
+                    <h4>Example: Syslog with Continuation</h4>
+                    <div class="code-block">
+<pre>Jan 04 10:23:45 firewall01 kernel: [UFW BLOCK] IN=eth0 OUT=
+  SRC=192.168.1.100 DST=10.0.0.50 PROTO=TCP
+  SPT=54321 DPT=22 LEN=60</pre>
+                    </div>
+
+                    <h4>Solution: props.conf Multi-Line Configuration</h4>
+
+                    <div class="file-block">
+                        <div class="header">$SPLUNK_HOME/etc/apps/my_app/local/props.conf</div>
+<pre><code>[app_error_logs]
+# Enable line merging
+SHOULD_LINEMERGE = true
+
+# Break BEFORE lines that start with timestamp (this starts a new event)
+BREAK_ONLY_BEFORE = ^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}
+
+# Alternative for syslog-style: break before month abbreviation
+# BREAK_ONLY_BEFORE = ^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d+
+
+# Maximum lines to merge into one event (3-4 is typical)
+MAX_EVENTS = 10
+
+# Timestamp extraction
+TIME_FORMAT = %Y-%m-%d %H:%M:%S.%3N
+TIME_PREFIX = ^
+MAX_TIMESTAMP_LOOKAHEAD = 24
+
+# Field extractions
+EXTRACT-level = ^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+(?&lt;log_level&gt;ERROR|WARN|INFO|DEBUG)
+EXTRACT-service = \[(?&lt;service&gt;[^\]]+)\]
+EXTRACT-txn_id = Transaction ID:\s*(?&lt;transaction_id&gt;\S+)
+EXTRACT-error_msg = Error:\s*(?&lt;error_message&gt;[^\n]+)
+EXTRACT-user = User:\s*(?&lt;user&gt;\S+)</code></pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Understanding Multi-Line Settings</h4>
+                        <table>
+                            <thead>
+                                <tr><th>Setting</th><th>What It Does</th><th>When to Use</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>SHOULD_LINEMERGE</code></td>
+                                    <td>Enable/disable line merging</td>
+                                    <td>Set to <code>true</code> for multi-line</td>
+                                </tr>
+                                <tr>
+                                    <td><code>BREAK_ONLY_BEFORE</code></td>
+                                    <td>Regex pattern that starts NEW event</td>
+                                    <td>When events start with timestamp</td>
+                                </tr>
+                                <tr>
+                                    <td><code>BREAK_ONLY_AFTER</code></td>
+                                    <td>Regex pattern that ends current event</td>
+                                    <td>When events have clear end marker</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LINE_BREAKER</code></td>
+                                    <td>Regex defining event boundaries</td>
+                                    <td>Advanced: full control over breaking</td>
+                                </tr>
+                                <tr>
+                                    <td><code>MAX_EVENTS</code></td>
+                                    <td>Max lines to merge</td>
+                                    <td>Set to ~10 for 3-4 line events</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Alternative: LINE_BREAKER for Full Control</h4>
+                        <div class="file-block">
+                            <div class="header">props.conf</div>
+<pre><code>[app_error_logs]
+# Disable default line merging, use custom breaker
+SHOULD_LINEMERGE = false
+
+# Custom LINE_BREAKER: break BEFORE timestamp pattern
+# The ([\r\n]+) is what gets consumed (removed between events)
+# The (?=\d{4}-\d{2}-\d{2}) is lookahead (kept as start of next event)
+LINE_BREAKER = ([\r\n]+)(?=\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Query Multi-Line Events</h4>
+                        <div class="code-block">
+<pre>index=application sourcetype=app_error_logs log_level=ERROR
+| stats count by service, error_message
+| sort -count
+
+// Search across the full multi-line event
+index=application sourcetype=app_error_logs "Payment gateway timeout"
+| table _time, service, transaction_id, user, error_message</pre>
+                        </div>
+                    </div>
+
+                    <div class="tip-box">
+                        <strong><i class="fas fa-lightbulb"></i> Best Practice: Use Structured Logging</strong>
+                        <p>If possible, configure your application to output single-line JSON. This eliminates multi-line complexity:</p>
+                        <div class="code-block" style="margin-top: 0.5rem;">
+<pre>{"timestamp":"2025-01-04T10:23:45","level":"ERROR","service":"PaymentService","txn_id":"TXN-789456","error":"Timeout","user":"john.doe"}</pre>
+                        </div>
+                        <p>Then use <code>KV_MODE = json</code> in props.conf for automatic field extraction.</p>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 2: EDR RETENTION -->
+                <div id="edr-retention" class="scenario-card">
+                    <h3><i class="fas fa-clock"></i> Scenario 2: EDR Data Retention & Compliance <span class="difficulty medium">Important</span></h3>
+
+                    <p><strong>Challenge:</strong> EDR solutions (CrowdStrike, Carbon Black, SentinelOne) have limited retention. Compliance requires longer retention in Splunk.</p>
+
+                    <h4>EDR Default Retention Periods</h4>
+                    <div class="retention-visual">
+                        <div class="retention-box">
+                            <div class="days">90</div>
+                            <div>CrowdStrike</div>
+                        </div>
+                        <div class="retention-box">
+                            <div class="days">30-180</div>
+                            <div>Carbon Black</div>
+                        </div>
+                        <div class="retention-box">
+                            <div class="days">14-365</div>
+                            <div>SentinelOne</div>
+                        </div>
+                        <div class="retention-box">
+                            <div class="days">180</div>
+                            <div>Cortex XDR</div>
+                        </div>
+                    </div>
+
+                    <div class="warning-box">
+                        <strong><i class="fas fa-exclamation-triangle"></i> Compliance Gap</strong>
+                        <p>If you rely on EDR's built-in retention, you lose endpoint telemetry after 90-180 days. PCI-DSS requires 1 year, HIPAA requires 6 years, SOX requires 7 years.</p>
+                    </div>
+
+                    <h4>Solution: Stream EDR Data to Splunk</h4>
+
+                    <div class="step-box">
+                        <h4>CrowdStrike Falcon → Splunk</h4>
+                        <div class="file-block">
+                            <div class="header">inputs.conf (using CrowdStrike TA)</div>
+<pre><code>[crowdstrike://detection_events]
+disabled = 0
+index = edr
+sourcetype = crowdstrike:events:detection
+
+[crowdstrike://audit_events]
+disabled = 0
+index = edr
+sourcetype = crowdstrike:events:audit
+
+# API credentials in passwords.conf (encrypted)</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Carbon Black → Splunk</h4>
+                        <div class="file-block">
+                            <div class="header">inputs.conf (using Carbon Black TA)</div>
+<pre><code>[carbon_black_cloud://alerts]
+disabled = 0
+index = edr
+sourcetype = carbonblack:cloud:alerts
+
+[carbon_black_cloud://events]
+disabled = 0
+index = edr
+sourcetype = carbonblack:cloud:events</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Configure Splunk Index for Long Retention</h4>
+                        <div class="file-block">
+                            <div class="header">indexes.conf</div>
+<pre><code>[edr]
+homePath = $SPLUNK_DB/edr/db
+coldPath = $SPLUNK_DB/edr/colddb
+thawedPath = $SPLUNK_DB/edr/thaweddb
+
+# Compliance: Keep for 2 years
+frozenTimePeriodInSecs = 63072000
+
+# Max size before rolling
+maxTotalDataSizeMB = 2000000
+
+# SmartStore for long-term (if configured)
+remotePath = volume:s3_remote/edr
+
+# Move to cold after 30 days
+maxWarmDBCount = 300</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Compliance Retention Requirements</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Framework</th><th>Required Retention</th><th>Splunk Configuration</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>PCI-DSS</strong></td>
+                                <td>1 year</td>
+                                <td><code>frozenTimePeriodInSecs = 31536000</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>HIPAA</strong></td>
+                                <td>6 years</td>
+                                <td><code>frozenTimePeriodInSecs = 189216000</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>SOX</strong></td>
+                                <td>7 years</td>
+                                <td><code>frozenTimePeriodInSecs = 220752000</code></td>
+                            </tr>
+                            <tr>
+                                <td><strong>GDPR</strong></td>
+                                <td>As needed</td>
+                                <td>Typically 1-2 years</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- SCENARIO 3: CUSTOM JSON -->
+                <div id="custom-json" class="scenario-card">
+                    <h3><i class="fas fa-code"></i> Scenario 3: Custom JSON Application Logs <span class="difficulty easy">Common</span></h3>
+
+                    <h4>Example JSON Log</h4>
+                    <div class="code-block">
+<pre>{"timestamp":"2025-01-04T10:23:45.123Z","level":"ERROR","service":"payment-api","trace_id":"abc123","user_id":"user_456","action":"process_payment","amount":150.00,"status":"failed","error":{"code":"INSUFFICIENT_FUNDS","message":"Balance too low"},"client_ip":"192.168.1.100"}</pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Configure props.conf for JSON</h4>
+                        <div class="file-block">
+                            <div class="header">props.conf</div>
+<pre><code>[json_app_logs]
+# Splunk auto-detects JSON and extracts fields
+KV_MODE = json
+
+# But set timestamp explicitly
+TIME_FORMAT = %Y-%m-%dT%H:%M:%S.%3N%Z
+TIME_PREFIX = "timestamp"\s*:\s*"
+MAX_TIMESTAMP_LOOKAHEAD = 32
+
+# Each line is one event
+SHOULD_LINEMERGE = false
+
+# Auto-extract nested JSON
+INDEXED_EXTRACTIONS = json
+
+# CIM field aliases
+FIELDALIAS-src = client_ip AS src
+FIELDALIAS-user_name = user_id AS user</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Access Nested Fields</h4>
+                        <div class="code-block">
+<pre>// Splunk auto-extracts nested JSON
+index=application sourcetype=json_app_logs
+| where 'error.code'="INSUFFICIENT_FUNDS"
+| stats count by user_id, service
+
+// Or use spath for dynamic extraction
+index=application sourcetype=json_app_logs
+| spath
+| search error.code=*
+| stats count by error.code</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Index-Time Extraction (Optional, Better Performance)</h4>
+                        <div class="file-block">
+                            <div class="header">props.conf</div>
+<pre><code>[json_app_logs]
+# Extract specific fields at index time (faster searches)
+INDEXED_EXTRACTIONS = json
+
+# Define which fields to extract at index time
+# This creates indexed fields for faster searching
+TRANSFORMS-index = json_indexed_fields</code></pre>
+                        </div>
+                        <div class="file-block">
+                            <div class="header">transforms.conf</div>
+<pre><code>[json_indexed_fields]
+REGEX = "service"\s*:\s*"(?&lt;service&gt;[^"]+)"
+FORMAT = service::$1
+WRITE_META = true</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 4: CUSTOM XML -->
+                <div id="custom-xml" class="scenario-card">
+                    <h3><i class="fas fa-file-code"></i> Scenario 4: Custom XML Logs <span class="difficulty medium">Legacy</span></h3>
+
+                    <h4>Example XML Log (Multi-Line)</h4>
+                    <div class="code-block">
+<pre>&lt;LogEntry&gt;
+  &lt;Timestamp&gt;2025-01-04T10:23:45&lt;/Timestamp&gt;
+  &lt;Severity&gt;ERROR&lt;/Severity&gt;
+  &lt;Source&gt;ERP-Module&lt;/Source&gt;
+  &lt;Transaction&gt;
+    &lt;ID&gt;TXN123456&lt;/ID&gt;
+    &lt;Type&gt;INVOICE&lt;/Type&gt;
+    &lt;Status&gt;FAILED&lt;/Status&gt;
+  &lt;/Transaction&gt;
+&lt;/LogEntry&gt;</pre>
+                    </div>
+
+                    <div class="file-block">
+                        <div class="header">props.conf</div>
+<pre><code>[xml_erp_logs]
+# Multi-line: Break before each &lt;LogEntry&gt;
+SHOULD_LINEMERGE = true
+BREAK_ONLY_BEFORE = &lt;LogEntry&gt;
+
+# Timestamp from XML element
+TIME_FORMAT = %Y-%m-%dT%H:%M:%S
+TIME_PREFIX = &lt;Timestamp&gt;
+
+# Enable automatic XML key-value extraction
+KV_MODE = xml
+
+# Manual extractions for nested elements
+EXTRACT-severity = &lt;Severity&gt;(?&lt;severity&gt;[^&lt;]+)&lt;/Severity&gt;
+EXTRACT-source = &lt;Source&gt;(?&lt;source&gt;[^&lt;]+)&lt;/Source&gt;
+EXTRACT-txn_id = &lt;ID&gt;(?&lt;transaction_id&gt;[^&lt;]+)&lt;/ID&gt;
+EXTRACT-txn_type = &lt;Type&gt;(?&lt;transaction_type&gt;[^&lt;]+)&lt;/Type&gt;
+EXTRACT-txn_status = &lt;Transaction&gt;.*?&lt;Status&gt;(?&lt;transaction_status&gt;[^&lt;]+)&lt;/Status&gt;</code></pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Query XML Data</h4>
+                        <div class="code-block">
+<pre>index=erp sourcetype=xml_erp_logs severity=ERROR
+| stats count by transaction_type, transaction_status
+
+// Use xpath for complex extraction
+index=erp sourcetype=xml_erp_logs
+| xpath outfield=txn_id "//Transaction/ID"
+| xpath outfield=amount "//Transaction/Amount"</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 5: SYSLOG/CEF -->
+                <div id="syslog-cef" class="scenario-card">
+                    <h3><i class="fas fa-network-wired"></i> Scenario 5: Syslog/CEF from Network Devices <span class="difficulty medium">Common</span></h3>
+
+                    <h4>Architecture</h4>
+                    <div class="code-block">
+<pre>┌─────────────┐     ┌───────────────────┐     ┌─────────────┐
+│  Firewalls  │────▶│  Heavy Forwarder  │────▶│  Indexers   │
+│  IDS/IPS    │     │  (Syslog Server)  │     │             │
+│  Proxies    │     │  - Parse by       │     │             │
+└─────────────┘     │    source IP      │     └─────────────┘
+                    └───────────────────┘</pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 1: Configure Syslog Input on Heavy Forwarder</h4>
+                        <div class="file-block">
+                            <div class="header">inputs.conf</div>
+<pre><code># UDP Syslog (fast, but can lose packets)
+[udp://514]
+connection_host = ip
+sourcetype = syslog
+index = network
+
+# TCP Syslog (reliable)
+[tcp://514]
+connection_host = ip
+sourcetype = syslog
+index = network
+
+# Separate port for CEF
+[tcp://1514]
+connection_host = ip
+sourcetype = cef
+index = network</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 2: Route to Correct Sourcetype by Source IP</h4>
+                        <div class="file-block">
+                            <div class="header">transforms.conf</div>
+<pre><code># Route Palo Alto traffic
+[route_paloalto]
+REGEX = .
+DEST_KEY = MetaData:Sourcetype
+FORMAT = sourcetype::pan:traffic
+
+# Route Fortinet traffic
+[route_fortinet]
+REGEX = .
+DEST_KEY = MetaData:Sourcetype
+FORMAT = sourcetype::fgt_traffic
+
+# Route Cisco ASA traffic
+[route_cisco_asa]
+REGEX = .
+DEST_KEY = MetaData:Sourcetype
+FORMAT = sourcetype::cisco:asa</code></pre>
+                        </div>
+                        <div class="file-block">
+                            <div class="header">props.conf</div>
+<pre><code>[source::udp:514]
+# Route based on sending IP
+TRANSFORMS-sourcetype = set_sourcetype_by_host
+
+[host::10.1.1.1]
+# Palo Alto firewall
+TRANSFORMS-sourcetype = route_paloalto
+
+[host::10.1.1.2]
+# Fortinet firewall  
+TRANSFORMS-sourcetype = route_fortinet
+
+[host::10.1.1.3]
+# Cisco ASA
+TRANSFORMS-sourcetype = route_cisco_asa</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Step 3: Install Vendor TAs</h4>
+                        <p>Install Technology Add-ons from Splunkbase for proper parsing:</p>
+                        <ul>
+                            <li>Palo Alto Networks Add-on for Splunk</li>
+                            <li>Fortinet FortiGate Add-on for Splunk</li>
+                            <li>Cisco Networks Add-on for Splunk</li>
+                        </ul>
+                        <p>The TAs provide props.conf and transforms.conf with correct field extractions and CIM mapping.</p>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 6: MULTI-CLOUD -->
+                <div id="cloud-logs" class="scenario-card">
+                    <h3><i class="fas fa-cloud"></i> Scenario 6: Multi-Cloud Log Ingestion <span class="difficulty hard">Enterprise</span></h3>
+
+                    <h4>AWS CloudTrail → Splunk</h4>
+                    <div class="step-box">
+                        <h4>Option A: S3-Based (Splunk Add-on for AWS)</h4>
+                        <div class="file-block">
+                            <div class="header">inputs.conf</div>
+<pre><code>[aws_cloudtrail://cloudtrail_logs]
+aws_account = my_aws_account
+aws_region = us-east-1
+bucket_name = my-cloudtrail-bucket
+sourcetype = aws:cloudtrail
+index = cloud
+interval = 300
+
+# Uses SQS for notifications (recommended)</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Option B: Kinesis Firehose (Real-time)</h4>
+                        <div class="code-block">
+<pre># CloudTrail → CloudWatch Logs → Kinesis Firehose → Splunk HEC
+# Configure Firehose destination as Splunk HEC endpoint</pre>
+                        </div>
+                    </div>
+
+                    <h4>GCP Logs → Splunk</h4>
+                    <div class="step-box">
+                        <h4>Using Pub/Sub + Dataflow</h4>
+                        <div class="code-block">
+<pre># GCP Logging → Pub/Sub → Dataflow → Splunk HEC
+
+# 1. Create log sink
+gcloud logging sinks create splunk-sink \
+  pubsub.googleapis.com/projects/PROJECT/topics/splunk-logs
+
+# 2. Use Dataflow template "Pub/Sub to Splunk"
+# 3. Configure with Splunk HEC endpoint</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Unified Multi-Cloud Search</h4>
+                        <div class="code-block">
+<pre>// Search across all cloud providers
+(index=cloud sourcetype=aws:cloudtrail) OR 
+(index=cloud sourcetype=google:gcp:*) OR 
+(index=cloud sourcetype=azure:*)
+| eval cloud=case(
+    sourcetype="aws:cloudtrail", "AWS",
+    match(sourcetype, "google:"), "GCP",
+    match(sourcetype, "azure:"), "Azure"
+  )
+| stats count by cloud, user</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 7: LEGACY SYSTEMS -->
+                <div id="legacy" class="scenario-card">
+                    <h3><i class="fas fa-server"></i> Scenario 7: Legacy System Integration <span class="difficulty hard">Complex</span></h3>
+
+                    <h4>Challenge: Mainframe/AS400 Logs</h4>
+                    <p>Legacy systems often write to flat files with non-standard formats.</p>
+
+                    <div class="step-box">
+                        <h4>Architecture: File-Based Collection</h4>
+                        <div class="code-block">
+<pre>┌──────────────┐     ┌─────────────────┐     ┌───────────────────┐     ┌───────────┐
+│   Mainframe  │────▶│  Shared Storage │────▶│  Universal        │────▶│  Indexers │
+│   (Logs)     │     │  (NFS/SMB)      │     │  Forwarder        │     │           │
+└──────────────┘     └─────────────────┘     └───────────────────┘     └───────────┘</pre>
+                        </div>
+                    </div>
+
+                    <div class="file-block">
+                        <div class="header">inputs.conf (on Forwarder with access to share)</div>
+<pre><code>[monitor:///mnt/mainframe/logs/*.log]
+disabled = 0
+index = legacy
+sourcetype = mainframe_audit
+# Check for new files every 60 seconds
+followTail = 0
+# Ignore files older than 7 days
+ignoreOlderThan = 7d</code></pre>
+                    </div>
+
+                    <div class="file-block">
+                        <div class="header">props.conf (custom parsing for fixed-width mainframe logs)</div>
+<pre><code>[mainframe_audit]
+# Fixed-width format: positions matter
+# YYYYMMDD HHMMSS USERID   ACTION     STATUS
+# 20250104 102345 JSMITH   LOGON      SUCCESS
+
+TIME_FORMAT = %Y%m%d %H%M%S
+TIME_PREFIX = ^
+MAX_TIMESTAMP_LOOKAHEAD = 16
+
+SHOULD_LINEMERGE = false
+
+# Fixed-width field extractions using position
+EXTRACT-user = ^.{16}(?&lt;user&gt;.{8})
+EXTRACT-action = ^.{25}(?&lt;action&gt;.{10})
+EXTRACT-status = ^.{36}(?&lt;status&gt;\w+)</code></pre>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 8: COMPLIANCE -->
+                <div id="compliance" class="scenario-card">
+                    <h3><i class="fas fa-balance-scale"></i> Scenario 8: Compliance & Long-Term Retention <span class="difficulty medium">Required</span></h3>
+
+                    <h4>Complete Retention Architecture</h4>
+
+                    <div class="code-block">
+<pre>┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        SPLUNK DATA LIFECYCLE                                     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  HOT ──────▶ WARM ──────▶ COLD ──────▶ FROZEN ──────▶ ARCHIVE                  │
+│  (SSD)      (SSD/HDD)    (HDD)        (S3/Glacier)   (Tape/Glacier Deep)       │
+│  1-7 days   7-30 days    30-90 days   90 days-7 yrs  7+ years                  │
+│                                                                                 │
+│  Full       Full         Full         Restore        Offline                    │
+│  Search     Search       Search       Required       Restore Required           │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘</pre>
+                    </div>
+
+                    <div class="file-block">
+                        <div class="header">indexes.conf - Compliance Configuration</div>
+<pre><code># Security index - 7 year retention for SOX
+[security]
+homePath = $SPLUNK_DB/security/db
+coldPath = $SPLUNK_DB/security/colddb
+thawedPath = $SPLUNK_DB/security/thaweddb
+
+# 7 years = 220752000 seconds
+frozenTimePeriodInSecs = 220752000
+
+# SmartStore remote path (S3)
+remotePath = volume:s3_compliance/security
+
+# Archive to Glacier after freezing
+coldToFrozenScript = $SPLUNK_HOME/bin/coldToFrozenArchive.py
+
+# Authentication index - PCI requirement (1 year + 3 months immediate)
+[authentication]
+homePath = $SPLUNK_DB/auth/db
+coldPath = $SPLUNK_DB/auth/colddb  
+thawedPath = $SPLUNK_DB/auth/thaweddb
+
+# 1 year retention
+frozenTimePeriodInSecs = 31536000
+
+# Keep 90 days in warm for fast access
+maxWarmDBCount = 500</code></pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Archive Script for Long-Term Storage</h4>
+                        <div class="file-block">
+                            <div class="header">$SPLUNK_HOME/bin/coldToFrozenArchive.py</div>
+<pre><code>#!/usr/bin/env python
+import sys, os, gzip, shutil
+import boto3
+
+def archive_to_glacier(bucket_path):
+    bucket_name = "splunk-compliance-archive"
+    s3 = boto3.client('s3', storage_class='GLACIER')
+    
+    for root, dirs, files in os.walk(bucket_path):
+        for file in files:
+            local_path = os.path.join(root, file)
+            s3_key = f"splunk-archive/{os.path.relpath(local_path, bucket_path)}"
+            s3.upload_file(local_path, bucket_name, s3_key)
+    
+    # Remove local bucket after archiving
+    shutil.rmtree(bucket_path)
+
+if __name__ == "__main__":
+    archive_to_glacier(sys.argv[1])</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCENARIO 9: SMARTSTORE -->
+                <div id="smartstore" class="scenario-card">
+                    <h3><i class="fas fa-database"></i> Scenario 9: SmartStore & Index Optimization <span class="difficulty medium">Scale</span></h3>
+
+                    <h4>What is SmartStore?</h4>
+                    <p>SmartStore uses remote object storage (S3, Azure Blob, GCS) as the primary data store, with local cache for performance.</p>
+
+                    <div class="file-block">
+                        <div class="header">indexes.conf - SmartStore Configuration</div>
+<pre><code># Define remote storage volume
+[volume:s3_remote]
+storageType = remote
+path = s3://my-splunk-bucket/indexes
+remote.s3.access_key = ACCESS_KEY
+remote.s3.secret_key = SECRET_KEY
+remote.s3.endpoint = s3.amazonaws.com
+
+# Index using SmartStore
+[main]
+remotePath = volume:s3_remote/$_index_name
+hotlist_recency_secs = 86400
+hotlist_bloom_filter_recency_hours = 360
+
+# Local cache size
+# maxCacheSize = auto (Splunk manages)
+# OR specify: maxCacheSize = 500000 (MB)</code></pre>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>SmartStore Benefits</h4>
+                        <ul>
+                            <li><strong>Reduced storage costs:</strong> S3 is cheaper than local SSD/HDD</li>
+                            <li><strong>Elastic scaling:</strong> Add indexers without data migration</li>
+                            <li><strong>Unlimited retention:</strong> S3 has no size limits</li>
+                            <li><strong>Disaster recovery:</strong> Data survives indexer failure</li>
+                        </ul>
+                    </div>
+
+                    <div class="step-box">
+                        <h4>Cost Optimization: Index Sizing</h4>
+                        <div class="code-block">
+<pre># Analyze index sizes
+| rest /services/data/indexes 
+| table title, currentDBSizeMB, totalEventCount, frozenTimePeriodInSecs
+| eval retention_days = frozenTimePeriodInSecs/86400
+| sort -currentDBSizeMB
+
+# Find candidates for shorter retention (high volume, low value)
+| dbinspect index=* 
+| stats sum(sizeOnDiskMB) as totalMB by index
+| sort -totalMB</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+                <div class="card-grid">
+                    <a href="pages/splunk/data-ingestion.html" class="card"><div class="card-icon"><i class="fas fa-database"></i></div><h3>Data Ingestion Basics</h3><p>props.conf, transforms.conf</p></a>
+                    <a href="pages/splunk/spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>SPL Fundamentals</h3><p>Query your data</p></a>
+                    <a href="pages/references/spl-library.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>SPL Library</h3><p>Ready-to-use queries</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

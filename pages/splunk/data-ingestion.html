@@ -140,6 +140,999 @@ INPUT METHODS - COMPLETE LIST:
   modular input      [mymodularinput://name]          Custom modular inputs
                 </div>
 
+                <!-- COMPREHENSIVE END-TO-END FLOWS SECTION -->
+                <h2 id="e2e-flows"><i class="fas fa-route"></i> End-to-End Flows (Interview-Ready)</h2>
+                
+                <p>This section provides <strong>complete, senior-level explanations</strong> of how data flows from source to dashboard. Understanding these flows is critical for interviews and real-world troubleshooting.</p>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 1: WINDOWS EVENT LOGS TO SPLUNK
+                         (The Most Common Enterprise Scenario)
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE OVERVIEW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Windows Servers]                  [Splunk Infrastructure]
+        │                                    │
+        │                           ┌────────┴────────┐
+        ▼                           ▼                 ▼
+  ┌─────────────────┐         ┌──────────┐     ┌──────────┐
+  │ Universal       │  TCP    │ Indexer  │     │ Search   │
+  │ Forwarder       │ ──────► │ Cluster  │     │ Head     │
+  │ + TA-Windows    │  9997   │          │     │ Cluster  │
+  └─────────────────┘         └──────────┘     └──────────┘
+        │                           │                 │
+        │                           │                 │
+  Collects locally           Indexes &          Search-time
+  + Forwards                 Stores             extractions +
+                                                CIM mapping
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: INSTALL SPLUNK UNIVERSAL FORWARDER (ON WINDOWS)
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT IT DOES:
+─────────────────────────────────────────────────────────────────────────────
+• Collects data locally from the Windows host
+• Forwards it securely to Splunk Indexers (TCP 9997, TLS encrypted)
+• Has minimal resource overhead (~50MB RAM, &lt;1% CPU typical)
+• Runs as a Windows Service (SplunkForwarder)
+
+WHY IT'S MANDATORY:
+─────────────────────────────────────────────────────────────────────────────
+• Windows hosts cannot "push" Event Logs on their own
+• The UF is the agent that extracts events from Windows Event Log API
+• Without UF, you have NO data from Windows
+• Alternative: Windows Event Forwarding (WEF) + Heavy Forwarder
+  (More complex, used in very large environments)
+
+INSTALLATION OPTIONS:
+─────────────────────────────────────────────────────────────────────────────
+# Option 1: Silent install with deployment server registration
+msiexec.exe /i splunkforwarder-9.3.0-x64.msi AGREETOLICENSE=Yes ^
+    DEPLOYMENT_SERVER="deploy.company.com:8089" ^
+    LAUNCHSPLUNK=1 SERVICESTARTTYPE=auto /quiet
+
+# Option 2: Manual install (development/testing)
+msiexec.exe /i splunkforwarder-9.3.0-x64.msi AGREETOLICENSE=Yes ^
+    RECEIVING_INDEXER="indexer1.company.com:9997" ^
+    LAUNCHSPLUNK=1 /quiet
+
+# Option 3: Group Policy / SCCM / Intune deployment
+# Package MSI with deployment server configuration
+# Use transforms file for consistent settings
+
+POST-INSTALL VERIFICATION:
+─────────────────────────────────────────────────────────────────────────────
+# Check service is running
+Get-Service SplunkForwarder
+
+# Check connectivity to indexer
+Test-NetConnection -ComputerName indexer1.company.com -Port 9997
+
+# Check UF logs
+Get-Content "C:\Program Files\SplunkUniversalForwarder\var\log\splunk\splunkd.log" -Tail 50
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: DEPLOY SPLUNK ADD-ON FOR MICROSOFT WINDOWS (TA-WINDOWS)
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT THE TA CONTAINS:
+─────────────────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Splunk_TA_windows/                                                     │
+│  │                                                                      │
+│  ├── default/                                                           │
+│  │   ├── inputs.conf      ← Defines WHAT to collect                    │
+│  │   │                       (WinEventLog, PerfMon, Registry, etc.)    │
+│  │   │                                                                  │
+│  │   ├── props.conf       ← Defines HOW to parse                       │
+│  │   │                       (Timestamp, line breaking, KV extraction) │
+│  │   │                                                                  │
+│  │   ├── transforms.conf  ← Advanced field extractions                 │
+│  │   │                                                                  │
+│  │   ├── eventtypes.conf  ← Event categorization                       │
+│  │   │                       (Groups of events for CIM)                │
+│  │   │                                                                  │
+│  │   └── tags.conf        ← CIM data model mapping                     │
+│  │                           (authentication, change, endpoint, etc.)  │
+│  │                                                                      │
+│  └── local/               ← YOUR customizations go here               │
+│      └── inputs.conf      ← Enable specific inputs                     │
+└─────────────────────────────────────────────────────────────────────────┘
+
+WHERE TO INSTALL THE TA (CRITICAL!):
+─────────────────────────────────────────────────────────────────────────────
+┌──────────────────────┬───────────────────────────────────────────────────┐
+│ Component            │ Why?                                              │
+├──────────────────────┼───────────────────────────────────────────────────┤
+│ Universal Forwarder  │ inputs.conf - tells UF WHAT to collect           │
+│                      │ (No parsing happens here - UF can't parse)       │
+├──────────────────────┼───────────────────────────────────────────────────┤
+│ Indexers             │ props.conf/transforms.conf for INDEX-TIME        │
+│                      │ extractions (if any defined)                     │
+│                      │ Most TAs do search-time, so often optional       │
+├──────────────────────┼───────────────────────────────────────────────────┤
+│ Search Heads         │ props.conf, transforms.conf, eventtypes.conf,    │
+│                      │ tags.conf - ALL search-time parsing, CIM,        │
+│                      │ field aliases, lookups                           │
+│                      │ THIS IS WHERE CIM COMPLIANCE HAPPENS!            │
+└──────────────────────┴───────────────────────────────────────────────────┘
+
+COMMON MISTAKE TO AVOID:
+─────────────────────────────────────────────────────────────────────────────
+❌ Installing TA only on forwarders → Fields won't extract on Search Head
+❌ Installing TA only on Search Heads → No data collected (no inputs!)
+✅ Install on BOTH forwarders (for inputs) AND Search Heads (for parsing)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: ENABLE THE REQUIRED INPUTS
+═══════════════════════════════════════════════════════════════════════════════
+
+DEFAULT BEHAVIOR - IMPORTANT!
+─────────────────────────────────────────────────────────────────────────────
+• TA-Windows ships with all inputs DISABLED by default
+• This is intentional - you choose what to collect
+• You MUST enable inputs in local/inputs.conf
+
+WHICH INPUTS TO ENABLE (Security Monitoring Focus):
+─────────────────────────────────────────────────────────────────────────────
+┌───────────────────────────────────────────────────────────────────────────┐
+│  FILE: Splunk_TA_windows/local/inputs.conf                               │
+├───────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  # SECURITY EVENT LOG - CRITICAL                                         │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  [WinEventLog://Security]                                                 │
+│  disabled = 0                                                             │
+│  index = wineventlog                                                      │
+│  # whitelist = 4624,4625,4648,4672,4688,4720,4726,4768,4769,4771        │
+│  # ^ Uncomment to reduce volume (collect only important EventIDs)        │
+│                                                                           │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  # SYSTEM EVENT LOG                                                       │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  [WinEventLog://System]                                                   │
+│  disabled = 0                                                             │
+│  index = wineventlog                                                      │
+│  # Good for: Service changes (7045), driver loads, boot events           │
+│                                                                           │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  # POWERSHELL LOGGING - HIGH VALUE                                        │
+│  # Requires GPO: Turn on PowerShell Script Block Logging                 │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  [WinEventLog://Microsoft-Windows-PowerShell/Operational]                 │
+│  disabled = 0                                                             │
+│  index = wineventlog                                                      │
+│                                                                           │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  # SYSMON - IF DEPLOYED                                                   │
+│  # Note: Sysmon must be installed separately on endpoints                │
+│  # ═══════════════════════════════════════════════════════════════════   │
+│  [WinEventLog://Microsoft-Windows-Sysmon/Operational]                     │
+│  disabled = 0                                                             │
+│  index = sysmon                                                           │
+│  renderXml = true   # Preserves full XML for better field extraction     │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+
+HOW TO DEPLOY INPUTS (Production):
+─────────────────────────────────────────────────────────────────────────────
+Method 1: Deployment Server (RECOMMENDED)
+  • Create serverclass for Windows servers
+  • Push TA with local/inputs.conf to all UFs
+  • Changes propagate automatically
+
+Method 2: Configuration Management (Ansible/Puppet/SCCM)
+  • Template the inputs.conf
+  • Deploy as part of UF package
+  • Version control the config
+
+Method 3: Manual (Development Only)
+  • Edit inputs.conf on each forwarder
+  • Restart SplunkForwarder service
+  • NEVER do this in production!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: DATA IS AUTOMATICALLY CIM-MAPPED
+═══════════════════════════════════════════════════════════════════════════════
+
+WHY CIM WORKS "AUTOMATICALLY" WITH TA-WINDOWS:
+─────────────────────────────────────────────────────────────────────────────
+Because TA-Windows already includes:
+
+1. STANDARD SOURCETYPES
+   • WinEventLog:Security → Recognized by CIM
+   • WinEventLog:System   → Recognized by CIM
+   • etc.
+
+2. FIELD ALIASES (in props.conf)
+   • TargetUserName → user (CIM field)
+   • IpAddress → src (CIM field)
+   • WorkstationName → dest (CIM field)
+
+3. EVENTTYPES (in eventtypes.conf)
+   • Categorizes events (e.g., "wineventlog_security_4624" for logons)
+
+4. TAGS (in tags.conf)
+   • Maps eventtypes to data models:
+     - tag: authentication → Authentication data model
+     - tag: change → Change data model
+     - tag: endpoint → Endpoint data model
+
+RESULT:
+─────────────────────────────────────────────────────────────────────────────
+• Enterprise Security correlation searches WORK immediately
+• ES dashboards populate with your Windows data
+• No manual field mapping needed for standard Windows logs
+
+VERIFICATION:
+─────────────────────────────────────────────────────────────────────────────
+# Check if data appears in Authentication data model
+| tstats count from datamodel=Authentication 
+    where nodename=Authentication 
+    by Authentication.user, Authentication.action
+| head 10
+
+# If this returns data → CIM is working!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY THIS IS "EASY" COMPARED TO OTHER SIEMS
+═══════════════════════════════════════════════════════════════════════════════
+
+SPLUNK ADVANTAGES:
+─────────────────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  1. PREBUILT TAs FOR MOST PLATFORMS                                    │
+│     • Windows, Linux, Network devices, Cloud, SaaS                     │
+│     • Community and Splunk-supported options                           │
+│     • Download → Install → Enable inputs → Done                        │
+│                                                                         │
+│  2. CLEAR SEPARATION OF CONCERNS                                       │
+│                                                                         │
+│     ┌──────────────┐   ┌──────────────┐   ┌──────────────┐            │
+│     │  COLLECTION  │   │   PARSING    │   │  ANALYTICS   │            │
+│     │     (UF)     │ → │    (TA)      │ → │    (ES)      │            │
+│     └──────────────┘   └──────────────┘   └──────────────┘            │
+│                                                                         │
+│     Each component has ONE job                                          │
+│     Easy to troubleshoot, scale, maintain                              │
+│                                                                         │
+│  3. MINIMAL CUSTOM ENGINEERING FOR STANDARD SOURCES                    │
+│     • Windows? Use TA-Windows                                           │
+│     • Palo Alto? Use TA-Palo Alto                                       │
+│     • AWS? Use TA-AWS                                                   │
+│     • Field extractions included                                        │
+│     • CIM mapping included                                              │
+│                                                                         │
+│  This is why Splunk is "log-first" and "operations-friendly"          │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS (SENIOR-LEVEL INTERVIEW POINTS)
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: NOT EVERYTHING IS PRECONFIGURED
+─────────────────────────────────────────────────────────────────────────────
+TA-Windows covers:
+  ✅ Native Windows Event Logs (Security, System, Application)
+  ✅ Windows Performance Counters
+  ✅ Windows Registry
+  ✅ Active Directory
+  ✅ DNS Server logs
+
+TA-Windows does NOT cover:
+  ❌ Custom applications writing to Event Log
+  ❌ Proprietary application logs (flat files)
+  ❌ Third-party software logs
+  ❌ IIS logs (separate TA exists)
+
+FOR CUSTOM LOGS, YOU NEED:
+  • Custom sourcetype in props.conf
+  • Custom field extractions
+  • Custom CIM mapping (FIELDALIAS, eventtypes, tags)
+  • This is where "Splunk Admin" expertise is required
+
+
+CAVEAT 2: SYSMON IS NOT "AUTOMATIC"
+─────────────────────────────────────────────────────────────────────────────
+Common misconception: "TA-Windows collects Sysmon automatically"
+
+REALITY:
+  1. Sysmon must be INSTALLED SEPARATELY on each endpoint
+     • Download from Microsoft Sysinternals
+     • Deploy via GPO, SCCM, or manual
+     
+  2. Sysmon requires a CONFIGURATION FILE
+     • SwiftOnSecurity config is a good starting point
+     • Tune for your environment to avoid noise
+     
+  3. TA-Windows provides the INPUT and PARSING
+     • [WinEventLog://Microsoft-Windows-Sysmon/Operational]
+     • But Sysmon must exist on the endpoint first!
+
+  4. High-volume consideration
+     • Sysmon generates LOTS of events
+     • Process creation, network connections, file writes
+     • Plan indexing capacity accordingly
+
+INTERVIEW ANSWER:
+  "Sysmon requires three things: installing the binary on endpoints,
+   deploying a configuration, and enabling the input in Splunk.
+   TA-Windows handles the parsing, but you still need to deploy Sysmon."
+
+
+CAVEAT 3: TA-WINDOWS v5.0+ BREAKING CHANGES
+─────────────────────────────────────────────────────────────────────────────
+If upgrading from pre-5.0:
+  • Source vs Sourcetype changed for XML events
+  • Old searches using sourcetype= may break
+  • Must update to use source= for some event types
+
+BEFORE v5.0:
+  sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational"
+
+AFTER v5.0:
+  source="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational"
+
+INTERVIEW ANSWER:
+  "When upgrading TA-Windows, you need to review the release notes
+   because version 5.0 introduced breaking changes to how XML
+   events are sourced. Existing searches and correlation rules
+   may need updates."
+
+
+CAVEAT 4: DEPLOYMENT BEST PRACTICES
+─────────────────────────────────────────────────────────────────────────────
+IN PRODUCTION:
+  ✅ Use a Deployment Server
+     • Centralized configuration management
+     • Push changes to all forwarders
+     • Version control what's deployed
+
+  ✅ Use Server Classes
+     • Group servers by type (Windows, Linux, Domain Controllers)
+     • Apply different configurations per group
+
+  ✅ Version-control TA changes
+     • Git repository for all TAs
+     • Code review before deployment
+     • Rollback capability
+
+  ❌ NEVER manually configure each forwarder
+     • Doesn't scale
+     • No audit trail
+     • Inconsistent configurations
+
+INTERVIEW ANSWER:
+  "In production, I use the Deployment Server with server classes
+   to push consistent configurations. All TA modifications are
+   version-controlled in Git, and changes go through review
+   before deployment."
+                </div>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 2: NETWORK DEVICE LOGS (SYSLOG)
+                         Palo Alto / Cisco / Fortinet → Splunk
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE OVERVIEW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Network Devices]                      [Splunk Infrastructure]
+  ┌─────────────────┐                    
+  │  Palo Alto FW   │                    ┌─────────────────────┐
+  │  Cisco ASA      │──── Syslog ───────►│  Heavy Forwarder    │
+  │  Fortinet       │     TCP/UDP        │  + Vendor TA        │
+  │  Switches       │     514/5514       │                     │
+  └─────────────────┘                    │  Receives syslog    │
+                                         │  Parses to types    │
+                                         │  Forwards to idx    │
+                                         └─────────┬───────────┘
+                                                   │ TCP 9997
+                                                   ▼
+                                         ┌─────────────────────┐
+                                         │  Indexer Cluster    │
+                                         └─────────────────────┘
+
+
+WHY HEAVY FORWARDER (NOT UNIVERSAL FORWARDER)?
+─────────────────────────────────────────────────────────────────────────────
+• Network devices PUSH logs (syslog) - they don't have agents
+• Someone needs to RECEIVE and PARSE these logs
+• Heavy Forwarder can:
+  - Listen on syslog port (514, 5514, etc.)
+  - Run the vendor TA for parsing
+  - Route to different indexes based on content
+  - Filter/mask data if needed
+
+COMPARISON:
+┌──────────────────────┬─────────────────────────────────────────────────────┐
+│ UF for Windows       │ UF is installed ON the Windows server              │
+│                      │ UF pulls from Windows Event Log API                │
+├──────────────────────┼─────────────────────────────────────────────────────┤
+│ HF for Syslog        │ HF is a central collector                          │
+│                      │ Devices PUSH syslog TO the HF                      │
+│                      │ HF listens on a port                               │
+└──────────────────────┴─────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP-BY-STEP: PALO ALTO → SPLUNK
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: PREPARE HEAVY FORWARDER
+─────────────────────────────────────────────────────────────────────────────
+# Install Splunk Enterprise (NOT Universal Forwarder)
+rpm -i splunk-9.3.0-x64.rpm
+/opt/splunk/bin/splunk start --accept-license
+
+# Disable local indexing (it's a forwarder, not an indexer)
+# This saves license and resources
+/opt/splunk/bin/splunk disable local-index
+
+# Configure outputs to indexers
+cat > /opt/splunk/etc/system/local/outputs.conf << 'EOF'
+[tcpout]
+defaultGroup = indexer_cluster
+
+[tcpout:indexer_cluster]
+server = idx1.company.com:9997, idx2.company.com:9997
+compressed = true
+useACK = true
+EOF
+
+
+STEP 2: INSTALL PALO ALTO TA
+─────────────────────────────────────────────────────────────────────────────
+# Download from Splunkbase: "Splunk Add-on for Palo Alto Networks" (7523)
+# NOT the old deprecated "Palo Alto Networks Add-on" (2757)
+
+cd /opt/splunk/etc/apps
+tar -xvf /tmp/Splunk_TA_paloalto.tgz
+
+# TA provides:
+# - props.conf: How to parse PAN-OS log format
+# - transforms.conf: Field extractions
+# - eventtypes.conf: Event categorization  
+# - tags.conf: CIM mapping (Network_Traffic, Intrusion_Detection, etc.)
+
+
+STEP 3: CONFIGURE SYSLOG INPUT
+─────────────────────────────────────────────────────────────────────────────
+# Create inputs.conf
+cat > /opt/splunk/etc/apps/Splunk_TA_paloalto/local/inputs.conf << 'EOF'
+# Main syslog input for Palo Alto
+[tcp://5514]
+disabled = 0
+connection_host = dns
+sourcetype = pan:log
+index = firewall
+
+# Optional: Separate port per log type
+# [tcp://5515]
+# sourcetype = pan:traffic
+# index = firewall_traffic
+EOF
+
+
+STEP 4: CONFIGURE PALO ALTO FIREWALL
+─────────────────────────────────────────────────────────────────────────────
+In Palo Alto GUI:
+
+1. Create Syslog Server Profile:
+   Device → Server Profiles → Syslog
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Name: Splunk_HF                                                     │
+   │ Syslog Server: 10.0.0.50 (Heavy Forwarder IP)                       │
+   │ Transport: TCP (recommended) or UDP                                 │
+   │ Port: 5514                                                          │
+   │ Format: BSD                                                         │
+   │ Facility: LOG_USER                                                  │
+   └─────────────────────────────────────────────────────────────────────┘
+
+2. Create Log Forwarding Profile:
+   Objects → Log Forwarding
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Name: Forward_to_Splunk                                             │
+   │ Traffic Log → Syslog: Splunk_HF                                     │
+   │ Threat Log → Syslog: Splunk_HF                                      │
+   │ URL Log → Syslog: Splunk_HF                                         │
+   │ WildFire Log → Syslog: Splunk_HF                                    │
+   └─────────────────────────────────────────────────────────────────────┘
+
+3. Apply to Security Rules:
+   Policies → Security → [each rule]
+   Actions tab → Log Forwarding: Forward_to_Splunk
+
+4. Commit changes
+
+
+STEP 5: VERIFY DATA FLOW
+─────────────────────────────────────────────────────────────────────────────
+# On Search Head:
+
+# Check data arriving
+index=firewall earliest=-15m
+| stats count by sourcetype
+
+# Expected sourcetypes:
+# pan:traffic  - Firewall session logs
+# pan:threat   - IPS/AV detections
+# pan:system   - System events
+# pan:config   - Configuration changes
+
+# Verify CIM compliance
+| tstats count from datamodel=Network_Traffic 
+    where nodename=All_Traffic.Traffic
+    by All_Traffic.Traffic.action
+| head 10
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS FOR NETWORK DEVICE INGESTION
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: SYSLOG IS UNRELIABLE (UDP)
+─────────────────────────────────────────────────────────────────────────────
+• UDP syslog can DROP messages under load
+• TCP syslog is more reliable but requires more resources
+• TLS syslog (port 6514) adds encryption but more complexity
+
+RECOMMENDATION:
+  Use TCP syslog for security-critical logs
+  Use UDP only for high-volume, lower-priority logs
+
+
+CAVEAT 2: TIMESTAMP PARSING ISSUES
+─────────────────────────────────────────────────────────────────────────────
+Common problem: Events indexed at wrong time
+
+CAUSES:
+  • Device timezone misconfigured
+  • Syslog relay adds its own timestamp
+  • Network latency
+
+SOLUTION:
+  • Configure devices to use UTC
+  • Check TZ setting in props.conf
+  • Use device timestamp, not syslog header timestamp
+
+
+CAVEAT 3: HIGH VOLUME CONSIDERATIONS
+─────────────────────────────────────────────────────────────────────────────
+Firewall traffic logs can be MASSIVE:
+  • 1 Gbps firewall = ~100GB/day in logs
+  • 10 Gbps firewall = ~1TB/day possible
+
+SOLUTIONS:
+  • Filter on firewall (only log deny + specific allow)
+  • Use Summary Indexing for aggregated data
+  • Consider Splunk Edge Processor for filtering
+  • Route high-volume logs to separate index with shorter retention
+
+
+CAVEAT 4: LOAD BALANCING FOR ENTERPRISE SCALE
+─────────────────────────────────────────────────────────────────────────────
+For large environments (100+ firewalls):
+  • Deploy multiple Heavy Forwarders
+  • Use HAProxy or F5 for load balancing
+  • Configure firewall to send to VIP
+
+                      ┌───────────────┐
+  [Firewalls] ───────►│ Load Balancer │
+                      │   (VIP)       │
+                      └───────┬───────┘
+                              │
+                ┌─────────────┼─────────────┐
+                ▼             ▼             ▼
+          ┌─────────┐   ┌─────────┐   ┌─────────┐
+          │   HF1   │   │   HF2   │   │   HF3   │
+          └─────────┘   └─────────┘   └─────────┘
+                </div>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 3: CLOUD/API-BASED SOURCES
+                         CrowdStrike, AWS, Azure, O365 → Splunk
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE OVERVIEW:
+─────────────────────────────────────────────────────────────────────────────
+
+                    [Cloud/SaaS Providers]
+                    ┌────────────────────┐
+                    │ CrowdStrike API    │
+                    │ AWS CloudTrail     │
+                    │ Azure Event Hub    │
+                    │ O365 Management    │
+                    └────────┬───────────┘
+                             │ HTTPS
+                             ▼
+                    ┌────────────────────┐
+                    │ Heavy Forwarder    │  ← Runs modular input
+                    │ + Vendor TA        │  ← TA contains Python scripts
+                    │                    │  ← Scripts poll API
+                    └────────┬───────────┘
+                             │ TCP 9997
+                             ▼
+                    ┌────────────────────┐
+                    │ Indexer Cluster    │
+                    └────────────────────┘
+
+
+WHY HEAVY FORWARDER (NOT UNIVERSAL FORWARDER)?
+─────────────────────────────────────────────────────────────────────────────
+• API-based TAs contain Python code (modular inputs)
+• UF cannot run Python scripts - it's too lightweight
+• HF has full Python runtime and can execute modular inputs
+
+WHAT HAPPENS:
+  1. TA contains modular input script (Python)
+  2. Script authenticates to cloud API (OAuth2, API key, etc.)
+  3. Script polls for new events
+  4. Events are ingested into Splunk with proper sourcetype
+  5. TA's props/transforms parse the JSON
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP-BY-STEP: CROWDSTRIKE → SPLUNK
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: CREATE API CREDENTIALS IN CROWDSTRIKE
+─────────────────────────────────────────────────────────────────────────────
+In Falcon Console:
+  Support → API Clients and Keys → Add new API Client
+
+  Name: Splunk_Integration
+  Scopes (minimum required):
+    ✅ Event Streams: Read
+    ✅ Detections: Read
+    ✅ Incidents: Read
+
+  Save:
+    Client ID: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    Client Secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    Cloud: US-1 (api.crowdstrike.com)
+
+
+STEP 2: INSTALL TA ON HEAVY FORWARDER
+─────────────────────────────────────────────────────────────────────────────
+# Download from Splunkbase: 
+# "CrowdStrike Falcon Event Streams Technical Add-On" (5082)
+
+cd /opt/splunk/etc/apps
+tar -xvf /tmp/TA-crowdstrike-falcon-event-streams.tgz
+
+# Restart Splunk
+/opt/splunk/bin/splunk restart
+
+
+STEP 3: CONFIGURE VIA SPLUNK WEB
+─────────────────────────────────────────────────────────────────────────────
+On Heavy Forwarder: https://heavy-forwarder:8000
+
+1. Apps → CrowdStrike Falcon Event Streams → Configuration
+
+2. Account Tab:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Account Name: CrowdStrike_Prod                                      │
+   │ Client ID: [your_client_id]                                         │
+   │ Client Secret: [your_client_secret]                                 │
+   │ CrowdStrike Cloud: US-1                                             │
+   └─────────────────────────────────────────────────────────────────────┘
+
+3. Inputs Tab → Create New Input:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Name: crowdstrike_events                                            │
+   │ Account: CrowdStrike_Prod                                           │
+   │ Index: crowdstrike                                                  │
+   │ App ID: splunk_events_prod  ← MUST BE UNIQUE per environment!       │
+   │ Event Types: DetectionSummaryEvent, IncidentSummaryEvent,           │
+   │              AuthActivityAuditEvent                                 │
+   └─────────────────────────────────────────────────────────────────────┘
+
+
+STEP 4: VERIFY DATA FLOW
+─────────────────────────────────────────────────────────────────────────────
+# Check data arriving
+index=crowdstrike earliest=-1h
+| stats count by sourcetype
+
+# Expected:
+# crowdstrike:events:sensor
+
+# Check specific detections
+index=crowdstrike sourcetype="crowdstrike:events:sensor" 
+    event_simpleName="DetectionSummaryEvent"
+| table _time, ComputerName, UserName, DetectName, Severity
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS FOR API-BASED INGESTION
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: API RATE LIMITS
+─────────────────────────────────────────────────────────────────────────────
+• Cloud providers impose rate limits
+• Too many requests = 429 Too Many Requests
+• TA should handle backoff, but check logs
+
+MONITORING:
+  index=_internal sourcetype=splunkd source=*ta_crowdstrike*
+  | search "429" OR "rate limit"
+
+
+CAVEAT 2: CREDENTIAL SECURITY
+─────────────────────────────────────────────────────────────────────────────
+• API keys stored in Splunk credential storage
+• Encrypted at rest, but Heavy Forwarder must be secure
+• Consider: Hashicorp Vault integration for secrets
+
+BEST PRACTICE:
+  • Minimum required scopes only
+  • Rotate credentials regularly
+  • Audit API key usage in source system
+
+
+CAVEAT 3: APP ID CONFLICTS
+─────────────────────────────────────────────────────────────────────────────
+CrowdStrike-specific issue:
+  • Each Event Streams connection requires unique AppID
+  • If two Splunk environments use same AppID → conflicts
+  • One will work, one will get no data
+
+SOLUTION:
+  • Use environment-specific AppID: splunk_prod, splunk_dev
+  • Document which AppID is used where
+
+
+CAVEAT 4: NETWORK CONNECTIVITY
+─────────────────────────────────────────────────────────────────────────────
+Heavy Forwarder needs OUTBOUND HTTPS access:
+  • api.crowdstrike.com (US-1)
+  • api.us-2.crowdstrike.com (US-2)
+  • api.eu-1.crowdstrike.com (EU-1)
+
+If behind proxy:
+  Configure proxy in TA settings or Splunk server.conf
+                </div>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 4: CUSTOM APPLICATION LOGS
+                         When There's No Pre-Built TA
+═══════════════════════════════════════════════════════════════════════════════
+
+SCENARIO:
+─────────────────────────────────────────────────────────────────────────────
+Your company has a custom application that writes logs like:
+
+  2024-01-15T10:30:45.123Z INFO  [OrderService] user=john.doe action=checkout 
+      order_id=ORD-12345 amount=99.99 status=completed duration_ms=234
+  
+  2024-01-15T10:30:46.456Z ERROR [PaymentService] user=jane.smith action=payment 
+      order_id=ORD-12346 amount=50.00 status=failed error="card_declined"
+
+No TA exists for this. You need to build custom ingestion.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: UNDERSTAND THE LOG FORMAT
+═══════════════════════════════════════════════════════════════════════════════
+
+Before writing any config, analyze the log:
+
+QUESTIONS TO ANSWER:
+  1. How are events separated? (newline, pattern)
+  2. Where is the timestamp? What format?
+  3. What fields exist? Key=value? JSON? Delimited?
+  4. What CIM data model does this map to? (Web? Change? Custom?)
+
+ANALYSIS OF OUR SAMPLE:
+  • Events separated by: newline
+  • Timestamp: ISO 8601 at start → %Y-%m-%dT%H:%M:%S.%3N%Z
+  • Fields: Mixed format (level, service in brackets, key=value)
+  • CIM mapping: Could be Web (for checkout) or Change
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: CREATE A TECHNOLOGY ADD-ON
+═══════════════════════════════════════════════════════════════════════════════
+
+# Create directory structure
+mkdir -p /opt/splunk/etc/apps/TA_custom_orderapp/default
+mkdir -p /opt/splunk/etc/apps/TA_custom_orderapp/local
+mkdir -p /opt/splunk/etc/apps/TA_custom_orderapp/metadata
+
+# Create app.conf
+cat > /opt/splunk/etc/apps/TA_custom_orderapp/default/app.conf << 'EOF'
+[install]
+state = enabled
+
+[launcher]
+description = Technology Add-on for Custom Order Application
+version = 1.0.0
+
+[ui]
+is_visible = false
+label = TA-CustomOrderApp
+EOF
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: CREATE props.conf FOR PARSING
+═══════════════════════════════════════════════════════════════════════════════
+
+cat > /opt/splunk/etc/apps/TA_custom_orderapp/default/props.conf << 'EOF'
+# ═══════════════════════════════════════════════════════════════════════════
+# SOURCETYPE DEFINITION
+# ═══════════════════════════════════════════════════════════════════════════
+
+[custom:orderapp]
+
+# ─────────────────────────────────────────────────────────────────────────
+# TIMESTAMP CONFIGURATION
+# ─────────────────────────────────────────────────────────────────────────
+TIME_FORMAT = %Y-%m-%dT%H:%M:%S.%3N%Z
+TIME_PREFIX = ^
+MAX_TIMESTAMP_LOOKAHEAD = 30
+TZ = UTC
+
+# ─────────────────────────────────────────────────────────────────────────
+# EVENT BREAKING
+# ─────────────────────────────────────────────────────────────────────────
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)
+TRUNCATE = 10000
+
+# ─────────────────────────────────────────────────────────────────────────
+# FIELD EXTRACTIONS
+# ─────────────────────────────────────────────────────────────────────────
+# Log level (INFO, ERROR, WARN)
+EXTRACT-level = ^\S+\s+(?P<level>\w+)
+
+# Service name in brackets
+EXTRACT-service = \[(?P<service>\w+)\]
+
+# Key=value pairs
+EXTRACT-user = user=(?P<user>[^\s]+)
+EXTRACT-action = action=(?P<action>[^\s]+)
+EXTRACT-order_id = order_id=(?P<order_id>[^\s]+)
+EXTRACT-amount = amount=(?P<amount>[\d.]+)
+EXTRACT-status = status=(?P<status>[^\s]+)
+EXTRACT-duration = duration_ms=(?P<duration_ms>\d+)
+EXTRACT-error = error="(?P<error_message>[^"]+)"
+
+# ─────────────────────────────────────────────────────────────────────────
+# CIM FIELD MAPPING
+# ─────────────────────────────────────────────────────────────────────────
+# Map to CIM standard field names
+FIELDALIAS-user_cim = user AS src_user
+FIELDALIAS-service_cim = service AS app
+
+# Computed fields for CIM
+EVAL-vendor = "MyCompany"
+EVAL-product = "OrderApp"
+EVAL-vendor_product = "MyCompany OrderApp"
+
+# Map status to CIM action field
+EVAL-action_cim = case(
+    status=="completed", "success",
+    status=="failed", "failure",
+    1==1, status
+)
+EOF
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: CREATE eventtypes.conf AND tags.conf FOR CIM
+═══════════════════════════════════════════════════════════════════════════════
+
+# eventtypes.conf - Categorize events
+cat > /opt/splunk/etc/apps/TA_custom_orderapp/default/eventtypes.conf << 'EOF'
+[orderapp_transaction]
+search = sourcetype="custom:orderapp" action IN ("checkout", "payment", "refund")
+
+[orderapp_error]
+search = sourcetype="custom:orderapp" level="ERROR"
+EOF
+
+# tags.conf - Map to CIM data models
+cat > /opt/splunk/etc/apps/TA_custom_orderapp/default/tags.conf << 'EOF'
+[eventtype=orderapp_transaction]
+web = enabled
+application = enabled
+
+[eventtype=orderapp_error]
+alert = enabled
+EOF
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 5: CREATE inputs.conf (ON FORWARDER)
+═══════════════════════════════════════════════════════════════════════════════
+
+cat > /opt/splunk/etc/apps/TA_custom_orderapp/local/inputs.conf << 'EOF'
+[monitor:///var/log/orderapp/application.log]
+disabled = 0
+sourcetype = custom:orderapp
+index = application
+
+# Optional: Monitor rotated logs too
+[monitor:///var/log/orderapp/application.log.*]
+disabled = 0
+sourcetype = custom:orderapp
+index = application
+EOF
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 6: DEPLOY AND VERIFY
+═══════════════════════════════════════════════════════════════════════════════
+
+DEPLOYMENT:
+  1. Push TA to forwarders (for inputs.conf) via Deployment Server
+  2. Push TA to Search Heads (for parsing/CIM) via Deployer
+  3. Restart Splunk on all affected components
+
+VERIFICATION:
+  # Check data arriving with correct sourcetype
+  index=application sourcetype="custom:orderapp" earliest=-1h
+  | table _time, level, service, user, action, status
+  
+  # Verify field extractions
+  index=application sourcetype="custom:orderapp" earliest=-1h
+  | fieldsummary
+  | where count > 0
+  | table field, count, distinct_count
+  
+  # Verify CIM tags applied
+  index=application sourcetype="custom:orderapp" earliest=-1h
+  | head 1
+  | eval mytags=mvjoin(tag, ", ")
+  | table mytags
+  # Should show: web, application (or your assigned tags)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW POINTS FOR CUSTOM LOG INGESTION
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT MAKES YOU "SENIOR-LEVEL":
+─────────────────────────────────────────────────────────────────────────────
+1. You understand that prebuilt TAs don't cover everything
+2. You know how to analyze log format before writing config
+3. You can create props.conf from scratch
+4. You know CIM field names and how to map to them
+5. You version-control your custom TAs
+6. You test in dev before deploying to production
+
+COMMON INTERVIEW QUESTION:
+  "You have a new application that needs to be onboarded to Splunk.
+   Walk me through your process."
+
+GOOD ANSWER:
+  "First, I analyze the log format - timestamp location, event delimiters,
+   and field structure. Then I create a Technology Add-on with props.conf
+   for parsing. I determine which CIM data model applies and create
+   eventtypes and tags for CIM compliance. I test locally, then deploy
+   via Deployment Server to forwarders and Deployer to Search Heads.
+   The TA is version-controlled in Git."
+                </div>
+
                 <h2 id="forwarders"><i class="fas fa-share"></i> Forwarder Types</h2>
 
                 <div class="diagram-box">

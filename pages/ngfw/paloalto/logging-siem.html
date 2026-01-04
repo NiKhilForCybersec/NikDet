@@ -30,6 +30,327 @@
                 <h1><i class="fas fa-database"></i> Palo Alto Logging & SIEM Integration</h1>
                 <p class="lead">Complete guide to configuring logging, Cortex Data Lake, syslog, and integrating with Microsoft Sentinel and Splunk.</p>
 
+                <!-- COMPREHENSIVE END-TO-END SIEM INTEGRATION SECTION -->
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+   END-TO-END FLOW: PALO ALTO → SIEM INTEGRATION (INTERVIEW-READY)
+═══════════════════════════════════════════════════════════════════════════════
+
+WHY INTEGRATE FIREWALL LOGS WITH SIEM?
+─────────────────────────────────────────────────────────────────────────────
+• Correlate network events with endpoint/identity events
+• Long-term retention (firewall local storage is limited)
+• Centralized alerting and investigation
+• Compliance requirements (log retention policies)
+• Advanced analytics and threat hunting
+
+KEY CONCEPT:
+  Firewall logs are ESSENTIAL for security monitoring.
+  Without network visibility, you miss lateral movement, C2, exfiltration.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTEGRATION OPTIONS COMPARISON
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Option                  │ Best For              │ Considerations        │
+  ├─────────────────────────┼───────────────────────┼───────────────────────┤
+  │ Syslog (TCP/UDP)        │ Universal, any SIEM   │ Requires log forwarder│
+  │                         │ Splunk, Sentinel,     │ UDP can lose packets  │
+  │                         │ QRadar, etc.          │ TCP more reliable     │
+  ├─────────────────────────┼───────────────────────┼───────────────────────┤
+  │ CEF (Common Event       │ Structured parsing    │ Better field mapping  │
+  │ Format)                 │ Sentinel, QRadar      │ Easier normalization  │
+  ├─────────────────────────┼───────────────────────┼───────────────────────┤
+  │ Cortex Data Lake        │ Palo Alto ecosystem   │ Paid cloud service    │
+  │                         │ Cortex XDR, XSOAR     │ Best Palo integration │
+  ├─────────────────────────┼───────────────────────┼───────────────────────┤
+  │ HTTPS/API               │ Cloud SIEMs           │ Lower volume limits   │
+  │                         │ Sentinel, Splunk Cloud│ Batched delivery      │
+  └─────────────────────────┴───────────────────────┴───────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ARCHITECTURE: PALO ALTO → SPLUNK (SYSLOG)
+═══════════════════════════════════════════════════════════════════════════════
+
+  [Palo Alto Firewall]           [Splunk Infrastructure]
+        │                               │
+        │ Syslog TCP 514               │
+        ▼                               │
+  ┌─────────────────┐            ┌──────────────────┐
+  │ Syslog Server   │            │ Heavy Forwarder   │
+  │ Profile         │───────────►│ + Palo Alto TA    │
+  └─────────────────┘            │                   │
+        │                        │ Receives syslog   │
+        │ Log Forwarding         │ Parses to pan:*   │
+        │ Profile                │ Forwards to IDX   │
+        ▼                        └────────┬──────────┘
+  ┌─────────────────┐                     │ TCP 9997
+  │ Security Rules  │                     ▼
+  │ (apply profile) │            ┌──────────────────┐
+  └─────────────────┘            │ Indexers         │
+                                 │ (index=firewall) │
+                                 └────────┬─────────┘
+                                          │
+                                          ▼
+                                 ┌──────────────────┐
+                                 │ Search Heads     │
+                                 │ + ES             │
+                                 │ (CIM: Network_   │
+                                 │  Traffic)        │
+                                 └──────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP-BY-STEP: COMPLETE SPLUNK INTEGRATION
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: DEPLOY SPLUNK HEAVY FORWARDER
+─────────────────────────────────────────────────────────────────────────────
+# Install Splunk Enterprise on Linux VM
+rpm -i splunk-9.3.0-x64.rpm
+/opt/splunk/bin/splunk start --accept-license
+
+# Disable local indexing
+/opt/splunk/bin/splunk disable local-index
+
+# Configure outputs to indexers
+cat > /opt/splunk/etc/system/local/outputs.conf << 'EOF'
+[tcpout]
+defaultGroup = indexer_cluster
+
+[tcpout:indexer_cluster]
+server = idx1.company.com:9997, idx2.company.com:9997
+compressed = true
+useACK = true
+EOF
+
+
+STEP 2: INSTALL PALO ALTO TA
+─────────────────────────────────────────────────────────────────────────────
+IMPORTANT: Use the NEW Splunk-supported TA!
+  • Splunkbase ID 7523: "Splunk Add-on for Palo Alto Networks"
+  • NOT the deprecated App ID 2757
+
+cd /opt/splunk/etc/apps
+tar -xvf /tmp/Splunk_TA_paloalto.tgz
+
+# Also install on Search Heads for field extractions
+
+
+STEP 3: CONFIGURE SYSLOG INPUT
+─────────────────────────────────────────────────────────────────────────────
+mkdir -p /opt/splunk/etc/apps/Splunk_TA_paloalto/local
+
+cat > /opt/splunk/etc/apps/Splunk_TA_paloalto/local/inputs.conf << 'EOF'
+[tcp://5514]
+disabled = 0
+connection_host = dns
+sourcetype = pan:log
+index = firewall
+EOF
+
+/opt/splunk/bin/splunk restart
+
+
+STEP 4: CONFIGURE PALO ALTO SYSLOG SERVER PROFILE
+─────────────────────────────────────────────────────────────────────────────
+GUI Path: Device → Server Profiles → Syslog
+
+Create Profile:
+  Name: Splunk_Integration
+  
+  Server Entry:
+    Name: splunk-hf-01
+    Syslog Server: [Heavy Forwarder IP]
+    Transport: TCP  (NOT UDP - TCP is more reliable!)
+    Port: 5514
+    Format: BSD
+    Facility: LOG_USER
+
+
+STEP 5: CREATE LOG FORWARDING PROFILE
+─────────────────────────────────────────────────────────────────────────────
+GUI Path: Objects → Log Forwarding
+
+Create Profile:
+  Name: Forward_All_to_Splunk
+  
+  Match List:
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │ Name              │ Log Type    │ Filter    │ Syslog Profile        │
+    ├───────────────────┼─────────────┼───────────┼───────────────────────┤
+    │ Traffic-Forward   │ Traffic     │ All Logs  │ Splunk_Integration    │
+    │ Threat-Forward    │ Threat      │ All Logs  │ Splunk_Integration    │
+    │ URL-Forward       │ URL         │ All Logs  │ Splunk_Integration    │
+    │ WildFire-Forward  │ WildFire    │ All Logs  │ Splunk_Integration    │
+    │ Auth-Forward      │ Auth        │ All Logs  │ Splunk_Integration    │
+    │ GlobalProtect-Fwd │ GlobalProtect│ All Logs │ Splunk_Integration    │
+    └───────────────────┴─────────────┴───────────┴───────────────────────┘
+
+
+STEP 6: APPLY LOG FORWARDING TO SECURITY RULES
+─────────────────────────────────────────────────────────────────────────────
+GUI Path: Policies → Security
+
+For EACH security rule:
+  1. Click on the rule
+  2. Go to Actions tab
+  3. Log Setting:
+     • Log at Session Start: ☐ (optional, high volume)
+     • Log at Session End: ☑ (required for traffic logs)
+     • Log Forwarding: Forward_All_to_Splunk
+  4. OK
+
+COMMIT the configuration!
+
+
+STEP 7: VERIFY DATA IN SPLUNK
+─────────────────────────────────────────────────────────────────────────────
+# Check data arriving
+index=firewall earliest=-15m
+| stats count by sourcetype
+
+# Expected sourcetypes:
+# pan:traffic, pan:threat, pan:url, pan:system, pan:config
+
+# Check field extractions
+index=firewall sourcetype=pan:traffic earliest=-1h
+| stats count by action, app, rule
+| head 20
+
+# Verify CIM compliance (Network_Traffic data model)
+| tstats count from datamodel=Network_Traffic 
+    where nodename=All_Traffic.Traffic
+    by All_Traffic.Traffic.action
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ARCHITECTURE: PALO ALTO → MICROSOFT SENTINEL (CEF)
+═══════════════════════════════════════════════════════════════════════════════
+
+  [Palo Alto Firewall]           [Azure Infrastructure]
+        │                               │
+        │ Syslog CEF TCP 514           │
+        ▼                               │
+  ┌─────────────────┐            ┌──────────────────┐
+  │ Log Forwarding  │            │ Linux VM         │
+  │ Profile (CEF)   │───────────►│ + AMA            │
+  └─────────────────┘            │ (rsyslog)        │
+                                 └────────┬─────────┘
+                                          │ HTTPS 443
+                                          ▼
+                                 ┌──────────────────┐
+                                 │ Log Analytics    │
+                                 │ Workspace        │
+                                 │ (CommonSecurityLog)
+                                 └──────────────────┘
+
+
+SENTINEL INTEGRATION STEPS:
+─────────────────────────────────────────────────────────────────────────────
+1. Deploy Linux VM (Ubuntu 20.04+) as log forwarder
+2. Install Azure Monitor Agent (AMA)
+3. Install "Common Event Format (CEF) via AMA" from Content Hub
+4. Configure rsyslog to receive on TCP 514
+5. Create DCR for CEF log collection
+6. Configure Palo Alto to send CEF format to Linux forwarder
+7. Verify data in CommonSecurityLog table
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS (SENIOR-LEVEL INTERVIEW POINTS)
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: LOG VOLUME CAN BE MASSIVE
+─────────────────────────────────────────────────────────────────────────────
+Traffic logs from a busy firewall:
+  • 1 Gbps throughput → 50-100 GB/day in logs
+  • 10 Gbps throughput → 500+ GB/day possible
+
+MITIGATION STRATEGIES:
+  1. Log only session END (not start AND end)
+  2. Filter "allowed" traffic for low-risk rules
+  3. Use summary indexing in Splunk for aggregated data
+  4. Use Basic Logs tier in Sentinel for high-volume tables
+
+INTERVIEW ANSWER:
+  "Firewall logs are high volume. I'd log session end only, filter
+   out allowed traffic on broad internet rules, and use appropriate
+   storage tiers. For Splunk, that's summary indexing. For Sentinel,
+   consider Basic Logs for cost optimization."
+
+
+CAVEAT 2: TCP VS UDP SYSLOG
+─────────────────────────────────────────────────────────────────────────────
+UDP (port 514 default):
+  ❌ Can lose packets under load
+  ❌ No delivery confirmation
+  ✅ Lower overhead
+
+TCP (recommended):
+  ✅ Guaranteed delivery (or fails with error)
+  ✅ Better for security logging
+  ❌ Slightly higher overhead
+
+TLS/SSL (port 6514):
+  ✅ Encrypted in transit
+  ✅ Best for compliance
+  ❌ Certificate management required
+
+INTERVIEW ANSWER:
+  "For security logs, I use TCP syslog, not UDP. UDP can drop packets
+   under load, and you might miss critical threat events. For sensitive
+   environments, I use TLS syslog on port 6514."
+
+
+CAVEAT 3: LOG FORWARDING PROFILE VS SYSLOG SERVER PROFILE
+─────────────────────────────────────────────────────────────────────────────
+COMMON CONFUSION:
+  "I created the Syslog Server Profile but logs aren't forwarding"
+
+YOU NEED BOTH:
+  1. Syslog Server Profile → WHERE to send logs
+  2. Log Forwarding Profile → WHICH logs to send and apply it
+  3. Security Rules → APPLY the Log Forwarding Profile
+
+ALL THREE are required! Missing any one = no logs.
+
+
+CAVEAT 4: TA INSTALLATION LOCATIONS
+─────────────────────────────────────────────────────────────────────────────
+For Splunk, the Palo Alto TA must be installed on:
+
+  • Heavy Forwarder → For inputs.conf (receive syslog)
+  • Search Heads → For props.conf (field extractions, CIM mapping)
+  • Indexers → Optional (only if index-time extractions needed)
+
+MISSING ON SEARCH HEADS = Fields won't extract!
+
+
+CAVEAT 5: WHICH LOGS TO SEND
+─────────────────────────────────────────────────────────────────────────────
+NOT all log types are equal for security monitoring:
+
+ESSENTIAL FOR SOC:
+  ✅ Threat logs → IPS/AV detections (must have!)
+  ✅ Traffic logs → Network forensics (session end only)
+  ✅ URL logs → Web filtering, hunting
+  ✅ WildFire logs → Malware verdicts
+  ✅ GlobalProtect → VPN access monitoring
+
+USEFUL BUT HIGH VOLUME:
+  ⚠️ Data Filtering → DLP matches (if using DLP)
+  ⚠️ User-ID → Identity correlation
+
+OPERATIONAL/COMPLIANCE:
+  📋 System logs → Firewall health
+  📋 Config logs → Change audit trail
+  📋 HIP Match → Endpoint compliance
+                </div>
+
                 <h2><i class="fas fa-list"></i> Log Types Overview</h2>
                 <table class="feature-table">
                     <thead>

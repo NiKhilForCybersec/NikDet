@@ -113,6 +113,857 @@ DATA INGESTION PIPELINE - COMPLETE ARCHITECTURE
                     └─────────────────────────────────┘
                 </div>
 
+                <!-- COMPREHENSIVE END-TO-END FLOWS SECTION -->
+                <h2 id="e2e-flows"><i class="fas fa-route"></i> End-to-End Flows (Interview-Ready)</h2>
+                
+                <p>This section provides <strong>complete, senior-level explanations</strong> of how data flows from source to Sentinel. Understanding these flows is critical for interviews and real-world troubleshooting.</p>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 1: WINDOWS SERVERS TO SENTINEL
+                         (Azure Monitor Agent + DCR)
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE OVERVIEW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Windows Servers]                  [Azure Infrastructure]
+        │                                    │
+        ▼                                    │
+  ┌─────────────────┐                        │
+  │ Azure Monitor   │                        │
+  │ Agent (AMA)     │                        │
+  │                 │─────── HTTPS ──────────┼─────►┌──────────────────────┐
+  │ Collects:       │        443             │      │ Data Collection      │
+  │ • Windows Events│                        │      │ Endpoint (DCE)       │
+  │ • Performance   │                        │      └──────────┬───────────┘
+  │ • Custom logs   │                        │                 │
+  └─────────────────┘                        │                 ▼
+        │                                    │      ┌──────────────────────┐
+        │                                    │      │ Data Collection      │
+  Configured by:                             │      │ Rule (DCR)           │
+  Data Collection Rule (DCR)                 │      │                      │
+                                             │      │ • What to collect    │
+                                             │      │ • Transformations    │
+                                             │      │ • Destination table  │
+                                             │      └──────────┬───────────┘
+                                             │                 │
+                                             │                 ▼
+                                             │      ┌──────────────────────┐
+                                             │      │ Log Analytics        │
+                                             │      │ Workspace            │
+                                             │      │ (SecurityEvent,      │
+                                             │      │  Event, Syslog)      │
+                                             └──────┴──────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: UNDERSTAND THE KEY COMPONENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+AZURE MONITOR AGENT (AMA) - THE COLLECTOR:
+─────────────────────────────────────────────────────────────────────────────
+WHAT IT IS:
+  • Agent installed on Windows/Linux VMs
+  • Collects logs and sends to Azure
+  • Replaced the deprecated MMA (Log Analytics Agent)
+
+WHY AMA (NOT MMA):
+  • MMA deprecated August 31, 2024 - DO NOT DEPLOY NEW MMA
+  • AMA supports Data Collection Rules (DCRs)
+  • AMA supports ingestion-time transformations
+  • Better security (managed identity, private endpoints)
+
+INSTALLATION OPTIONS:
+  • Azure VM Extension (recommended for Azure VMs)
+  • Arc-connected servers (for on-premises)
+  • Manual installer (for disconnected scenarios)
+
+
+DATA COLLECTION ENDPOINT (DCE):
+─────────────────────────────────────────────────────────────────────────────
+WHAT IT IS:
+  • Regional endpoint that receives data from AMA
+  • Provides HTTPS endpoint for secure ingestion
+  • Required for custom logs and some scenarios
+
+WHEN YOU NEED DCE:
+  ✅ Custom table ingestion
+  ✅ Private link scenarios
+  ✅ Text log collection
+  ❌ NOT needed for standard Windows Events to built-in tables
+
+
+DATA COLLECTION RULE (DCR) - THE CONFIGURATION:
+─────────────────────────────────────────────────────────────────────────────
+WHAT IT IS:
+  • Defines WHAT data to collect
+  • Defines WHICH VMs are in scope (via associations)
+  • Defines WHERE to send data (destination)
+  • Can include TRANSFORMATIONS (filter/enrich)
+
+KEY CONCEPT:
+  AMA does nothing without a DCR!
+  DCR tells AMA what to collect and where to send it.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: INSTALL AZURE MONITOR AGENT
+═══════════════════════════════════════════════════════════════════════════════
+
+OPTION 1: Via Azure Portal (Manual - good for testing)
+─────────────────────────────────────────────────────────────────────────────
+1. VM → Settings → Extensions + applications
+2. Add → Azure Monitor Windows Agent
+3. Review + Create
+
+OPTION 2: Via Azure Policy (Recommended for production)
+─────────────────────────────────────────────────────────────────────────────
+Policy: "Configure Windows machines to run Azure Monitor Agent"
+
+Benefits:
+  • Automatically installs AMA on all matching VMs
+  • Ensures compliance
+  • New VMs get AMA automatically
+
+Assignment:
+  • Scope: Subscription or Resource Group
+  • Remediation: Create remediation task for existing VMs
+
+
+OPTION 3: Via Azure CLI
+─────────────────────────────────────────────────────────────────────────────
+# For Azure VM
+az vm extension set \
+  --name AzureMonitorWindowsAgent \
+  --publisher Microsoft.Azure.Monitor \
+  --vm-name myVM \
+  --resource-group myRG
+
+# For Arc-connected server
+az connectedmachine extension create \
+  --machine-name myServer \
+  --resource-group myRG \
+  --name AzureMonitorWindowsAgent \
+  --publisher Microsoft.Azure.Monitor \
+  --type AzureMonitorWindowsAgent
+
+
+VERIFICATION:
+─────────────────────────────────────────────────────────────────────────────
+# In Azure Portal:
+VM → Extensions → AzureMonitorWindowsAgent → Status: Provisioning succeeded
+
+# In Sentinel/Log Analytics:
+Heartbeat
+| where TimeGenerated > ago(15m)
+| where Category == "Azure Monitor Agent"
+| project Computer, TimeGenerated, Version
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: CREATE DATA COLLECTION RULE
+═══════════════════════════════════════════════════════════════════════════════
+
+VIA AZURE PORTAL:
+─────────────────────────────────────────────────────────────────────────────
+1. Monitor → Data Collection Rules → Create
+
+2. Basics:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Rule Name: DCR-Windows-Security                                     │
+   │ Subscription: [your subscription]                                   │
+   │ Resource Group: [your RG]                                           │
+   │ Region: [must match workspace region]                               │
+   │ Platform Type: Windows                                              │
+   └─────────────────────────────────────────────────────────────────────┘
+
+3. Resources (Associate VMs):
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Select VMs that should use this DCR:                                │
+   │ ☑ server-dc-01                                                     │
+   │ ☑ server-web-01                                                    │
+   │ ☑ server-sql-01                                                    │
+   │                                                                     │
+   │ Enable Data Collection Endpoint: ☐ (not needed for basic events)   │
+   └─────────────────────────────────────────────────────────────────────┘
+
+4. Collect and Deliver:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ Data Source: Windows Event Logs                                     │
+   │                                                                     │
+   │ Log Types:                                                          │
+   │   ☑ Security - Critical, Error, Warning, Information               │
+   │   ☑ Application - Error, Warning                                   │
+   │   ☑ System - Critical, Error, Warning                              │
+   │                                                                     │
+   │ (For Security Events, you can also use XPath for granular control) │
+   │                                                                     │
+   │ Destination:                                                        │
+   │   Log Analytics workspace → [your Sentinel workspace]               │
+   └─────────────────────────────────────────────────────────────────────┘
+
+
+VIA ARM TEMPLATE (Infrastructure as Code):
+─────────────────────────────────────────────────────────────────────────────
+{
+  "type": "Microsoft.Insights/dataCollectionRules",
+  "apiVersion": "2022-06-01",
+  "name": "DCR-Windows-Security",
+  "location": "eastus",
+  "properties": {
+    "dataSources": {
+      "windowsEventLogs": [
+        {
+          "streams": ["Microsoft-SecurityEvent"],
+          "xPathQueries": [
+            "Security!*[System[(EventID=4624 or EventID=4625 or 
+             EventID=4648 or EventID=4672 or EventID=4688)]]"
+          ],
+          "name": "SecurityEvents"
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "/subscriptions/.../workspaces/sentinel",
+          "name": "sentinel-workspace"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-SecurityEvent"],
+        "destinations": ["sentinel-workspace"]
+      }
+    ]
+  }
+}
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: VERIFY DATA FLOW
+═══════════════════════════════════════════════════════════════════════════════
+
+CHECK DATA ARRIVING:
+─────────────────────────────────────────────────────────────────────────────
+// Check SecurityEvent table
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| summarize count() by Computer
+| order by count_ desc
+
+// Check specific security events
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID in (4624, 4625)  // Logon success/failure
+| project TimeGenerated, Computer, EventID, Account, LogonType, IpAddress
+| take 50
+
+
+CHECK AGENT HEALTH:
+─────────────────────────────────────────────────────────────────────────────
+// Heartbeat confirms agent is reporting
+Heartbeat
+| where TimeGenerated > ago(24h)
+| where Category == "Azure Monitor Agent"
+| summarize LastHeartbeat = max(TimeGenerated) by Computer
+| extend Status = iff(LastHeartbeat > ago(15m), "✅ Healthy", "❌ Not Reporting")
+
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY THIS IS "EASIER" THAN SPLUNK (BUT DIFFERENT)
+═══════════════════════════════════════════════════════════════════════════════
+
+SENTINEL ADVANTAGES:
+─────────────────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  1. NO FORWARDER INFRASTRUCTURE TO MANAGE                              │
+│     • AMA is a simple agent, not a full Splunk instance                │
+│     • No Heavy Forwarders to provision                                 │
+│     • Azure manages the ingestion infrastructure                       │
+│                                                                         │
+│  2. NATIVE CLOUD INTEGRATION                                           │
+│     • Microsoft services (Entra ID, M365) connect with ONE CLICK       │
+│     • No custom connectors needed for Azure services                   │
+│     • Diagnostic settings enable logging instantly                     │
+│                                                                         │
+│  3. PAY-PER-USE PRICING                                                │
+│     • No upfront infrastructure cost                                   │
+│     • Scale automatically                                              │
+│     • Cost tied directly to data volume                                │
+│                                                                         │
+│  This is why Sentinel is "cloud-native" and "infrastructure-light"    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS (SENIOR-LEVEL INTERVIEW POINTS)
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: MMA IS DEPRECATED - DO NOT USE
+─────────────────────────────────────────────────────────────────────────────
+Common mistake: Using old documentation that references MMA
+
+REALITY:
+  • MMA (Log Analytics Agent / OMS Agent) deprecated August 31, 2024
+  • Microsoft will not provide support for new MMA deployments
+  • Existing MMA should be migrated to AMA
+  • Some features (legacy solutions) still require MMA temporarily
+
+INTERVIEW ANSWER:
+  "MMA was deprecated in August 2024. All new deployments should use AMA.
+   AMA provides better security with managed identities and supports DCRs
+   for transformation at ingestion time. If I encounter MMA in an 
+   environment, I'd plan a migration to AMA."
+
+
+CAVEAT 2: DCR IS MANDATORY FOR AMA
+─────────────────────────────────────────────────────────────────────────────
+Common mistake: Installing AMA without creating DCR
+
+REALITY:
+  • AMA installed but no data flowing → Check DCR association
+  • Each VM must be associated with at least one DCR
+  • DCR defines what to collect - without it, AMA collects nothing
+
+TROUBLESHOOTING:
+  // Check if VM has DCR association
+  resources
+  | where type == "microsoft.insights/datacollectionruleassociations"
+  | project VMName = split(id, "/")[8], DCRName = properties.dataCollectionRuleId
+
+
+CAVEAT 3: REGION MATTERS
+─────────────────────────────────────────────────────────────────────────────
+DCR and Workspace must be in same region (for most scenarios)
+
+REALITY:
+  • DCR → Must be in workspace region
+  • DCE → Must be in same region as VMs (for custom logs)
+  • Cross-region can work but adds latency and complexity
+
+BEST PRACTICE:
+  Deploy DCR and workspace in same Azure region
+
+
+CAVEAT 4: COST CAN SURPRISE YOU
+─────────────────────────────────────────────────────────────────────────────
+Windows Security Event Log can be MASSIVE if you collect everything
+
+REALITY:
+  • Collecting "All Events" from Security log = 10+ GB/day per DC
+  • Event ID 4688 (Process Creation) is extremely high volume
+  • Commitment Tiers provide discounts at scale
+
+RECOMMENDATION:
+  • Use XPath filters to collect only needed EventIDs
+  • Consider Basic Logs for high-volume, low-value data
+  • Use ingestion-time transformation to filter noise
+
+INTERVIEW ANSWER:
+  "Cost optimization is critical with Sentinel. I use XPath filters
+   in DCRs to collect only specific EventIDs like 4624, 4625, 4648.
+   For high-volume logs, I evaluate Basic Logs tier which costs
+   76% less. I also use ingestion-time transformations to filter
+   noise before it's indexed."
+                </div>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 2: NETWORK DEVICES (SYSLOG/CEF)
+                         Firewalls → Log Forwarder → Sentinel
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE OVERVIEW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Network Devices]                      [Azure]
+  ┌─────────────────┐                    
+  │  Palo Alto FW   │                    ┌─────────────────────┐
+  │  Cisco ASA      │── Syslog/CEF ─────►│  Linux VM with AMA  │
+  │  Fortinet       │   TCP/UDP 514      │  (Log Forwarder)    │
+  │  Check Point    │                    │                     │
+  └─────────────────┘                    │  rsyslog receives   │
+                                         │  logs, AMA forwards │
+                                         └─────────┬───────────┘
+                                                   │ HTTPS 443
+                                                   ▼
+                                         ┌─────────────────────┐
+                                         │  Log Analytics      │
+                                         │  Workspace          │
+                                         │  (CommonSecurityLog │
+                                         │   or Syslog)        │
+                                         └─────────────────────┘
+
+
+WHY A LINUX VM FORWARDER?
+─────────────────────────────────────────────────────────────────────────────
+• Network devices can't run Azure Monitor Agent
+• They only know how to send syslog
+• Linux VM receives syslog → AMA forwards to Azure
+• This is similar to Splunk Heavy Forwarder concept
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP-BY-STEP: PALO ALTO CEF → SENTINEL
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: DEPLOY LINUX VM AS LOG FORWARDER
+─────────────────────────────────────────────────────────────────────────────
+Requirements:
+  • Ubuntu 20.04+ or RHEL 8+
+  • Network access FROM firewalls (TCP/UDP 514)
+  • Outbound HTTPS to Azure
+
+Sizing:
+  • 4 CPU, 16GB RAM for ~10,000 EPS
+  • Scale up for higher volumes
+  • Consider load balancing for HA
+
+
+STEP 2: INSTALL AMA ON LINUX FORWARDER
+─────────────────────────────────────────────────────────────────────────────
+# For Azure VM
+az vm extension set \
+  --name AzureMonitorLinuxAgent \
+  --publisher Microsoft.Azure.Monitor \
+  --vm-name log-forwarder-01 \
+  --resource-group myRG
+
+# Verify installation
+systemctl status azuremonitoragent
+
+
+STEP 3: DEPLOY CEF/SYSLOG SOLUTION FROM CONTENT HUB
+─────────────────────────────────────────────────────────────────────────────
+In Sentinel:
+1. Content Hub → Search "Common Event Format"
+2. Install "Common Event Format (CEF) via AMA"
+3. This creates the DCR template for CEF logs
+
+The solution includes:
+  • Data connector configuration
+  • DCR for CEF collection
+  • rsyslog configuration script
+
+
+STEP 4: CONFIGURE RSYSLOG TO RECEIVE SYSLOG
+─────────────────────────────────────────────────────────────────────────────
+# On the Linux forwarder VM, configure rsyslog
+
+# Edit /etc/rsyslog.conf to enable TCP/UDP listener
+cat >> /etc/rsyslog.conf << 'EOF'
+# Receive syslog on TCP 514
+module(load="imtcp")
+input(type="imtcp" port="514")
+
+# Receive syslog on UDP 514
+module(load="imudp")
+input(type="imudp" port="514")
+EOF
+
+# Restart rsyslog
+systemctl restart rsyslog
+
+
+STEP 5: CREATE DCR FOR CEF COLLECTION
+─────────────────────────────────────────────────────────────────────────────
+Via Azure Portal:
+1. Monitor → Data Collection Rules → Create
+2. Data Source: Syslog
+3. Facilities: local0-local7 (CEF typically uses local4)
+4. Minimum log level: Debug (to capture all)
+5. Destination: Log Analytics workspace
+6. Associate with Linux forwarder VM
+
+
+STEP 6: CONFIGURE PALO ALTO TO SEND LOGS
+─────────────────────────────────────────────────────────────────────────────
+In Palo Alto GUI:
+  Device → Server Profiles → Syslog
+  
+  Name: Sentinel_Forwarder
+  Server: [Linux forwarder IP]
+  Transport: TCP
+  Port: 514
+  Format: CEF (if available) or BSD
+  
+Create Log Forwarding Profile and apply to Security Rules
+
+
+STEP 7: VERIFY DATA IN SENTINEL
+─────────────────────────────────────────────────────────────────────────────
+// Check CommonSecurityLog table (CEF)
+CommonSecurityLog
+| where TimeGenerated > ago(1h)
+| summarize count() by DeviceVendor, DeviceProduct
+| order by count_ desc
+
+// Check for Palo Alto specifically
+CommonSecurityLog
+| where DeviceVendor == "Palo Alto Networks"
+| project TimeGenerated, Activity, SourceIP, DestinationIP, 
+          DestinationPort, DeviceAction
+| take 50
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS FOR SYSLOG/CEF INGESTION
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: CEF VS PLAIN SYSLOG
+─────────────────────────────────────────────────────────────────────────────
+CEF (Common Event Format):
+  • Structured format with defined fields
+  • Goes to CommonSecurityLog table
+  • Fields automatically parsed (SourceIP, DestinationIP, etc.)
+  • PREFERRED for security devices
+
+Plain Syslog:
+  • Unstructured text
+  • Goes to Syslog table
+  • May need custom parsing
+  • Used when CEF not supported
+
+INTERVIEW POINT:
+  "CEF provides structured logging with predefined fields that map
+   to CommonSecurityLog. If a device only supports plain syslog,
+   I'd evaluate using ingestion-time transformations to parse
+   key fields, or accept that I'll need regex at query time."
+
+
+CAVEAT 2: SINGLE FORWARDER = SINGLE POINT OF FAILURE
+─────────────────────────────────────────────────────────────────────────────
+For production:
+  • Deploy multiple Linux forwarders
+  • Use Azure Load Balancer in front
+  • Configure firewalls to send to load balancer VIP
+  • Consider VM Scale Set for auto-scaling
+
+
+CAVEAT 3: SYSLOG CAN BE LOSSY
+─────────────────────────────────────────────────────────────────────────────
+UDP syslog drops packets under load
+
+RECOMMENDATION:
+  • Use TCP syslog (port 514) for security logs
+  • Monitor rsyslog queue metrics
+  • Size forwarder VM appropriately
+                </div>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 3: MICROSOFT SERVICES (NATIVE CONNECTORS)
+                         Entra ID, M365, Defender → Sentinel
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE - THE "EASY" FLOW:
+─────────────────────────────────────────────────────────────────────────────
+
+  [Microsoft Services]                 [Sentinel]
+  ┌─────────────────┐                 ┌─────────────────────┐
+  │ Entra ID        │──── Native ────►│ SigninLogs          │
+  │ Microsoft 365   │    Connector    │ AuditLogs           │
+  │ Defender XDR    │   (API-based)   │ OfficeActivity      │
+  │ Azure Activity  │                 │ SecurityAlert       │
+  └─────────────────┘                 └─────────────────────┘
+
+  NO AGENTS. NO FORWARDERS. ONE-CLICK ENABLE.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY THIS IS SO EASY
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT HAPPENS BEHIND THE SCENES:
+─────────────────────────────────────────────────────────────────────────────
+1. You click "Enable" on the connector in Sentinel
+2. Azure creates a service-to-service API connection
+3. Microsoft backend pushes logs to your workspace
+4. Data appears in pre-defined tables with pre-defined schema
+5. Built-in analytics rules work immediately
+
+NO INFRASTRUCTURE REQUIRED:
+  ❌ No agents to install
+  ❌ No forwarders to manage
+  ❌ No parsing to configure
+  ❌ No custom tables to create
+
+THIS IS THE "CLOUD-NATIVE" ADVANTAGE OF SENTINEL
+
+
+STEP-BY-STEP: ENABLE ENTRA ID (AZURE AD) CONNECTOR
+─────────────────────────────────────────────────────────────────────────────
+1. Sentinel → Content Hub → Search "Microsoft Entra ID"
+2. Install the solution
+3. Data Connectors → Microsoft Entra ID → Open connector page
+4. Select log types to enable:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ ☑ Sign-in logs (requires Entra P1/P2)                              │
+   │ ☑ Audit logs (free with any Entra license)                         │
+   │ ☑ Non-interactive sign-in logs                                      │
+   │ ☑ Service principal sign-in logs                                    │
+   │ ☑ Provisioning logs                                                 │
+   │ ☐ Risky users (requires Entra P2)                                   │
+   │ ☐ User risk events (requires Entra P2)                              │
+   └─────────────────────────────────────────────────────────────────────┘
+5. Click "Connect" for each log type
+
+
+STEP-BY-STEP: ENABLE DEFENDER XDR CONNECTOR
+─────────────────────────────────────────────────────────────────────────────
+1. Sentinel → Content Hub → Search "Microsoft Defender XDR"
+2. Install the solution  
+3. Data Connectors → Microsoft Defender XDR → Open connector page
+4. Connect incidents and alerts
+5. Select raw data tables:
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │ ☑ DeviceProcessEvents                                               │
+   │ ☑ DeviceNetworkEvents                                               │
+   │ ☑ DeviceFileEvents                                                  │
+   │ ☑ DeviceLogonEvents                                                 │
+   │ ☑ EmailEvents                                                       │
+   │ ☑ EmailAttachmentInfo                                               │
+   │ ☑ IdentityLogonEvents                                               │
+   │ ☑ CloudAppEvents                                                    │
+   └─────────────────────────────────────────────────────────────────────┘
+
+
+VERIFY DATA FLOW:
+─────────────────────────────────────────────────────────────────────────────
+// Check Entra ID sign-ins
+SigninLogs
+| where TimeGenerated > ago(1h)
+| summarize count() by ResultType
+| order by count_ desc
+
+// Check Defender XDR data
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| summarize count() by DeviceName
+| order by count_ desc
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS FOR NATIVE CONNECTORS
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: LICENSE REQUIREMENTS
+─────────────────────────────────────────────────────────────────────────────
+Not all logs are free with basic licenses:
+
+  ┌────────────────────────┬───────────────────────────────────────────────┐
+  │ Log Type               │ License Required                              │
+  ├────────────────────────┼───────────────────────────────────────────────┤
+  │ Audit Logs             │ Any Entra license (free)                     │
+  │ Sign-in Logs           │ Entra P1 or P2                               │
+  │ Risky Users/Events     │ Entra P2 only                                │
+  │ Risky Service Principals│ Workload Identity Premium                   │
+  ├────────────────────────┼───────────────────────────────────────────────┤
+  │ Defender XDR Data      │ Requires Defender licensing                  │
+  │ M365 Office Activity   │ Requires M365 licensing                      │
+  └────────────────────────┴───────────────────────────────────────────────┘
+
+
+CAVEAT 2: PERMISSIONS REQUIRED
+─────────────────────────────────────────────────────────────────────────────
+To enable connectors, you need:
+  • Security Administrator (or higher) in Entra ID
+  • Sentinel Contributor on the workspace
+  • Sometimes Global Administrator for initial consent
+
+INTERVIEW POINT:
+  "Enabling native connectors requires appropriate permissions in both
+   Entra ID and the Sentinel workspace. For Entra ID connector, I need
+   Security Administrator to enable diagnostic settings."
+
+
+CAVEAT 3: DATA LATENCY EXISTS
+─────────────────────────────────────────────────────────────────────────────
+Even native connectors have some latency:
+  • SigninLogs: ~5-10 minutes typical
+  • AuditLogs: ~15-30 minutes for some operations
+  • Defender: Near real-time for alerts, minutes for raw events
+
+DON'T PANIC if data isn't instant - check after 15-30 minutes
+
+
+CAVEAT 4: SOME TABLES ARE HIGH VOLUME
+─────────────────────────────────────────────────────────────────────────────
+Watch out for these high-volume tables:
+  • AADNonInteractiveUserSignInLogs - Very high (background auth)
+  • DeviceProcessEvents - Very high (all process creation)
+  • DeviceNetworkEvents - Very high (all network connections)
+
+COST CONSIDERATION:
+  Consider if you need ALL data from these tables
+  Some can be filtered using ingestion-time transformation
+  Or use Basic Logs tier for cost savings
+                </div>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    FLOW 4: CUSTOM/API-BASED SOURCES
+                         When There's No Native Connector
+═══════════════════════════════════════════════════════════════════════════════
+
+SCENARIO:
+─────────────────────────────────────────────────────────────────────────────
+You need to ingest logs from:
+  • Third-party SaaS (Okta, Salesforce, etc.)
+  • Custom applications
+  • On-premises systems without agent support
+  • Cloud providers (AWS, GCP)
+
+NO NATIVE CONNECTOR EXISTS. You have options:
+
+
+═══════════════════════════════════════════════════════════════════════════════
+OPTION 1: LOGS INGESTION API + AZURE FUNCTION
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE:
+─────────────────────────────────────────────────────────────────────────────
+
+  [External API]                    [Azure]
+       │                               
+       │ Polls API                  ┌─────────────────────┐
+       ▼                            │ Azure Function      │
+  ┌─────────────┐                   │ (Timer Triggered)   │
+  │ Third-party │◄─────────────────│                     │
+  │ SaaS API    │   Request logs    │ Python/PowerShell   │
+  └─────────────┘                   │ code polls API      │
+       │                            └─────────┬───────────┘
+       │ Returns JSON                         │
+       │                                      ▼
+       │                            ┌─────────────────────┐
+       └───────────────────────────►│ Logs Ingestion API  │
+                                    │ (DCE endpoint)      │
+                                    └─────────┬───────────┘
+                                              │
+                                              ▼
+                                    ┌─────────────────────┐
+                                    │ Custom Table        │
+                                    │ (MyLogs_CL)         │
+                                    └─────────────────────┘
+
+
+STEPS TO IMPLEMENT:
+─────────────────────────────────────────────────────────────────────────────
+1. CREATE CUSTOM TABLE
+   // Define schema for your logs
+   
+2. CREATE DATA COLLECTION ENDPOINT (DCE)
+   // Regional endpoint for API ingestion
+   
+3. CREATE DATA COLLECTION RULE (DCR)
+   // Maps incoming data to table columns
+   
+4. CREATE AZURE FUNCTION
+   // Timer trigger (e.g., every 5 minutes)
+   // Call third-party API
+   // POST data to Logs Ingestion API
+   
+5. CONFIGURE AUTHENTICATION
+   // Azure Function uses Managed Identity
+   // Grant "Monitoring Metrics Publisher" role
+
+
+═══════════════════════════════════════════════════════════════════════════════
+OPTION 2: LOGIC APPS (NO CODE)
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┐
+  │ Logic App           │
+  │ (Recurrence Trigger)│
+  │                     │
+  │ 1. HTTP action      │───────► [Third-party API]
+  │    (Get logs)       │
+  │                     │
+  │ 2. Parse JSON       │
+  │                     │
+  │ 3. Send to Log      │───────► [Log Analytics Workspace]
+  │    Analytics        │          Custom Table
+  │    (Data Collector) │
+  └─────────────────────┘
+
+
+WHEN TO USE LOGIC APPS:
+  ✅ Simple integrations
+  ✅ Low volume (&lt;10,000 events/hour)
+  ✅ No custom code required
+  ✅ Built-in connectors exist for source
+
+WHEN TO USE AZURE FUNCTION:
+  ✅ Complex transformations needed
+  ✅ High volume
+  ✅ Need full programming control
+  ✅ Cheaper at scale
+
+
+═══════════════════════════════════════════════════════════════════════════════
+OPTION 3: CONTENT HUB SOLUTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Before building custom, check Content Hub!
+Many vendors provide ready-made solutions:
+
+  Content Hub → Search for vendor name
+
+EXAMPLES:
+  • Okta Single Sign-On (includes Function template)
+  • AWS CloudTrail
+  • Google Cloud Platform
+  • Salesforce
+  • Zoom
+  • Many more...
+
+THESE INCLUDE:
+  • Pre-built data connector (Function or Logic App)
+  • Custom table schemas
+  • Workbooks
+  • Analytics rules
+  • Hunting queries
+
+SAVES SIGNIFICANT TIME vs building from scratch
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW SUMMARY: WHEN TO USE WHAT
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌────────────────────────────────┬────────────────────────────────────────┐
+  │ Scenario                       │ Best Approach                          │
+  ├────────────────────────────────┼────────────────────────────────────────┤
+  │ Microsoft service              │ Native connector (one-click)           │
+  │                                │                                        │
+  │ Windows/Linux servers          │ Azure Monitor Agent + DCR              │
+  │                                │                                        │
+  │ Network devices (syslog)       │ Linux forwarder + AMA                  │
+  │                                │                                        │
+  │ Third-party SaaS               │ Check Content Hub first, then custom   │
+  │                                │                                        │
+  │ Custom application             │ Logs Ingestion API + Function          │
+  │                                │                                        │
+  │ AWS/GCP                        │ Content Hub solutions available        │
+  └────────────────────────────────┴────────────────────────────────────────┘
+
+SENIOR-LEVEL INTERVIEW ANSWER:
+  "For data ingestion in Sentinel, I first check if there's a native
+   connector - Microsoft services have one-click enablement. For 
+   Windows/Linux, I use AMA with DCRs. For network devices, I deploy
+   a Linux syslog forwarder with AMA. For third-party sources, I check
+   Content Hub for existing solutions before building custom integrations
+   using the Logs Ingestion API and Azure Functions."
+                </div>
+
                 <h2 id="tables"><i class="fas fa-table"></i> Table Types</h2>
 
                 <div class="diagram-box">

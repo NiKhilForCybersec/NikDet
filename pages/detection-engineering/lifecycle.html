@@ -41,6 +41,477 @@
                 <h1><i class="fas fa-sync-alt"></i> Detection Engineering Lifecycle</h1>
                 <p class="lead">Follow Apex Financial as they build detections based on their assessment - from research to production deployment.</p>
 
+                <!-- COMPREHENSIVE END-TO-END DETECTION ENGINEERING SECTION -->
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+     END-TO-END FLOW: BUILDING PRODUCTION DETECTIONS (INTERVIEW-READY)
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT IS DETECTION ENGINEERING?
+─────────────────────────────────────────────────────────────────────────────
+Detection Engineering is the practice of building, testing, deploying, and
+maintaining security detection rules that identify malicious activity.
+
+IT IS NOT:
+  ❌ Just writing SIEM queries
+  ❌ Copy-pasting rules from the internet
+  ❌ One-time rule creation
+
+IT IS:
+  ✅ A complete lifecycle with research, testing, documentation
+  ✅ Understanding the threat BEFORE writing the detection
+  ✅ Continuous tuning based on false positive feedback
+  ✅ Measurable coverage against attack frameworks (MITRE ATT&CK)
+
+KEY CONCEPT:
+  Detection Engineering is a DISCIPLINE, not a task.
+  It combines threat intelligence, data analysis, and software development
+  practices to create reliable security detections.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+COMPLETE DETECTION DEVELOPMENT FLOW
+═══════════════════════════════════════════════════════════════════════════════
+
+  [TRIGGER]                              [OUTPUT]
+  ─────────                              ─────────
+  • Threat intel report                  • Production detection rule
+  • Incident post-mortem                 • Analyst runbook
+  • Red team findings                    • Tuning documentation
+  • Coverage gap analysis                • MITRE coverage update
+
+                          THE FLOW:
+
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │   TRIGGER   │     │  RESEARCH   │     │  DEVELOP    │
+  │             │────►│             │────►│             │
+  │ Why are we  │     │ How does    │     │ What query  │
+  │ building    │     │ the attack  │     │ detects     │
+  │ this?       │     │ work?       │     │ this?       │
+  └─────────────┘     └─────────────┘     └──────┬──────┘
+                                                 │
+                                                 ▼
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │   DEPLOY    │     │  DOCUMENT   │     │    TEST     │
+  │             │◄────│             │◄────│             │
+  │ Push to     │     │ Write       │     │ Validate    │
+  │ production  │     │ runbook     │     │ accuracy    │
+  └──────┬──────┘     └─────────────┘     └─────────────┘
+         │
+         ▼
+  ┌─────────────────────────────────────────────────────┐
+  │               MAINTAIN & TUNE                        │
+  │                                                     │
+  │  Monitor FP rate → Tune → Re-test → Update docs    │
+  └─────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 1: UNDERSTAND THE TRIGGER (WHY BUILD THIS DETECTION?)
+═══════════════════════════════════════════════════════════════════════════════
+
+COMMON TRIGGERS:
+─────────────────────────────────────────────────────────────────────────────
+┌────────────────────────────┬────────────────────────────────────────────────┐
+│ Trigger Type               │ Example                                        │
+├────────────────────────────┼────────────────────────────────────────────────┤
+│ Threat Intelligence        │ "New ransomware group uses WMI for lateral     │
+│                            │  movement - we need detection for this"        │
+├────────────────────────────┼────────────────────────────────────────────────┤
+│ Incident Post-Mortem       │ "Attacker was in environment for 30 days -     │
+│                            │  why didn't we detect the C2 beaconing?"       │
+├────────────────────────────┼────────────────────────────────────────────────┤
+│ Red Team Findings          │ "Red team used Kerberoasting undetected -      │
+│                            │  we need to detect TGS requests for SPNs"      │
+├────────────────────────────┼────────────────────────────────────────────────┤
+│ Coverage Gap Analysis      │ "We have 0% coverage for T1055 (Process        │
+│                            │  Injection) - need at least basic detection"   │
+├────────────────────────────┼────────────────────────────────────────────────┤
+│ Compliance Requirement     │ "Audit requires detection of admin account     │
+│                            │  creation - must alert on Event ID 4720"       │
+└────────────────────────────┴────────────────────────────────────────────────┘
+
+INTERVIEW POINT:
+  "Detection development should be prioritized, not ad-hoc. I use triggers
+   like threat intel, incident lessons learned, and MITRE coverage gaps to
+   determine which detections to build next. Not every technique needs a
+   detection - I focus on techniques relevant to our threat profile."
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 2: RESEARCH THE TECHNIQUE (BEFORE WRITING ANY CODE!)
+═══════════════════════════════════════════════════════════════════════════════
+
+RESEARCH QUESTIONS TO ANSWER:
+─────────────────────────────────────────────────────────────────────────────
+1. What is the attack technique? (MITRE ATT&CK reference)
+2. What does the attack look like in logs?
+3. What data sources do we need? (Do we have them?)
+4. What's the legitimate use case? (To avoid false positives)
+5. What existing detections exist? (Sigma rules, vendor blogs)
+
+RESEARCH SOURCES:
+─────────────────────────────────────────────────────────────────────────────
+• MITRE ATT&CK → Attack description, data sources, examples
+• Sigma Rules → Pre-built detection logic (github.com/SigmaHQ/sigma)
+• Splunk Security Content → Vendor-provided rules
+• Atomic Red Team → Attack simulations for testing
+• Threat research blogs → Real-world attack chains
+• Vendor documentation → What logs are generated
+
+EXAMPLE: Researching Kerberoasting (T1558.003)
+─────────────────────────────────────────────────────────────────────────────
+1. MITRE Description:
+   Adversaries request TGS tickets for service accounts with SPNs,
+   then crack offline to recover passwords.
+
+2. Log Evidence:
+   Windows Security Event ID 4769 (TGS Request)
+   • ServiceName = SPN of target account
+   • TicketEncryptionType = 0x17 (RC4, weak) or 0x18 (AES)
+   • TargetUserName = Requesting user
+
+3. Data Source Required:
+   Windows Security Event Logs with 4769 auditing enabled
+   (Advanced Audit Policy → Account Logon → Audit Kerberos Service Ticket)
+
+4. Legitimate Use:
+   Normal users request TGS tickets all day for services
+   Key differentiator: VOLUME of requests in short time, RC4 encryption
+
+5. Existing Rules:
+   Sigma: win_security_kerberoasting.yml
+   Splunk: Multiple rules in ESCU
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 3: DEVELOP THE DETECTION QUERY
+═══════════════════════════════════════════════════════════════════════════════
+
+QUERY DEVELOPMENT BEST PRACTICES:
+─────────────────────────────────────────────────────────────────────────────
+1. Start BROAD, then narrow down
+2. Test against HISTORICAL data first
+3. Identify false positive patterns early
+4. Document your logic with comments
+
+EXAMPLE: Building Kerberoasting Detection (Sentinel KQL)
+─────────────────────────────────────────────────────────────────────────────
+
+// VERSION 1: Broad - Find ALL TGS requests (too noisy!)
+SecurityEvent
+| where EventID == 4769
+| project TimeGenerated, Computer, Account, ServiceName
+
+// RESULT: 50,000 events/day - Unusable!
+
+
+// VERSION 2: Add basic filters
+SecurityEvent
+| where EventID == 4769
+| where TicketEncryptionType in ("0x17", "0x18")  // RC4 or AES
+| where ServiceName !endswith "$"  // Exclude computer accounts
+| where ServiceName != "krbtgt"    // Exclude normal TGT
+| project TimeGenerated, Computer, Account, ServiceName
+
+// RESULT: 5,000 events/day - Still too many
+
+
+// VERSION 3: Aggregate to find anomalies
+SecurityEvent
+| where EventID == 4769
+| where TicketEncryptionType == "0x17"  // Focus on weak RC4
+| where ServiceName !endswith "$"
+| where ServiceName != "krbtgt"
+| summarize 
+    SPNCount = dcount(ServiceName),
+    SPNList = make_set(ServiceName, 10),
+    RequestCount = count()
+    by bin(TimeGenerated, 5m), Account, Computer
+| where SPNCount >= 3  // Multiple SPNs in 5 minutes = suspicious
+| project TimeGenerated, Account, Computer, SPNCount, RequestCount, SPNList
+
+// RESULT: 2-5 alerts/day - Manageable!
+
+
+// VERSION 4: Production-ready with context
+let threshold = 3;
+let timewindow = 5m;
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4769
+| where TicketEncryptionType == "0x17"
+| where ServiceName !endswith "$"
+| where ServiceName != "krbtgt"
+| summarize 
+    SPNCount = dcount(ServiceName),
+    SPNList = make_set(ServiceName, 20),
+    RequestCount = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated)
+    by bin(TimeGenerated, timewindow), Account, Computer, IpAddress
+| where SPNCount >= threshold
+| extend 
+    AlertTitle = strcat("Potential Kerberoasting - ", Account),
+    AlertSeverity = case(SPNCount >= 10, "High", SPNCount >= 5, "Medium", "Low"),
+    MITREAttackTactic = "Credential Access",
+    MITREAttackTechnique = "T1558.003"
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 4: TEST AGAINST HISTORICAL DATA & SIMULATE ATTACKS
+═══════════════════════════════════════════════════════════════════════════════
+
+TESTING IS NOT OPTIONAL:
+─────────────────────────────────────────────────────────────────────────────
+
+Two types of testing:
+
+1. HISTORICAL DATA TESTING
+   • Run query against 30-90 days of data
+   • Identify all hits
+   • Categorize: True Positive, False Positive, Unknown
+   • Calculate FP rate
+   • Target: &lt;10% FP rate before production
+
+2. ATTACK SIMULATION
+   • Use Atomic Red Team, Invoke-AtomicRedTeam
+   • Generate real attack traffic in lab
+   • Verify detection fires correctly
+   • Validate alert contains needed context
+
+TESTING EXAMPLE:
+─────────────────────────────────────────────────────────────────────────────
+# Run Atomic Red Team Kerberoasting simulation
+Invoke-AtomicTest T1558.003 -TestNumbers 1
+
+# This runs Rubeus or Invoke-Kerberoast
+# Generates Event ID 4769 with multiple SPN requests
+# Verify your detection fires within minutes
+
+
+FALSE POSITIVE ANALYSIS:
+─────────────────────────────────────────────────────────────────────────────
+After 30-day historical review:
+
+  HITS FOUND: 15
+  ├── True Positives: 0 (no actual attacks - expected in most environments)
+  ├── False Positives: 12
+  │   ├── Backup service account: 8 (requests many SPNs during backup)
+  │   ├── Monitoring tool: 4 (scans AD regularly)
+  └── Unknown: 3 (need investigation)
+
+  ACTION:
+  • Add backup service account to allowlist
+  • Add monitoring tool IP to allowlist
+  • Investigate unknown hits before production
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 5: DOCUMENT THE RUNBOOK
+═══════════════════════════════════════════════════════════════════════════════
+
+EVERY DETECTION NEEDS A RUNBOOK:
+─────────────────────────────────────────────────────────────────────────────
+Without documentation, analysts can't triage effectively.
+
+RUNBOOK TEMPLATE:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ DETECTION: Potential Kerberoasting Activity                                 │
+│ ID: DET-WIN-CRED-001                                                        │
+│ MITRE: T1558.003                                                            │
+│ SEVERITY: Medium                                                            │
+│ AUTHOR: [Your Name]                                                         │
+│ CREATED: 2024-01-15                                                         │
+│ LAST REVIEWED: 2024-06-15                                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ DESCRIPTION:                                                                │
+│ Detects when a user account requests TGS tickets for multiple service      │
+│ accounts within a short time window, indicating potential Kerberoasting.   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ TRIAGE STEPS:                                                               │
+│ 1. Identify the source account and computer                                │
+│ 2. Is this a known scanning/backup service? → Known FP, close              │
+│ 3. Check account history - is this normal behavior?                        │
+│ 4. Review the SPNs requested - are they high-value targets?                │
+│ 5. Check for other suspicious activity from same account                   │
+│ 6. If suspicious: escalate to Tier 2 for investigation                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ FALSE POSITIVE PATTERNS:                                                    │
+│ • BackupExec service account (allowlisted)                                 │
+│ • SCCM scanning (allowlisted by IP)                                        │
+│ • Vulnerability scanner during scheduled scans                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ ESCALATION CRITERIA:                                                        │
+│ • Account is a privileged user                                             │
+│ • SPNs include domain admin service accounts                               │
+│ • Activity from unusual source IP                                          │
+│ • Follow-on suspicious activity detected                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ RESPONSE ACTIONS:                                                           │
+│ • Disable account pending investigation                                    │
+│ • Reset password for targeted service accounts                             │
+│ • Check if any service account passwords were weak/compromised             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 6: DEPLOY TO PRODUCTION
+═══════════════════════════════════════════════════════════════════════════════
+
+DEPLOYMENT CHECKLIST:
+─────────────────────────────────────────────────────────────────────────────
+Before enabling in production:
+
+□ Query tested against 30+ days historical data
+□ FP rate below 10%
+□ Attack simulation verified detection works
+□ Runbook documented and reviewed
+□ Allowlist entries configured
+□ Alert severity appropriate
+□ Notification routing configured (SOC team, ticketing system)
+□ Change ticket created and approved
+□ Detection added to version control
+
+DEPLOYMENT OPTIONS (by SIEM):
+─────────────────────────────────────────────────────────────────────────────
+SENTINEL:
+  Analytics Rules → Create → Scheduled query rule
+  • Set query schedule (e.g., every 5 minutes)
+  • Configure entity mapping (Account, Host, IP)
+  • Set alert grouping
+  • Enable automation if applicable
+
+SPLUNK:
+  Correlation Search in Enterprise Security
+  • savedsearches.conf for the search
+  • analyticstories.conf for grouping
+  • Or use ESCU content if available
+
+
+═══════════════════════════════════════════════════════════════════════════════
+STEP 7: MAINTAIN & TUNE
+═══════════════════════════════════════════════════════════════════════════════
+
+ONGOING MAINTENANCE (Often Forgotten!):
+─────────────────────────────────────────────────────────────────────────────
+WEEKLY:
+  • Review FP feedback from SOC analysts
+  • Process tuning requests
+
+MONTHLY:
+  • Review detection metrics (alerts generated, FP rate, MTTR)
+  • Check if detection still relevant
+
+QUARTERLY:
+  • Re-test against attack simulation
+  • Review and update runbook
+  • Validate data sources still available
+
+ANNUALLY:
+  • Full detection catalog review
+  • Retire obsolete detections
+  • Coverage gap analysis
+
+
+═══════════════════════════════════════════════════════════════════════════════
+IMPORTANT CAVEATS (SENIOR-LEVEL INTERVIEW POINTS)
+═══════════════════════════════════════════════════════════════════════════════
+
+CAVEAT 1: DATA SOURCES TRUMP DETECTIONS
+─────────────────────────────────────────────────────────────────────────────
+The best detection is useless without the right data.
+
+BEFORE WRITING ANY DETECTION:
+  1. Verify the required log source is being collected
+  2. Verify the required fields are parsed
+  3. Verify retention period covers your lookback
+
+COMMON FAILURE:
+  "We wrote a great PowerShell detection but Script Block Logging
+   wasn't enabled on endpoints."
+
+INTERVIEW ANSWER:
+  "Before I build any detection, I validate data availability.
+   For example, to detect Kerberoasting, I need Event ID 4769
+   with TGS auditing enabled - that's an Advanced Audit Policy
+   setting that isn't on by default."
+
+
+CAVEAT 2: FALSE POSITIVE RATE IS EVERYTHING
+─────────────────────────────────────────────────────────────────────────────
+High FP rate = Analysts ignore the alert = Missed real attacks
+
+TARGETS:
+  • &lt;10% FP rate for high-severity alerts
+  • &lt;20% FP rate for medium-severity alerts
+  • FP rate must be measured, not guessed
+
+IF FP RATE TOO HIGH:
+  • Tune the detection (add filters, raise thresholds)
+  • Add allowlist entries
+  • Change severity if legitimacy is uncertain
+  • Consider making it a hunting query instead of alert
+
+
+CAVEAT 3: DOCUMENT OR IT DIDN'T HAPPEN
+─────────────────────────────────────────────────────────────────────────────
+Undocumented detection = Tech debt
+
+CONSEQUENCES:
+  • Analyst doesn't know how to triage → FP reported as TP
+  • Original author leaves → No one knows how to tune it
+  • Changes made without understanding → Detection breaks
+
+MINIMUM DOCUMENTATION:
+  • What it detects (MITRE mapping)
+  • How to triage (step-by-step)
+  • Known FP patterns
+  • Escalation criteria
+
+
+CAVEAT 4: NOT EVERY TECHNIQUE NEEDS A DETECTION
+─────────────────────────────────────────────────────────────────────────────
+MITRE ATT&CK has 200+ techniques. You can't detect all of them.
+
+PRIORITIZE BASED ON:
+  • Your threat profile (which threat actors target your industry?)
+  • Your visibility (what data do you have?)
+  • Your operational capacity (how many alerts can SOC handle?)
+
+BETTER TO HAVE:
+  50 well-tuned detections with documented runbooks
+
+THAN:
+  500 noisy detections that analysts ignore
+
+
+CAVEAT 5: DETECTION AS CODE
+─────────────────────────────────────────────────────────────────────────────
+Modern detection engineering uses software development practices:
+
+VERSION CONTROL:
+  • All detections in Git repository
+  • Changes through pull requests
+  • Code review required
+
+TESTING:
+  • Automated testing in CI/CD pipeline
+  • Unit tests for detection logic
+  • Integration tests with simulated attacks
+
+DEPLOYMENT:
+  • Automated deployment from Git to SIEM
+  • No manual changes in production
+  • Audit trail of all changes
+
+INTERVIEW ANSWER:
+  "I treat detections as code. They live in Git, changes go through
+   PR review, and deployment is automated. This gives us version
+   history, rollback capability, and prevents unauthorized changes
+   in production."
+                </div>
+
                 <div class="diagram-box">
 DETECTION ENGINEERING LIFECYCLE
 ═══════════════════════════════════════════════════════════════════════════════

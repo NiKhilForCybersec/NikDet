@@ -23,6 +23,280 @@
             </div>
             <div class="content">
 
+                <!-- COMPREHENSIVE END-TO-END FLOW SECTION -->
+                <h2 id="e2e-overview"><i class="fas fa-route"></i> Log Collection End-to-End (Interview-Ready)</h2>
+                
+                <p>This section provides <strong>complete, senior-level explanations</strong> of log collection architecture. Understanding these flows is critical for interviews and real-world implementation.</p>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+                    LOG COLLECTION: COMPLETE MENTAL MODEL
+═══════════════════════════════════════════════════════════════════════════════
+
+THE FUNDAMENTAL QUESTION:
+─────────────────────────────────────────────────────────────────────────────
+How do logs get from SOURCE to SIEM?
+
+There are only TWO patterns:
+  1. PUSH: Source/agent sends logs TO collector
+  2. PULL: Collector fetches logs FROM source
+
+EVERY log collection method falls into one of these patterns.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+PATTERN 1: AGENT-BASED (PUSH)
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW IT WORKS:
+─────────────────────────────────────────────────────────────────────────────
+  [Endpoint]                              [SIEM]
+       │                                    │
+       ▼                                    │
+  ┌─────────────────┐                       │
+  │ Installed Agent │                       │
+  │                 │ ────── PUSH ─────────►│
+  │ • Reads logs    │      (TCP/HTTPS)      │
+  │ • Buffers       │                       │
+  │ • Forwards      │                       │
+  └─────────────────┘                       │
+
+EXAMPLES:
+  • Splunk Universal Forwarder → Splunk Indexers (TCP 9997)
+  • Elastic Agent → Elasticsearch (HTTPS)
+  • Azure Monitor Agent → Azure Monitor (HTTPS 443)
+  • NXLog → Any destination
+
+WHEN TO USE:
+  ✅ Windows/Linux servers
+  ✅ Endpoints you control
+  ✅ Need reliable delivery (buffering)
+  ✅ Need local filtering before forwarding
+
+ADVANTAGES:
+  + Reliable (agent buffers if network down)
+  + Efficient (agent does local filtering)
+  + Secure (encrypted transport, authentication)
+
+DISADVANTAGES:
+  - Must install/maintain agents
+  - Agent consumes resources on endpoint
+  - Scaling requires deployment infrastructure
+
+
+═══════════════════════════════════════════════════════════════════════════════
+PATTERN 2: SYSLOG (PUSH)
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW IT WORKS:
+─────────────────────────────────────────────────────────────────────────────
+  [Network Device]                    [Syslog Collector]           [SIEM]
+        │                                    │                        │
+        │                                    ▼                        │
+        │ ────── Syslog (UDP/TCP) ──► ┌──────────────┐               │
+        │         514 / 6514          │ rsyslog      │───────────────►│
+        │                              │ syslog-ng    │               │
+        │                              │ Heavy Fwd    │               │
+        │                              └──────────────┘               │
+
+EXAMPLES:
+  • Firewall → rsyslog → Splunk HF → Splunk
+  • Router → syslog-ng → Logstash → Elasticsearch
+  • Linux server → rsyslog → Azure Monitor Agent → Sentinel
+
+WHEN TO USE:
+  ✅ Network devices (can't install agents)
+  ✅ Firewalls, routers, switches, load balancers
+  ✅ Linux systems (native syslog support)
+  ✅ Legacy systems
+
+CRITICAL CONSIDERATION - UDP VS TCP:
+─────────────────────────────────────────────────────────────────────────────
+┌─────────────┬───────────────────────────────────────────────────────────────┐
+│ UDP (514)   │ Fast but UNRELIABLE. Packets can be DROPPED under load.      │
+│             │ Use only for: testing, non-critical logs, high-volume/low    │
+│             │ value data where some loss is acceptable.                    │
+├─────────────┼───────────────────────────────────────────────────────────────┤
+│ TCP (514)   │ Reliable delivery. Connection-based. Backpressure handling.  │
+│             │ Use for: ALL security-critical logs (firewalls, auth, etc.) │
+├─────────────┼───────────────────────────────────────────────────────────────┤
+│ TLS (6514)  │ TCP + Encryption. Best security.                              │
+│             │ Use for: Compliance requirements, cross-network transport    │
+└─────────────┴───────────────────────────────────────────────────────────────┘
+
+INTERVIEW POINT:
+  "For security logs, I always use TCP syslog instead of UDP because
+   UDP can drop packets under load. For compliance environments,
+   I configure TLS syslog on port 6514 for encryption in transit."
+
+
+═══════════════════════════════════════════════════════════════════════════════
+PATTERN 3: API POLLING (PULL)
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW IT WORKS:
+─────────────────────────────────────────────────────────────────────────────
+  [Cloud/SaaS Service]                [SIEM / Collector]
+         │                                   │
+         │ ◄──── REST API Request ───────────│
+         │       (HTTPS GET/POST)            │
+         │                                   │
+         │ ────── JSON Response ────────────►│
+         │       (logs, events)              │
+
+EXAMPLES:
+  • Office 365 Management API → Sentinel
+  • AWS CloudTrail API → Splunk
+  • Okta System Log API → Any SIEM
+  • Azure Audit Logs → Log Analytics
+
+WHEN TO USE:
+  ✅ Cloud services (AWS, Azure, GCP)
+  ✅ SaaS applications (Okta, Salesforce, Box)
+  ✅ No agent installation possible
+  ✅ Service provides REST API
+
+KEY CONSIDERATIONS:
+─────────────────────────────────────────────────────────────────────────────
+1. RATE LIMITS
+   • Cloud APIs have rate limits (requests/minute)
+   • Must handle 429 Too Many Requests errors
+   • Design polling interval to stay within limits
+
+2. AUTHENTICATION
+   • OAuth 2.0 (most modern APIs)
+   • API Keys (simpler but less secure)
+   • Certificate-based (high security)
+
+3. PAGINATION
+   • APIs return results in pages
+   • Must handle pagination correctly
+   • Track "cursor" or "next page" tokens
+
+4. STATE MANAGEMENT
+   • Must track "last polled timestamp"
+   • Avoid duplicate or missed events
+   • Handle restarts/failures gracefully
+
+INTERVIEW POINT:
+  "API-based collection requires careful handling of rate limits,
+   pagination, and state management. I use a checkpoint mechanism
+   to track the last successfully processed event, so I can resume
+   from that point after failures without duplicates."
+
+
+═══════════════════════════════════════════════════════════════════════════════
+PATTERN 4: NATIVE CONNECTORS (MANAGED)
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW IT WORKS:
+─────────────────────────────────────────────────────────────────────────────
+  [Microsoft Service]                [Sentinel]
+         │                               │
+         │ ════ Native Integration ═════►│  (Microsoft manages this)
+         │    (No user configuration)    │
+         │                               │
+
+This is a SPECIAL CASE for cloud-native SIEMs where the SIEM vendor
+manages the integration completely.
+
+EXAMPLES:
+  • Microsoft Entra ID → Sentinel (one-click enable)
+  • Microsoft 365 → Sentinel (one-click enable)
+  • Defender XDR → Sentinel (one-click enable)
+  • AWS GuardDuty → AWS Security Hub → SIEM
+
+WHEN TO USE:
+  ✅ Same-vendor integration (Microsoft-to-Microsoft)
+  ✅ When available - always use native connectors first
+  ✅ Less maintenance than custom API polling
+
+ADVANTAGES:
+  + No infrastructure to manage
+  + Pre-built parsing and normalization
+  + Vendor-supported, tested
+  + Usually free (part of service cost)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+COMPLETE DECISION FRAMEWORK
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  Q: What kind of source?                                               │
+  │                                                                         │
+  │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    │
+  │  │ Windows/Linux   │    │ Network Device  │    │ Cloud/SaaS      │    │
+  │  │ Server          │    │ (FW, Router)    │    │ Service         │    │
+  │  └────────┬────────┘    └────────┬────────┘    └────────┬────────┘    │
+  │           │                      │                      │             │
+  │           ▼                      ▼                      ▼             │
+  │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    │
+  │  │ Install Agent   │    │ Configure       │    │ Check for       │    │
+  │  │ (UF, AMA, etc.) │    │ Syslog (TCP!)   │    │ Native Connector│    │
+  │  └────────┬────────┘    └────────┬────────┘    └────────┬────────┘    │
+  │           │                      │                      │             │
+  │           │                      ▼                      ▼             │
+  │           │             ┌─────────────────┐    Native     Custom     │
+  │           │             │ Collector/HF    │    exists?    API?       │
+  │           │             │ receives syslog │      │          │        │
+  │           │             └────────┬────────┘      ▼          ▼        │
+  │           │                      │         ┌────────┐  ┌────────┐    │
+  │           │                      │         │ Enable │  │ Build  │    │
+  │           │                      │         │ It!    │  │ Custom │    │
+  │           └──────────────────────┴─────────┴────────┴──┴────────┘    │
+  │                                  │                                    │
+  │                                  ▼                                    │
+  │                         ┌─────────────────┐                          │
+  │                         │      SIEM       │                          │
+  │                         │  (Splunk, ELK,  │                          │
+  │                         │   Sentinel)     │                          │
+  │                         └─────────────────┘                          │
+  │                                                                       │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+COMMON INTERVIEW QUESTIONS & ANSWERS
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: "How would you collect logs from 500 Windows servers?"
+─────────────────────────────────────────────────────────────────────────────
+A: "I'd deploy Splunk Universal Forwarders using a Deployment Server for
+    centralized configuration management. For Microsoft environments,
+    I'd consider Azure Monitor Agent with Data Collection Rules, managed
+    via Azure Policy for automatic deployment to new VMs."
+
+
+Q: "We're losing firewall logs. What would you check?"
+─────────────────────────────────────────────────────────────────────────────
+A: "First, I'd verify if they're using UDP or TCP syslog. UDP drops packets
+    under load. I'd switch to TCP. Then I'd check the syslog collector's
+    queue metrics, disk space, and whether the SIEM's ingestion rate is
+    keeping up. I'd also verify the firewall's logging configuration and
+    that no network ACLs are blocking traffic."
+
+
+Q: "What's the difference between agent-based and agentless collection?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Agent-based uses installed software that buffers and forwards logs -
+    more reliable, but requires deployment. Agentless uses syslog or API
+    polling - no installation needed, but syslog over UDP can lose data,
+    and API polling adds latency and requires state management. I use
+    agent-based for servers I control, syslog for network devices, and
+    API polling for cloud/SaaS services."
+
+
+Q: "How do you ensure log integrity and no data loss?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Multiple layers: TCP instead of UDP for syslog, agents with persistent
+    queues that survive restarts, acknowledgment-based forwarding in Splunk,
+    monitoring of ingestion health dashboards, alerting on silent sources
+    when expected volume drops. For compliance, I'd also implement TLS
+    encryption and log signing."
+                </div>
+
                 <h2>Collection Architecture</h2>
                 <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
 <pre style="margin: 0;"><span style="color: #a78bf6;">LOG COLLECTION FLOW</span>

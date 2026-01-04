@@ -4,677 +4,2189 @@
     <base href="/NikDet/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splunk Data Ingestion & Parsing | SOC Compendium</title>
+    <title>Splunk Data Ingestion Complete Guide | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .concept-box { background: linear-gradient(135deg, rgba(101, 166, 55, 0.1), rgba(101, 166, 55, 0.05)); border: 1px solid rgba(101, 166, 55, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
-        .concept-box h3 { color: #65a637; margin-top: 0; }
-        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #65a637; }
-        .scenario-box h4 { margin-top: 0; color: #65a637; }
-        .code-block { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; }
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
         .file-block { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; margin: 1rem 0; overflow: hidden; }
-        .file-block .header { background: var(--card-bg); padding: 0.5rem 1rem; font-family: var(--font-mono); font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: #65a637; }
-        .file-block pre { margin: 0; padding: 1rem; font-size: 0.85rem; }
-        .tier-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; }
-        .tier-card h4 { margin: 0 0 0.5rem 0; }
-        .tier-card.hot { border-left: 4px solid #ef4444; }
-        .tier-card.warm { border-left: 4px solid #f97316; }
-        .tier-card.cold { border-left: 4px solid #3b82f6; }
-        .tier-card.frozen { border-left: 4px solid #6b7280; }
-        .flow-diagram { background: var(--bg-secondary); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-        .flow-step { display: inline-block; background: #65a637; color: white; padding: 0.5rem 1rem; border-radius: 8px; margin: 0.25rem; font-size: 0.85rem; }
-        .flow-arrow { color: var(--text-muted); margin: 0 0.5rem; }
-        .tip-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
-        .warning-box { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
-        .step-section { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
-        .step-section h5 { margin: 0 0 0.5rem 0; color: #65a637; }
+        .file-block .header { background: var(--card-bg); padding: 0.5rem 1rem; font-family: monospace; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: #65a637; }
+        .file-block pre { margin: 0; padding: 1rem; font-size: 0.85rem; overflow-x: auto; }
+        .ta-category { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #65a637; }
+        .ta-category h3 { color: #65a637; margin-top: 0; }
+        .info-box { background: rgba(99, 102, 241, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; }
     </style>
-<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="pages/splunk/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb">
-                <a href="index.html">Home</a><span class="separator">/</span>
-                <a href="index.html">Splunk</a><span class="separator">/</span>
-                <span>Data Ingestion & Parsing</span>
-            </div>
-
+            <div class="breadcrumb"><a href="pages/splunk/index.html">Home</a><span class="separator">/</span><a href="pages/splunk/index.html">Splunk</a><span class="separator">/</span><span>Data Ingestion</span></div>
             <div class="content">
-                <h1><i class="fas fa-database" style="color: #65a637;"></i> Splunk Data Ingestion & Parsing</h1>
-                <p class="lead">Complete guide to getting data into Splunk: inputs, sourcetypes, props.conf, transforms.conf, CIM normalization, and index tiers.</p>
+                <h1><i class="fas fa-database" style="color: #65a637;"></i> Splunk Data Ingestion Complete Guide</h1>
+                <p class="lead">100% comprehensive guide to ALL data ingestion methods: inputs, forwarders, Technology Add-ons, HEC, props.conf, transforms.conf, and CIM compliance.</p>
 
-                <!-- OVERVIEW -->
-                <div class="concept-box">
-                    <h3><i class="fas fa-route"></i> How Data Gets Into Splunk</h3>
-                    <p>Data flows through Splunk's pipeline:</p>
-                    <div class="flow-diagram">
-                        <span class="flow-step">📊 Log Source</span>
-                        <span class="flow-arrow">→</span>
-                        <span class="flow-step">📤 Forwarder</span>
-                        <span class="flow-arrow">→</span>
-                        <span class="flow-step">⚙️ Parsing (props/transforms)</span>
-                        <span class="flow-arrow">→</span>
-                        <span class="flow-step">💾 Indexer</span>
-                        <span class="flow-arrow">→</span>
-                        <span class="flow-step">🔍 Search Head</span>
-                    </div>
-                    <p style="margin-top: 1rem;"><strong>Key concepts:</strong></p>
-                    <ul>
-                        <li><strong>Input</strong> = How data enters Splunk (file monitor, syslog, API)</li>
-                        <li><strong>Sourcetype</strong> = Tells Splunk how to parse the data</li>
-                        <li><strong>Index</strong> = Where data is stored (like a database)</li>
-                        <li><strong>props.conf</strong> = Parsing rules for each sourcetype</li>
-                        <li><strong>transforms.conf</strong> = Advanced transformations and field extractions</li>
+                <div style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                    <strong>⚠️ Important Updates (January 2025)</strong>
+                    <ul style="margin: 0.5rem 0;">
+                        <li><strong>Splunk Enterprise 9.3.x</strong> is current version - Platform version compatibility varies by TA</li>
+                        <li><strong>Splunk_TA_windows v5.0+</strong> introduced BREAKING CHANGES - Read upgrade docs before deploying</li>
+                        <li><strong>Palo Alto TA migrated to Splunk-supported</strong> - Old "Palo Alto Networks Add-on" deprecated, use new "Splunk Add-on for Palo Alto Networks"</li>
+                        <li><strong>CIM version 6.x</strong> is current - Some older TAs may need updates for ES 8.x compatibility</li>
+                        <li><strong>Always test TAs in non-production first</strong> before deploying to production indexers</li>
                     </ul>
                 </div>
 
-                <!-- SECTION 1: INPUTS -->
-                <h2><i class="fas fa-upload"></i> Section 1: Data Inputs</h2>
+                <div class="diagram-box">
+SPLUNK DATA INGESTION ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
 
-                <p>The first step is getting data INTO Splunk. There are several input methods:</p>
+COMPLETE DATA FLOW:
+─────────────────────────────────────────────────────────────────────────────
 
-                <table>
-                    <thead>
-                        <tr><th>Input Type</th><th>Use Case</th><th>Configuration</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>monitor://</strong></td>
-                            <td>Watch files/directories</td>
-                            <td><code>[monitor:///var/log/messages]</code></td>
-                        </tr>
-                        <tr>
-                            <td><strong>WinEventLog://</strong></td>
-                            <td>Windows Event Logs</td>
-                            <td><code>[WinEventLog://Security]</code></td>
-                        </tr>
-                        <tr>
-                            <td><strong>tcp:// / udp://</strong></td>
-                            <td>Syslog, network inputs</td>
-                            <td><code>[tcp://514]</code></td>
-                        </tr>
-                        <tr>
-                            <td><strong>HTTP Event Collector</strong></td>
-                            <td>API-based ingestion</td>
-                            <td>POST to <code>:8088/services/collector</code></td>
-                        </tr>
-                        <tr>
-                            <td><strong>scripted://</strong></td>
-                            <td>Custom scripts</td>
-                            <td><code>[script://./bin/myscript.sh]</code></td>
-                        </tr>
-                    </tbody>
-                </table>
+                          ┌─────────────────────┐
+                          │   LOG SOURCES       │
+                          │                     │
+                          │  • Windows Events   │
+                          │  • Linux Syslog     │
+                          │  • Network Devices  │
+                          │  • Cloud Services   │
+                          │  • Custom Apps      │
+                          │  • APIs             │
+                          └──────────┬──────────┘
+                                     │
+              ┌──────────────────────┼──────────────────────┐
+              │                      │                      │
+              ▼                      ▼                      ▼
+     ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+     │   Universal     │   │     Heavy       │   │    HTTP Event   │
+     │   Forwarder     │   │   Forwarder     │   │   Collector     │
+     │     (UF)        │   │     (HF)        │   │    (HEC)        │
+     │                 │   │                 │   │                 │
+     │  • Lightweight  │   │  • Full parsing │   │  • REST API     │
+     │  • No parsing   │   │  • Routing      │   │  • JSON/Raw     │
+     │  • Agent-based  │   │  • Aggregation  │   │  • Token auth   │
+     └────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+              │                      │                      │
+              └──────────────────────┼──────────────────────┘
+                                     │
+                                     ▼
+                    ┌─────────────────────────────────────┐
+                    │           INDEXER CLUSTER           │
+                    │                                     │
+                    │  ┌─────────────────────────────┐   │
+                    │  │     PARSING PIPELINE        │   │
+                    │  │                             │   │
+                    │  │  1. Input Phase             │   │
+                    │  │     └── inputs.conf         │   │
+                    │  │                             │   │
+                    │  │  2. Parsing Phase           │   │
+                    │  │     └── props.conf          │   │
+                    │  │         (LINE_BREAKER,      │   │
+                    │  │          TIME_FORMAT, etc.) │   │
+                    │  │                             │   │
+                    │  │  3. Transform Phase         │   │
+                    │  │     └── transforms.conf     │   │
+                    │  │         (Field extraction,  │   │
+                    │  │          routing, masking)  │   │
+                    │  │                             │   │
+                    │  │  4. Index Phase             │   │
+                    │  │     └── indexes.conf        │   │
+                    │  │         (Storage location,  │   │
+                    │  │          retention)         │   │
+                    │  │                             │   │
+                    │  └─────────────────────────────┘   │
+                    │                                     │
+                    │  Indexes:                          │
+                    │  ├── main                          │
+                    │  ├── security                      │
+                    │  ├── wineventlog                   │
+                    │  ├── firewall                      │
+                    │  └── custom_index                  │
+                    └─────────────────┬───────────────────┘
+                                      │
+                                      ▼
+                    ┌─────────────────────────────────────┐
+                    │          SEARCH HEAD CLUSTER        │
+                    │                                     │
+                    │  Search-time field extractions      │
+                    │  props.conf, transforms.conf        │
+                    │  CIM data models                    │
+                    │  Knowledge objects                  │
+                    └─────────────────────────────────────┘
 
-                <div class="scenario-box">
-                    <h4>Scenario: Configure Windows Event Log Collection</h4>
-                    
-                    <div class="step-section">
-                        <h5>Step 1: Create inputs.conf on Universal Forwarder</h5>
-                        <div class="file-block">
-                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/inputs.conf</div>
-<pre><code># Collect Windows Security Events
+
+INPUT METHODS - COMPLETE LIST:
+═══════════════════════════════════════════════════════════════════════════════
+
+  INPUT TYPE          CONFIG                           USE CASE
+  ─────────────────────────────────────────────────────────────────────────────
+  monitor://          [monitor:///path/to/file]        File/directory monitoring
+  WinEventLog://      [WinEventLog://Security]         Windows Event Logs
+  tcp://              [tcp://514]                      Syslog over TCP
+  udp://              [udp://514]                      Syslog over UDP
+  splunktcp://        [splunktcp://9997]               Receive from forwarders
+  http://             HTTP Event Collector             REST API ingestion
+  script://           [script://./bin/myscript.sh]    Custom scripts
+  perfmon://          [perfmon://CPU]                  Windows Performance
+  WMI://              [WMI://Win32_Process]            Windows WMI
+  MonitorNoHandle://  [MonitorNoHandle://path]        Files without file handle
+  fschange://         [fschange://path]               File system changes
+  batch://            [batch://path]                   One-time file ingestion
+  fifo://             [fifo://path]                    Named pipes (Unix)
+  modular input      [mymodularinput://name]          Custom modular inputs
+                </div>
+
+                <h2 id="forwarders"><i class="fas fa-share"></i> Forwarder Types</h2>
+
+                <div class="diagram-box">
+FORWARDER COMPARISON
+═══════════════════════════════════════════════════════════════════════════════
+
+UNIVERSAL FORWARDER (UF):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  CHARACTERISTICS:                                                       │
+  │  • Lightweight (~50MB RAM)                                             │
+  │  • No local parsing (sends raw data)                                   │
+  │  • No search capability                                                │
+  │  • Free - no license required                                          │
+  │  • Deployed on endpoints/servers                                       │
+  │                                                                         │
+  │  USE CASES:                                                            │
+  │  ✅ Windows servers collecting Event Logs                             │
+  │  ✅ Linux servers collecting syslog/app logs                          │
+  │  ✅ Any endpoint where lightweight agent needed                       │
+  │                                                                         │
+  │  LIMITATIONS:                                                          │
+  │  ❌ Cannot perform complex parsing                                     │
+  │  ❌ Cannot route based on content                                      │
+  │  ❌ No search capability                                               │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  Installation (Windows):
+  msiexec.exe /i splunkforwarder-9.x.x-x64.msi AGREETOLICENSE=Yes /quiet
+
+  Installation (Linux):
+  tar -xvf splunkforwarder-9.x.x-Linux-x86_64.tgz -C /opt
+  /opt/splunkforwarder/bin/splunk start --accept-license
+
+
+HEAVY FORWARDER (HF):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  CHARACTERISTICS:                                                       │
+  │  • Full Splunk instance (indexing disabled)                            │
+  │  • Can parse, filter, route data                                       │
+  │  • Requires Splunk license                                             │
+  │  • Higher resource usage                                               │
+  │                                                                         │
+  │  USE CASES:                                                            │
+  │  ✅ Syslog aggregation point                                          │
+  │  ✅ Parse and route based on content                                  │
+  │  ✅ Filter/mask sensitive data before indexing                        │
+  │  ✅ Protocol conversion (e.g., syslog → Splunk)                       │
+  │  ✅ Collect from APIs that need processing                            │
+  │                                                                         │
+  │  ARCHITECTURE:                                                         │
+  │                                                                         │
+  │  ┌───────────────┐     Syslog      ┌─────────────────┐                │
+  │  │   Firewall    │ ──────────────► │ Heavy Forwarder │                │
+  │  │   Router      │                 │                 │                │
+  │  │   Switch      │                 │ • Parse logs    │                │
+  │  └───────────────┘                 │ • Add metadata  │                │
+  │                                    │ • Route to index│                │
+  │                                    └────────┬────────┘                │
+  │                                             │ TCP 9997                │
+  │                                             ▼                         │
+  │                                    ┌─────────────────┐                │
+  │                                    │    Indexers     │                │
+  │                                    └─────────────────┘                │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+DEPLOYMENT SERVER:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  PURPOSE: Centrally manage forwarder configurations                    │
+  │                                                                         │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │           Deployment Server                                      │   │
+  │  │  /opt/splunk/etc/deployment-apps/                               │   │
+  │  │  ├── TA-windows/                                                │   │
+  │  │  │   └── local/inputs.conf                                      │   │
+  │  │  ├── TA-linux/                                                  │   │
+  │  │  │   └── local/inputs.conf                                      │   │
+  │  │  └── outputs_to_indexers/                                       │   │
+  │  │      └── local/outputs.conf                                     │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                              │                                          │
+  │              ┌───────────────┼───────────────┐                         │
+  │              ▼               ▼               ▼                         │
+  │         ┌────────┐      ┌────────┐      ┌────────┐                    │
+  │         │  UF 1  │      │  UF 2  │      │  UF 3  │                    │
+  │         │Windows │      │Windows │      │ Linux  │                    │
+  │         └────────┘      └────────┘      └────────┘                    │
+  │                                                                         │
+  │  serverclass.conf defines which apps go to which forwarders           │
+  └─────────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h2 id="inputs"><i class="fas fa-upload"></i> Input Configuration</h2>
+
+                <div class="file-block">
+                    <div class="header">inputs.conf - Windows Event Logs (Complete)</div>
+<pre># ═══════════════════════════════════════════════════════════════════════════
+# WINDOWS EVENT LOG COLLECTION - COMPREHENSIVE
+# Location: $SPLUNK_HOME/etc/apps/myapp/local/inputs.conf
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Security Events - Critical for SOC
 [WinEventLog://Security]
 disabled = 0
 index = wineventlog
 sourcetype = WinEventLog:Security
-# Only collect specific Event IDs (reduces volume)
-whitelist = 4624,4625,4648,4672,4688,4720,4726,4728,4732,4756
+# Whitelist critical Event IDs to reduce volume
+whitelist = 4624,4625,4634,4648,4672,4688,4689,4697,4698,4699,4700,4701,4702,4719,4720,4722,4723,4724,4725,4726,4727,4728,4729,4730,4731,4732,4733,4734,4735,4737,4738,4740,4741,4742,4743,4744,4745,4746,4747,4748,4749,4750,4751,4752,4753,4754,4755,4756,4757,4758,4759,4760,4761,4762,4763,4764,4767,4768,4769,4770,4771,4772,4773,4774,4775,4776,4777,4778,4779,4780,4781,4782,4783,4784,4785,4786,4787,4788,4789,4790,4791,4792,4793,4794,4795,4796,4797,4798,4799,4800,4801,4802,4803,5038,5140,5142,5143,5144,5145,5156,5157
 
-# Collect Windows System Events
+# System Events
 [WinEventLog://System]
 disabled = 0
 index = wineventlog
 sourcetype = WinEventLog:System
+# Service changes, driver loads, etc.
+whitelist = 7034,7035,7036,7040,7045,1001,6005,6006
 
-# Collect Sysmon Events
+# Application Events
+[WinEventLog://Application]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Application
+
+# PowerShell Script Block Logging (CRITICAL for detection)
+[WinEventLog://Microsoft-Windows-PowerShell/Operational]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:PowerShell:Operational
+whitelist = 4103,4104,4105,4106
+
+# Sysmon (if installed) - GOLD STANDARD for endpoint telemetry
 [WinEventLog://Microsoft-Windows-Sysmon/Operational]
 disabled = 0
 index = sysmon
 sourcetype = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
-renderXml = true</code></pre>
-                        </div>
-                    </div>
+renderXml = true
 
-                    <div class="step-section">
-                        <h5>Step 2: Configure outputs.conf (Where to send)</h5>
-                        <div class="file-block">
-                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/outputs.conf</div>
-<pre><code>[tcpout]
-defaultGroup = indexer_cluster
+# Windows Defender
+[WinEventLog://Microsoft-Windows-Windows Defender/Operational]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Microsoft-Windows-Windows Defender/Operational
 
-[tcpout:indexer_cluster]
-server = indexer1.company.com:9997, indexer2.company.com:9997
-compressed = true
-useACK = true</code></pre>
-                        </div>
-                    </div>
+# Task Scheduler (persistence detection)
+[WinEventLog://Microsoft-Windows-TaskScheduler/Operational]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:TaskScheduler
+whitelist = 106,140,141,142,200,201
 
-                    <div class="step-section">
-                        <h5>Step 3: Restart and Verify</h5>
-                        <div class="code-block">
-<pre># Restart forwarder
-$SPLUNK_HOME/bin/splunk restart
+# WMI Activity (persistence, lateral movement)
+[WinEventLog://Microsoft-Windows-WMI-Activity/Operational]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:WMI
 
-# On search head, verify data
-index=wineventlog sourcetype=WinEventLog:Security | head 10</pre>
-                        </div>
-                    </div>
+# DNS Client (DNS-based attacks)
+[WinEventLog://Microsoft-Windows-DNS-Client/Operational]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:DNS-Client
+
+# Windows Firewall
+[WinEventLog://Microsoft-Windows-Windows Firewall With Advanced Security/Firewall]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Firewall</pre>
                 </div>
 
-                <!-- SECTION 2: SOURCETYPES -->
-                <h2><i class="fas fa-tags"></i> Section 2: Sourcetypes (Pre-Built Parsing)</h2>
+                <div class="file-block">
+                    <div class="header">inputs.conf - Linux Syslog Collection</div>
+<pre># ═══════════════════════════════════════════════════════════════════════════
+# LINUX SYSLOG COLLECTION
+# ═══════════════════════════════════════════════════════════════════════════
 
-                <div class="concept-box">
-                    <h3>What is a Sourcetype?</h3>
-                    <p>A <strong>sourcetype</strong> tells Splunk:</p>
+# Standard syslog files
+[monitor:///var/log/syslog]
+disabled = 0
+index = linux
+sourcetype = syslog
+
+[monitor:///var/log/messages]
+disabled = 0
+index = linux
+sourcetype = syslog
+
+# Authentication logs (CRITICAL)
+[monitor:///var/log/auth.log]
+disabled = 0
+index = linux
+sourcetype = linux_secure
+
+[monitor:///var/log/secure]
+disabled = 0
+index = linux
+sourcetype = linux_secure
+
+# Audit logs (if auditd installed)
+[monitor:///var/log/audit/audit.log]
+disabled = 0
+index = linux
+sourcetype = linux_audit
+
+# Cron logs
+[monitor:///var/log/cron]
+disabled = 0
+index = linux
+sourcetype = cron
+
+# Boot log
+[monitor:///var/log/boot.log]
+disabled = 0
+index = linux
+sourcetype = linux_boot
+
+# Apache/Nginx logs
+[monitor:///var/log/apache2/access.log]
+disabled = 0
+index = web
+sourcetype = access_combined
+
+[monitor:///var/log/nginx/access.log]
+disabled = 0
+index = web
+sourcetype = nginx:access</pre>
+                </div>
+
+                <div class="file-block">
+                    <div class="header">inputs.conf - Syslog Listener (Heavy Forwarder)</div>
+<pre># ═══════════════════════════════════════════════════════════════════════════
+# SYSLOG LISTENER - RECEIVE FROM NETWORK DEVICES
+# Deploy on Heavy Forwarder
+# ═══════════════════════════════════════════════════════════════════════════
+
+# TCP Syslog (recommended - reliable)
+[tcp://514]
+disabled = 0
+connection_host = dns
+sourcetype = syslog
+index = network
+
+# UDP Syslog (faster but can lose events)
+[udp://514]
+disabled = 0
+connection_host = dns
+sourcetype = syslog
+index = network
+
+# TLS Encrypted Syslog (secure)
+[tcp-ssl://6514]
+disabled = 0
+connection_host = dns
+sourcetype = syslog
+index = network
+
+# Dedicated port for specific vendor (Palo Alto)
+[tcp://5514]
+disabled = 0
+connection_host = dns
+sourcetype = pan:traffic
+index = firewall
+
+# Dedicated port for Cisco ASA
+[udp://5515]
+disabled = 0
+connection_host = dns
+sourcetype = cisco:asa
+index = firewall</pre>
+                </div>
+
+                <h2 id="hec"><i class="fas fa-code"></i> HTTP Event Collector (HEC)</h2>
+
+                <div class="diagram-box">
+HTTP EVENT COLLECTOR - API-BASED INGESTION
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  Application/Script                                                     │
+  │         │                                                               │
+  │         │  POST https://splunk-hec.company.com:8088/services/collector │
+  │         │  Headers:                                                     │
+  │         │    Authorization: Splunk {HEC-TOKEN}                         │
+  │         │    Content-Type: application/json                            │
+  │         │                                                               │
+  │         │  Body:                                                        │
+  │         │  {                                                            │
+  │         │    "time": 1704067200,                                       │
+  │         │    "host": "webserver01",                                    │
+  │         │    "source": "myapp",                                        │
+  │         │    "sourcetype": "myapp:json",                               │
+  │         │    "index": "application",                                   │
+  │         │    "event": {                                                │
+  │         │      "message": "User login successful",                     │
+  │         │      "user": "john.doe",                                     │
+  │         │      "ip": "10.0.0.100"                                      │
+  │         │    }                                                          │
+  │         │  }                                                            │
+  │         │                                                               │
+  │         ▼                                                               │
+  │  ┌─────────────────────────────────────────┐                           │
+  │  │  HTTP Event Collector (Port 8088)       │                           │
+  │  │                                          │                           │
+  │  │  • Token authentication                 │                           │
+  │  │  • TLS encryption                       │                           │
+  │  │  • Acknowledgement (optional)           │                           │
+  │  └─────────────────────────────────────────┘                           │
+  │         │                                                               │
+  │         ▼                                                               │
+  │  Indexer → Index: application                                          │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+HEC ENDPOINTS:
+─────────────────────────────────────────────────────────────────────────────
+
+  /services/collector/event        POST single or batch events (JSON)
+  /services/collector/raw          POST raw text data
+  /services/collector/event/1.0    Versioned endpoint
+  /services/collector/ack          Check acknowledgement status
+  /services/collector/health       Health check endpoint
+
+
+HEC TOKEN CREATION (via CLI):
+─────────────────────────────────────────────────────────────────────────────
+
+  # Create HEC token
+  ./splunk http-event-collector create my-token -uri https://localhost:8089 \
+    -index main -sourcetype _json -auth admin:password
+
+  # List tokens
+  ./splunk http-event-collector list -uri https://localhost:8089 -auth admin:password
+
+  # Enable/disable token
+  ./splunk http-event-collector enable my-token -uri https://localhost:8089
+  ./splunk http-event-collector disable my-token -uri https://localhost:8089
+                </div>
+
+                <h3>HEC Examples</h3>
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# HEC - SEND EVENTS (Various Languages)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# CURL - Single Event
+curl -k https://splunk-hec.company.com:8088/services/collector/event \
+  -H "Authorization: Splunk YOUR-HEC-TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"event": "Hello from curl!", "sourcetype": "manual"}'
+
+# CURL - Batch Events
+curl -k https://splunk-hec.company.com:8088/services/collector/event \
+  -H "Authorization: Splunk YOUR-HEC-TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"event": {"action": "login", "user": "alice"}}
+{"event": {"action": "logout", "user": "bob"}}'
+
+# PYTHON
+import requests
+import json
+
+HEC_URL = "https://splunk-hec.company.com:8088/services/collector/event"
+HEC_TOKEN = "YOUR-HEC-TOKEN"
+
+def send_to_splunk(events):
+    headers = {
+        "Authorization": f"Splunk {HEC_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = "\n".join([json.dumps({"event": e}) for e in events])
+    
+    response = requests.post(HEC_URL, headers=headers, data=payload, verify=False)
+    return response.json()
+
+# Usage
+events = [
+    {"action": "login", "user": "alice", "ip": "10.0.0.1"},
+    {"action": "file_access", "user": "alice", "file": "/etc/passwd"}
+]
+result = send_to_splunk(events)
+
+
+# POWERSHELL
+$HecUrl = "https://splunk-hec.company.com:8088/services/collector/event"
+$HecToken = "YOUR-HEC-TOKEN"
+
+$headers = @{
+    "Authorization" = "Splunk $HecToken"
+    "Content-Type" = "application/json"
+}
+
+$event = @{
+    event = @{
+        action = "login"
+        user = "alice"
+        ip = "10.0.0.1"
+    }
+    sourcetype = "myapp:json"
+    index = "application"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri $HecUrl -Method Post -Headers $headers -Body $event -SkipCertificateCheck</pre></div>
+
+                <h2 id="tas"><i class="fas fa-puzzle-piece"></i> Technology Add-ons (TAs)</h2>
+
+                <div class="ta-category">
+                    <h3>What are Technology Add-ons?</h3>
+                    <p>TAs provide pre-built parsing configurations, field extractions, and CIM compliance for specific log sources. They contain:</p>
                     <ul>
-                        <li>How to break data into events (line breaking)</li>
-                        <li>How to extract the timestamp</li>
-                        <li>What fields to extract</li>
+                        <li><strong>props.conf</strong> - Parsing rules, time format, line breaking</li>
+                        <li><strong>transforms.conf</strong> - Field extractions, lookups, routing</li>
+                        <li><strong>eventtypes.conf</strong> - Event categorization</li>
+                        <li><strong>tags.conf</strong> - CIM tagging for data models</li>
+                        <li><strong>inputs.conf</strong> - Sample input configurations (usually disabled by default)</li>
                     </ul>
-                    <p>For common log formats, <strong>Technology Add-ons (TAs)</strong> provide pre-built sourcetypes with all parsing configured.</p>
+                    <p><strong>Where to install TAs:</strong></p>
+                    <ul>
+                        <li><strong>Search Heads</strong> - For search-time field extractions, lookups, CIM compliance</li>
+                        <li><strong>Indexers</strong> - For index-time extractions (if TA has INDEXED_EXTRACTIONS)</li>
+                        <li><strong>Heavy Forwarders</strong> - For parsing before forwarding, modular inputs</li>
+                        <li><strong>Universal Forwarders</strong> - Usually just inputs.conf (no parsing capability)</li>
+                    </ul>
                 </div>
 
-                <h3>Common Security Sourcetypes</h3>
+                <h3>Essential Security TAs (Splunkbase) - Current Versions January 2025</h3>
                 <table>
-                    <thead>
-                        <tr><th>Sourcetype</th><th>Source</th><th>TA Required</th><th>Key Fields</th></tr>
-                    </thead>
+                    <thead><tr><th>Category</th><th>Add-on Name (Splunkbase ID)</th><th>Key Sourcetypes</th><th>Notes</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td><code>WinEventLog:Security</code></td>
-                            <td>Windows Security Log</td>
-                            <td>Splunk Add-on for Windows</td>
-                            <td>EventCode, Account_Name, Logon_Type, Source_Network_Address</td>
-                        </tr>
-                        <tr>
-                            <td><code>XmlWinEventLog:Microsoft-Windows-Sysmon/Operational</code></td>
-                            <td>Sysmon</td>
-                            <td>Splunk Add-on for Sysmon</td>
-                            <td>EventID, Image, CommandLine, ParentImage, Hashes</td>
-                        </tr>
-                        <tr>
-                            <td><code>pan:traffic</code></td>
-                            <td>Palo Alto Firewall</td>
-                            <td>Palo Alto Networks Add-on</td>
-                            <td>src_ip, dest_ip, dest_port, action, app, rule</td>
-                        </tr>
-                        <tr>
-                            <td><code>cisco:asa</code></td>
-                            <td>Cisco ASA Firewall</td>
-                            <td>Cisco ASA Add-on</td>
-                            <td>src_ip, dest_ip, action, protocol</td>
-                        </tr>
-                        <tr>
-                            <td><code>linux_secure</code></td>
-                            <td>Linux /var/log/secure</td>
-                            <td>Splunk Add-on for Unix</td>
-                            <td>user, src_ip, process, action</td>
-                        </tr>
-                        <tr>
-                            <td><code>aws:cloudtrail</code></td>
-                            <td>AWS CloudTrail</td>
-                            <td>Splunk Add-on for AWS</td>
-                            <td>eventName, userIdentity, sourceIPAddress</td>
-                        </tr>
-                        <tr>
-                            <td><code>ms:o365:management</code></td>
-                            <td>Microsoft 365 Audit</td>
-                            <td>Splunk Add-on for O365</td>
-                            <td>Operation, UserId, ClientIP, Workload</td>
-                        </tr>
+                        <tr><td><strong>Windows</strong></td><td><strong>Splunk Add-on for Microsoft Windows</strong> (742)<br><em>⚠️ v5.0+ has BREAKING CHANGES</em></td><td>WinEventLog:Security, WinEventLog:System, XmlWinEventLog:*, WinRegistry, WindowsUpdateLog, WinHostMon</td><td>Install on: SH, IDX, HF, UF. Version 5.0 changed source vs sourcetype - read migration guide!</td></tr>
+                        <tr><td><strong>Sysmon</strong></td><td><strong>Splunk Add-on for Sysmon</strong> (5709)<br><em>Splunk-supported version</em></td><td>XmlWinEventLog:Microsoft-Windows-Sysmon/Operational (use source= not sourcetype= with TA-windows v5+)</td><td>Install on: SH, IDX. Maps to Endpoint, Network Traffic, Change data models. NOT same as community TA-microsoft-sysmon.</td></tr>
+                        <tr><td><strong>Linux/Unix</strong></td><td><strong>Splunk Add-on for Unix and Linux</strong> (833)</td><td>syslog, linux_secure, linux_audit, linux_bootlog, Unix:ListeningPorts, Unix:Service, ps, top, df</td><td>Install on: SH, IDX, HF, UF. Includes scripted inputs for system inventory.</td></tr>
+                        <tr><td><strong>Palo Alto</strong></td><td><strong>Splunk Add-on for Palo Alto Networks</strong> (7523)<br><em>NEW Splunk-supported version (Oct 2024)</em></td><td>pan:traffic, pan:threat, pan:system, pan:config, pan:globalprotect, pan:hipmatch, pan:userid, pan:decryption, pan:iot_security, pan:cortex_xdr</td><td>⚠️ Old "Palo Alto Networks Add-on" (2757) DEPRECATED. Migrate to new Splunk-supported version. Different CIM mappings!</td></tr>
+                        <tr><td><strong>Fortinet</strong></td><td><strong>Fortinet FortiGate Add-on for Splunk</strong> (2846)</td><td>fgt_traffic, fgt_utm, fgt_event, fgt_log</td><td>Install on: SH, IDX, HF. Vendor-supported. Works with FortiAnalyzer syslog export.</td></tr>
+                        <tr><td><strong>Cisco ASA</strong></td><td><strong>Splunk Add-on for Cisco ASA</strong> (1620)</td><td>cisco:asa</td><td>Install on: SH, IDX, HF. Parses ASA syslog (port 514 default).</td></tr>
+                        <tr><td><strong>CrowdStrike</strong></td><td><strong>CrowdStrike Falcon Event Streams TA</strong> (5082)<br><em>v3.5.0 Oct 2024</em></td><td>crowdstrike:events:sensor, crowdstrike:events:incident</td><td>Install on: SH, HF. Requires CrowdStrike API credentials. Uses Event Streams API.</td></tr>
+                        <tr><td><strong>CrowdStrike Devices</strong></td><td><strong>CrowdStrike Falcon Devices TA</strong> (5570)<br><em>v3.3.0 Nov 2024</em></td><td>crowdstrike:device:json</td><td>Pull device inventory from Falcon. Good for asset enrichment.</td></tr>
+                        <tr><td><strong>AWS</strong></td><td><strong>Splunk Add-on for AWS</strong> (1876)</td><td>aws:cloudtrail, aws:cloudwatch, aws:cloudwatch:guardduty, aws:s3:accesslogs, aws:config:rule, aws:vpc:flow</td><td>Install on: SH, HF. Uses SQS-based S3 input. Requires IAM role/keys.</td></tr>
+                        <tr><td><strong>Azure/Entra</strong></td><td><strong>Splunk Add-on for Microsoft Cloud Services</strong> (3110)</td><td>mscs:azure:eventhub, azure:aad:signin, azure:aad:audit, azure:monitor:aad, azure:activity</td><td>Install on: SH, HF. Uses Event Hub ingestion for Azure. Now covers Microsoft Entra ID (formerly Azure AD).</td></tr>
+                        <tr><td><strong>Microsoft Security</strong></td><td><strong>Splunk Add-on for Microsoft Security</strong> (6207)</td><td>ms:defender:incident, ms:defender:alert</td><td>NEW: Collects from Microsoft 365 Defender. Replaces deprecated "Microsoft 365 Defender Add-on".</td></tr>
+                        <tr><td><strong>O365</strong></td><td><strong>Splunk Add-on for Microsoft Office 365</strong> (4055)</td><td>o365:management:activity</td><td>Install on: SH, HF. Uses Management Activity API. Covers Exchange, SharePoint, Teams, etc.</td></tr>
+                        <tr><td><strong>Okta</strong></td><td><strong>Splunk Add-on for Okta</strong> (6049)</td><td>OktaIM2:log</td><td>Install on: SH, HF. Uses System Log API. Splunk-supported.</td></tr>
+                        <tr><td><strong>Zscaler</strong></td><td><strong>Zscaler App for Splunk</strong> (3866)</td><td>zscalernss-web, zscalernss-fw, zscalernss-dns</td><td>Uses Nanolog Streaming Service (NSS). Vendor-supported.</td></tr>
+                        <tr><td><strong>CIM</strong></td><td><strong>Splunk Common Information Model</strong> (1621)<br><em>CIM 6.x for ES 8.x</em></td><td>N/A (provides data models)</td><td>Install on: SH only. Required for Enterprise Security. Contains Authentication, Network Traffic, Endpoint, Web, Email, etc. data models.</td></tr>
+                        <tr><td><strong>ES Content Update</strong></td><td><strong>Splunk ES Content Update (ESCU)</strong> (3449)</td><td>N/A (provides detection rules)</td><td>Pre-packaged detections mapped to MITRE ATT&CK. Use with Enterprise Security.</td></tr>
                     </tbody>
                 </table>
 
-                <div class="tip-box">
-                    <strong><i class="fas fa-lightbulb"></i> Best Practice</strong>
-                    <p>Always check Splunkbase for a Technology Add-on (TA) before writing custom parsing. TAs are tested, maintained, and include CIM compliance.</p>
-                </div>
-
-                <!-- SECTION 3: PROPS.CONF -->
-                <h2><i class="fas fa-cog"></i> Section 3: props.conf (Parsing Configuration)</h2>
-
-                <div class="concept-box">
-                    <h3>What is props.conf?</h3>
-                    <p><strong>props.conf</strong> defines how Splunk parses a specific sourcetype:</p>
-                    <ul>
-                        <li><strong>Time extraction</strong> - Where is the timestamp? What format?</li>
-                        <li><strong>Line breaking</strong> - Where does one event end and another begin?</li>
-                        <li><strong>Field extraction</strong> - What fields to extract (at search-time or index-time)</li>
-                        <li><strong>Field aliases</strong> - Map custom names to CIM names</li>
+                <div class="info-box" style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0;">
+                    <strong>💡 Pro Tips for TAs:</strong>
+                    <ul style="margin: 0.5rem 0;">
+                        <li>Always check Splunkbase for the latest version before deploying</li>
+                        <li>Read the "Upgrade" section in documentation - many TAs have breaking changes between major versions</li>
+                        <li>Test in dev/staging environment before pushing to production</li>
+                        <li>For clustered environments, deploy TAs via Cluster Master (now called Manager) to indexers, via Deployer to search heads</li>
+                        <li>Use Deployment Server to push TAs and inputs.conf to Universal Forwarders</li>
                     </ul>
                 </div>
 
-                <h3>Key props.conf Settings</h3>
-                <table>
-                    <thead>
-                        <tr><th>Setting</th><th>Purpose</th><th>Example</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>TIME_FORMAT</code></td>
-                            <td>Timestamp format</td>
-                            <td><code>TIME_FORMAT = %Y-%m-%d %H:%M:%S</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>TIME_PREFIX</code></td>
-                            <td>Text before timestamp</td>
-                            <td><code>TIME_PREFIX = ^</code> (start of line)</td>
-                        </tr>
-                        <tr>
-                            <td><code>MAX_TIMESTAMP_LOOKAHEAD</code></td>
-                            <td>How far to look for timestamp</td>
-                            <td><code>MAX_TIMESTAMP_LOOKAHEAD = 25</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>SHOULD_LINEMERGE</code></td>
-                            <td>Merge multiple lines into one event?</td>
-                            <td><code>SHOULD_LINEMERGE = false</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>LINE_BREAKER</code></td>
-                            <td>Regex for event boundaries</td>
-                            <td><code>LINE_BREAKER = ([\r\n]+)</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>EXTRACT-&lt;name&gt;</code></td>
-                            <td>Regex field extraction</td>
-                            <td><code>EXTRACT-user = user=(?&lt;user&gt;\w+)</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>FIELDALIAS-&lt;name&gt;</code></td>
-                            <td>Create field alias</td>
-                            <td><code>FIELDALIAS-src = source_ip AS src_ip</code></td>
-                        </tr>
-                        <tr>
-                            <td><code>REPORT-&lt;name&gt;</code></td>
-                            <td>Use transform from transforms.conf</td>
-                            <td><code>REPORT-fields = my_extraction</code></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <h3>TA Installation - Step by Step</h3>
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# TA INSTALLATION WORKFLOW
+# ═══════════════════════════════════════════════════════════════════════════
 
-                <div class="scenario-box">
-                    <h4>Scenario: Create Custom Sourcetype for Application Logs</h4>
-                    <p><strong>Your application produces logs like:</strong></p>
-                    <div class="code-block">
-<pre>2025-01-04 10:23:45.123 [INFO] [user=john.doe] [action=login] [status=success] [ip=192.168.1.100] Login completed
-2025-01-04 10:24:12.456 [WARN] [user=jane.smith] [action=file_download] [status=blocked] [ip=10.0.0.50] Download blocked by policy</pre>
-                    </div>
+# OPTION 1: Splunk Web (Single Server or Search Head)
+# 1. Apps → Find More Apps → Search for TA name
+# 2. Click Install → Enter splunk.com credentials
+# 3. Restart Splunk if prompted
 
-                    <div class="step-section">
-                        <h5>Step 1: Create props.conf</h5>
-                        <div class="file-block">
-                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/props.conf</div>
-<pre><code>[custom_app_log]
-# Timestamp extraction
-TIME_FORMAT = %Y-%m-%d %H:%M:%S.%3N
-TIME_PREFIX = ^
-MAX_TIMESTAMP_LOOKAHEAD = 24
+# OPTION 2: Command Line
+cd /opt/splunk/etc/apps
+tar -xvf /path/to/downloaded-ta.tgz
+/opt/splunk/bin/splunk restart
 
-# Line breaking - each line is one event
+# OPTION 3: Deployment Server (for Universal Forwarders)
+# 1. Extract TA to deployment-apps directory
+cd /opt/splunk/etc/deployment-apps
+tar -xvf /path/to/Splunk_TA_windows.tgz
+
+# 2. Create/edit serverclass.conf
+cat >> /opt/splunk/etc/system/local/serverclass.conf << 'EOF'
+[serverClass:Windows_Servers]
+whitelist.0 = *.yourdomain.com
+whitelist.1 = 10.0.0.*
+
+[serverClass:Windows_Servers:app:Splunk_TA_windows]
+restartSplunkWeb = 0
+restartSplunkd = 1
+stateOnClient = enabled
+EOF
+
+# 3. Reload deployment server
+/opt/splunk/bin/splunk reload deploy-server
+
+# OPTION 4: Cluster Master/Manager (for Indexer Cluster)
+# Extract to master-apps directory
+cd /opt/splunk/etc/master-apps
+tar -xvf /path/to/Splunk_TA_windows.tgz
+
+# Apply bundle to peers
+/opt/splunk/bin/splunk apply cluster-bundle
+
+# OPTION 5: Deployer (for Search Head Cluster)
+cd /opt/splunk/etc/shcluster/apps
+tar -xvf /path/to/Splunk_TA_windows.tgz
+/opt/splunk/bin/splunk apply shcluster-bundle -target https://sh1:8089 -auth admin:password</pre></div>
+
+                <h3>Deep Dive: What's Inside a Technology Add-on</h3>
+                <p>Understanding TA internals is crucial for troubleshooting and customization. Here's exactly what you'll find:</p>
+                
+                <div class="diagram-box">
+TA DIRECTORY STRUCTURE - COMPLETE BREAKDOWN
+═══════════════════════════════════════════════════════════════════════════════
+
+$SPLUNK_HOME/etc/apps/Splunk_TA_windows/
+│
+├── default/                      # Vendor-provided configs (DO NOT EDIT)
+│   ├── app.conf                  # App metadata, version info
+│   ├── inputs.conf               # Sample inputs (usually disabled)
+│   ├── props.conf                # Parsing rules, field extractions
+│   ├── transforms.conf           # Advanced extractions, lookups
+│   ├── eventtypes.conf           # Event categorization
+│   ├── tags.conf                 # CIM tagging
+│   └── data/
+│       └── ui/
+│           └── views/            # Any included dashboards
+│
+├── local/                        # YOUR customizations go here
+│   ├── inputs.conf               # Enable/customize inputs
+│   └── props.conf                # Override extractions if needed
+│
+├── lookups/                      # CSV lookup files
+│   ├── action_lookup.csv         # Maps raw values to CIM values
+│   ├── severity_lookup.csv       
+│   └── vendor_product_lookup.csv
+│
+├── metadata/
+│   ├── default.meta              # Permissions for default/
+│   └── local.meta                # Permissions for local/
+│
+├── bin/                          # Scripts for modular inputs
+│   └── (Python scripts for API-based collection)
+│
+├── README/                       # Documentation
+│   └── inputs.conf.spec          # All available input options
+│
+└── static/                       # Icons, images
+    └── appIcon.png
+
+
+KEY RULE: Never edit files in default/ - always create/edit in local/
+          Splunk merges local/ over default/ at runtime
+                </div>
+
+                <h3>Real Example: Examining Splunk_TA_windows</h3>
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# HANDS-ON: Explore the Windows TA
+# ═══════════════════════════════════════════════════════════════════════════
+
+# List all files in the TA
+ls -la /opt/splunk/etc/apps/Splunk_TA_windows/
+
+# View the default inputs (these are typically disabled)
+cat /opt/splunk/etc/apps/Splunk_TA_windows/default/inputs.conf
+
+# OUTPUT SHOWS SOMETHING LIKE:
+# [WinEventLog://Application]
+# disabled = 1
+# 
+# [WinEventLog://Security]  
+# disabled = 1
+# ...
+
+# View parsing rules (props.conf)
+cat /opt/splunk/etc/apps/Splunk_TA_windows/default/props.conf | head -100
+
+# OUTPUT SHOWS:
+# [WinEventLog:Security]
+# KV_MODE = xml
+# SHOULD_LINEMERGE = false
+# TIME_FORMAT = %Y-%m-%dT%H:%M:%S
+# ...
+
+# View field aliases for CIM compliance
+grep "FIELDALIAS" /opt/splunk/etc/apps/Splunk_TA_windows/default/props.conf
+
+# OUTPUT SHOWS:
+# FIELDALIAS-user = TargetUserName AS user
+# FIELDALIAS-src = IpAddress AS src
+# FIELDALIAS-dest = WorkstationName AS dest
+# ...</pre></div>
+
+                <h3>Hands-On: Configure Windows TA for Security Monitoring</h3>
+                <div class="diagram-box">
+SCENARIO: Configure Splunk_TA_windows to collect security-relevant events only
+═══════════════════════════════════════════════════════════════════════════════
+
+GOAL: Collect only important security events to reduce volume while maintaining
+      visibility for SOC operations.
+
+STEP 1: Create local inputs.conf
+────────────────────────────────────────────────────────────────────────────────
+
+  Location: /opt/splunk/etc/apps/Splunk_TA_windows/local/inputs.conf
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # WINDOWS SECURITY EVENTS - OPTIMIZED FOR SOC
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  [WinEventLog://Security]
+  disabled = 0
+  index = wineventlog
+  # Only collect security-relevant events (reduces volume by 80%+)
+  whitelist = 4624,4625,4626,4627,4634,4647,4648,4649,4672,4673,4674,4675,\
+              4688,4689,4697,4698,4699,4700,4701,4702,4703,4704,4705,4706,\
+              4707,4713,4714,4715,4716,4717,4718,4719,4720,4722,4723,4724,\
+              4725,4726,4727,4728,4729,4730,4731,4732,4733,4734,4735,4737,\
+              4738,4739,4740,4741,4742,4743,4744,4745,4746,4747,4748,4749,\
+              4750,4751,4752,4753,4754,4755,4756,4757,4758,4759,4760,4761,\
+              4762,4763,4764,4765,4766,4767,4768,4769,4770,4771,4772,4773,\
+              4774,4776,4777,4778,4779,4780,4781,4782,4793,4797,4798,4799,\
+              4800,4801,4802,4803,4864,4865,4866,4867,4868,4869,4870,4871,\
+              4872,4873,4874,4875,4876,4877,4878,4879,4880,4881,4882,4883,\
+              4884,4885,4886,4887,4888,4889,4890,4891,4892,4893,4894,4895,\
+              4896,4897,4898,4899,4900,4901,4902,4903,4904,4905,4906,4907,\
+              4908,4909,4910,4911,4912,4913,4964,4985,5024,5025,5027,5028,\
+              5029,5030,5031,5032,5033,5034,5035,5037,5038,5039,5040,5041,\
+              5042,5043,5044,5045,5046,5047,5048,5049,5050,5051,5056,5057,\
+              5058,5059,5060,5061,5136,5137,5138,5139,5140,5141,5142,5143,\
+              5144,5145,5146,5147,5148,5149,5150,5151,5152,5153,5154,5155,\
+              5156,5157,5158,5159
+
+  # CRITICAL EVENTS TO NEVER MISS:
+  # 4624 - Successful Logon
+  # 4625 - Failed Logon
+  # 4648 - Explicit Credential Logon (Pass-the-Hash indicator)
+  # 4672 - Special Privileges Assigned (Admin logon)
+  # 4688 - Process Creation (requires command line auditing)
+  # 4720 - User Account Created
+  # 4726 - User Account Deleted
+  # 4728/4732/4756 - User Added to Security Group
+  # 4768 - Kerberos TGT Requested
+  # 4769 - Kerberos Service Ticket Requested
+  # 4771 - Kerberos Pre-Auth Failed
+
+
+STEP 2: Enable PowerShell Logging
+────────────────────────────────────────────────────────────────────────────────
+
+  # PowerShell Script Block Logging (requires GPO to enable on endpoints)
+  [WinEventLog://Microsoft-Windows-PowerShell/Operational]
+  disabled = 0
+  index = wineventlog
+  whitelist = 4103,4104,4105,4106
+  # 4103 - Module Logging
+  # 4104 - Script Block Logging (CRITICAL - shows full scripts)
+  # 4105 - Script Block Start
+  # 4106 - Script Block Stop
+
+
+STEP 3: Enable Sysmon Collection (if Sysmon is deployed)
+────────────────────────────────────────────────────────────────────────────────
+
+  [WinEventLog://Microsoft-Windows-Sysmon/Operational]
+  disabled = 0
+  index = sysmon
+  renderXml = true
+  # renderXml=true preserves full XML for better field extraction
+  
+  # IMPORTANT for TA-windows v5+:
+  # Use source= not sourcetype= in searches:
+  # source="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational"
+
+
+STEP 4: Verify Configuration
+────────────────────────────────────────────────────────────────────────────────
+
+  # On the forwarder, check effective config
+  /opt/splunk/bin/splunk btool inputs list --debug | grep -A5 "WinEventLog"
+  
+  # Check for config errors
+  /opt/splunk/bin/splunk btool check
+  
+  # Restart forwarder to apply
+  /opt/splunk/bin/splunk restart
+                </div>
+
+                <h3>Hands-On: Configure CrowdStrike Falcon TA</h3>
+                <div class="diagram-box">
+SCENARIO: Integrate CrowdStrike Falcon with Splunk
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE:
+
+  [CrowdStrike Cloud]                    [Splunk]
+        │                                    │
+        │  Event Streams API                 │
+        │  (OAuth2 authenticated)            │
+        ▼                                    │
+  ┌─────────────────┐                        │
+  │ Heavy Forwarder │ ───TCP 9997──────────► │
+  │ + Event Streams │                        │
+  │   TA installed  │                        │
+  └─────────────────┘                        │
+
+
+PREREQUISITES:
+  1. CrowdStrike Falcon subscription with API access
+  2. API Client credentials (Client ID + Secret)
+  3. Splunk Heavy Forwarder (NOT Universal Forwarder - TA needs Python)
+
+
+STEP 1: Create CrowdStrike API Client
+────────────────────────────────────────────────────────────────────────────────
+
+  # In Falcon Console:
+  # Support → API Clients and Keys → Add new API Client
+  #
+  # Name: Splunk_Integration
+  # Scopes (minimum required):
+  #   - Event Streams: Read
+  #   - Detections: Read  
+  #   - Incidents: Read
+  #
+  # Save the Client ID and Client Secret - you'll need these!
+  #
+  # Note your CrowdStrike cloud:
+  #   US-1: api.crowdstrike.com
+  #   US-2: api.us-2.crowdstrike.com
+  #   EU-1: api.eu-1.crowdstrike.com
+  #   US-GOV: api.laggar.gcw.crowdstrike.com
+
+
+STEP 2: Install TA on Heavy Forwarder
+────────────────────────────────────────────────────────────────────────────────
+
+  # Download from Splunkbase:
+  # "CrowdStrike Falcon Event Streams Technical Add-On" (App ID: 5082)
+  
+  cd /opt/splunk/etc/apps
+  tar -xvf /tmp/TA-crowdstrike-falcon-event-streams.tgz
+  
+  # Also install on Search Heads for field extractions
+  # (copy the same tgz to search heads)
+
+
+STEP 3: Configure via Splunk Web
+────────────────────────────────────────────────────────────────────────────────
+
+  # On Heavy Forwarder, access Splunk Web:
+  # https://heavy-forwarder:8000
+  
+  # Navigate to:
+  # Apps → CrowdStrike Falcon Event Streams → Configuration
+  
+  # Account Tab:
+  #   Account Name: CrowdStrike_Prod
+  #   Client ID: [your_client_id]
+  #   Client Secret: [your_client_secret]
+  #   CrowdStrike Cloud: US-1 (or your cloud)
+  
+  # Inputs Tab:
+  #   Click "Create New Input"
+  #   Name: crowdstrike_events
+  #   Account: CrowdStrike_Prod
+  #   Index: crowdstrike
+  #   App ID: splunk_events_prod (unique per environment!)
+  #   Event Types to Collect: DetectionSummaryEvent, IncidentSummaryEvent,
+  #                           AuthActivityAuditEvent, UserActivityAuditEvent
+
+
+STEP 4: Verify Data Flow
+────────────────────────────────────────────────────────────────────────────────
+
+  # On Search Head:
+  
+  # Check if data is arriving
+  index=crowdstrike earliest=-1h
+  | stats count by sourcetype
+  
+  # Expected sourcetypes:
+  # crowdstrike:events:sensor
+  # crowdstrike:events:incident
+  
+  # View recent detections
+  index=crowdstrike sourcetype="crowdstrike:events:sensor" 
+      event_simpleName="DetectionSummaryEvent"
+  | table _time, ComputerName, UserName, DetectName, Severity, Tactic, Technique
+  
+  # Check CIM compliance (Endpoint data model)
+  | tstats count from datamodel=Endpoint.Processes by Processes.dest
+
+
+STEP 5: Troubleshooting
+────────────────────────────────────────────────────────────────────────────────
+
+  # Check TA internal logs
+  index=_internal sourcetype=splunkd component=ExecProcessor 
+      crowdstrike OR falcon
+  | head 50
+  
+  # Check for API errors
+  index=_internal source=*ta_crowdstrike* log_level=ERROR
+  
+  # Common issues:
+  # 1. "401 Unauthorized" - Wrong Client ID/Secret or expired token
+  # 2. "403 Forbidden" - Missing API scopes
+  # 3. "No data" - AppID already in use by another input
+  # 4. "Connection refused" - Firewall blocking api.crowdstrike.com
+                </div>
+
+                <h3>Hands-On: Configure Palo Alto TA (Syslog)</h3>
+                <div class="diagram-box">
+SCENARIO: Collect Palo Alto Firewall logs via Syslog
+═══════════════════════════════════════════════════════════════════════════════
+
+IMPORTANT: As of 2024, migrate to the NEW Splunk-supported TA:
+           "Splunk Add-on for Palo Alto Networks" (7523)
+           NOT the deprecated "Palo Alto Networks Add-on" (2757)
+
+
+ARCHITECTURE:
+
+  [Palo Alto FW/Panorama]  ──Syslog TCP 514──►  [Heavy Forwarder]
+                                                     │
+                                     ┌───────────────┴───────────────┐
+                                     │  Splunk_TA_paloalto          │
+                                     │  - Receives syslog            │
+                                     │  - Parses to pan:* sourcetypes│
+                                     │  - Applies CIM mapping        │
+                                     └───────────────┬───────────────┘
+                                                     │
+                                              TCP 9997
+                                                     │
+                                                     ▼
+                                              [Indexers]
+
+
+STEP 1: Install TA on Heavy Forwarder
+────────────────────────────────────────────────────────────────────────────────
+
+  # Download NEW Splunk-supported version from Splunkbase (App ID: 7523)
+  cd /opt/splunk/etc/apps
+  tar -xvf /tmp/Splunk_Add-on_for_Palo_Alto_Networks.tgz
+
+
+STEP 2: Configure Syslog Input
+────────────────────────────────────────────────────────────────────────────────
+
+  # Create local inputs.conf
+  mkdir -p /opt/splunk/etc/apps/Splunk_TA_paloalto/local
+  
+  cat > /opt/splunk/etc/apps/Splunk_TA_paloalto/local/inputs.conf << 'EOF'
+  # Palo Alto syslog input
+  [tcp://514]
+  disabled = 0
+  connection_host = dns
+  sourcetype = pan:log
+  index = firewall
+  
+  # Optional: Use dedicated port per log type for easier troubleshooting
+  # [tcp://5514]
+  # disabled = 0
+  # sourcetype = pan:traffic
+  # index = firewall
+  # 
+  # [tcp://5515]
+  # disabled = 0
+  # sourcetype = pan:threat
+  # index = firewall
+  EOF
+
+
+STEP 3: Configure Palo Alto to Send Logs
+────────────────────────────────────────────────────────────────────────────────
+
+  # In Palo Alto GUI (Panorama or Firewall):
+  
+  # 1. Create Syslog Server Profile
+  #    Device → Server Profiles → Syslog
+  #    Name: Splunk_HF
+  #    Servers:
+  #      Name: splunk-hf-01
+  #      Syslog Server: 10.0.0.50 (Heavy Forwarder IP)
+  #      Transport: TCP
+  #      Port: 514
+  #      Format: BSD
+  #      Facility: LOG_USER
+  
+  # 2. Create Log Forwarding Profile
+  #    Objects → Log Forwarding
+  #    Name: Forward_to_Splunk
+  #    Log Type: Traffic
+  #      - Syslog: Splunk_HF
+  #    Log Type: Threat
+  #      - Syslog: Splunk_HF
+  #    Log Type: URL
+  #      - Syslog: Splunk_HF
+  #    Log Type: WildFire
+  #      - Syslog: Splunk_HF
+  
+  # 3. Apply Log Forwarding to Security Rules
+  #    Policies → Security
+  #    Edit each rule → Actions tab → Log Forwarding: Forward_to_Splunk
+  
+  # 4. Commit changes
+  #    Commit (top right)
+
+
+STEP 4: Verify on Splunk
+────────────────────────────────────────────────────────────────────────────────
+
+  # Check raw data arriving
+  index=firewall earliest=-15m
+  | stats count by sourcetype
+  
+  # Expected sourcetypes:
+  # pan:traffic  - Firewall traffic logs
+  # pan:threat   - Threat/IPS logs
+  # pan:system   - System events
+  # pan:config   - Configuration changes
+  # pan:url      - URL filtering logs
+  # pan:wildfire - WildFire verdict logs
+  
+  # View traffic summary
+  index=firewall sourcetype=pan:traffic earliest=-1h
+  | stats count by action, app, rule
+  | sort -count
+  
+  # View threat detections
+  index=firewall sourcetype=pan:threat earliest=-24h
+  | stats count by threatid, threat_name, severity
+  | sort -count
+  
+  # Check CIM compliance
+  | tstats count from datamodel=Network_Traffic 
+      where nodename=All_Traffic by All_Traffic.action
+
+
+SOURCETYPE TO LOG TYPE MAPPING:
+────────────────────────────────────────────────────────────────────────────────
+
+  Sourcetype        │ Palo Alto Log Type      │ Contains
+  ──────────────────┼─────────────────────────┼────────────────────────────
+  pan:traffic       │ Traffic                 │ Allow/deny, bytes, sessions
+  pan:threat        │ Threat                  │ IPS, antivirus, anti-spyware
+  pan:url           │ URL Filtering           │ URL categories, actions
+  pan:wildfire      │ WildFire Submissions    │ File verdicts
+  pan:data          │ Data Filtering          │ DLP matches
+  pan:config        │ Configuration           │ Config changes
+  pan:system        │ System                  │ System events, HA failover
+  pan:globalprotect │ GlobalProtect           │ VPN connections
+  pan:hipmatch      │ HIP Match               │ Host compliance
+  pan:userid        │ User-ID                 │ User mapping events
+  pan:decryption    │ Decryption              │ SSL decryption events
+  pan:iot_security  │ IoT Security            │ Device identification
+  pan:cortex_xdr    │ Cortex XDR              │ XDR alerts (via API)
+                </div>
+
+                <h3>TA Troubleshooting Guide</h3>
+                <div class="diagram-box">
+TA TROUBLESHOOTING FLOWCHART
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEM: TA not working / No data / Wrong field extractions
+
+START HERE
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: Is the TA installed correctly?                                      │
+│                                                                             │
+│   # List installed apps                                                     │
+│   /opt/splunk/bin/splunk display app                                        │
+│                                                                             │
+│   # Check if TA directory exists                                            │
+│   ls -la /opt/splunk/etc/apps/ | grep -i "ta\|add-on"                       │
+│                                                                             │
+│   # Verify app is enabled                                                   │
+│   cat /opt/splunk/etc/apps/Splunk_TA_windows/local/app.conf                 │
+│   # Should NOT have: state = disabled                                       │
+└───────────────────────────────────────────────────┬─────────────────────────┘
+                                                    │
+                                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: Is the input enabled?                                               │
+│                                                                             │
+│   # Check effective input configuration                                      │
+│   /opt/splunk/bin/splunk btool inputs list --debug | grep -A10 "WinEventLog"│
+│                                                                             │
+│   # Look for: disabled = 0 (means enabled)                                  │
+│   # Look for: disabled = 1 (means disabled - won't collect!)                │
+│                                                                             │
+│   # Check which file is setting the value (--debug shows file path)         │
+│   # Files are merged in order: default/ then local/                         │
+└───────────────────────────────────────────────────┬─────────────────────────┘
+                                                    │
+                                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: Are there configuration errors?                                     │
+│                                                                             │
+│   # Run btool check for syntax errors                                       │
+│   /opt/splunk/bin/splunk btool check                                        │
+│                                                                             │
+│   # Check splunkd.log for errors                                            │
+│   tail -100 /opt/splunk/var/log/splunk/splunkd.log | grep -i error          │
+│                                                                             │
+│   # Check for props.conf issues                                             │
+│   /opt/splunk/bin/splunk btool props list --debug | grep -i "your_source"   │
+└───────────────────────────────────────────────────┬─────────────────────────┘
+                                                    │
+                                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 4: Is data being indexed?                                              │
+│                                                                             │
+│   # Check _internal for data flow                                           │
+│   index=_internal source=*metrics.log group=per_sourcetype_thruput          │
+│   | stats sum(kb) by series                                                 │
+│                                                                             │
+│   # Check if events exist (any index, any time)                             │
+│   index=* sourcetype="WinEventLog:Security" earliest=-1h                    │
+│   | stats count                                                             │
+│                                                                             │
+│   # If no data: check forwarder connectivity                                │
+│   index=_internal sourcetype=splunkd group=tcpin_connections                │
+│   | stats latest(connectionType) by hostname                                │
+└───────────────────────────────────────────────────┬─────────────────────────┘
+                                                    │
+                                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 5: Are field extractions working?                                      │
+│                                                                             │
+│   # Check if expected fields exist                                          │
+│   index=wineventlog sourcetype="WinEventLog:Security" earliest=-1h          │
+│   | fieldsummary                                                            │
+│   | where count > 0                                                         │
+│   | table field, count, distinct_count                                      │
+│                                                                             │
+│   # If fields missing, check props.conf is being applied                    │
+│   /opt/splunk/bin/splunk btool props list WinEventLog:Security --debug      │
+│                                                                             │
+│   # Verify TA is installed on Search Heads (not just forwarders!)           │
+│   # Field extractions happen at search time on Search Heads                 │
+└───────────────────────────────────────────────────┬─────────────────────────┘
+                                                    │
+                                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ STEP 6: Is CIM mapping working?                                             │
+│                                                                             │
+│   # Check if data model acceleration is enabled                             │
+│   | rest /services/datamodel/config                                         │
+│   | search name="Authentication"                                            │
+│                                                                             │
+│   # Check if data appears in data model                                     │
+│   | tstats count from datamodel=Authentication by Authentication.action     │
+│                                                                             │
+│   # If no data in datamodel, check tags                                     │
+│   index=wineventlog sourcetype="WinEventLog:Security" EventCode=4624        │
+│   | head 1                                                                  │
+│   | eval mytags=mvjoin(tag, ", ")                                           │
+│   | table mytags                                                            │
+│   # Should show: authentication, success (or similar CIM tags)              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+COMMON TA ISSUES AND FIXES:
+═══════════════════════════════════════════════════════════════════════════════
+
+Issue: "Fields not extracting"
+────────────────────────────────────────
+Cause: TA not installed on Search Heads
+Fix:   Install TA on all Search Heads (field extractions are search-time)
+
+Issue: "Wrong timestamp / events in future"
+────────────────────────────────────────
+Cause: TIME_FORMAT mismatch or wrong timezone
+Fix:   Check props.conf TIME_FORMAT matches actual log format
+       Check TZ setting in props.conf
+
+Issue: "Data going to wrong index"
+────────────────────────────────────────
+Cause: inputs.conf missing index= setting
+Fix:   Add explicit index= to inputs.conf in local/
+
+Issue: "CrowdStrike/API TA not collecting"
+────────────────────────────────────────
+Cause: Wrong credentials, network blocked, or duplicate AppID
+Fix:   Check _internal logs for TA, verify API credentials,
+       ensure unique AppID per Splunk environment
+
+Issue: "Splunk_TA_windows v5 broke my searches"
+────────────────────────────────────────
+Cause: v5 changed source vs sourcetype handling
+Fix:   Change searches from sourcetype= to source= for XML events
+       Read: docs.splunk.com/Documentation/WindowsAddOn/5.0.1/User/Upgrade
+
+Issue: "props.conf changes not taking effect"
+────────────────────────────────────────
+Cause: Searching old events (props.conf only affects new events)
+Fix:   Wait for new events, or test with: earliest=-5m
+       For existing data, re-index or use SEDCMD at search time
+                </div>
+
+                <h2 id="parsing"><i class="fas fa-cogs"></i> Custom Parsing (props.conf & transforms.conf)</h2>
+
+                <div class="diagram-box">
+PARSING CONFIGURATION FILES
+═══════════════════════════════════════════════════════════════════════════════
+
+props.conf - SOURCETYPE DEFINITION
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  [sourcetype_name]                                                      │
+  │                                                                         │
+  │  # EVENT BREAKING                                                       │
+  │  LINE_BREAKER = ([\r\n]+)          # Where to break events             │
+  │  SHOULD_LINEMERGE = false          # Don't merge lines                 │
+  │  TRUNCATE = 10000                  # Max event size                    │
+  │                                                                         │
+  │  # TIMESTAMP                                                            │
+  │  TIME_FORMAT = %Y-%m-%dT%H:%M:%S   # Timestamp format                  │
+  │  TIME_PREFIX = timestamp=          # Text before timestamp             │
+  │  MAX_TIMESTAMP_LOOKAHEAD = 30      # How far to look                   │
+  │  TZ = UTC                          # Timezone                          │
+  │                                                                         │
+  │  # FIELD EXTRACTIONS                                                    │
+  │  KV_MODE = auto                    # Key=value extraction mode         │
+  │  EXTRACT-myfield = regex           # Inline regex extraction           │
+  │  REPORT-fields = transform_name    # Use transforms.conf               │
+  │                                                                         │
+  │  # CATEGORIZATION                                                       │
+  │  FIELDALIAS-user = src_user AS user  # Field aliases for CIM          │
+  │  EVAL-action = if(status="200","allowed","blocked")  # Computed field │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+transforms.conf - ADVANCED TRANSFORMATIONS
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  [transform_name]                                                       │
+  │                                                                         │
+  │  # REGEX EXTRACTION                                                     │
+  │  REGEX = user=(?&lt;user&gt;\S+)\s+action=(?&lt;action&gt;\S+)                     │
+  │  FORMAT = user::$1 action::$2                                          │
+  │                                                                         │
+  │  # ROUTING (send to different index)                                   │
+  │  REGEX = sourcetype=pan:threat                                         │
+  │  DEST_KEY = _MetaData:Index                                            │
+  │  FORMAT = security                                                      │
+  │                                                                         │
+  │  # MASKING SENSITIVE DATA                                              │
+  │  REGEX = (password=)\S+                                                 │
+  │  FORMAT = $1XXXXX                                                       │
+  │  DEST_KEY = _raw                                                        │
+  │                                                                         │
+  │  # LOOKUP                                                               │
+  │  filename = users.csv                                                   │
+  │  match_type = WILDCARD(user)                                           │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h3>Custom Sourcetype Example</h3>
+                <div class="file-block">
+                    <div class="header">props.conf - Custom Application Logs</div>
+<pre># ═══════════════════════════════════════════════════════════════════════════
+# CUSTOM APPLICATION LOG PARSING
+# ═══════════════════════════════════════════════════════════════════════════
+
+[myapp:json]
+# JSON logs - automatic field extraction
+KV_MODE = json
+TIME_FORMAT = %Y-%m-%dT%H:%M:%S.%3N%Z
+TIME_PREFIX = "timestamp"\s*:\s*"
+MAX_TIMESTAMP_LOOKAHEAD = 40
 SHOULD_LINEMERGE = false
 LINE_BREAKER = ([\r\n]+)
 
-# Field extractions (search-time)
-EXTRACT-level = \[(?&lt;log_level&gt;INFO|WARN|ERROR|DEBUG)\]
-EXTRACT-user = \[user=(?&lt;user&gt;[^\]]+)\]
-EXTRACT-action = \[action=(?&lt;action&gt;[^\]]+)\]
-EXTRACT-status = \[status=(?&lt;status&gt;[^\]]+)\]
-EXTRACT-src_ip = \[ip=(?&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)\]
+# CIM Field Aliases for Authentication data model
+FIELDALIAS-user = username AS user
+FIELDALIAS-src = client_ip AS src
+FIELDALIAS-action = event_type AS action
+EVAL-app = "MyApplication"
 
-# CIM field aliases
-FIELDALIAS-src = src_ip AS src
-FIELDALIAS-user_name = user AS user_name
+# Tag for CIM
+LOOKUP-action = myapp_action_lookup action OUTPUT action_type
 
-# Add vendor/product for CIM
-EVAL-vendor_product = "MyApp"</code></pre>
-                        </div>
-                    </div>
 
-                    <div class="step-section">
-                        <h5>Step 2: Create inputs.conf</h5>
-                        <div class="file-block">
-                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/inputs.conf</div>
-<pre><code>[monitor:///var/log/myapp/app.log]
-disabled = 0
-index = application
-sourcetype = custom_app_log</code></pre>
-                        </div>
-                    </div>
+[myapp:syslog]
+# Syslog format: 2024-01-15 10:30:00 INFO [user=john] [action=login] Message here
+TIME_FORMAT = %Y-%m-%d %H:%M:%S
+TIME_PREFIX = ^
+MAX_TIMESTAMP_LOOKAHEAD = 20
+SHOULD_LINEMERGE = false
 
-                    <div class="step-section">
-                        <h5>Step 3: Verify Parsing</h5>
-                        <div class="code-block">
-<pre>index=application sourcetype=custom_app_log
-| table _time, log_level, user, action, status, src_ip
-| head 20</pre>
-                        </div>
-                    </div>
+# Field extractions
+EXTRACT-level = ^[^[\n]*\s+(?P&lt;level&gt;\w+)\s+\[
+EXTRACT-user = \[user=(?P&lt;user&gt;[^\]]+)\]
+EXTRACT-action = \[action=(?P&lt;action&gt;[^\]]+)\]
+EXTRACT-message = \]\s+(?P&lt;message&gt;.+)$
+
+# CIM compliance
+FIELDALIAS-src_user = user AS src_user
+EVAL-vendor = "MyCompany"
+EVAL-product = "MyApp"</pre>
                 </div>
 
-                <!-- SECTION 4: TRANSFORMS.CONF -->
-                <h2><i class="fas fa-exchange-alt"></i> Section 4: transforms.conf (Advanced Transformations)</h2>
+                <div class="file-block">
+                    <div class="header">transforms.conf - Advanced Transformations</div>
+<pre># ═══════════════════════════════════════════════════════════════════════════
+# ADVANCED TRANSFORMATIONS
+# ═══════════════════════════════════════════════════════════════════════════
 
-                <div class="concept-box">
-                    <h3>What is transforms.conf?</h3>
-                    <p><strong>transforms.conf</strong> handles complex transformations that can't be done in props.conf alone:</p>
-                    <ul>
-                        <li><strong>Complex regex extractions</strong> with multiple capture groups</li>
-                        <li><strong>Lookups</strong> - enrich events with external data</li>
-                        <li><strong>Routing</strong> - send events to different indexes based on content</li>
-                        <li><strong>Masking</strong> - hide sensitive data (credit cards, SSNs)</li>
-                    </ul>
-                </div>
-
-                <div class="scenario-box">
-                    <h4>Scenario: Route Logs to Different Indexes by Severity</h4>
-                    <p><strong>Goal:</strong> Send ERROR logs to a high-priority index, INFO logs to standard index.</p>
-
-                    <div class="file-block">
-                        <div class="header">transforms.conf</div>
-<pre><code># Route ERROR events to priority index
-[route_errors]
-REGEX = \[(ERROR)\]
+# Route firewall logs to security index
+[route_firewall_to_security]
+REGEX = .
 DEST_KEY = _MetaData:Index
-FORMAT = priority_logs
+FORMAT = security
 
-# Route INFO events to standard index
-[route_info]
-REGEX = \[(INFO)\]
-DEST_KEY = _MetaData:Index
-FORMAT = application_logs</code></pre>
-                    </div>
-
-                    <div class="file-block">
-                        <div class="header">props.conf</div>
-<pre><code>[custom_app_log]
-# Apply the routing transforms
-TRANSFORMS-routing = route_errors, route_info</code></pre>
-                    </div>
-                </div>
-
-                <div class="scenario-box">
-                    <h4>Scenario: Mask Credit Card Numbers</h4>
-                    <div class="file-block">
-                        <div class="header">transforms.conf</div>
-<pre><code>[mask_credit_cards]
+# Mask credit card numbers
+[mask_credit_card]
 REGEX = (\d{4})[- ]?(\d{4})[- ]?(\d{4})[- ]?(\d{4})
 FORMAT = XXXX-XXXX-XXXX-$4
-DEST_KEY = _raw</code></pre>
-                    </div>
+DEST_KEY = _raw
 
-                    <div class="file-block">
-                        <div class="header">props.conf</div>
-<pre><code>[payment_logs]
-TRANSFORMS-mask = mask_credit_cards</code></pre>
-                    </div>
-                    <p><strong>Result:</strong> <code>4111-1111-1111-1234</code> becomes <code>XXXX-XXXX-XXXX-1234</code></p>
+# Mask passwords in logs
+[mask_password]
+REGEX = (password|passwd|pwd)\s*[=:]\s*\S+
+FORMAT = $1=********
+DEST_KEY = _raw
+
+# Extract complex nested fields
+[extract_json_nested]
+REGEX = "user":\s*\{"name":\s*"(?P&lt;user_name&gt;[^"]+)",\s*"email":\s*"(?P&lt;user_email&gt;[^"]+)"\}
+
+# Lookup for enrichment
+[user_department_lookup]
+filename = user_departments.csv
+match_type = WILDCARD(user)
+
+# Null queue (drop events)
+[setnull]
+REGEX = .
+DEST_KEY = queue
+FORMAT = nullQueue</pre>
                 </div>
 
-                <!-- SECTION 5: CIM -->
-                <h2><i class="fas fa-balance-scale"></i> Section 5: CIM Normalization</h2>
+                <h2 id="cim"><i class="fas fa-layer-group"></i> CIM (Common Information Model)</h2>
 
-                <div class="concept-box">
-                    <h3>What is CIM?</h3>
-                    <p>The <strong>Common Information Model (CIM)</strong> is Splunk's normalization standard. It maps different log formats to common field names.</p>
-                    
-                    <p><strong>Why CIM matters:</strong></p>
-                    <ul>
-                        <li>Splunk Enterprise Security (ES) requires CIM-compliant data</li>
-                        <li>One search works across all sources</li>
-                        <li>Pre-built dashboards and content work automatically</li>
-                    </ul>
+                <div class="diagram-box">
+CIM DATA MODELS - NORMALIZE FOR ENTERPRISE SECURITY
+═══════════════════════════════════════════════════════════════════════════════
+
+PURPOSE:
+─────────────────────────────────────────────────────────────────────────────
+
+  Same event type from different sources → Normalized field names
+  
+  Windows Logon:          Linux auth.log:           Okta:
+  ─────────────────       ─────────────────        ─────────────────
+  TargetUserName: john    user: john               actor.alternateId: john
+  IpAddress: 10.0.0.1     rhost: 10.0.0.1          client.ipAddress: 10.0.0.1
+  LogonType: 10           -                         -
+  
+  After CIM normalization (Authentication data model):
+  ─────────────────────────────────────────────────────────────────────────────
+  user = john
+  src = 10.0.0.1
+  action = success
+  app = Windows/Linux/Okta
+
+
+KEY CIM DATA MODELS:
+─────────────────────────────────────────────────────────────────────────────
+
+  DATA MODEL              TYPICAL SOURCES               KEY FIELDS
+  ─────────────────────────────────────────────────────────────────────────────
+  Authentication          Windows Security, Linux auth, user, src, dest, action,
+                          VPN, Okta, Azure AD          app, signature
+  
+  Network_Traffic         Firewall, Router, IDS/IPS,   src_ip, dest_ip, dest_port,
+                          NetFlow                      action, bytes_in, bytes_out
+  
+  Endpoint                EDR, AV, Sysmon              dest, user, file_name,
+                                                       file_path, signature
+  
+  Web                     Proxy, WAF, Web server       src, dest, url, http_method,
+                                                       status, user_agent
+  
+  Email                   Email gateway, O365          src_user, recipient, subject,
+                                                       file_name, action
+  
+  Malware                 AV, EDR, Sandbox             dest, file_name, file_hash,
+                                                       signature, action
+  
+  Change                  Windows, Linux, Network      user, object, action,
+                                                       status, object_category
+
+
+MAKING DATA CIM COMPLIANT:
+─────────────────────────────────────────────────────────────────────────────
+
+  props.conf:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  [my:sourcetype]                                                        │
+  │  # Field aliases - map source fields to CIM                            │
+  │  FIELDALIAS-user = src_user AS user                                    │
+  │  FIELDALIAS-src = source_ip AS src                                     │
+  │  FIELDALIAS-action = result AS action                                  │
+  │                                                                         │
+  │  # Computed fields                                                      │
+  │  EVAL-vendor = "MyVendor"                                              │
+  │  EVAL-product = "MyProduct"                                            │
+  │  EVAL-action = case(status="200","allowed",status="403","blocked")    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  tags.conf:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  [eventtype=my_authentication_event]                                    │
+  │  authentication = enabled                                               │
+  │  default = enabled                                                      │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  eventtypes.conf:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  [my_authentication_event]                                              │
+  │  search = sourcetype="my:sourcetype" action IN ("login","logout")      │
+  └─────────────────────────────────────────────────────────────────────────┘
                 </div>
 
-                <h3>CIM Data Models</h3>
+                <h3>Complete CIM Compliance Example: Custom VPN Logs</h3>
+                <div class="diagram-box">
+HANDS-ON: MAKE CUSTOM VPN LOGS CIM-COMPLIANT FOR ENTERPRISE SECURITY
+═══════════════════════════════════════════════════════════════════════════════
+
+SAMPLE VPN LOG FORMAT:
+
+  2024-01-15T10:30:45Z vpn-gw-01 CONNECT user=john.doe@company.com client_ip=203.0.113.50 
+      assigned_ip=10.100.0.25 tunnel=SSL-VPN duration=0 status=connected
+  2024-01-15T11:45:32Z vpn-gw-01 AUTH_FAIL user=jane.smith@company.com client_ip=192.0.2.100 
+      reason="invalid_password" attempts=3 status=failed
+  2024-01-15T12:00:00Z vpn-gw-01 DISCONNECT user=john.doe@company.com client_ip=203.0.113.50 
+      assigned_ip=10.100.0.25 tunnel=SSL-VPN duration=5355 bytes_sent=15234567 status=disconnected
+
+
+STEP 1: Create props.conf for Parsing + CIM Mapping
+────────────────────────────────────────────────────────────────────────────────
+
+# File: $SPLUNK_HOME/etc/apps/TA_custom_vpn/local/props.conf
+
+[custom:vpn]
+# Timestamp extraction
+TIME_FORMAT = %Y-%m-%dT%H:%M:%S%Z
+TIME_PREFIX = ^
+MAX_TIMESTAMP_LOOKAHEAD = 25
+TZ = UTC
+
+# Event breaking
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)
+
+# Field extractions
+EXTRACT-host = ^\d{4}-\d{2}-\d{2}T[\d:]+Z\s+(?P<vpn_gateway>\S+)
+EXTRACT-action_type = ^\S+\s+\S+\s+(?P<action_type>\S+)
+EXTRACT-user = user=(?P<src_user>[^\s]+)
+EXTRACT-client_ip = client_ip=(?P<client_ip>[\d.]+)
+EXTRACT-assigned_ip = assigned_ip=(?P<assigned_ip>[\d.]+)
+EXTRACT-tunnel = tunnel=(?P<tunnel_type>\S+)
+EXTRACT-duration = duration=(?P<session_duration>\d+)
+EXTRACT-bytes = bytes_sent=(?P<bytes_sent>\d+)
+EXTRACT-status = status=(?P<status>\S+)
+EXTRACT-reason = reason="(?P<failure_reason>[^"]+)"
+EXTRACT-attempts = attempts=(?P<attempt_count>\d+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CIM FIELD MAPPING - Authentication Data Model
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Map to CIM standard field names
+FIELDALIAS-user = src_user AS user
+FIELDALIAS-src = client_ip AS src
+FIELDALIAS-dest = vpn_gateway AS dest
+FIELDALIAS-src_ip = client_ip AS src_ip
+FIELDALIAS-dest_ip = assigned_ip AS dest_ip
+
+# Computed fields for CIM compliance
+EVAL-vendor = "CustomVendor"
+EVAL-vendor_product = "CustomVendor VPN Gateway"
+EVAL-product = "VPN Gateway"
+EVAL-app = "vpn"
+
+# Map status to CIM action field
+EVAL-action = case(
+    status=="connected", "success",
+    status=="failed", "failure",
+    status=="disconnected", "success",
+    1==1, "unknown"
+)
+
+# Map to CIM signature fields
+EVAL-signature = action_type
+EVAL-signature_id = case(
+    action_type=="CONNECT", "100",
+    action_type=="DISCONNECT", "101",
+    action_type=="AUTH_FAIL", "200",
+    1==1, "0"
+)
+
+# Authentication type for CIM
+EVAL-authentication_method = tunnel_type
+
+
+STEP 2: Create eventtypes.conf for CIM Categorization
+────────────────────────────────────────────────────────────────────────────────
+
+# File: $SPLUNK_HOME/etc/apps/TA_custom_vpn/local/eventtypes.conf
+
+[custom_vpn_authentication]
+search = sourcetype="custom:vpn" (action_type="CONNECT" OR action_type="AUTH_FAIL")
+
+[custom_vpn_session]
+search = sourcetype="custom:vpn" (action_type="CONNECT" OR action_type="DISCONNECT")
+
+[custom_vpn_failed_auth]
+search = sourcetype="custom:vpn" action_type="AUTH_FAIL"
+
+
+STEP 3: Create tags.conf for Data Model Assignment
+────────────────────────────────────────────────────────────────────────────────
+
+# File: $SPLUNK_HOME/etc/apps/TA_custom_vpn/local/tags.conf
+
+# Tag for Authentication data model
+[eventtype=custom_vpn_authentication]
+authentication = enabled
+
+# Tag for Network Session data model
+[eventtype=custom_vpn_session]
+network = enabled
+session = enabled
+
+# Tag failed authentications specifically
+[eventtype=custom_vpn_failed_auth]
+authentication = enabled
+failure = enabled
+
+
+STEP 4: Verify CIM Compliance
+────────────────────────────────────────────────────────────────────────────────
+
+# Search for data with CIM fields
+index=vpn sourcetype="custom:vpn" earliest=-1h
+| table _time, user, src, dest, action, app, vendor_product
+
+# Verify tags are applied
+index=vpn sourcetype="custom:vpn" earliest=-1h
+| head 10
+| eval mytags=mvjoin(tag, ", ")
+| table _time, action_type, mytags
+
+# Should show: authentication, network, session
+
+# Verify data appears in Authentication data model
+| tstats count from datamodel=Authentication 
+    where Authentication.app="vpn"
+    by Authentication.user Authentication.action
+
+# If above returns data → CIM compliance achieved!
+
+
+WHY THIS MATTERS FOR ENTERPRISE SECURITY:
+────────────────────────────────────────────────────────────────────────────────
+
+  Without CIM:
+  ───────────────────────────────────────
+  • Each data source uses different field names
+  • ES correlation rules won't find your data
+  • Dashboards won't populate
+  • You miss security detections!
+
+  With CIM:
+  ───────────────────────────────────────
+  • All auth sources use: user, src, dest, action
+  • ES "Excessive Failed Logins" rule works across ALL sources
+  • Identity dashboards include your VPN data
+  • Correlation searches find your data automatically
+                </div>
+
+                <h3>CIM Quick Reference - Required Fields by Data Model</h3>
                 <table>
-                    <thead>
-                        <tr><th>Data Model</th><th>Use For</th><th>Key CIM Fields</th></tr>
-                    </thead>
+                    <thead><tr><th>Data Model</th><th>Required Fields</th><th>Recommended Fields</th><th>Required Tags</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Authentication</strong></td><td>Logins, auth events</td><td>user, src, dest, action, app</td></tr>
-                        <tr><td><strong>Network Traffic</strong></td><td>Firewall, netflow</td><td>src_ip, dest_ip, dest_port, bytes, action</td></tr>
-                        <tr><td><strong>Endpoint</strong></td><td>Process, file, registry</td><td>process, file_name, user, action</td></tr>
-                        <tr><td><strong>Web</strong></td><td>Proxy, web server</td><td>url, http_method, status, src, dest</td></tr>
-                        <tr><td><strong>Malware</strong></td><td>AV, EDR alerts</td><td>signature, file_name, action, dest</td></tr>
+                        <tr>
+                            <td><strong>Authentication</strong></td>
+                            <td><code>action</code>, <code>app</code>, <code>user</code></td>
+                            <td><code>src</code>, <code>dest</code>, <code>src_user</code>, <code>dest_user</code>, <code>signature</code></td>
+                            <td><code>authentication</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Network_Traffic</strong></td>
+                            <td><code>action</code>, <code>src_ip</code>, <code>dest_ip</code></td>
+                            <td><code>src_port</code>, <code>dest_port</code>, <code>transport</code>, <code>bytes_in</code>, <code>bytes_out</code>, <code>app</code></td>
+                            <td><code>network</code>, <code>communicate</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Endpoint.Processes</strong></td>
+                            <td><code>dest</code>, <code>process_name</code></td>
+                            <td><code>user</code>, <code>process_id</code>, <code>parent_process</code>, <code>process_path</code>, <code>process_hash</code></td>
+                            <td><code>process</code>, <code>report</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Endpoint.Filesystem</strong></td>
+                            <td><code>dest</code>, <code>file_name</code></td>
+                            <td><code>file_path</code>, <code>file_hash</code>, <code>action</code>, <code>user</code></td>
+                            <td><code>endpoint</code>, <code>filesystem</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Web</strong></td>
+                            <td><code>action</code>, <code>dest</code></td>
+                            <td><code>src</code>, <code>url</code>, <code>http_method</code>, <code>status</code>, <code>user</code>, <code>user_agent</code></td>
+                            <td><code>web</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email</strong></td>
+                            <td><code>action</code></td>
+                            <td><code>src_user</code>, <code>recipient</code>, <code>subject</code>, <code>file_name</code>, <code>url</code></td>
+                            <td><code>email</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Malware</strong></td>
+                            <td><code>action</code>, <code>signature</code></td>
+                            <td><code>dest</code>, <code>file_name</code>, <code>file_hash</code>, <code>user</code>, <code>category</code></td>
+                            <td><code>malware</code>, <code>attack</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Change</strong></td>
+                            <td><code>action</code>, <code>object</code></td>
+                            <td><code>user</code>, <code>object_category</code>, <code>status</code>, <code>dest</code></td>
+                            <td><code>change</code></td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <div class="scenario-box">
-                    <h4>Scenario: Make Custom Logs CIM-Compliant</h4>
-                    
-                    <div class="file-block">
-                        <div class="header">props.conf - Add CIM field aliases and tags</div>
-<pre><code>[custom_firewall_log]
-# Your custom parsing
-EXTRACT-src = src=(?&lt;source_ip&gt;\d+\.\d+\.\d+\.\d+)
-EXTRACT-dst = dst=(?&lt;destination_ip&gt;\d+\.\d+\.\d+\.\d+)
-EXTRACT-port = dport=(?&lt;destination_port&gt;\d+)
-EXTRACT-act = action=(?&lt;firewall_action&gt;\w+)
-
-# Map to CIM field names
-FIELDALIAS-src_ip = source_ip AS src_ip
-FIELDALIAS-dest_ip = destination_ip AS dest_ip
-FIELDALIAS-dest_port = destination_port AS dest_port
-FIELDALIAS-action = firewall_action AS action
-
-# Add CIM-required fields
-EVAL-vendor_product = "Custom Firewall"
-EVAL-dvc = host</code></pre>
-                    </div>
-
-                    <div class="file-block">
-                        <div class="header">tags.conf - Tag for data model</div>
-<pre><code># Tag this sourcetype for Network Traffic data model
-[sourcetype=custom_firewall_log]
-network = enabled
-communicate = enabled</code></pre>
-                    </div>
-
-                    <div class="step-section">
-                        <h5>Verify CIM Compliance</h5>
-                        <div class="code-block">
-<pre># Check if data appears in data model
-| datamodel Network_Traffic All_Traffic search
-| table src_ip, dest_ip, dest_port, action
-| head 20
-
-# Or use tstats (faster)
-| tstats count from datamodel=Network_Traffic by All_Traffic.src_ip, All_Traffic.dest_ip</pre>
-                        </div>
-                    </div>
+                <div class="info-box" style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1rem; margin: 1rem 0;">
+                    <strong>💡 Interview Tip:</strong> When asked about CIM in interviews, explain:
+                    <ol style="margin: 0.5rem 0;">
+                        <li><strong>What</strong>: CIM provides standardized field names so different data sources can be analyzed together</li>
+                        <li><strong>Why</strong>: Enterprise Security correlation rules use CIM fields - without CIM compliance, your data won't trigger detections</li>
+                        <li><strong>How</strong>: Use FIELDALIAS for mapping, EVAL for computed fields, eventtypes.conf + tags.conf for data model assignment</li>
+                        <li><strong>Verify</strong>: Use <code>| tstats</code> to confirm data appears in accelerated data models</li>
+                    </ol>
                 </div>
 
-                <!-- SECTION 6: INDEX TIERS -->
-                <h2><i class="fas fa-layer-group"></i> Section 6: Index Tiers (SmartStore)</h2>
+                <h2 id="indexes"><i class="fas fa-hdd"></i> Index Configuration</h2>
 
-                <p>Splunk indexes have storage tiers that data moves through over time:</p>
-
-                <div class="tier-card hot">
-                    <h4><i class="fas fa-fire"></i> Hot Bucket</h4>
-                    <p><strong>What:</strong> Actively receiving new data</p>
-                    <p><strong>Storage:</strong> Fast local SSD</p>
-                    <p><strong>Searchable:</strong> Yes, fastest</p>
-                    <p><strong>Typical age:</strong> Current data being indexed</p>
-                </div>
-
-                <div class="tier-card warm">
-                    <h4><i class="fas fa-temperature-half"></i> Warm Bucket</h4>
-                    <p><strong>What:</strong> No longer receiving data, but recent</p>
-                    <p><strong>Storage:</strong> Local disk (SSD or HDD)</p>
-                    <p><strong>Searchable:</strong> Yes, fast</p>
-                    <p><strong>Typical age:</strong> Hours to days old</p>
-                </div>
-
-                <div class="tier-card cold">
-                    <h4><i class="fas fa-snowflake"></i> Cold Bucket</h4>
-                    <p><strong>What:</strong> Older data, accessed less frequently</p>
-                    <p><strong>Storage:</strong> Slower/cheaper storage (HDD, NAS)</p>
-                    <p><strong>Searchable:</strong> Yes, slower</p>
-                    <p><strong>Typical age:</strong> Days to months old</p>
-                </div>
-
-                <div class="tier-card frozen">
-                    <h4><i class="fas fa-box-archive"></i> Frozen Bucket</h4>
-                    <p><strong>What:</strong> Archived data</p>
-                    <p><strong>Storage:</strong> Archive storage, SmartStore (S3)</p>
-                    <p><strong>Searchable:</strong> Must thaw first (restore)</p>
-                    <p><strong>Typical age:</strong> Months to years old</p>
-                </div>
-
-                <h3>Configuring Index Retention</h3>
                 <div class="file-block">
-                    <div class="header">indexes.conf</div>
-<pre><code># Security index - keep longer
+                    <div class="header">indexes.conf - Complete Example</div>
+<pre># ═══════════════════════════════════════════════════════════════════════════
+# INDEX CONFIGURATION
+# Location: $SPLUNK_HOME/etc/apps/myapp/local/indexes.conf
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Security logs - long retention
 [security]
 homePath = $SPLUNK_DB/security/db
 coldPath = $SPLUNK_DB/security/colddb
 thawedPath = $SPLUNK_DB/security/thaweddb
+frozenTimePeriodInSecs = 31536000  # 365 days
+maxTotalDataSizeMB = 500000        # 500 GB
 
-# Retention settings
-frozenTimePeriodInSecs = 31536000  # 365 days before freezing
-maxTotalDataSizeMB = 500000        # 500 GB max
+# Windows Event Logs
+[wineventlog]
+homePath = $SPLUNK_DB/wineventlog/db
+coldPath = $SPLUNK_DB/wineventlog/colddb
+thawedPath = $SPLUNK_DB/wineventlog/thaweddb
+frozenTimePeriodInSecs = 15552000  # 180 days
+maxTotalDataSizeMB = 1000000       # 1 TB
 
-# Data moves to cold after 7 days
-maxWarmDBCount = 300
+# Sysmon (high value endpoint data)
+[sysmon]
+homePath = $SPLUNK_DB/sysmon/db
+coldPath = $SPLUNK_DB/sysmon/colddb
+thawedPath = $SPLUNK_DB/sysmon/thaweddb
+frozenTimePeriodInSecs = 7776000   # 90 days
+maxTotalDataSizeMB = 500000
 
-# SmartStore for frozen (S3)
-remotePath = volume:s3_archive/security
-
-# Firewall index - shorter retention, high volume
+# Firewall logs - shorter retention, high volume
 [firewall]
 homePath = $SPLUNK_DB/firewall/db
 coldPath = $SPLUNK_DB/firewall/colddb
 thawedPath = $SPLUNK_DB/firewall/thaweddb
+frozenTimePeriodInSecs = 2592000   # 30 days
+maxTotalDataSizeMB = 2000000       # 2 TB
 
+# Linux/Unix logs
+[linux]
+homePath = $SPLUNK_DB/linux/db
+coldPath = $SPLUNK_DB/linux/colddb
+thawedPath = $SPLUNK_DB/linux/thaweddb
 frozenTimePeriodInSecs = 7776000   # 90 days
-maxTotalDataSizeMB = 1000000       # 1 TB max</code></pre>
+maxTotalDataSizeMB = 200000
+
+# SmartStore configuration (S3 backend for frozen)
+[volume:s3_remote]
+storageType = remote
+path = s3://my-splunk-bucket/frozen
+remote.s3.endpoint = https://s3.amazonaws.com
+
+[security]
+remotePath = volume:s3_remote/security</pre>
                 </div>
 
-                <h3>Recommended Retention by Log Type</h3>
-                <table>
-                    <thead>
-                        <tr><th>Log Type</th><th>Index</th><th>Retention</th><th>Rationale</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Authentication</td><td>security</td><td>365+ days</td><td>Compliance, breach investigation</td></tr>
-                        <tr><td>Windows Events</td><td>wineventlog</td><td>90-180 days</td><td>Endpoint forensics</td></tr>
-                        <tr><td>Sysmon</td><td>sysmon</td><td>90-180 days</td><td>Detailed endpoint telemetry</td></tr>
-                        <tr><td>Firewall Traffic</td><td>firewall</td><td>30-90 days</td><td>High volume, network forensics</td></tr>
-                        <tr><td>Proxy/Web</td><td>proxy</td><td>30-90 days</td><td>High volume</td></tr>
-                        <tr><td>DNS</td><td>dns</td><td>30-90 days</td><td>Very high volume</td></tr>
-                        <tr><td>Email Gateway</td><td>email</td><td>90-365 days</td><td>Phishing investigation</td></tr>
-                        <tr><td>Application Logs</td><td>application</td><td>30-90 days</td><td>Depends on security value</td></tr>
-                    </tbody>
-                </table>
+                <h2><i class="fas fa-chart-line"></i> Monitoring Ingestion Health</h2>
 
-                <!-- SECTION 7: PARSING PIPELINE SUMMARY -->
-                <h2><i class="fas fa-sitemap"></i> Section 7: Complete Parsing Pipeline</h2>
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# INGESTION MONITORING QUERIES
+# ═══════════════════════════════════════════════════════════════════════════
 
-                <div class="scenario-box">
-                    <h4>End-to-End Example: Ingest Palo Alto Firewall Logs</h4>
+# Daily ingestion by index
+index=_internal source=*license_usage.log type=Usage
+| timechart span=1d sum(b) AS bytes by idx
+| eval GB = bytes / 1024 / 1024 / 1024
+| fields - bytes
 
-                    <div class="step-section">
-                        <h5>1. Install Technology Add-on</h5>
-                        <p>Download "Palo Alto Networks Add-on for Splunk" from Splunkbase. Install on:</p>
-                        <ul>
-                            <li>Search Heads (for field extractions at search time)</li>
-                            <li>Indexers (for index-time parsing)</li>
-                            <li>Heavy Forwarder (if doing syslog collection there)</li>
-                        </ul>
-                    </div>
+# Ingestion by sourcetype
+index=_internal source=*license_usage.log type=Usage
+| stats sum(b) AS bytes by st
+| eval GB = round(bytes / 1024 / 1024 / 1024, 2)
+| sort -GB
 
-                    <div class="step-section">
-                        <h5>2. Configure Syslog Input</h5>
-                        <div class="file-block">
-                            <div class="header">inputs.conf (on Heavy Forwarder or Indexer)</div>
-<pre><code>[tcp://514]
-connection_host = dns
-sourcetype = pan:traffic
-index = firewall</code></pre>
-                        </div>
-                    </div>
+# Forwarder health
+index=_internal sourcetype=splunkd group=tcpin_connections
+| stats latest(connectionType) AS type, latest(version) AS version, 
+        max(_time) AS lastSeen by hostname
+| eval status = if(lastSeen > relative_time(now(), "-15m"), "Active", "Inactive")
 
-                    <div class="step-section">
-                        <h5>3. Configure Firewall to Send Logs</h5>
-                        <p>On Palo Alto: Device → Server Profiles → Syslog</p>
-                        <ul>
-                            <li>Server: Your Splunk Heavy Forwarder IP</li>
-                            <li>Port: 514</li>
-                            <li>Format: BSD</li>
-                        </ul>
-                    </div>
+# Events per second by sourcetype
+index=* earliest=-1h
+| timechart span=1m count by sourcetype
+| addtotals
 
-                    <div class="step-section">
-                        <h5>4. Verify Data</h5>
-                        <div class="code-block">
-<pre>index=firewall sourcetype=pan:traffic
-| stats count by action, app
-| sort -count</pre>
-                        </div>
-                    </div>
+# Find silent sources (no data in last hour)
+| rest /services/data/inputs/all
+| search disabled=0
+| eval lastEventTime = strftime(lastEventReceivedTime, "%Y-%m-%d %H:%M:%S")
+| where lastEventReceivedTime < relative_time(now(), "-1h")
 
-                    <div class="step-section">
-                        <h5>5. Verify CIM Compliance</h5>
-                        <div class="code-block">
-<pre>| tstats count from datamodel=Network_Traffic where nodename=All_Traffic.Traffic_By_Action by All_Traffic.action</pre>
-                        </div>
-                    </div>
+# Index queue health (parsing bottleneck)
+index=_internal source=*metrics.log group=queue
+| timechart span=1m avg(current_size) by name</pre></div>
+
+                <h2 id="hands-on"><i class="fas fa-laptop-code"></i> Hands-On Real-World Scenarios</h2>
+                
+                <p>These end-to-end scenarios walk you through common real-world tasks so you can gain practical experience even without a lab environment.</p>
+
+                <div class="diagram-box">
+SCENARIO 1: ONBOARD WINDOWS SERVERS TO SPLUNK (Complete Workflow)
+═══════════════════════════════════════════════════════════════════════════════
+
+ARCHITECTURE:
+  
+  [Windows Servers]     [Deployment Server]     [Indexer Cluster]     [Search Head]
+        │                      │                       │                    │
+        │ 1. Install UF        │                       │                    │
+        │───────────────────►  │                       │                    │
+        │                      │                       │                    │
+        │ 2. Receive config    │                       │                    │
+        │ ◄───────────────────│                       │                    │
+        │                      │                       │                    │
+        │ 3. Forward events ───────────────────────────►                    │
+        │                      │                       │                    │
+        │                      │                       │ 4. Query ◄─────────│
+        │                      │                       │───────────────────►│
+
+
+STEP-BY-STEP:
+
+Step 1: Install Universal Forwarder on Windows Server
+────────────────────────────────────────────────────────────────────────────
+
+  # Download from splunk.com/download/universalforwarder
+  # Run installer (GUI or command line)
+  
+  msiexec.exe /i splunkforwarder-9.3.0-x64-release.msi AGREETOLICENSE=Yes ^
+    RECEIVING_INDEXER="indexer1.company.com:9997" ^
+    DEPLOYMENT_SERVER="deploy.company.com:8089" ^
+    LAUNCHSPLUNK=1 SERVICESTARTTYPE=auto /quiet
+  
+  # After install, UF will phone home to deployment server
+
+
+Step 2: Create App on Deployment Server
+────────────────────────────────────────────────────────────────────────────
+
+  # On Deployment Server: /opt/splunk/etc/deployment-apps/
+  
+  mkdir -p /opt/splunk/etc/deployment-apps/TA_windows_inputs/local
+  
+  # Create inputs.conf
+  cat > /opt/splunk/etc/deployment-apps/TA_windows_inputs/local/inputs.conf << 'EOF'
+  # Security Events - filtered to important events
+  [WinEventLog://Security]
+  disabled = 0
+  index = wineventlog
+  whitelist = 4624,4625,4648,4672,4688,4720,4726,4732,4756,4768,4769,4771
+  
+  # Sysmon (if installed)
+  [WinEventLog://Microsoft-Windows-Sysmon/Operational]
+  disabled = 0
+  index = sysmon
+  renderXml = true
+  
+  # PowerShell Script Block Logging
+  [WinEventLog://Microsoft-Windows-PowerShell/Operational]
+  disabled = 0
+  index = wineventlog
+  whitelist = 4103,4104
+  EOF
+
+
+Step 3: Create Server Class
+────────────────────────────────────────────────────────────────────────────
+
+  # Edit /opt/splunk/etc/system/local/serverclass.conf
+  
+  [serverClass:Windows_Servers]
+  whitelist.0 = *.company.com
+  machineTypesFilter = windows-*
+  
+  [serverClass:Windows_Servers:app:Splunk_TA_windows]
+  restartSplunkd = 1
+  stateOnClient = enabled
+  
+  [serverClass:Windows_Servers:app:TA_windows_inputs]
+  restartSplunkd = 1
+  stateOnClient = enabled
+  
+  # Reload deployment server
+  /opt/splunk/bin/splunk reload deploy-server
+
+
+Step 4: Verify Data Flow
+────────────────────────────────────────────────────────────────────────────
+
+  # On Search Head - run these SPL queries
+  
+  # Check if events are arriving
+  index=wineventlog earliest=-15m
+  | stats count by host, sourcetype
+  
+  # Check specific event types
+  index=wineventlog EventCode=4624 earliest=-1h
+  | stats count by host, Logon_Type
+  
+  # Verify Sysmon
+  index=sysmon earliest=-1h
+  | stats count by EventCode, host
                 </div>
 
-                <!-- SUMMARY -->
-                <h2><i class="fas fa-check-circle"></i> Summary: When to Use What</h2>
+                <div class="diagram-box">
+SCENARIO 2: ONBOARD PALO ALTO FIREWALL (Syslog to Heavy Forwarder)
+═══════════════════════════════════════════════════════════════════════════════
 
-                <table>
-                    <thead>
-                        <tr><th>Scenario</th><th>Approach</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Common log source (Windows, Palo Alto, AWS)</td>
-                            <td>Install TA from Splunkbase → Configure input with correct sourcetype</td>
-                        </tr>
-                        <tr>
-                            <td>Custom application logs</td>
-                            <td>Create custom sourcetype in props.conf with extractions</td>
-                        </tr>
-                        <tr>
-                            <td>Complex parsing with multiple patterns</td>
-                            <td>Use transforms.conf with REPORT in props.conf</td>
-                        </tr>
-                        <tr>
-                            <td>Route logs to different indexes</td>
-                            <td>transforms.conf with DEST_KEY routing</td>
-                        </tr>
-                        <tr>
-                            <td>Enterprise Security compatibility</td>
-                            <td>Add CIM field aliases and tags for data models</td>
-                        </tr>
-                        <tr>
-                            <td>Cost optimization</td>
-                            <td>Configure shorter retention for high-volume, low-value indexes</td>
-                        </tr>
-                    </tbody>
-                </table>
+ARCHITECTURE:
 
-                <!-- RELATED -->
-                <h2><i class="fas fa-link"></i> Related Topics</h2>
-                <div class="card-grid">
-                    <a href="spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>SPL Fundamentals</h3><p>Query your data</p></a>
-                    <a href="spl-intermediate.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>SPL Intermediate</h3><p>Stats, eval, lookups</p></a>
-                    <a href="spl-library.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>SPL Library</h3><p>Ready-to-use queries</p></a>
+  [Palo Alto FW]  ──TCP 514──►  [Heavy Forwarder]  ──TCP 9997──►  [Indexers]
+                               (rsyslog + Splunk)
+                               • Receives syslog
+                               • Parses with TA
+                               • Forwards to indexers
+
+
+Step 1: Configure Heavy Forwarder to Receive Syslog
+────────────────────────────────────────────────────────────────────────────
+
+  # Install Splunk Enterprise on Heavy Forwarder VM (not UF!)
+  # Download from splunk.com
+  
+  rpm -i splunk-9.3.0-x64.rpm
+  /opt/splunk/bin/splunk start --accept-license
+  
+  # Disable local indexing (it's a forwarder)
+  /opt/splunk/bin/splunk disable local-index
+
+
+Step 2: Install Palo Alto TA on Heavy Forwarder
+────────────────────────────────────────────────────────────────────────────
+
+  # Download from Splunkbase: "Splunk Add-on for Palo Alto Networks" (7523)
+  cd /opt/splunk/etc/apps
+  tar -xvf /tmp/Splunk_Add-on_for_Palo_Alto_Networks.tgz
+
+
+Step 3: Configure Syslog Input
+────────────────────────────────────────────────────────────────────────────
+
+  # Create inputs.conf
+  cat > /opt/splunk/etc/apps/Splunk_TA_paloalto/local/inputs.conf << 'EOF'
+  [tcp://514]
+  disabled = 0
+  connection_host = dns
+  sourcetype = pan:log
+  index = firewall
+  EOF
+  
+  # Restart Splunk
+  /opt/splunk/bin/splunk restart
+
+
+Step 4: Configure Palo Alto to Send Logs
+────────────────────────────────────────────────────────────────────────────
+
+  # In Palo Alto GUI:
+  # Device → Server Profiles → Syslog
+  # 
+  # Name: Splunk_Syslog
+  # Server: [Heavy Forwarder IP]
+  # Transport: TCP
+  # Port: 514
+  # Format: BSD
+  # Facility: LOG_USER
+  #
+  # Then: Objects → Log Forwarding → Create profile
+  # Send Traffic, Threat, System logs to Splunk_Syslog profile
+  #
+  # Apply to Security Rules: Rules → Select rule → Actions → Log Forwarding
+
+
+Step 5: Configure Outputs to Indexers
+────────────────────────────────────────────────────────────────────────────
+
+  # On Heavy Forwarder
+  cat > /opt/splunk/etc/system/local/outputs.conf << 'EOF'
+  [tcpout]
+  defaultGroup = indexer_cluster
+  
+  [tcpout:indexer_cluster]
+  server = indexer1.company.com:9997, indexer2.company.com:9997
+  compressed = true
+  useACK = true
+  EOF
+  
+  /opt/splunk/bin/splunk restart
+
+
+Step 6: Verify Data
+────────────────────────────────────────────────────────────────────────────
+
+  # On Search Head
+  index=firewall sourcetype=pan:traffic earliest=-1h
+  | stats count by action, app
+  | sort -count
+  
+  # Check CIM compliance
+  | tstats count from datamodel=Network_Traffic by All_Traffic.action
                 </div>
 
+                <div class="diagram-box">
+SCENARIO 3: TROUBLESHOOT "NO DATA" ISSUES
+═══════════════════════════════════════════════════════════════════════════════
+
+TROUBLESHOOTING FLOWCHART:
+
+  No data in Splunk?
+        │
+        ├─► Check Forwarder
+        │      │
+        │      ├─► Is UF running? → splunkd status
+        │      ├─► Is input enabled? → btool inputs list --debug
+        │      ├─► Network connectivity? → telnet indexer 9997
+        │      └─► Check internal logs → index=_internal host=forwarder
+        │
+        ├─► Check Network
+        │      │
+        │      ├─► Firewall blocking? → Test port 9997
+        │      ├─► DNS resolution? → nslookup indexer
+        │      └─► Load balancer? → Check health check
+        │
+        ├─► Check Indexer
+        │      │
+        │      ├─► Receiving port listening? → netstat -an | grep 9997
+        │      ├─► Queue blocked? → index=_internal group=queue
+        │      └─► Index exists? → | rest /services/data/indexes
+        │
+        └─► Check Parsing
+               │
+               ├─► Wrong sourcetype? → btool props list
+               ├─► Time parsing? → Check TIME_FORMAT in props.conf
+               └─► Line breaking? → Check LINE_BREAKER
+
+
+DIAGNOSTIC QUERIES:
+
+  # 1. Check if forwarder is connected
+  index=_internal sourcetype=splunkd group=tcpin_connections
+  | stats latest(connectionType) latest(version) by hostname
+  | sort hostname
+  
+  # 2. Check internal forwarder logs
+  index=_internal host=<forwarder_hostname> log_level=ERROR
+  | head 50
+  
+  # 3. Check if data is hitting any index
+  | tstats count where index=* by index, sourcetype
+  
+  # 4. Check parsing queue
+  index=_internal source=*metrics.log group=queue name=parsingQueue
+  | timechart avg(current_size) avg(largest_size)
+  
+  # 5. Find events with bad timestamps (future dates)
+  index=* earliest=+1d
+  | stats count by index, sourcetype
+  
+  # 6. Check license usage
+  index=_internal source=*license_usage.log type=Usage
+  | stats sum(b) as bytes by pool
+  | eval GB = round(bytes/1024/1024/1024, 2)
+                </div>
+
+                <div class="diagram-box">
+SCENARIO 4: CREATE CUSTOM SOURCETYPE FOR APPLICATION LOGS
+═══════════════════════════════════════════════════════════════════════════════
+
+SAMPLE LOG FORMAT:
+
+  2024-01-15T10:30:45.123Z INFO  [UserService] user=john.doe action=login ip=10.0.0.50 result=success duration=0.234
+  2024-01-15T10:30:46.456Z ERROR [AuthService] user=jane.smith action=login ip=10.0.0.51 result=failure reason="invalid_password"
+  2024-01-15T10:31:00.789Z WARN  [RateLimiter] user=john.doe action=api_call ip=10.0.0.50 result=throttled calls=150
+
+
+Step 1: Create Custom App Structure
+────────────────────────────────────────────────────────────────────────────
+
+  mkdir -p /opt/splunk/etc/apps/TA_myapp/local
+  mkdir -p /opt/splunk/etc/apps/TA_myapp/default
+  mkdir -p /opt/splunk/etc/apps/TA_myapp/metadata
+  
+  # Create app.conf
+  cat > /opt/splunk/etc/apps/TA_myapp/default/app.conf << 'EOF'
+  [install]
+  state = enabled
+  
+  [launcher]
+  description = Technology Add-on for MyApp logs
+  version = 1.0.0
+  
+  [ui]
+  is_visible = false
+  label = TA-myapp
+  EOF
+
+
+Step 2: Create props.conf for Parsing
+────────────────────────────────────────────────────────────────────────────
+
+  cat > /opt/splunk/etc/apps/TA_myapp/local/props.conf << 'EOF'
+  [myapp:log]
+  # Timestamp settings
+  TIME_FORMAT = %Y-%m-%dT%H:%M:%S.%3N%Z
+  TIME_PREFIX = ^
+  MAX_TIMESTAMP_LOOKAHEAD = 30
+  TZ = UTC
+  
+  # Event breaking
+  SHOULD_LINEMERGE = false
+  LINE_BREAKER = ([\r\n]+)
+  TRUNCATE = 10000
+  
+  # Field extractions (inline regex)
+  EXTRACT-level = ^[^\s]+\s+(?P<level>\w+)
+  EXTRACT-service = \[(?P<service>\w+)\]
+  EXTRACT-user = user=(?P<user>[^\s]+)
+  EXTRACT-action = action=(?P<action>[^\s]+)
+  EXTRACT-src_ip = ip=(?P<src_ip>[^\s]+)
+  EXTRACT-result = result=(?P<result>[^\s]+)
+  EXTRACT-duration = duration=(?P<duration>[\d.]+)
+  EXTRACT-reason = reason="(?P<reason>[^"]+)"
+  
+  # CIM field aliases for Authentication data model
+  FIELDALIAS-src = src_ip AS src
+  FIELDALIAS-app = service AS app
+  EVAL-vendor = "MyCompany"
+  EVAL-product = "MyApp"
+  EVAL-vendor_product = "MyCompany MyApp"
+  EOF
+
+
+Step 3: Create tags.conf for CIM Compliance
+────────────────────────────────────────────────────────────────────────────
+
+  cat > /opt/splunk/etc/apps/TA_myapp/local/tags.conf << 'EOF'
+  [eventtype=myapp_authentication]
+  authentication = enabled
+  EOF
+  
+  cat > /opt/splunk/etc/apps/TA_myapp/local/eventtypes.conf << 'EOF'
+  [myapp_authentication]
+  search = sourcetype="myapp:log" action IN ("login", "logout", "authenticate")
+  EOF
+
+
+Step 4: Create inputs.conf
+────────────────────────────────────────────────────────────────────────────
+
+  cat > /opt/splunk/etc/apps/TA_myapp/local/inputs.conf << 'EOF'
+  [monitor:///var/log/myapp/application.log]
+  disabled = 0
+  sourcetype = myapp:log
+  index = application
+  EOF
+
+
+Step 5: Test and Verify
+────────────────────────────────────────────────────────────────────────────
+
+  # Restart Splunk
+  /opt/splunk/bin/splunk restart
+  
+  # Search for data
+  index=application sourcetype=myapp:log earliest=-1h
+  | table _time, level, service, user, action, result
+  
+  # Verify CIM compliance
+  | tstats count from datamodel=Authentication by Authentication.action
+                </div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="pages/splunk/spl-fundamentals.html">SPL Fundamentals</a></li>
+                    <li><a href="pages/splunk/spl-intermediate.html">SPL Intermediate</a></li>
+                    <li><a href="pages/splunk/enterprise-scenarios.html">Enterprise Scenarios</a></li>
+                    <li><a href="pages/references/spl-library.html">SPL Query Library</a></li>
+                </ul>
             </div>
         </div>
-        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

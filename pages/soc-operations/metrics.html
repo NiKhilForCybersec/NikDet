@@ -7,271 +7,381 @@
     <title>SOC Metrics & KPIs | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .bad-metric { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .bad-metric h4 { margin-top: 0; color: #ef4444; }
+        .good-metric { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .good-metric h4 { margin-top: 0; color: #22c55e; }
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .metric-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; display: flex; align-items: center; gap: 1rem; }
+        .metric-card .value { font-size: 2rem; font-weight: bold; color: var(--accent-primary); min-width: 80px; }
+        .metric-card .label { font-size: 0.9rem; color: var(--text-secondary); }
+        .dashboard-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .warning-box { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/soc-operations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/soc-operations/index.html">Home</a><span class="separator">/</span><a href="pages/soc-operations/index.html">SOC Operations</a><span class="separator">/</span><span>Metrics</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-chart-line" style="color: var(--accent-primary);"></i> SOC Metrics & KPIs</h1>
-                <p class="lead">Measure what matters. Comprehensive guide to SOC performance metrics, KPIs, and reporting.</p>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/soc-operations/index.html">SOC Operations</a><span class="separator">/</span>
+                <span>Metrics</span>
             </div>
-            <div class="content">
-                <h2>Why Metrics Matter</h2>
-                <p>Metrics serve multiple purposes in a SOC:</p>
-                <ul>
-                    <li><strong>Demonstrate value</strong> to leadership and stakeholders</li>
-                    <li><strong>Identify improvement areas</strong> in processes and tools</li>
-                    <li><strong>Track team performance</strong> and workload distribution</li>
-                    <li><strong>Justify resource requests</strong> with data</li>
-                    <li><strong>Benchmark</strong> against industry standards</li>
-                    <li><strong>Drive accountability</strong> across the team</li>
-                </ul>
 
-                <h2>Core SOC Metrics</h2>
+            <div class="content">
+                <h1><i class="fas fa-chart-line"></i> SOC Metrics & KPIs</h1>
+                <p class="lead">Real talk about metrics: what actually matters, common problems, and how to measure without gaming.</p>
+
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                    <ol>
+                        <li><a href="#problems">Common Metrics Problems</a></li>
+                        <li><a href="#gaming">Metrics Gaming Examples</a></li>
+                        <li><a href="#matters">What Actually Matters</a></li>
+                        <li><a href="#core-metrics">Core Metrics Explained</a></li>
+                        <li><a href="#dashboards">Useful Dashboards</a></li>
+                        <li><a href="#reporting">Reporting to Leadership</a></li>
+                    </ol>
+                </div>
+
+                <!-- SECTION 1: PROBLEMS -->
+                <h2 id="problems"><i class="fas fa-exclamation-triangle"></i> Common Metrics Problems</h2>
+
+                <p>Most SOC metrics programs fail not because of bad intentions, but because of these common pitfalls:</p>
+
+                <div class="bad-metric">
+                    <h4>❌ Problem 1: Measuring Activity, Not Outcomes</h4>
+                    <p><strong>What happens:</strong> SOC tracks "tickets closed per analyst" as primary metric.</p>
+                    <p><strong>Result:</strong> Analysts rush through alerts, close things without proper investigation, quality drops.</p>
+                    <p><strong>Real example:</strong> Analyst closes 50 tickets/day, looks great on paper. 3 months later, breach discovered - one of those "closed" tickets was the initial access that was missed.</p>
+                </div>
+
+                <div class="bad-metric">
+                    <h4>❌ Problem 2: Vanity Metrics That Don't Help</h4>
+                    <p><strong>What happens:</strong> Weekly reports show "500,000 alerts blocked" and "99.9% uptime".</p>
+                    <p><strong>Result:</strong> Leadership thinks security is great. But... were any real threats detected? Nobody knows.</p>
+                    <p><strong>Real example:</strong> Security report shows 2 million "threats blocked" - turns out 99.8% are spam emails, not threats.</p>
+                </div>
+
+                <div class="bad-metric">
+                    <h4>❌ Problem 3: Metrics That Punish Good Behavior</h4>
+                    <p><strong>What happens:</strong> Analysts measured on "time to close" - faster = better.</p>
+                    <p><strong>Result:</strong> Analysts don't escalate (takes longer), don't investigate thoroughly, close as FP when unsure.</p>
+                    <p><strong>Real example:</strong> Analyst could escalate suspicious alert (right thing) but closes as FP instead because escalation "hurts their numbers."</p>
+                </div>
+
+                <div class="bad-metric">
+                    <h4>❌ Problem 4: Gaming the Metrics</h4>
+                    <p><strong>What happens:</strong> MTTA target is 15 minutes. Analysts learn to "acknowledge" immediately without actually looking.</p>
+                    <p><strong>Result:</strong> MTTA looks great (3 min average!), but actual investigation doesn't start for hours.</p>
+                </div>
+
+                <!-- SECTION 2: GAMING EXAMPLES -->
+                <h2 id="gaming"><i class="fas fa-user-secret"></i> Metrics Gaming Examples</h2>
+
+                <p>If you measure it, people will optimize for it. Here's how metrics get gamed:</p>
+
+                <div class="scenario-box">
+                    <h4>Gaming Example: Mean Time to Acknowledge (MTTA)</h4>
+                    <table>
+                        <tr><td><strong>Metric:</strong></td><td>MTTA target < 15 minutes</td></tr>
+                        <tr><td><strong>How it's gamed:</strong></td><td>Analyst opens alert, clicks "acknowledge", moves on. Comes back to actually look at it hours later.</td></tr>
+                        <tr><td><strong>Dashboard shows:</strong></td><td>MTTA: 4 minutes ✓</td></tr>
+                        <tr><td><strong>Reality:</strong></td><td>Actual investigation starts 2 hours later</td></tr>
+                    </table>
+                    <p><strong>Fix:</strong> Measure time to MEANINGFUL action (first query run, first note added, classification decision)</p>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Gaming Example: Tickets Closed Per Day</h4>
+                    <table>
+                        <tr><td><strong>Metric:</strong></td><td>Target: 30 tickets/analyst/day</td></tr>
+                        <tr><td><strong>How it's gamed:</strong></td><td>Close obvious FPs instantly, bulk close similar alerts, avoid complex investigations</td></tr>
+                        <tr><td><strong>Dashboard shows:</strong></td><td>Average: 35 tickets/day ✓</td></tr>
+                        <tr><td><strong>Reality:</strong></td><td>True positives getting closed as FP, complex threats missed</td></tr>
+                    </table>
+                    <p><strong>Fix:</strong> Track closure quality (audit random sample), separate simple vs complex tickets</p>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Gaming Example: True Positive Rate</h4>
+                    <table>
+                        <tr><td><strong>Metric:</strong></td><td>Target: >50% True Positive rate</td></tr>
+                        <tr><td><strong>How it's gamed:</strong></td><td>Disable noisy rules, only keep rules that rarely fire</td></tr>
+                        <tr><td><strong>Dashboard shows:</strong></td><td>TP Rate: 68% ✓</td></tr>
+                        <tr><td><strong>Reality:</strong></td><td>Detection coverage dropped by 40%, now blind to common attacks</td></tr>
+                    </table>
+                    <p><strong>Fix:</strong> Track TP rate AND coverage (which techniques are detected)</p>
+                </div>
+
+                <!-- SECTION 3: WHAT MATTERS -->
+                <h2 id="matters"><i class="fas fa-check-circle"></i> What Actually Matters</h2>
+
+                <p>Instead of vanity metrics, focus on outcomes:</p>
+
+                <div class="good-metric">
+                    <h4>✓ Did we detect real threats?</h4>
+                    <ul>
+                        <li><strong>Metric:</strong> Number of confirmed True Positives requiring action</li>
+                        <li><strong>Why:</strong> This is the actual job - finding real threats</li>
+                        <li><strong>Target:</strong> Track trend, not absolute number</li>
+                    </ul>
+                </div>
+
+                <div class="good-metric">
+                    <h4>✓ How fast did we respond to real threats?</h4>
+                    <ul>
+                        <li><strong>Metric:</strong> Time from TRUE POSITIVE alert to containment</li>
+                        <li><strong>Why:</strong> Speed matters only for real incidents</li>
+                        <li><strong>Target:</strong> < 4 hours for High severity incidents</li>
+                    </ul>
+                </div>
+
+                <div class="good-metric">
+                    <h4>✓ What did we miss?</h4>
+                    <ul>
+                        <li><strong>Metric:</strong> Incidents discovered by someone other than SOC (IT, user, third party)</li>
+                        <li><strong>Why:</strong> This is your detection gap</li>
+                        <li><strong>Target:</strong> < 10% of incidents discovered externally</li>
+                    </ul>
+                </div>
+
+                <div class="good-metric">
+                    <h4>✓ How much noise are we dealing with?</h4>
+                    <ul>
+                        <li><strong>Metric:</strong> Alert-to-Incident ratio (how many alerts per real incident)</li>
+                        <li><strong>Why:</strong> Shows detection quality and analyst fatigue risk</li>
+                        <li><strong>Target:</strong> < 100:1 (100 alerts per real incident)</li>
+                    </ul>
+                </div>
+
+                <div class="good-metric">
+                    <h4>✓ Can analysts keep up?</h4>
+                    <ul>
+                        <li><strong>Metric:</strong> Alert backlog trend (growing or shrinking)</li>
+                        <li><strong>Why:</strong> Growing backlog = analysts overwhelmed</li>
+                        <li><strong>Target:</strong> Flat or declining backlog</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 4: CORE METRICS -->
+                <h2 id="core-metrics"><i class="fas fa-tachometer-alt"></i> Core Metrics Explained</h2>
+
                 <h3>Time-Based Metrics</h3>
                 <table>
-                    <thead><tr><th>Metric</th><th>Definition</th><th>Target</th><th>Why It Matters</th></tr></thead>
+                    <thead><tr><th>Metric</th><th>What It Measures</th><th>Realistic Target</th><th>Watch Out For</th></tr></thead>
                     <tbody>
                         <tr>
-                            <td><strong>MTTD</strong><br><span style="font-size: 0.8rem; color: var(--text-secondary);">Mean Time to Detect</span></td>
-                            <td>Time from attack start to detection</td>
-                            <td>&lt; 24 hours</td>
-                            <td>Measures detection capability speed</td>
+                            <td><strong>MTTD</strong><br>(Mean Time to Detect)</td>
+                            <td>Time from attack start to alert firing</td>
+                            <td>Varies by attack type</td>
+                            <td>Hard to measure - you need to know when attack actually started</td>
                         </tr>
                         <tr>
-                            <td><strong>MTTR</strong><br><span style="font-size: 0.8rem; color: var(--text-secondary);">Mean Time to Respond</span></td>
-                            <td>Time from detection to containment</td>
-                            <td>&lt; 4 hours</td>
-                            <td>Measures response efficiency</td>
+                            <td><strong>MTTA</strong><br>(Mean Time to Acknowledge)</td>
+                            <td>Time from alert to analyst picks it up</td>
+                            <td>< 15 min (Critical)<br>< 1 hr (High)</td>
+                            <td>Easy to game - measure meaningful action instead</td>
                         </tr>
                         <tr>
-                            <td><strong>MTTA</strong><br><span style="font-size: 0.8rem; color: var(--text-secondary);">Mean Time to Acknowledge</span></td>
-                            <td>Time from alert to first analyst touch</td>
-                            <td>&lt; 15 min (Critical)<br>&lt; 1 hour (High)</td>
-                            <td>Measures initial response speed</td>
-                        </tr>
-                        <tr>
-                            <td><strong>MTTT</strong><br><span style="font-size: 0.8rem; color: var(--text-secondary);">Mean Time to Triage</span></td>
-                            <td>Time from alert to classification</td>
-                            <td>&lt; 30 minutes</td>
-                            <td>Measures triage efficiency</td>
+                            <td><strong>MTTR</strong><br>(Mean Time to Respond)</td>
+                            <td>Time from alert to containment complete</td>
+                            <td>< 4 hrs (High severity)</td>
+                            <td>Only meaningful for True Positives</td>
                         </tr>
                         <tr>
                             <td><strong>Dwell Time</strong></td>
-                            <td>Time attacker present before detection</td>
-                            <td>&lt; 7 days</td>
-                            <td>Critical security effectiveness measure</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h3>Volume Metrics</h3>
-                <table>
-                    <thead><tr><th>Metric</th><th>Definition</th><th>Use</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Alert Volume</strong></td>
-                            <td>Total alerts per day/week/month</td>
-                            <td>Capacity planning, trend analysis</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Alerts per Analyst</strong></td>
-                            <td>Workload distribution</td>
-                            <td>Staffing decisions, burnout prevention</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Incidents Opened</strong></td>
-                            <td>True security incidents (not just alerts)</td>
-                            <td>Threat landscape understanding</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Escalation Rate</strong></td>
-                            <td>% of alerts escalated L1→L2</td>
-                            <td>L1 empowerment, training needs</td>
+                            <td>How long attacker was present before detection</td>
+                            <td>< 7 days</td>
+                            <td>Only measurable after incident is investigated</td>
                         </tr>
                     </tbody>
                 </table>
 
                 <h3>Quality Metrics</h3>
                 <table>
-                    <thead><tr><th>Metric</th><th>Definition</th><th>Target</th><th>Calculation</th></tr></thead>
+                    <thead><tr><th>Metric</th><th>What It Measures</th><th>Target</th><th>How to Calculate</th></tr></thead>
                     <tbody>
                         <tr>
                             <td><strong>True Positive Rate</strong></td>
-                            <td>% of alerts that are actual issues</td>
-                            <td>&gt; 40%</td>
-                            <td>TP / (TP + FP) × 100</td>
+                            <td>% of investigated alerts that were real</td>
+                            <td>> 30-50%</td>
+                            <td>TPs / (TPs + FPs)</td>
                         </tr>
                         <tr>
-                            <td><strong>False Positive Rate</strong></td>
-                            <td>% of alerts that are noise</td>
-                            <td>&lt; 60%</td>
-                            <td>FP / (TP + FP) × 100</td>
+                            <td><strong>Escalation Quality</strong></td>
+                            <td>% of escalations that were appropriate</td>
+                            <td>> 80%</td>
+                            <td>Valid escalations / Total escalations</td>
                         </tr>
                         <tr>
                             <td><strong>Detection Coverage</strong></td>
-                            <td>% of ATT&CK techniques with detections</td>
-                            <td>&gt; 60%</td>
-                            <td>Detected techniques / Total techniques</td>
+                            <td>% of MITRE techniques with detections</td>
+                            <td>> 60%</td>
+                            <td>Covered techniques / Total relevant techniques</td>
                         </tr>
                         <tr>
-                            <td><strong>SLA Compliance</strong></td>
-                            <td>% of alerts handled within SLA</td>
-                            <td>&gt; 95%</td>
-                            <td>Within SLA / Total alerts</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Reopened Incidents</strong></td>
-                            <td>% of incidents reopened after closure</td>
-                            <td>&lt; 5%</td>
-                            <td>Measures investigation quality</td>
+                            <td><strong>Missed Incidents</strong></td>
+                            <td>Incidents found by others, not SOC</td>
+                            <td>< 10%</td>
+                            <td>External discoveries / Total incidents</td>
                         </tr>
                     </tbody>
                 </table>
 
-                <h2>Metric Dashboards</h2>
-                <h3>Executive Dashboard (CISO/Leadership)</h3>
-                <p>Focus on business impact and trends:</p>
-                <ul>
-                    <li>Security incidents by severity (monthly trend)</li>
-                    <li>MTTD and MTTR trends</li>
-                    <li>Top threat categories</li>
-                    <li>Detection coverage heatmap (ATT&CK)</li>
-                    <li>Comparison to industry benchmarks</li>
-                </ul>
+                <!-- SECTION 5: DASHBOARDS -->
+                <h2 id="dashboards"><i class="fas fa-desktop"></i> Useful Dashboards</h2>
 
-                <h3>Operations Dashboard (SOC Manager)</h3>
-                <p>Focus on team performance and capacity:</p>
-                <ul>
-                    <li>Alert volume by hour/day/week</li>
-                    <li>SLA compliance by severity</li>
-                    <li>Alerts per analyst distribution</li>
-                    <li>Queue age (oldest open alerts)</li>
-                    <li>False positive rate by detection rule</li>
-                    <li>Escalation rate trends</li>
-                </ul>
-
-                <h3>Analyst Dashboard</h3>
-                <p>Focus on individual workload and queues:</p>
-                <ul>
-                    <li>My open alerts/incidents</li>
-                    <li>My average triage time</li>
-                    <li>Alerts by severity in queue</li>
-                    <li>Recent closures needing review</li>
-                </ul>
-
-                <h2>Calculating Key Metrics</h2>
-                <h3>MTTD Example</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
-                    Incident 1: Attack started 10:00, detected 14:00 = 4 hours<br>
-                    Incident 2: Attack started 08:00, detected 09:30 = 1.5 hours<br>
-                    Incident 3: Attack started 15:00, detected 16:00 = 1 hour<br><br>
-                    <strong>MTTD = (4 + 1.5 + 1) / 3 = 2.17 hours</strong>
+                <h3>SOC Operations Dashboard (Daily View)</h3>
+                <div class="dashboard-example">
+<pre>┌─────────────────────────────────────────────────────────────────────┐
+│ SOC OPERATIONS - January 4, 2025                                    │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  CURRENT STATUS                                                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │ Open Alerts  │  │ Open Tickets │  │  SLA Risk    │              │
+│  │     47       │  │     12       │  │     3        │              │
+│  │  ▼ 12 vs AM  │  │  ▲ 2 vs AM   │  │  (> 4 hrs)   │              │
+│  └──────────────┘  └──────────────┘  └──────────────┘              │
+│                                                                     │
+│  TODAY'S OUTCOMES                                                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │ Closed Today │  │ True Positives│  │ Escalated   │              │
+│  │     89       │  │      7       │  │      4       │              │
+│  │              │  │   (8% TP)    │  │              │              │
+│  └──────────────┘  └──────────────┘  └──────────────┘              │
+│                                                                     │
+│  RESPONSE TIMES (Today)                                             │
+│  MTTA Critical: 8 min ✓    MTTA High: 34 min ✓                     │
+│  Avg Time to Close: 22 min                                          │
+│                                                                     │
+│  ACTIVE INCIDENTS                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ INC-2025-0104-001 | Phishing | HIGH | Investigating | L2   │   │
+│  │ INC-2025-0103-003 | Malware  | MED  | Monitoring    | L2   │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘</pre>
                 </div>
 
-                <h3>False Positive Rate Query (KQL)</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> Sentinel</span></div>
-                    <div class="query-body">
-<pre class="code-block"><code>SecurityIncident
-| where TimeGenerated > ago(30d)
-| summarize 
-    TruePositives = countif(Classification == "TruePositive"),
-    FalsePositives = countif(Classification == "FalsePositive"),
-    BenignPositives = countif(Classification == "BenignPositive")
-| extend 
-    Total = TruePositives + FalsePositives + BenignPositives,
-    FPRate = round(FalsePositives * 100.0 / (TruePositives + FalsePositives + BenignPositives), 2)</code></pre>
+                <h3>Weekly Executive Dashboard</h3>
+                <div class="dashboard-example">
+<pre>┌─────────────────────────────────────────────────────────────────────┐
+│ SECURITY OPERATIONS - WEEKLY SUMMARY                                │
+│ Week of December 30, 2024                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  KEY OUTCOMES                                                       │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │ Incidents Detected: 12        vs Last Week: 8   (▲ 50%)     │  │
+│  │ Avg Response Time:  2.4 hrs   vs Last Week: 3.1 (▼ Better)  │  │
+│  │ Incidents Missed:   0         vs Target: < 10%   ✓          │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  TOP THREATS THIS WEEK                                              │
+│  1. Phishing attempts (47 blocked, 2 clicked)                       │
+│  2. Brute force attacks (1,247 blocked)                             │
+│  3. Malware detected (3 hosts, all contained)                       │
+│                                                                     │
+│  NOTABLE INCIDENTS                                                  │
+│  • INC-001: BEC attempt targeting Finance (blocked, $0 loss)        │
+│  • INC-002: Malware via USB on WKSTN-045 (contained in 47 min)     │
+│                                                                     │
+│  DETECTION HEALTH                                                   │
+│  Alert Volume: 2,847 (▼ 12% - good, less noise)                    │
+│  True Positive Rate: 34% (▲ 5% - improving)                        │
+│  Rules Tuned: 7 (reduced FPs by ~200/week)                          │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘</pre>
+                </div>
+
+                <!-- SECTION 6: REPORTING -->
+                <h2 id="reporting"><i class="fas fa-file-alt"></i> Reporting to Leadership</h2>
+
+                <h3>What Executives Actually Care About</h3>
+                <table>
+                    <thead><tr><th>They Ask</th><th>They Mean</th><th>What to Show</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>"Are we secure?"</td>
+                            <td>Are we at risk? Will we be breached?</td>
+                            <td>Real incidents detected, response times, what we're blind to</td>
+                        </tr>
+                        <tr>
+                            <td>"How's the SOC performing?"</td>
+                            <td>Is my investment paying off?</td>
+                            <td>Threats stopped, incidents contained, comparison to past</td>
+                        </tr>
+                        <tr>
+                            <td>"What do you need?"</td>
+                            <td>What will reduce risk further?</td>
+                            <td>Coverage gaps, capacity issues, tool limitations</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Monthly Report Template</h3>
+                <div class="scenario-box">
+                    <h4>Executive Summary Format</h4>
+                    <div class="dashboard-example">
+<pre>SECURITY OPERATIONS MONTHLY REPORT
+January 2025
+
+EXECUTIVE SUMMARY
+-----------------
+This month we detected and contained 47 security incidents, a 15% 
+increase from December. Key wins:
+• Stopped 1 ransomware attempt before encryption (saved ~$2M estimated)
+• Detected compromised vendor account within 2 hours
+• Zero data breaches or business impact
+
+CONCERNS
+• Alert volume increased 30% - approaching team capacity
+• Two detection gaps identified during purple team exercise
+
+KEY METRICS
+-----------
+| Metric                | Jan 2025 | Dec 2024 | Target | Status |
+|----------------------|----------|----------|--------|--------|
+| Incidents Detected   | 47       | 41       | -      | ▲      |
+| Avg Response Time    | 2.1 hrs  | 2.4 hrs  | < 4 hrs| ✓      |
+| Missed Incidents     | 0        | 1        | < 10%  | ✓      |
+| Detection Coverage   | 67%      | 65%      | > 60%  | ✓      |
+
+RECOMMENDATIONS
+---------------
+1. Add 1 L1 analyst to handle increased volume
+2. Implement detection for identified gaps (T1055, T1134)
+3. Schedule quarterly purple team exercises</pre>
                     </div>
                 </div>
 
-                <h2>Industry Benchmarks</h2>
-                <table>
-                    <thead><tr><th>Metric</th><th>Poor</th><th>Average</th><th>Good</th><th>Excellent</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>MTTD</strong></td>
-                            <td style="color: #f07070;">&gt; 30 days</td>
-                            <td style="color: #f0b756;">7-30 days</td>
-                            <td style="color: #6aa3f7;">1-7 days</td>
-                            <td style="color: #5ce0c4;">&lt; 24 hours</td>
-                        </tr>
-                        <tr>
-                            <td><strong>MTTR</strong></td>
-                            <td style="color: #f07070;">&gt; 30 days</td>
-                            <td style="color: #f0b756;">7-30 days</td>
-                            <td style="color: #6aa3f7;">1-7 days</td>
-                            <td style="color: #5ce0c4;">&lt; 24 hours</td>
-                        </tr>
-                        <tr>
-                            <td><strong>False Positive Rate</strong></td>
-                            <td style="color: #f07070;">&gt; 80%</td>
-                            <td style="color: #f0b756;">60-80%</td>
-                            <td style="color: #6aa3f7;">40-60%</td>
-                            <td style="color: #5ce0c4;">&lt; 40%</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Dwell Time</strong></td>
-                            <td style="color: #f07070;">&gt; 200 days</td>
-                            <td style="color: #f0b756;">50-200 days</td>
-                            <td style="color: #6aa3f7;">7-50 days</td>
-                            <td style="color: #5ce0c4;">&lt; 7 days</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h2>Avoiding Bad Metrics</h2>
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Metrics Pitfalls</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li><strong>Vanity metrics:</strong> "We blocked 1 million attacks!" (meaningless without context)</li>
-                        <li><strong>Gaming:</strong> Closing alerts quickly without investigation to hit SLA</li>
-                        <li><strong>Counting wrong things:</strong> Alert count instead of incident count</li>
-                        <li><strong>No baseline:</strong> Metrics without historical comparison</li>
-                        <li><strong>Too many metrics:</strong> Information overload loses focus</li>
+                <div class="warning-box">
+                    <h4>⚠️ Avoid These Reporting Mistakes</h4>
+                    <ul>
+                        <li><strong>Don't lead with vanity metrics</strong> - "Blocked 5 million threats" means nothing</li>
+                        <li><strong>Don't hide bad news</strong> - Missed incidents are learning opportunities</li>
+                        <li><strong>Don't use jargon</strong> - Executives don't know what MTTA is</li>
+                        <li><strong>Don't provide data without context</strong> - "47 incidents" vs "47 incidents, up 15%, handled with zero business impact"</li>
                     </ul>
                 </div>
 
-                <h2>Reporting Cadence</h2>
-                <table>
-                    <thead><tr><th>Report</th><th>Frequency</th><th>Audience</th><th>Content</th></tr></thead>
-                    <tbody>
-                        <tr><td>Daily Brief</td><td>Daily</td><td>SOC team</td><td>Queue status, notable alerts, shift handoff</td></tr>
-                        <tr><td>Weekly Report</td><td>Weekly</td><td>SOC Manager, IT</td><td>Volume trends, SLA compliance, top alerts</td></tr>
-                        <tr><td>Monthly Report</td><td>Monthly</td><td>CISO, Leadership</td><td>KPIs, incidents, threats, improvements</td></tr>
-                        <tr><td>Quarterly Review</td><td>Quarterly</td><td>Executive</td><td>Strategic metrics, risk posture, roadmap</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Continuous Improvement</h2>
-                <p>Use metrics to drive improvements:</p>
-                <ol>
-                    <li><strong>Identify:</strong> Which metric is underperforming?</li>
-                    <li><strong>Analyze:</strong> What's causing the issue?</li>
-                    <li><strong>Plan:</strong> What changes could improve it?</li>
-                    <li><strong>Implement:</strong> Make the changes</li>
-                    <li><strong>Measure:</strong> Did the metric improve?</li>
-                    <li><strong>Iterate:</strong> Repeat the cycle</li>
-                </ol>
-
-                <div class="info-box tip">
-                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Pro Tips</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li>Start with 5-7 key metrics, not 50</li>
-                        <li>Automate metric collection where possible</li>
-                        <li>Review metrics monthly to ensure they're still relevant</li>
-                        <li>Combine metrics with qualitative feedback</li>
-                        <li>Celebrate improvements, not just flag issues</li>
-                    </ul>
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="pages/soc-operations/index.html" class="card"><div class="card-icon"><i class="fas fa-building"></i></div><h3>SOC Operations</h3><p>Full operations guide</p></a>
+                    <a href="pages/soc-maturity/index.html" class="card"><div class="card-icon"><i class="fas fa-chart-bar"></i></div><h3>SOC Maturity</h3><p>Maturity assessment</p></a>
                 </div>
+
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

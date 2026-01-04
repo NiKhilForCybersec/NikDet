@@ -7,277 +7,414 @@
     <title>Incident Response | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #ef4444; }
+        .scenario-box h4 { margin-top: 0; color: #ef4444; }
+        .alert-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-x: auto; }
+        .timeline-box { background: var(--bg-secondary); border-left: 3px solid #ef4444; padding: 0.75rem 1rem; margin: 0.5rem 0; }
+        .timeline-box .time { font-weight: bold; color: #ef4444; }
+        .phase-box { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-primary); }
+        .phase-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .mistake-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .correct-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .critical-action { background: rgba(239, 68, 68, 0.15); border: 2px solid #ef4444; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .checklist { list-style: none; padding-left: 0; }
+        .checklist li { padding: 0.25rem 0; }
+        .checklist li:before { content: "☐ "; color: var(--accent-primary); }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/soc-operations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/soc-operations/index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
                 <a href="pages/soc-operations/index.html">SOC Operations</a><span class="separator">/</span>
                 <span>Incident Response</span>
             </div>
 
-            <h1><i class="fas fa-fire-extinguisher"></i> Incident Response</h1>
-            <p class="lead">Structured approach to handling security incidents from detection through recovery and lessons learned.</p>
-
             <div class="content">
-                <!-- WHY IR MATTERS -->
-                <h2 id="why-matters"><i class="fas fa-question-circle"></i> Why Incident Response Matters</h2>
+                <h1><i class="fas fa-fire-extinguisher"></i> Incident Response</h1>
+                <p class="lead">Real IR scenarios: what actually happens during incidents, common mistakes, and practical response procedures.</p>
 
-                <div class="info-box danger">
-                    <div class="info-box-title"><i class="fas fa-clock"></i> Time is Everything</div>
-                    <p style="margin: 0.5rem 0;">The difference between a minor incident and a catastrophic breach often comes down to how fast and effectively you respond.</p>
-                    <table>
-                        <thead><tr><th>Response Speed</th><th>Typical Outcome</th><th>Cost Impact</th></tr></thead>
-                        <tbody>
-                            <tr><td style="color: #3fb950;">< 1 hour</td><td>Contained, minimal damage</td><td>Low - cleanup costs only</td></tr>
-                            <tr><td style="color: #d29922;">1-24 hours</td><td>Some spread, moderate damage</td><td>Medium - some recovery needed</td></tr>
-                            <tr><td style="color: #f0883e;">1-7 days</td><td>Significant spread, major damage</td><td>High - extensive recovery</td></tr>
-                            <tr><td style="color: #f85149;">> 7 days</td><td>Full compromise likely</td><td>Critical - may include ransom, breach notification</td></tr>
-                        </tbody>
-                    </table>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                    <ol>
+                        <li><a href="#real-incidents">Real Incident Scenarios</a></li>
+                        <li><a href="#common-mistakes">Common IR Mistakes</a></li>
+                        <li><a href="#communication">Communication During Incidents</a></li>
+                        <li><a href="#containment">Containment Playbooks</a></li>
+                        <li><a href="#post-incident">Post-Incident Process</a></li>
+                    </ol>
                 </div>
 
-                <h3>What Effective IR Achieves</h3>
-                <table>
-                    <thead><tr><th>Goal</th><th>How IR Achieves It</th><th>Without IR...</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Limit damage</strong></td><td>Fast containment stops spread</td><td>Attackers expand unchecked</td></tr>
-                        <tr><td><strong>Preserve evidence</strong></td><td>Proper handling maintains forensic integrity</td><td>Evidence destroyed, can't determine scope</td></tr>
-                        <tr><td><strong>Restore operations</strong></td><td>Structured recovery minimizes downtime</td><td>Chaotic recovery, longer outage</td></tr>
-                        <tr><td><strong>Meet obligations</strong></td><td>Proper documentation for legal/regulatory</td><td>Compliance failures, increased liability</td></tr>
-                        <tr><td><strong>Prevent recurrence</strong></td><td>Lessons learned improve defenses</td><td>Same attack succeeds again</td></tr>
-                    </tbody>
-                </table>
+                <!-- SECTION 1: REAL INCIDENTS -->
+                <h2 id="real-incidents"><i class="fas fa-fire"></i> Real Incident Scenarios</h2>
 
-                <!-- IR PHASES -->
-                <h2 id="phases"><i class="fas fa-layer-group"></i> Incident Response Phases</h2>
+                <div class="scenario-box">
+                    <h4>🚨 Incident: Malware Outbreak via Email</h4>
+                    
+                    <p><strong>Initial Alert (9:15 AM):</strong></p>
+                    <div class="alert-example">
+<pre>Alert: Malware Detected
+Host: WKSTN-FIN-023
+User: jane.doe (Finance)
+Threat: Emotet (trojan)
+Action: Quarantined
+Source: Email attachment "Invoice_12847.xlsm"</pre>
+                    </div>
 
-                <h3>The IR Lifecycle</h3>
-                <table>
-                    <thead><tr><th>Phase</th><th>Goal</th><th>Key Activities</th><th>Output</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td style="color: #3fb950;"><strong>1. Preparation</strong></td>
-                            <td>Be ready before incidents occur</td>
-                            <td>Build team, create playbooks, establish tools, practice</td>
-                            <td>IR plan, trained team, tested procedures</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #d29922;"><strong>2. Detection & Analysis</strong></td>
-                            <td>Identify and understand the incident</td>
-                            <td>Alert triage, scope assessment, evidence collection</td>
-                            <td>Confirmed incident, initial scope, severity</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #f0883e;"><strong>3. Containment</strong></td>
-                            <td>Stop the bleeding</td>
-                            <td>Isolate systems, disable accounts, block IOCs</td>
-                            <td>Threat contained, no further spread</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #f85149;"><strong>4. Eradication</strong></td>
-                            <td>Remove the threat completely</td>
-                            <td>Remove malware, close access, patch vulnerabilities</td>
-                            <td>Threat eliminated from environment</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #3fb950;"><strong>5. Recovery</strong></td>
-                            <td>Return to normal operations</td>
-                            <td>Restore systems, verify clean, monitor closely</td>
-                            <td>Systems operational, enhanced monitoring</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #3fb950;"><strong>6. Lessons Learned</strong></td>
-                            <td>Improve for next time</td>
-                            <td>Post-incident review, documentation, improvements</td>
-                            <td>Incident report, action items</td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <p><strong>What Actually Happens:</strong></p>
+                    
+                    <div class="timeline-box">
+                        <p><span class="time">9:15</span> - MDE alerts on Emotet. L1 sees alert, starts triage.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">9:18</span> - L1 checks: "Quarantined" - considers closing. But waits...</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">9:22</span> - Two more alerts: WKSTN-FIN-019, WKSTN-HR-007. Same malware.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">9:25</span> - L1 escalates: "Multiple hosts, same malware, escalating to L2."</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">9:30</span> - L2 declares incident. Starts bridge call.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">9:35</span> - Check email: Same phishing email sent to 47 recipients.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">9:40</span> - Block sender domain, delete email from all mailboxes.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">9:45</span> - 8 users clicked. 3 had malware execute before quarantine.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">10:00</span> - Isolate 3 compromised hosts for investigation.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">10:30</span> - Investigation shows no lateral movement, no persistence.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">11:00</span> - Reimage 3 hosts, user awareness reminder sent.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">12:00</span> - Incident closed. Total time: 2h 45m.</p>
+                    </div>
 
-                <!-- SEVERITY CLASSIFICATION -->
-                <h2 id="severity"><i class="fas fa-thermometer-half"></i> Incident Severity Classification</h2>
-
-                <table>
-                    <thead><tr><th>Severity</th><th>Definition</th><th>Examples</th><th>Response</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td style="color: #f85149;"><strong>Critical (P1)</strong></td>
-                            <td>Active threat, major business impact</td>
-                            <td>Active ransomware, data breach in progress, critical system down</td>
-                            <td>All hands, 24/7, executive notification</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #f0883e;"><strong>High (P2)</strong></td>
-                            <td>Confirmed compromise, significant risk</td>
-                            <td>Compromised admin account, malware executed, lateral movement</td>
-                            <td>Dedicated IR resources, management notification</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #d29922;"><strong>Medium (P3)</strong></td>
-                            <td>Potential compromise, moderate risk</td>
-                            <td>Suspicious activity on endpoint, phishing with click</td>
-                            <td>Standard investigation, SOC handles</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #3fb950;"><strong>Low (P4)</strong></td>
-                            <td>Minor issue, low risk</td>
-                            <td>Blocked malware, policy violation, failed attack</td>
-                            <td>Routine handling, document and close</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- CONTAINMENT STRATEGIES -->
-                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Strategies</h2>
-
-                <h3>Containment Decision Framework</h3>
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-balance-scale"></i> Speed vs. Completeness</div>
-                    <table>
-                        <thead><tr><th>Contain Fast (Short-term)</th><th>Contain Carefully (Long-term)</th></tr></thead>
-                        <tbody>
-                            <tr><td>Active threat spreading</td><td>Threat appears dormant</td></tr>
-                            <tr><td>Data being exfiltrated now</td><td>Need to understand full scope first</td></tr>
-                            <tr><td>Critical systems at risk</td><td>Want to preserve evidence</td></tr>
-                            <tr><td>Simple containment available</td><td>Complex, interconnected systems</td></tr>
-                        </tbody>
-                    </table>
-                    <p style="margin-top: 0.5rem;"><strong>Default:</strong> When in doubt, contain fast. You can always investigate more after bleeding stops.</p>
+                    <div class="critical-action">
+                        <h4>⚡ Key Decisions Made</h4>
+                        <ol>
+                            <li><strong>Don't just close "quarantined" alerts</strong> - check for spread first</li>
+                            <li><strong>Declare incident early</strong> - when pattern emerges (3+ hosts)</li>
+                            <li><strong>Block at source</strong> - email before investigating all endpoints</li>
+                            <li><strong>Isolate first, investigate second</strong> - for active malware</li>
+                        </ol>
+                    </div>
                 </div>
 
-                <h3>Containment Actions by Scenario</h3>
-                <table>
-                    <thead><tr><th>Scenario</th><th>Containment Actions</th><th>Consider</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Compromised endpoint</strong></td>
-                            <td>Network isolation, disable account used</td>
-                            <td>User needs device? Provide clean loaner</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Compromised account</strong></td>
-                            <td>Disable account, revoke sessions, reset password</td>
-                            <td>Service account? Plan for service disruption</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Active C2</strong></td>
-                            <td>Block C2 at firewall, isolate endpoint</td>
-                            <td>Attacker may have backup C2 channels</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Ransomware</strong></td>
-                            <td>Network segment isolation, protect backups</td>
-                            <td>Don't power off - may lose keys in memory</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Data exfiltration</strong></td>
-                            <td>Block destination, disable source access</td>
-                            <td>May be too late - focus on stopping more</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="scenario-box">
+                    <h4>🚨 Incident: Compromised Admin Account</h4>
+                    
+                    <p><strong>Initial Alert (2:30 AM - overnight):</strong></p>
+                    <div class="alert-example">
+<pre>Alert: Suspicious Sign-in Activity
+Account: admin_svc_backup (service account)
+Location: Russia
+Risk Level: High
+Action: Sign-in succeeded (no MFA on service account)</pre>
+                    </div>
 
-                <!-- COMMUNICATION -->
-                <h2 id="communication"><i class="fas fa-bullhorn"></i> Incident Communication</h2>
+                    <p><strong>What Actually Happens:</strong></p>
+                    
+                    <div class="timeline-box">
+                        <p><span class="time">2:30 AM</span> - Alert fires. Night shift L1 is handling other tickets.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">2:45 AM</span> - L1 sees alert. "Service account from Russia... that's weird."</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">2:50 AM</span> - L1 checks: No VPN for this account. Escalates immediately.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">3:00 AM</span> - On-call L2 paged. Reviews alert.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">3:05 AM</span> - L2 disables account, revokes sessions. Containment in 35 min.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">3:15 AM</span> - What did attacker do? Queries show...</p>
+                    </div>
 
-                <h3>Who to Notify and When</h3>
-                <table>
-                    <thead><tr><th>Stakeholder</th><th>P1 (Critical)</th><th>P2 (High)</th><th>P3/P4</th></tr></thead>
-                    <tbody>
-                        <tr><td>SOC Manager</td><td>Immediately</td><td>Within 1 hour</td><td>Daily summary</td></tr>
-                        <tr><td>CISO</td><td>Within 30 min</td><td>Within 4 hours</td><td>Weekly summary</td></tr>
-                        <tr><td>Executive leadership</td><td>Within 1 hour</td><td>If escalates</td><td>No</td></tr>
-                        <tr><td>Legal</td><td>Within 2 hours</td><td>If data breach possible</td><td>No</td></tr>
-                        <tr><td>PR/Communications</td><td>If public-facing</td><td>If customer impact</td><td>No</td></tr>
-                        <tr><td>Affected business units</td><td>Immediately</td><td>As needed</td><td>If relevant</td></tr>
-                    </tbody>
-                </table>
+                    <div class="alert-example">
+<pre>// Attacker activity found:
+2:32 AM - Logged in from 185.xx.xx.xx (Russia)
+2:33 AM - Accessed Azure Portal
+2:35 AM - Listed all storage accounts
+2:38 AM - Downloaded blob from "backups" container
+2:41 AM - Attempted to create new admin user (BLOCKED - PIM required)
+2:45 AM - Attempted to access Key Vault (BLOCKED - no permission)
+3:05 AM - Account disabled by IR team</pre>
+                    </div>
 
-                <h3>Communication Templates</h3>
-                <div class="info-box info">
-                    <div class="info-box-title">Initial Notification Template</div>
-                    <p style="font-family: var(--font-mono); font-size: 0.85rem;">
-                        <strong>Subject:</strong> [SEVERITY] Security Incident - [Brief Description]<br><br>
-                        <strong>Summary:</strong> [What happened in 1-2 sentences]<br>
-                        <strong>Impact:</strong> [What's affected, who's affected]<br>
-                        <strong>Status:</strong> [Investigating/Containing/Contained]<br>
-                        <strong>Actions:</strong> [What we're doing / have done]<br>
-                        <strong>Next Update:</strong> [When]<br>
-                        <strong>Contact:</strong> [Incident commander]
-                    </p>
+                    <div class="timeline-box">
+                        <p><span class="time">3:30 AM</span> - Manager notified. Data in "backups" container = DB backups with PII.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">4:00 AM</span> - Legal and CISO looped in. Potential breach.</p>
+                    </div>
+                    <div class="timeline-box">
+                        <p><span class="time">8:00 AM</span> - Investigation: Password was in code repository (leaked)</p>
+                    </div>
+
+                    <div class="critical-action">
+                        <h4>💡 Lessons Learned</h4>
+                        <ul>
+                            <li>Service accounts need MFA or conditional access</li>
+                            <li>Credentials in code = instant compromise</li>
+                            <li>35-minute response prevented worse damage</li>
+                            <li>PIM blocking admin creation was critical control</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <!-- WHAT IF SCENARIOS -->
-                <h2 id="what-if"><i class="fas fa-random"></i> IR Decision Scenarios</h2>
+                <!-- SECTION 2: COMMON MISTAKES -->
+                <h2 id="common-mistakes"><i class="fas fa-exclamation-triangle"></i> Common IR Mistakes</h2>
 
-                <table>
-                    <thead><tr><th>What If...</th><th>Then...</th><th>Why</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Business refuses containment?</strong></td>
-                            <td>Document the risk clearly, escalate to CISO/executives for decision</td>
-                            <td>Business may accept risk, but decision must be documented</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Scope keeps expanding?</strong></td>
-                            <td>Consider broader containment (segment isolation), get more resources</td>
-                            <td>Better to over-contain than chase an expanding breach</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Attack happened weeks ago?</strong></td>
-                            <td>Focus on current scope, assume significant access achieved</td>
-                            <td>Attacker had time to achieve goals; prioritize understanding impact</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Press/public finds out?</strong></td>
-                            <td>Engage PR/Legal immediately, prepare statement, don't speculate</td>
-                            <td>Uncontrolled messaging creates additional damage</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Law enforcement wants to investigate?</strong></td>
-                            <td>Coordinate through Legal, preserve evidence, may delay recovery</td>
-                            <td>LE has different priorities; balance with business recovery</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Team is exhausted (multi-day incident)?</strong></td>
-                            <td>Rotate staff, bring in external help, prioritize rest</td>
-                            <td>Exhausted responders make mistakes; sustained response requires rotation</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="mistake-box">
+                    <h4>❌ Mistake 1: Not Preserving Evidence Before Containment</h4>
+                    <p><strong>What happens:</strong> Attacker on server. Admin immediately reimages it. Now you have no evidence of what attacker did, what they accessed, or how they got in.</p>
+                    <p><strong>Real example:</strong> Ransomware on file server. IT reimages it within 1 hour. Investigation can't determine if data was exfiltrated. Company must assume breach and notify all customers.</p>
+                </div>
+                <div class="correct-box">
+                    <h4>✓ Correct: Isolate First, Preserve, Then Contain</h4>
+                    <ol>
+                        <li>Network isolate (prevents spread)</li>
+                        <li>Capture memory dump (volatile evidence)</li>
+                        <li>Disk image or triage collection</li>
+                        <li>THEN reimage/rebuild</li>
+                    </ol>
+                </div>
 
-                <!-- POST-INCIDENT -->
-                <h2 id="post-incident"><i class="fas fa-graduation-cap"></i> Post-Incident Activities</h2>
+                <div class="mistake-box">
+                    <h4>❌ Mistake 2: Tipping Off the Attacker</h4>
+                    <p><strong>What happens:</strong> Attacker has access to email. IR team sends email: "We've detected an intrusion, please reset all passwords." Attacker sees email, accelerates attack, deploys ransomware.</p>
+                </div>
+                <div class="correct-box">
+                    <h4>✓ Correct: Assume Attacker Can See Communications</h4>
+                    <ul>
+                        <li>Use out-of-band communication (phone, Signal, separate email)</li>
+                        <li>Don't discuss IR in company Slack/Teams if compromise is unknown</li>
+                        <li>Coordinate simultaneous containment before attacker notices</li>
+                    </ul>
+                </div>
 
-                <h3>Lessons Learned Meeting</h3>
-                <table>
-                    <thead><tr><th>Question</th><th>Purpose</th></tr></thead>
-                    <tbody>
-                        <tr><td>What happened? (timeline)</td><td>Establish facts, not blame</td></tr>
-                        <tr><td>How did we detect it?</td><td>Identify detection improvements</td></tr>
-                        <tr><td>How could we have detected it sooner?</td><td>Close detection gaps</td></tr>
-                        <tr><td>What went well in response?</td><td>Reinforce good practices</td></tr>
-                        <tr><td>What could we improve?</td><td>Identify process improvements</td></tr>
-                        <tr><td>What actions will we take?</td><td>Concrete improvements with owners and dates</td></tr>
-                    </tbody>
-                </table>
+                <div class="mistake-box">
+                    <h4>❌ Mistake 3: Partial Containment</h4>
+                    <p><strong>What happens:</strong> Find compromised user account, reset password. But attacker already created backdoor account. Attacker returns next day.</p>
+                </div>
+                <div class="correct-box">
+                    <h4>✓ Correct: Full Scope Before Eradication</h4>
+                    <ul>
+                        <li>Find ALL compromised accounts</li>
+                        <li>Find ALL persistence mechanisms</li>
+                        <li>Find ALL affected systems</li>
+                        <li>Eradicate everything simultaneously</li>
+                    </ul>
+                </div>
 
-                <h3>Documentation Requirements</h3>
-                <table>
-                    <thead><tr><th>Document</th><th>Contents</th><th>Retention</th></tr></thead>
-                    <tbody>
-                        <tr><td>Incident timeline</td><td>All events, actions, decisions with timestamps</td><td>7 years (legal)</td></tr>
-                        <tr><td>Evidence inventory</td><td>What was collected, chain of custody</td><td>7 years</td></tr>
-                        <tr><td>Technical analysis</td><td>How attack worked, IOCs, scope</td><td>Permanent (knowledge base)</td></tr>
-                        <tr><td>Lessons learned</td><td>Findings, action items, improvements</td><td>Permanent</td></tr>
-                        <tr><td>Communication log</td><td>Who was notified, when, what was said</td><td>7 years</td></tr>
-                    </tbody>
-                </table>
+                <div class="mistake-box">
+                    <h4>❌ Mistake 4: No Communication Plan</h4>
+                    <p><strong>What happens:</strong> Major incident in progress. CEO walks into SOC asking "What's going on?" No one knows who should talk to executives. Chaos.</p>
+                </div>
+                <div class="correct-box">
+                    <h4>✓ Correct: Define Roles Before Incidents</h4>
+                    <ul>
+                        <li>Incident Commander: Overall coordination</li>
+                        <li>Technical Lead: Investigation direction</li>
+                        <li>Communications Lead: Talks to executives, legal, external</li>
+                        <li>Scribe: Documents everything</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 3: COMMUNICATION -->
+                <h2 id="communication"><i class="fas fa-comments"></i> Communication During Incidents</h2>
+
+                <h3>Status Update Template (Every 1-2 Hours)</h3>
+                <div class="alert-example">
+<pre>INCIDENT STATUS UPDATE
+======================
+Incident ID: INC-2025-0104-001
+Time: January 4, 2025 14:00 EST
+Status: INVESTIGATING
+
+SUMMARY:
+Emotet malware outbreak affecting Finance and HR departments.
+8 users received phishing email, 3 systems confirmed infected.
+
+CURRENT SITUATION:
+- 3 infected hosts isolated and being investigated
+- Phishing email blocked and purged from all mailboxes
+- No evidence of lateral movement or data exfiltration yet
+
+IMPACT:
+- 3 users unable to work (using loaners)
+- Finance daily close delayed 2 hours
+
+ACTIONS IN PROGRESS:
+1. Forensic analysis of 3 hosts (ETA: 15:00)
+2. Review of email logs for additional indicators (ETA: 14:30)
+3. User awareness reminder being drafted (ETA: 14:15)
+
+NEXT UPDATE: 16:00 EST or sooner if significant developments
+
+BRIDGE: [conference line]
+INCIDENT LEAD: John Smith (x1234)</pre>
+                </div>
+
+                <h3>Executive Summary (End of Day)</h3>
+                <div class="alert-example">
+<pre>EXECUTIVE INCIDENT SUMMARY
+==========================
+Incident: Malware Outbreak - Emotet
+Date: January 4, 2025
+Status: CONTAINED
+
+WHAT HAPPENED:
+At 9:15 AM, our security tools detected Emotet malware on a Finance
+workstation. Investigation revealed a phishing email was sent to 47
+employees. 8 users clicked the attachment, and 3 systems were infected
+before our tools could block the malware.
+
+IMPACT:
+- 3 workstations required reimaging (2 hours downtime per user)
+- No data was accessed or exfiltrated
+- No spread to servers or other systems
+- Finance daily close delayed 2 hours
+
+RESPONSE:
+- Malware detected and blocked within minutes
+- Phishing email removed from all mailboxes within 30 minutes
+- All affected systems cleaned and returned to service by 2 PM
+- User awareness reminder sent to all employees
+
+ROOT CAUSE:
+Phishing email with malicious Excel attachment bypassed email security
+(new variant not yet in signatures).
+
+FOLLOW-UP ACTIONS:
+1. Review email filtering rules with vendor
+2. Implement additional controls for macro-enabled Office files
+3. Schedule refresher security training for Finance department</pre>
+                </div>
+
+                <!-- SECTION 4: CONTAINMENT -->
+                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Playbooks</h2>
+
+                <h3>Malware Containment Checklist</h3>
+                <ul class="checklist">
+                    <li>Isolate affected host(s) from network</li>
+                    <li>Identify source (email, USB, download, lateral movement)</li>
+                    <li>Block source at perimeter (email sender, URL, IP)</li>
+                    <li>Check for spread to other hosts</li>
+                    <li>Preserve evidence (memory dump, disk image if needed)</li>
+                    <li>Scan all hosts for same indicators</li>
+                    <li>Remove malware / reimage system</li>
+                    <li>Verify clean before returning to network</li>
+                </ul>
+
+                <h3>Compromised Account Checklist</h3>
+                <ul class="checklist">
+                    <li>Reset password immediately</li>
+                    <li>Revoke all active sessions</li>
+                    <li>Check for mailbox rules (forwarding, deletion)</li>
+                    <li>Review account activity for last 30 days</li>
+                    <li>Check for new MFA devices added</li>
+                    <li>Look for OAuth app consents</li>
+                    <li>Review data access (files downloaded, emails read)</li>
+                    <li>Check for persistence (new accounts created, permissions changed)</li>
+                    <li>Enable MFA if not already</li>
+                    <li>Notify user and require security awareness</li>
+                </ul>
+
+                <h3>Ransomware Containment Checklist</h3>
+                <ul class="checklist">
+                    <li>ISOLATE EVERYTHING - network segment, affected hosts</li>
+                    <li>DO NOT REBOOT (may trigger more encryption)</li>
+                    <li>Disable accounts used by ransomware</li>
+                    <li>Block C2 communications</li>
+                    <li>Preserve encrypted samples and ransom note</li>
+                    <li>Check backup integrity (are backups affected?)</li>
+                    <li>Identify ransomware variant (for decryptor possibility)</li>
+                    <li>Engage leadership for business decisions</li>
+                    <li>Contact cyber insurance if applicable</li>
+                    <li>Report to FBI IC3 / CISA</li>
+                </ul>
+
+                <!-- SECTION 5: POST-INCIDENT -->
+                <h2 id="post-incident"><i class="fas fa-clipboard-check"></i> Post-Incident Process</h2>
+
+                <h3>Post-Incident Review (PIR) Template</h3>
+                <div class="alert-example">
+<pre>POST-INCIDENT REVIEW
+====================
+Incident: INC-2025-0104-001 - Emotet Malware Outbreak
+Date of Incident: January 4, 2025
+PIR Date: January 6, 2025
+Attendees: SOC Team, IT Security, Email Admin, Finance Manager
+
+INCIDENT TIMELINE:
+09:15 - First malware alert
+09:25 - Pattern identified, escalated
+09:30 - Incident declared
+09:40 - Email blocked and purged
+10:00 - Affected hosts isolated
+11:00 - Reimaging complete
+12:00 - Incident closed
+
+WHAT WENT WELL:
+✓ Detection was fast (within minutes of execution)
+✓ L1 correctly identified pattern and escalated quickly
+✓ Email containment executed within 30 minutes
+✓ No lateral movement or data loss
+
+WHAT COULD BE IMPROVED:
+✗ Phishing email bypassed email security (new variant)
+✗ 3 users still clicked despite training
+✗ Macro-enabled files are still allowed from external senders
+✗ Took 45 min to get IT to help with reimaging
+
+ROOT CAUSE ANALYSIS:
+- Email filtering did not catch zero-day variant
+- Users trained 6 months ago, need refresher
+- No policy blocking macro-enabled files from external
+
+ACTION ITEMS:
+| Action                                    | Owner       | Due Date   |
+|-------------------------------------------|-------------|------------|
+| Review email filtering with vendor        | Email Admin | Jan 10     |
+| Block macro files from external senders   | IT Security | Jan 8      |
+| Schedule Finance dept security training   | HR/Security | Jan 15     |
+| Create runbook for faster IT coordination | SOC Lead    | Jan 12     |
+| Add detection for Emotet variant IOCs     | Detection   | Jan 7      |
+
+METRICS:
+- Time to Detect: 3 minutes
+- Time to Contain: 85 minutes
+- Time to Eradicate: 165 minutes
+- Business Impact: 6 person-hours lost, 2-hour Finance delay</pre>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="pages/soc-operations/l2-operations.html" class="card"><div class="card-icon"><i class="fas fa-user-shield"></i></div><h3>L2 Operations</h3><p>Investigation details</p></a>
+                    <a href="pages/soc-operations/l3-operations.html" class="card"><div class="card-icon"><i class="fas fa-user-secret"></i></div><h3>L3 Operations</h3><p>Major incidents</p></a>
+                    <a href="pages/forensics/index.html" class="card"><div class="card-icon"><i class="fas fa-microscope"></i></div><h3>Forensics</h3><p>Evidence collection</p></a>
+                </div>
 
             </div>
         </div>

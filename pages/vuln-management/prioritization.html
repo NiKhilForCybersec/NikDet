@@ -7,194 +7,330 @@
     <title>Vulnerability Prioritization | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .alert-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-x: auto; }
+        .bad-practice { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .bad-practice h4 { margin-top: 0; color: #ef4444; }
+        .good-practice { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .good-practice h4 { margin-top: 0; color: #22c55e; }
+        .priority-critical { color: #ef4444; font-weight: bold; }
+        .priority-high { color: #f97316; font-weight: bold; }
+        .priority-medium { color: #fbbf24; font-weight: bold; }
+        .priority-low { color: #22c55e; font-weight: bold; }
+        .vuln-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid var(--accent-primary); }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Vulnerability Management</a><span class="separator">/</span><span>Prioritization</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-sort-amount-down" style="color: var(--accent-primary);"></i> Vulnerability Prioritization</h1>
-                <p class="lead">Focus remediation efforts on vulnerabilities that matter most to your organization.</p>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/vuln-management/index.html">Vulnerability Management</a><span class="separator">/</span>
+                <span>Prioritization</span>
             </div>
+
             <div class="content">
-                <h2>Why Prioritization Matters</h2>
-                <p>Organizations face thousands of vulnerabilities. With limited resources, you must prioritize effectively. CVSS alone isn't enough - a vulnerability with CVSS 9.0 on an isolated test system is less urgent than a CVSS 7.0 on an internet-facing production server.</p>
+                <h1><i class="fas fa-sort-amount-down"></i> Vulnerability Prioritization</h1>
+                <p class="lead">Real-world prioritization: why CVSS alone fails, how to prioritize when you have 10,000 vulns, and common organizational challenges.</p>
 
-                <h2>Risk-Based Prioritization Framework</h2>
-                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); text-align: center; margin: 1rem 0;">
-                    <p style="font-size: 1.25rem; margin: 0; color: var(--text-primary);">
-                        <strong>Risk = Severity × Exploitability × Asset Value × Exposure</strong>
-                    </p>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                    <ol>
+                        <li><a href="#reality">The Reality of Vulnerability Management</a></li>
+                        <li><a href="#cvss-fails">Why CVSS Alone Fails</a></li>
+                        <li><a href="#real-prioritization">Real-World Prioritization</a></li>
+                        <li><a href="#scenarios">Prioritization Scenarios</a></li>
+                        <li><a href="#organizational">Organizational Challenges</a></li>
+                    </ol>
                 </div>
 
-                <h3>Factor 1: Severity (CVSS)</h3>
-                <p>The base CVSS score provides initial severity context.</p>
+                <!-- SECTION 1: REALITY -->
+                <h2 id="reality"><i class="fas fa-mountain"></i> The Reality of Vulnerability Management</h2>
 
-                <h3>Factor 2: Exploitability</h3>
+                <div class="scenario-box">
+                    <h4>A Typical Day in Vulnerability Management</h4>
+                    <p>Monday morning. You run your weekly vulnerability scan. Results:</p>
+                    <div class="alert-example">
+<pre>VULNERABILITY SCAN SUMMARY
+==========================
+Total Vulnerabilities: 47,832
+  Critical (CVSS 9.0+):  1,247
+  High (CVSS 7.0-8.9):   8,934
+  Medium (CVSS 4.0-6.9): 24,651
+  Low (CVSS 0.1-3.9):    13,000
+
+New since last week: 2,341
+Assets scanned: 12,847
+
+Your team capacity: ~200 remediations/week</pre>
+                    </div>
+                    <p><strong>The math doesn't work:</strong> 1,247 criticals. 200 remediations/week. Even if you ONLY worked criticals, it would take 6+ weeks to clear the backlog. And new ones arrive weekly.</p>
+                </div>
+
+                <p><strong>This is normal.</strong> Every organization faces this. The key is prioritization - not trying to fix everything, but fixing the RIGHT things.</p>
+
+                <!-- SECTION 2: CVSS FAILS -->
+                <h2 id="cvss-fails"><i class="fas fa-times-circle"></i> Why CVSS Alone Fails</h2>
+
+                <div class="bad-practice">
+                    <h4>❌ The CVSS-Only Approach</h4>
+                    <p><strong>What happens:</strong> "Fix all CVSS 9.0+ vulnerabilities first."</p>
+                    <p><strong>Problem:</strong> You end up patching a critical vuln on an isolated test server while ignoring a high-severity vuln on your domain controller.</p>
+                </div>
+
+                <h3>CVSS Doesn't Tell You:</h3>
                 <table>
-                    <thead><tr><th>Indicator</th><th>Source</th><th>Weight</th></tr></thead>
+                    <thead><tr><th>Missing Context</th><th>Why It Matters</th><th>Example</th></tr></thead>
                     <tbody>
                         <tr>
-                            <td><strong>Actively Exploited (KEV)</strong></td>
-                            <td>CISA KEV Catalog</td>
-                            <td style="color: #f07070;">Critical - Immediate action</td>
+                            <td><strong>Asset importance</strong></td>
+                            <td>Vuln on DC vs test box = very different risk</td>
+                            <td>CVSS 9.0 on isolated lab server vs CVSS 7.5 on AD server</td>
                         </tr>
                         <tr>
-                            <td><strong>Public Exploit Available</strong></td>
-                            <td>Exploit-DB, GitHub, Metasploit</td>
-                            <td style="color: #f0b756;">High - Prioritize</td>
+                            <td><strong>Exposure</strong></td>
+                            <td>Internet-facing vs internal-only</td>
+                            <td>Same vuln: public web server vs internal file share</td>
                         </tr>
                         <tr>
-                            <td><strong>High EPSS Score (&gt;0.5)</strong></td>
-                            <td>EPSS API</td>
-                            <td style="color: #f0b756;">High - Likely exploitation</td>
+                            <td><strong>Exploitability</strong></td>
+                            <td>Is it actually being exploited in the wild?</td>
+                            <td>CVSS 10.0 with no known exploits vs CVSS 7.0 in active campaigns</td>
                         </tr>
                         <tr>
-                            <td><strong>PoC Only</strong></td>
-                            <td>Security research</td>
-                            <td style="color: #5ce0c4;">Medium</td>
+                            <td><strong>Compensating controls</strong></td>
+                            <td>Other defenses may reduce risk</td>
+                            <td>RCE vuln on host with no network access = lower real risk</td>
                         </tr>
                         <tr>
-                            <td><strong>Theoretical</strong></td>
-                            <td>No known exploit</td>
-                            <td style="color: #6aa3f7;">Lower</td>
+                            <td><strong>Data sensitivity</strong></td>
+                            <td>What data is at risk?</td>
+                            <td>Vuln on PII database vs vuln on public marketing site</td>
                         </tr>
                     </tbody>
                 </table>
 
-                <h3>Factor 3: Asset Value</h3>
+                <div class="scenario-box">
+                    <h4>Real Example: CVSS Misleads</h4>
+                    <table>
+                        <tr>
+                            <td><strong>Vuln A:</strong></td>
+                            <td>CVSS 9.8 - RCE in Apache on isolated dev server, no sensitive data, not internet-facing</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Vuln B:</strong></td>
+                            <td>CVSS 7.5 - SQL injection on customer portal, internet-facing, contains PII, actively exploited in wild</td>
+                        </tr>
+                    </table>
+                    <p><strong>CVSS says:</strong> Fix A first (9.8 > 7.5)</p>
+                    <p><strong>Reality says:</strong> Fix B first - it's actually exploited, internet-facing, and has customer data</p>
+                </div>
+
+                <!-- SECTION 3: REAL PRIORITIZATION -->
+                <h2 id="real-prioritization"><i class="fas fa-filter"></i> Real-World Prioritization</h2>
+
+                <h3>Risk-Based Prioritization Formula</h3>
+                <div class="alert-example">
+<pre>ACTUAL RISK = CVSS × Asset Value × Exposure × Exploit Availability
+
+Where:
+- Asset Value: 1 (low) to 5 (crown jewels)
+- Exposure: 1 (isolated) to 5 (internet-facing, no WAF)
+- Exploit Availability: 1 (theoretical) to 5 (weaponized, in campaigns)
+
+Example calculations:
+
+Vuln A (Dev Server):
+  CVSS 9.8 × Asset(1) × Exposure(1) × Exploit(2) = 19.6
+
+Vuln B (Customer Portal):
+  CVSS 7.5 × Asset(4) × Exposure(5) × Exploit(5) = 750
+
+Vuln B priority score is 38x higher despite lower CVSS!</pre>
+                </div>
+
+                <h3>Quick Prioritization Framework</h3>
                 <table>
-                    <thead><tr><th>Asset Type</th><th>Examples</th><th>Priority</th></tr></thead>
+                    <thead><tr><th>Priority</th><th>Criteria</th><th>SLA</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Crown Jewels</strong></td><td>Domain controllers, databases with PII, financial systems</td><td style="color: #f07070;">Critical</td></tr>
-                        <tr><td><strong>Business Critical</strong></td><td>Production servers, core applications</td><td style="color: #f0b756;">High</td></tr>
-                        <tr><td><strong>Standard Business</strong></td><td>Workstations, internal tools</td><td style="color: #5ce0c4;">Medium</td></tr>
-                        <tr><td><strong>Low Value</strong></td><td>Test systems, non-production</td><td style="color: #6aa3f7;">Low</td></tr>
+                        <tr>
+                            <td class="priority-critical">P1 - Critical</td>
+                            <td>Actively exploited + Internet-facing OR on crown jewels</td>
+                            <td>24-48 hours</td>
+                        </tr>
+                        <tr>
+                            <td class="priority-high">P2 - High</td>
+                            <td>Exploit available + Internet-facing OR CVSS 9+ on important assets</td>
+                            <td>7 days</td>
+                        </tr>
+                        <tr>
+                            <td class="priority-medium">P3 - Medium</td>
+                            <td>CVSS 7+ on internal systems OR CVSS 9+ on low-value assets</td>
+                            <td>30 days</td>
+                        </tr>
+                        <tr>
+                            <td class="priority-low">P4 - Low</td>
+                            <td>Everything else</td>
+                            <td>90 days or accept risk</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h3>Factor 4: Exposure</h3>
+                <h3>CISA KEV - Your Best Friend</h3>
+                <div class="good-practice">
+                    <h4>✓ Use CISA Known Exploited Vulnerabilities (KEV) Catalog</h4>
+                    <p>If a vulnerability is in KEV, it's being actively exploited. This immediately makes it P1 regardless of CVSS.</p>
+                    <p><strong>Check:</strong> <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog" target="_blank">https://www.cisa.gov/known-exploited-vulnerabilities-catalog</a></p>
+                </div>
+
+                <!-- SECTION 4: SCENARIOS -->
+                <h2 id="scenarios"><i class="fas fa-tasks"></i> Prioritization Scenarios</h2>
+
+                <div class="scenario-box">
+                    <h4>Scenario 1: Zero-Day Announced (Log4Shell style)</h4>
+                    <p><strong>Situation:</strong> Critical zero-day announced. CVSS 10.0. Exploit code public. You have 500 instances of the vulnerable software.</p>
+                    
+                    <p><strong>Wrong approach:</strong> "Patch all 500 servers this weekend!"</p>
+                    <p><strong>Problem:</strong> You'll burn out the team, break things, and still not finish in time.</p>
+                    
+                    <p><strong>Right approach:</strong></p>
+                    <ol>
+                        <li><strong>Hour 1-4:</strong> Identify internet-facing instances (probably 20-30). Patch OR apply WAF rule OR take offline.</li>
+                        <li><strong>Hour 4-8:</strong> Patch/mitigate crown jewels (Domain controllers, databases with PII)</li>
+                        <li><strong>Day 2-3:</strong> Patch remaining critical systems</li>
+                        <li><strong>Week 1:</strong> Patch everything else</li>
+                    </ol>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario 2: Quarterly Vuln Review Meeting</h4>
+                    <p><strong>Situation:</strong> CISO asks: "Why do we still have 1,200 critical vulnerabilities?"</p>
+                    
+                    <p><strong>Wrong answer:</strong> "We're working on it."</p>
+                    
+                    <p><strong>Right answer:</strong></p>
+                    <div class="alert-example">
+<pre>"Of the 1,200 criticals:
+- 847 are on isolated dev/test systems (accepted risk, documented)
+- 203 are pending vendor patches (no fix available yet)
+- 89 are scheduled for next maintenance window (7 days)
+- 61 are actively being remediated this week
+
+Our internet-facing critical count is 12, down from 34 last quarter.
+Zero criticals on crown jewel systems.
+Zero vulns from CISA KEV catalog unpatched > 48 hours."</pre>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario 3: Application Team Pushes Back</h4>
+                    <p><strong>Situation:</strong> Critical vuln on production web app. App team says "We can't patch - it'll break the application. Our next release is in 3 months."</p>
+                    
+                    <p><strong>Options:</strong></p>
+                    <table>
+                        <tr><td><strong>Option 1:</strong></td><td>WAF rule to block exploit (temporary mitigation)</td></tr>
+                        <tr><td><strong>Option 2:</strong></td><td>Network segmentation to reduce exposure</td></tr>
+                        <tr><td><strong>Option 3:</strong></td><td>Enhanced monitoring for exploitation attempts</td></tr>
+                        <tr><td><strong>Option 4:</strong></td><td>Risk acceptance signed by business owner</td></tr>
+                    </table>
+                    <p><strong>Key:</strong> Document the decision. If they won't patch AND won't accept compensating controls, escalate to CISO with the risk in business terms.</p>
+                </div>
+
+                <!-- SECTION 5: ORGANIZATIONAL -->
+                <h2 id="organizational"><i class="fas fa-building"></i> Organizational Challenges</h2>
+
+                <div class="bad-practice">
+                    <h4>❌ Challenge 1: "Not My Problem"</h4>
+                    <p><strong>Situation:</strong> Security identifies vuln. Server team says "We don't own the application." App team says "We don't manage the server."</p>
+                    <p><strong>Reality:</strong> 3 months later, vuln still unpatched, everyone pointing fingers.</p>
+                </div>
+                <div class="good-practice">
+                    <h4>✓ Solution: Clear Ownership Matrix</h4>
+                    <ul>
+                        <li>Define: Who patches OS? Who patches applications?</li>
+                        <li>Asset inventory with clear owners</li>
+                        <li>Escalation path when owner doesn't respond</li>
+                        <li>SLAs tied to performance reviews</li>
+                    </ul>
+                </div>
+
+                <div class="bad-practice">
+                    <h4>❌ Challenge 2: Legacy Systems</h4>
+                    <p><strong>Situation:</strong> Windows Server 2008 running critical business app. No patches available. Vendor out of business. App team says "It works, don't touch it."</p>
+                </div>
+                <div class="good-practice">
+                    <h4>✓ Solution: Compensating Controls</h4>
+                    <ul>
+                        <li>Network isolation (own VLAN, strict firewall rules)</li>
+                        <li>Enhanced monitoring (every connection logged, alerted)</li>
+                        <li>Application whitelisting</li>
+                        <li>Documented risk acceptance with sunset date</li>
+                        <li>Migrate to supported platform (budget it!)</li>
+                    </ul>
+                </div>
+
+                <div class="bad-practice">
+                    <h4>❌ Challenge 3: Change Freeze</h4>
+                    <p><strong>Situation:</strong> Critical vuln discovered. But it's Q4 and there's a company-wide change freeze until January.</p>
+                </div>
+                <div class="good-practice">
+                    <h4>✓ Solution: Emergency Change Process</h4>
+                    <ul>
+                        <li>Define what constitutes "security emergency"</li>
+                        <li>Pre-approved process for critical security patches during freeze</li>
+                        <li>Requires CISO + IT Director approval</li>
+                        <li>Extra testing and rollback plan required</li>
+                    </ul>
+                </div>
+
+                <h3>Vulnerability Metrics That Matter</h3>
                 <table>
-                    <thead><tr><th>Exposure Level</th><th>Description</th><th>Priority</th></tr></thead>
+                    <thead><tr><th>Metric</th><th>Why It Matters</th><th>Target</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Internet-Facing</strong></td><td>Directly accessible from internet</td><td style="color: #f07070;">Critical</td></tr>
-                        <tr><td><strong>DMZ</strong></td><td>In perimeter network</td><td style="color: #f0b756;">High</td></tr>
-                        <tr><td><strong>Internal Reachable</strong></td><td>Accessible from user network</td><td style="color: #5ce0c4;">Medium</td></tr>
-                        <tr><td><strong>Isolated</strong></td><td>Air-gapped or heavily segmented</td><td style="color: #6aa3f7;">Lower</td></tr>
+                        <tr>
+                            <td>Internet-facing criticals</td>
+                            <td>Highest risk - attackers can reach them</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>CISA KEV vulns unpatched > 48h</td>
+                            <td>Actively exploited = immediate risk</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>Crown jewels with any critical</td>
+                            <td>Most important assets</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>Mean time to remediate (critical)</td>
+                            <td>Speed of response</td>
+                            <td>< 7 days</td>
+                        </tr>
+                        <tr>
+                            <td>% of criticals remediated in SLA</td>
+                            <td>Process effectiveness</td>
+                            <td>> 90%</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h2>EPSS - Exploit Prediction Scoring System</h2>
-                <p>EPSS provides a probability (0-1) that a vulnerability will be exploited in the next 30 days.</p>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Query EPSS API</span>
-curl "https://api.first.org/data/v1/epss?cve=CVE-2021-44228"
-
-<span style="color: #6aa3f7;"># Response</span>
-{
-  "data": [{
-    "cve": "CVE-2021-44228",
-    "epss": "0.97565",
-    "percentile": "0.99996"
-  }]
-}</pre>
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="pages/vuln-management/scanning.html" class="card"><div class="card-icon"><i class="fas fa-search"></i></div><h3>Scanning</h3><p>Scan configuration</p></a>
+                    <a href="pages/vuln-management/remediation.html" class="card"><div class="card-icon"><i class="fas fa-wrench"></i></div><h3>Remediation</h3><p>Fix vulnerabilities</p></a>
+                    <a href="pages/vuln-management/cvss-scoring.html" class="card"><div class="card-icon"><i class="fas fa-calculator"></i></div><h3>CVSS Scoring</h3><p>Understand scores</p></a>
                 </div>
 
-                <h3>EPSS Interpretation</h3>
-                <table>
-                    <thead><tr><th>EPSS Score</th><th>Interpretation</th><th>Action</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>&gt; 0.7</strong></td><td>Very likely to be exploited</td><td style="color: #f07070;">Immediate remediation</td></tr>
-                        <tr><td><strong>0.4 - 0.7</strong></td><td>Probable exploitation</td><td style="color: #f0b756;">Prioritize highly</td></tr>
-                        <tr><td><strong>0.1 - 0.4</strong></td><td>Possible exploitation</td><td style="color: #5ce0c4;">Standard priority</td></tr>
-                        <tr><td><strong>&lt; 0.1</strong></td><td>Less likely exploitation</td><td>Normal remediation cycle</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>CISA KEV Catalog</h2>
-                <p>CISA's Known Exploited Vulnerabilities catalog lists CVEs with confirmed active exploitation.</p>
-                <div class="info-box danger">
-                    <div class="info-box-title"><i class="fas fa-exclamation-circle"></i> KEV = Top Priority</div>
-                    <p style="margin: 0.5rem 0 0 0;">If a vulnerability is in the KEV catalog, it is being actively exploited. These should be treated as emergencies and remediated immediately according to CISA's due dates.</p>
-                </div>
-
-                <h2>SSVC - Stakeholder-Specific Vulnerability Categorization</h2>
-                <p>SSVC uses decision trees to determine response actions based on exploitation status, technical impact, and mission impact.</p>
-
-                <h3>SSVC Decision Outcomes</h3>
-                <table>
-                    <thead><tr><th>Decision</th><th>Meaning</th><th>Timeframe</th></tr></thead>
-                    <tbody>
-                        <tr><td style="color: #f07070;"><strong>Act</strong></td><td>Remediate immediately</td><td>As fast as possible</td></tr>
-                        <tr><td style="color: #f0b756;"><strong>Attend</strong></td><td>Focus attention, may require out-of-cycle patch</td><td>Days to weeks</td></tr>
-                        <tr><td style="color: #5ce0c4;"><strong>Track*</strong></td><td>Closely monitor for changes</td><td>Normal patch cycle, watch closely</td></tr>
-                        <tr><td><strong>Track</strong></td><td>Monitor, patch in regular cycle</td><td>Normal patch cycle</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Practical Prioritization Matrix</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">PRIORITY CALCULATION</span>
-━━━━━━━━━━━━━━━━━━━━
-
-<span style="color: #f07070;">P1 - CRITICAL (Remediate within 24-48 hours)</span>
-✓ In CISA KEV (actively exploited) OR
-✓ CVSS ≥ 9.0 + EPSS ≥ 0.5 + Internet-facing
-
-<span style="color: #f0b756;">P2 - HIGH (Remediate within 7 days)</span>
-✓ CVSS ≥ 7.0 + Public exploit + Internet-facing OR
-✓ CVSS ≥ 9.0 + Any asset OR
-✓ Any CVSS + Crown jewel asset + EPSS ≥ 0.3
-
-<span style="color: #5ce0c4;">P3 - MEDIUM (Remediate within 30 days)</span>
-✓ CVSS ≥ 7.0 + Internal systems OR
-✓ CVSS 4.0-6.9 + Internet-facing OR
-✓ Any critical asset with exploitable vuln
-
-<span style="color: #6aa3f7;">P4 - LOW (Remediate within 90 days)</span>
-✓ CVSS < 7.0 + Internal systems OR
-✓ Isolated systems OR
-✓ Low-value assets</pre>
-                </div>
-
-                <h2>Automation Example</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Python: Calculate priority score</span>
-def calculate_priority(vuln):
-    score = 0
-    
-    <span style="color: #5ce0c4;"># CVSS contribution</span>
-    score += vuln['cvss'] * 10
-    
-    <span style="color: #5ce0c4;"># EPSS contribution</span>
-    score += vuln['epss'] * 30
-    
-    <span style="color: #5ce0c4;"># KEV bonus</span>
-    if vuln['in_kev']:
-        score += 50
-    
-    <span style="color: #5ce0c4;"># Exposure multiplier</span>
-    if vuln['internet_facing']:
-        score *= 1.5
-    
-    <span style="color: #5ce0c4;"># Asset value multiplier</span>
-    asset_multipliers = {
-        'crown_jewel': 2.0,
-        'critical': 1.5,
-        'standard': 1.0,
-        'low': 0.5
-    }
-    score *= asset_multipliers.get(vuln['asset_type'], 1.0)
-    
-    return score</pre>
-                </div>
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

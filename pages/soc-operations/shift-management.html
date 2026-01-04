@@ -7,396 +7,315 @@
     <title>Shift Management | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .handoff-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-x: auto; }
+        .bad-practice { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .bad-practice h4 { margin-top: 0; color: #ef4444; }
+        .good-practice { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .good-practice h4 { margin-top: 0; color: #22c55e; }
+        .burnout-warning { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/soc-operations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/soc-operations/index.html">Home</a><span class="separator">/</span><a href="pages/soc-operations/index.html">SOC Operations</a><span class="separator">/</span><span>Shift Management</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-calendar-alt" style="color: var(--accent-warning);"></i> SOC Shift Management</h1>
-                <p class="lead">Complete guide to managing 24/7 SOC operations, shift handovers, staffing, and team effectiveness.</p>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/soc-operations/index.html">SOC Operations</a><span class="separator">/</span>
+                <span>Shift Management</span>
             </div>
+
             <div class="content">
+                <h1><i class="fas fa-calendar-alt"></i> Shift Management</h1>
+                <p class="lead">Real shift management: handoff problems, coverage challenges, and preventing burnout.</p>
 
-                <!-- PART 1: SHIFT MODELS -->
-                <h2>Part 1: Common Shift Models</h2>
-
-                <h3>24/7 Coverage Models</h3>
-                <table>
-                    <thead><tr><th>Model</th><th>Description</th><th>Pros</th><th>Cons</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Follow-the-Sun</strong></td>
-                            <td>Handoff between global locations (US → EU → APAC)</td>
-                            <td>No night shifts, better work-life balance</td>
-                            <td>Requires multiple locations, complex handovers</td>
-                        </tr>
-                        <tr>
-                            <td><strong>4x10 Hour</strong></td>
-                            <td>Four 10-hour shifts per week</td>
-                            <td>3 days off, fewer handovers</td>
-                            <td>Long days, fatigue at end of shift</td>
-                        </tr>
-                        <tr>
-                            <td><strong>3x12 Hour</strong></td>
-                            <td>Three 12-hour shifts, then 3-4 days off</td>
-                            <td>Extended time off, fewer handovers</td>
-                            <td>Very long shifts, burnout risk</td>
-                        </tr>
-                        <tr>
-                            <td><strong>5x8 Hour (Rotating)</strong></td>
-                            <td>Standard 8-hour shifts, rotating day/night</td>
-                            <td>Standard hours, manageable</td>
-                            <td>Sleep disruption from rotation</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Panama Schedule</strong></td>
-                            <td>2 days on, 2 off, 3 on, 2 off, 2 on, 3 off</td>
-                            <td>Every other weekend off, predictable</td>
-                            <td>Complex schedule, some long stretches</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h3>Example: 24/7 Coverage with 4 Teams</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; overflow-x: auto;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">4-TEAM ROTATION (12-HOUR SHIFTS)</span>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-         Mon   Tue   Wed   Thu   Fri   Sat   Sun   Mon   Tue   Wed...
-         ─────────────────────────────────────────────────────────────
-Day      A     A     B     B     C     C     D     D     A     A
-(6am-6pm)
-
-Night    C     C     D     D     A     A     B     B     C     C
-(6pm-6am)
-
-<span style="color: #6aa3f7;">Team A:</span> Days Mon-Tue, Off Wed-Thu, Nights Fri-Sat, Off Sun-Mon...
-<span style="color: #5ce0c4;">Team B:</span> Days Wed-Thu, Off Fri-Sat, Nights Sun-Mon, Off Tue-Wed...
-<span style="color: #f0b756;">Team C:</span> Nights Mon-Tue, Off Wed-Thu, Days Fri-Sat, Off Sun-Mon...
-<span style="color: #a78bf6;">Team D:</span> Off Mon-Tue, Nights Wed-Thu, Days Sun-Mon, Off Fri-Sat...
-
-<span style="color: #6aa3f7;">Result: Each analyst works ~42 hours/week, gets every other weekend off.</span></pre>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                    <ol>
+                        <li><a href="#handoff-problems">Handoff Problems</a></li>
+                        <li><a href="#handoff-done-right">Handoffs Done Right</a></li>
+                        <li><a href="#coverage">Coverage Challenges</a></li>
+                        <li><a href="#burnout">Preventing Burnout</a></li>
+                        <li><a href="#schedules">Shift Schedules</a></li>
+                    </ol>
                 </div>
 
-                <!-- PART 2: STAFFING -->
-                <h2>Part 2: Staffing Requirements</h2>
+                <!-- SECTION 1: HANDOFF PROBLEMS -->
+                <h2 id="handoff-problems"><i class="fas fa-exclamation-triangle"></i> Handoff Problems</h2>
 
-                <h3>Minimum Staffing Calculation</h3>
-                <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin: 1rem 0;">
-                    <p style="margin: 0; font-size: 1rem;">
-                        <strong>Formula:</strong> Analysts Needed = (Hours to Cover × Days per Week) ÷ (Hours per Analyst per Week)
-                    </p>
-                    <p style="margin: 0.5rem 0 0 0; font-size: 1rem;">
-                        <strong>Example:</strong> 24 hours × 7 days = 168 hours ÷ 40 hours = <strong>4.2 analysts minimum</strong>
-                    </p>
-                    <p style="margin: 0.5rem 0 0 0; color: var(--text-secondary);">
-                        Add 20-30% for PTO, sick days, training → Need 5-6 analysts for true 24/7 coverage
-                    </p>
+                <div class="bad-practice">
+                    <h4>❌ Problem 1: The Verbal-Only Handoff</h4>
+                    <p><strong>What happens:</strong> Outgoing analyst: "Nothing much happened, there's one alert I'm looking at but it's probably nothing." Incoming analyst: "Ok cool." Two days later: that alert was the start of a breach.</p>
                 </div>
 
-                <h3>Staffing by SOC Size</h3>
-                <table>
-                    <thead><tr><th>SOC Size</th><th>Coverage</th><th>Minimum Staff</th><th>Typical Structure</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Small</strong></td>
-                            <td>Business hours + on-call</td>
-                            <td>2-4 analysts</td>
-                            <td>L1/L2 combined, L3 outsourced</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Medium</strong></td>
-                            <td>Extended hours (16h) + on-call</td>
-                            <td>6-10 analysts</td>
-                            <td>L1 and L2 tiers, shared L3</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Large</strong></td>
-                            <td>24/7 coverage</td>
-                            <td>15-25 analysts</td>
-                            <td>Full L1/L2/L3 tiers, shift leads</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Enterprise</strong></td>
-                            <td>Follow-the-sun 24/7</td>
-                            <td>30+ analysts</td>
-                            <td>Multiple global SOCs, specialized teams</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- PART 3: SHIFT HANDOVER -->
-                <h2>Part 3: Shift Handover Process</h2>
-
-                <p>The handover is the most critical moment in shift operations. Poor handovers lead to dropped incidents, repeated work, and gaps in coverage.</p>
-
-                <h3>Handover Checklist</h3>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Active Incidents (15 min before shift end)</div>
-                            <p>Review all open/in-progress incidents. Document current status, next steps, and any blockers.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Queue Status</div>
-                            <p>How many alerts in queue? Any aged alerts that need attention? Priority items?</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Environment Issues</div>
-                            <p>Any known SIEM issues? Log sources down? Planned maintenance? Tool outages?</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Threat Intel Updates</div>
-                            <p>New threat campaigns? IOCs to watch for? Active exploitation of new vulnerabilities?</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Verbal Handover (5-10 min)</div>
-                            <p>Face-to-face or video call to discuss critical items. Allow questions.</p>
-                        </div>
-                    </div>
+                <div class="bad-practice">
+                    <h4>❌ Problem 2: The "I'll Finish It Tomorrow" Trap</h4>
+                    <p><strong>What happens:</strong> Analyst has alert 80% investigated. Shift ends. Doesn't document findings. Next day: different analyst, or worse - same analyst forgot where they left off.</p>
                 </div>
 
-                <h3>Shift Handover Template</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">═══════════════════════════════════════════════════════════════</span>
-<span style="color: #a78bf6;">SOC SHIFT HANDOVER REPORT</span>
-<span style="color: #a78bf6;">═══════════════════════════════════════════════════════════════</span>
+                <div class="bad-practice">
+                    <h4>❌ Problem 3: The Ghost Shift</h4>
+                    <p><strong>What happens:</strong> Night shift analyst goes home 15 minutes early. Day shift analyst arrives 10 minutes late. 25-minute gap with no coverage. Murphy's Law: critical alert fires at 7:55 AM.</p>
+                </div>
 
-<span style="color: #f0b756;">Date:</span> 2025-01-15
-<span style="color: #f0b756;">Shift:</span> Day Shift (06:00 - 18:00)
-<span style="color: #f0b756;">Outgoing Team:</span> Alpha (Lead: John Smith)
-<span style="color: #f0b756;">Incoming Team:</span> Bravo (Lead: Jane Doe)
+                <div class="bad-practice">
+                    <h4>❌ Problem 4: Information Overload</h4>
+                    <p><strong>What happens:</strong> Handoff document is 3 pages long. Incoming analyst glazes over after paragraph 2. Misses the one important thing buried in page 2.</p>
+                </div>
 
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-<span style="color: #a78bf6;">ACTIVE INCIDENTS</span>
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+                <!-- SECTION 2: HANDOFFS DONE RIGHT -->
+                <h2 id="handoff-done-right"><i class="fas fa-check-circle"></i> Handoffs Done Right</h2>
 
-<span style="color: #f07070;">INC-2025-0142 [HIGH] - Possible Ransomware Activity</span>
-  Status: Under Investigation (L2 - Mike)
-  Summary: Suspicious file encryption activity on WORKSTATION-045
-  Current: Isolated workstation, collecting forensic image
-  Next Steps: Complete forensic collection, analyze memory dump
-  ETA: 2-3 hours for initial analysis
-  Owner: Transitioning to Bravo shift
+                <h3>The 5-Minute Handoff Template</h3>
+                <div class="handoff-example">
+<pre>SHIFT HANDOFF - January 4, 2025 - Day → Evening
 
-<span style="color: #f0b756;">INC-2025-0139 [MEDIUM] - Brute Force Authentication</span>
+ACTIVE INCIDENTS (Action Required)
+==================================
+INC-2025-0104-001 - Phishing Investigation
+  Status: L2 investigating
+  Owner: Sarah (handing off to Mike)
+  Summary: 5 users clicked phishing link, 2 hosts isolated
+  Next step: Waiting for forensic image from WKSTN-045
+  Priority: HIGH - Check with IT if image ready
+
+INC-2025-0103-003 - Unusual Outbound Traffic  
   Status: Monitoring
-  Summary: Failed login attempts from 185.234.xx.xx targeting VPN
-  Current: IP blocked at firewall, monitoring for additional attempts
-  Next Steps: Continue monitoring, escalate if pattern continues
-  Owner: Bravo shift to monitor
+  Owner: John
+  Summary: Marketing server connecting to unusual IPs
+  Next step: Review after 24h monitoring period ends (tomorrow 8 AM)
+  Priority: MEDIUM - No action needed tonight unless alert fires
 
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-<span style="color: #a78bf6;">QUEUE STATUS</span>
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+ALERT QUEUE STATUS
+==================
+Open alerts: 23 (12 are from last hour)
+Oldest alert: 2 hours (Medium severity - fine)
+SLA at risk: None
 
-Total Alerts in Queue: 47
-  - Critical: 0
-  - High: 3 (all assigned)
-  - Medium: 12
-  - Low: 32
+HEADS UP
+========
+- SCCM patching tonight 2-4 AM - expect PowerShell alerts (FP)
+- VPN maintenance window tomorrow - users may have login issues
 
-Aged Alerts (>4 hours): 5 (all low priority, backlogged)
+NOTHING TO REPORT (if applicable)
+=================================
+Queue is clear. No active incidents. Normal night expected.
 
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-<span style="color: #a78bf6;">ENVIRONMENT STATUS</span>
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-
-SIEM Status: <span style="color: #5ce0c4;">Healthy</span>
-Log Sources: All operational
-Known Issues: None
-
-Planned Maintenance: 
-  - Network switch upgrade 22:00-02:00 tonight (Building C)
-  - May see brief log gaps from that subnet
-
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-<span style="color: #a78bf6;">THREAT INTELLIGENCE</span>
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-
-New IOCs Added: 15 (related to LOCKBIT campaign targeting healthcare)
-Active Campaigns: LOCKBIT ransomware - watch for encrypted file extensions
-Vulnerability Watch: CVE-2025-XXXX in Cisco ASA - patching in progress
-
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-<span style="color: #a78bf6;">NOTES FOR INCOMING SHIFT</span>
-<span style="color: #a78bf6;">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
-
-1. Priority: INC-2025-0142 needs continued attention
-2. Executive briefing scheduled for 10:00 - need status update by 09:30
-3. New analyst Sarah is shadowing today - please include her in triage
-
-<span style="color: #f0b756;">Handover Completed:</span> 17:55
-<span style="color: #f0b756;">Outgoing Lead Signature:</span> John Smith
-<span style="color: #f0b756;">Incoming Lead Signature:</span> Jane Doe</pre>
+Handoff by: Sarah | Received by: Mike | Time: 17:00</pre>
                 </div>
 
-                <!-- PART 4: DAILY OPERATIONS -->
-                <h2>Part 4: Daily Operational Rhythm</h2>
-
-                <h3>Typical Shift Structure</h3>
+                <h3>Handoff Meeting Format (10 min max)</h3>
                 <table>
-                    <thead><tr><th>Time</th><th>Activity</th><th>Duration</th></tr></thead>
+                    <thead><tr><th>Time</th><th>Topic</th><th>Who Speaks</th></tr></thead>
                     <tbody>
-                        <tr><td>+0:00</td><td>Shift handover meeting</td><td>15 min</td></tr>
-                        <tr><td>+0:15</td><td>Review queue, prioritize alerts</td><td>15 min</td></tr>
-                        <tr><td>+0:30</td><td>Alert triage and investigation</td><td>2-3 hours</td></tr>
-                        <tr><td>+3:00</td><td>Brief break</td><td>15 min</td></tr>
-                        <tr><td>+3:15</td><td>Continue alert triage</td><td>2 hours</td></tr>
-                        <tr><td>+5:15</td><td>Midshift standup (quick sync)</td><td>10 min</td></tr>
-                        <tr><td>+5:25</td><td>Alert triage continues</td><td>2-3 hours</td></tr>
-                        <tr><td>+8:00</td><td>Documentation catchup</td><td>30 min</td></tr>
-                        <tr><td>+8:30</td><td>Prepare handover report</td><td>15 min</td></tr>
-                        <tr><td>+8:45</td><td>Handover to next shift</td><td>15 min</td></tr>
+                        <tr><td>0-2 min</td><td>Active incidents requiring handoff</td><td>Outgoing analyst</td></tr>
+                        <tr><td>2-4 min</td><td>Queue status and any SLA concerns</td><td>Outgoing analyst</td></tr>
+                        <tr><td>4-6 min</td><td>Scheduled maintenance / expected activity</td><td>Outgoing analyst</td></tr>
+                        <tr><td>6-8 min</td><td>Questions from incoming analyst</td><td>Incoming analyst</td></tr>
+                        <tr><td>8-10 min</td><td>Review written handoff together</td><td>Both</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Daily Standup Format</h3>
-                <p>Brief sync meeting (10-15 minutes max) covering:</p>
-                <ul>
-                    <li><strong>What happened since last standup?</strong> Major incidents, notable events</li>
-                    <li><strong>What's the current queue status?</strong> Backlog, blockers</li>
-                    <li><strong>Any help needed?</strong> Escalations, collaboration requests</li>
-                    <li><strong>Threat intel updates?</strong> New campaigns, IOCs</li>
-                </ul>
-
-                <!-- PART 5: ON-CALL -->
-                <h2>Part 5: On-Call Management</h2>
-
-                <h3>On-Call Responsibilities</h3>
-                <table>
-                    <thead><tr><th>Responsibility</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Availability</strong></td><td>Reachable within 15 minutes, able to start working within 30 minutes</td></tr>
-                        <tr><td><strong>Escalation Point</strong></td><td>Handle escalations that can't wait until business hours</td></tr>
-                        <tr><td><strong>Critical Alerts</strong></td><td>Respond to critical/high severity alerts outside normal hours</td></tr>
-                        <tr><td><strong>Incident Management</strong></td><td>Coordinate response for after-hours incidents</td></tr>
-                        <tr><td><strong>Documentation</strong></td><td>Document all actions for next business day handover</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>On-Call Escalation Criteria</h3>
-                <table>
-                    <thead><tr><th>Severity</th><th>Description</th><th>Action</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td style="color: #f07070;"><strong>Critical (P1)</strong></td>
-                            <td>Active breach, ransomware, data exfiltration</td>
-                            <td>Immediate wake-up call, all hands response</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #f0b756;"><strong>High (P2)</strong></td>
-                            <td>Confirmed compromise, significant risk</td>
-                            <td>Page on-call, assess within 30 minutes</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #5ce0c4;"><strong>Medium (P3)</strong></td>
-                            <td>Suspicious activity, potential threat</td>
-                            <td>Queue for review, notify if trending</td>
-                        </tr>
-                        <tr>
-                            <td style="color: #6aa3f7;"><strong>Low (P4)</strong></td>
-                            <td>Informational, routine findings</td>
-                            <td>Queue for next business day</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h3>On-Call Schedule Example</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">Weekly On-Call Rotation</span>
-━━━━━━━━━━━━━━━━━━━━━━━━
-Week 1: Alice (Primary), Bob (Backup)
-Week 2: Bob (Primary), Charlie (Backup)  
-Week 3: Charlie (Primary), Diana (Backup)
-Week 4: Diana (Primary), Alice (Backup)
-
-<span style="color: #6aa3f7;">On-Call Hours:</span> Mon 6pm - Fri 6am (overnight)
-                 Fri 6pm - Mon 6am (weekend)
-
-<span style="color: #6aa3f7;">Compensation:</span> On-call stipend + overtime for actual work</pre>
+                <div class="good-practice">
+                    <h4>✓ Golden Rules</h4>
+                    <ul>
+                        <li><strong>Write it down:</strong> If it's not written, it didn't happen</li>
+                        <li><strong>Overlap shifts:</strong> 15-30 minute overlap minimum</li>
+                        <li><strong>Prioritize:</strong> Active incidents first, FYIs last</li>
+                        <li><strong>Be specific:</strong> "Check X" not "keep an eye on things"</li>
+                        <li><strong>Confirm receipt:</strong> Incoming analyst acknowledges handoff</li>
+                    </ul>
                 </div>
 
-                <!-- PART 6: BURNOUT PREVENTION -->
-                <h2>Part 6: Burnout Prevention</h2>
+                <!-- SECTION 3: COVERAGE -->
+                <h2 id="coverage"><i class="fas fa-users"></i> Coverage Challenges</h2>
 
-                <p>SOC analysts face high stress, alert fatigue, and irregular hours. Managing burnout is essential for retention and effectiveness.</p>
+                <div class="scenario-box">
+                    <h4>Scenario: Analyst Calls In Sick</h4>
+                    <p><strong>7:30 AM:</strong> Night shift analyst texts: "Throwing up, can't come in."</p>
+                    <p><strong>Problem:</strong> You now have no night coverage. Day shift can't stay - they just worked 8 hours.</p>
+                    
+                    <p><strong>Solutions (pick one):</strong></p>
+                    <table>
+                        <tr><td><strong>Option 1:</strong></td><td>Call on-call backup analyst</td></tr>
+                        <tr><td><strong>Option 2:</strong></td><td>Split shift - two analysts each do 4 hours</td></tr>
+                        <tr><td><strong>Option 3:</strong></td><td>Reduced coverage - handle critical only, accept backlog</td></tr>
+                        <tr><td><strong>Option 4:</strong></td><td>Day shift volunteers overtime (pay premium)</td></tr>
+                    </table>
+                    
+                    <p><strong>Key:</strong> Have a plan BEFORE this happens. Document who the backups are.</p>
+                </div>
 
-                <h3>Warning Signs of Burnout</h3>
-                <ul>
-                    <li>Decreased alert quality (missing obvious items)</li>
-                    <li>Increased absenteeism</li>
-                    <li>Cynicism about the job or security in general</li>
-                    <li>Decreased participation in team activities</li>
-                    <li>Reluctance to take on new challenges</li>
-                </ul>
+                <div class="scenario-box">
+                    <h4>Scenario: Holiday Coverage</h4>
+                    <p><strong>Problem:</strong> Christmas week. Everyone wants off. Still need 24/7 coverage.</p>
+                    
+                    <p><strong>Fair approaches:</strong></p>
+                    <ul>
+                        <li><strong>Rotate holidays:</strong> You work Christmas, you're off New Year's</li>
+                        <li><strong>Volunteer first:</strong> Some people prefer the holiday pay</li>
+                        <li><strong>Reduced staffing:</strong> Skeleton crew + on-call backup</li>
+                        <li><strong>Plan early:</strong> Holiday schedule set 2+ months in advance</li>
+                    </ul>
+                </div>
 
-                <h3>Prevention Strategies</h3>
+                <h3>Minimum Viable Coverage</h3>
                 <table>
-                    <thead><tr><th>Strategy</th><th>Implementation</th></tr></thead>
+                    <thead><tr><th>Scenario</th><th>Minimum Staff</th><th>Acceptable Risk</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td><strong>Rotation</strong></td>
-                            <td>Rotate between L1 triage and project work (detection engineering, hunting)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Training Time</strong></td>
-                            <td>Dedicate 10-20% of time to learning and development</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Alert Tuning</strong></td>
-                            <td>Continuously reduce false positives to decrease noise</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Automation</strong></td>
-                            <td>Automate repetitive tasks (enrichment, common responses)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Fair Scheduling</strong></td>
-                            <td>Equitable distribution of nights, weekends, holidays</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Recognition</strong></td>
-                            <td>Acknowledge good catches, celebrate wins</td>
-                        </tr>
+                        <tr><td>Normal business hours</td><td>2+ analysts</td><td>Full coverage, normal SLAs</td></tr>
+                        <tr><td>Nights/weekends</td><td>1 analyst + on-call</td><td>Critical only, extended SLAs for Low/Med</td></tr>
+                        <tr><td>Major holiday</td><td>1 analyst + on-call</td><td>Critical only, accept backlog</td></tr>
+                        <tr><td>Emergency (sick call)</td><td>1 analyst + on-call</td><td>Critical only until backup arrives</td></tr>
                     </tbody>
                 </table>
 
-                <!-- PART 7: TOOLS -->
-                <h2>Part 7: Shift Management Tools</h2>
+                <!-- SECTION 4: BURNOUT -->
+                <h2 id="burnout"><i class="fas fa-heartbeat"></i> Preventing Burnout</h2>
 
+                <div class="burnout-warning">
+                    <h4>⚠️ Burnout Warning Signs</h4>
+                    <ul>
+                        <li>Analyst starts closing alerts faster without thorough investigation</li>
+                        <li>Increased sick days, especially on weekends/nights</li>
+                        <li>"I don't care anymore" attitude</li>
+                        <li>Mistakes increasing (missing obvious things)</li>
+                        <li>Analysts avoiding escalations to "not deal with it"</li>
+                        <li>High turnover (people leaving for other jobs)</li>
+                    </ul>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Why SOC Analysts Burn Out</h4>
+                    <table>
+                        <thead><tr><th>Cause</th><th>Reality</th><th>Solution</th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Alert fatigue</strong></td>
+                                <td>200 alerts/day, 90% are FP. Soul-crushing.</td>
+                                <td>Invest in tuning. Reduce noise.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>No growth</strong></td>
+                                <td>Same alerts, same triage, forever.</td>
+                                <td>Rotate tasks, training time, project work.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Night/weekend shifts</strong></td>
+                                <td>Social life suffers. Health suffers.</td>
+                                <td>Rotate fairly. Extra compensation.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Understaffed</strong></td>
+                                <td>Can never take vacation. Always behind.</td>
+                                <td>Hire appropriately. Accept reduced coverage.</td>
+                            </tr>
+                            <tr>
+                                <td><strong>No recognition</strong></td>
+                                <td>"You're just closing tickets all day."</td>
+                                <td>Celebrate wins. Explain SOC value to org.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="good-practice">
+                    <h4>✓ Burnout Prevention Strategies</h4>
+                    <ul>
+                        <li><strong>20% time:</strong> One day per week (or equivalent) for training, projects, not just ticket work</li>
+                        <li><strong>Rotate tasks:</strong> Not same person on night shift for months</li>
+                        <li><strong>Tune aggressively:</strong> Every FP is an opportunity to reduce noise</li>
+                        <li><strong>Career path:</strong> Clear progression L1 → L2 → L3 / Detection / Hunting</li>
+                        <li><strong>Mental health days:</strong> No questions asked time off when needed</li>
+                        <li><strong>On-call boundaries:</strong> Clear expectations, compensation for after-hours</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 5: SCHEDULES -->
+                <h2 id="schedules"><i class="fas fa-clock"></i> Shift Schedules</h2>
+
+                <h3>Common SOC Shift Models</h3>
+
+                <div class="scenario-box">
+                    <h4>Model 1: Fixed Shifts (Traditional)</h4>
+                    <div class="handoff-example">
+<pre>Day Shift:    7 AM - 3 PM   (Team A)
+Evening Shift: 3 PM - 11 PM  (Team B)  
+Night Shift:  11 PM - 7 AM  (Team C)
+
+Pros: Consistency, people can plan life around it
+Cons: Night shift is always night shift (burnout risk)</pre>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Model 2: Rotating Shifts</h4>
+                    <div class="handoff-example">
+<pre>Week 1: Day Shift
+Week 2: Evening Shift
+Week 3: Night Shift
+Week 4: Off / Training
+
+Pros: Everyone shares night duty fairly
+Cons: Hard on sleep schedule, some people hate it</pre>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Model 3: 4x10 Schedule</h4>
+                    <div class="handoff-example">
+<pre>4 days on (10 hours each)
+3 days off
+
+Example:
+Team A: Sun-Wed
+Team B: Wed-Sat
+(Wednesday overlap for handoffs)
+
+Pros: Long weekends, fewer handoffs
+Cons: 10 hour shifts are tiring</pre>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Model 4: Follow-the-Sun (Global)</h4>
+                    <div class="handoff-example">
+<pre>Americas team: 6 AM - 2 PM EST
+EMEA team:     2 PM - 10 PM EST (8 PM - 4 AM local)
+APAC team:     10 PM - 6 AM EST (11 AM - 7 PM local)
+
+Pros: Everyone works normal business hours
+Cons: Requires global presence, handoff complexity</pre>
+                    </div>
+                </div>
+
+                <h3>Staffing Calculator</h3>
                 <table>
-                    <thead><tr><th>Tool</th><th>Purpose</th><th>Common Options</th></tr></thead>
+                    <thead><tr><th>Coverage Need</th><th>Shifts to Cover</th><th>Minimum FTEs</th><th>Comfortable FTEs</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>Scheduling</strong></td><td>Manage shifts, rotations, time-off</td><td>When I Work, Deputy, Shiftboard</td></tr>
-                        <tr><td><strong>On-Call</strong></td><td>Alerting, escalation, rotation</td><td>PagerDuty, Opsgenie, VictorOps</td></tr>
-                        <tr><td><strong>Communication</strong></td><td>Team chat, handover notes</td><td>Slack, Teams, Mattermost</td></tr>
-                        <tr><td><strong>Documentation</strong></td><td>Runbooks, handover templates</td><td>Confluence, Notion, Wiki</td></tr>
-                        <tr><td><strong>Ticket Tracking</strong></td><td>Incident and task management</td><td>ServiceNow, Jira, TheHive</td></tr>
+                        <tr><td>24/7 with 1 analyst</td><td>21 shifts/week (3/day × 7)</td><td>4 FTEs</td><td>5-6 FTEs</td></tr>
+                        <tr><td>24/7 with 2 analysts</td><td>42 shifts/week</td><td>8 FTEs</td><td>10-12 FTEs</td></tr>
+                        <tr><td>Business hours only (8x5)</td><td>5 shifts/week</td><td>2 FTEs</td><td>3 FTEs</td></tr>
+                        <tr><td>Extended hours (16x7)</td><td>14 shifts/week</td><td>3 FTEs</td><td>4-5 FTEs</td></tr>
                     </tbody>
                 </table>
+                <p><em>Note: "Comfortable" accounts for vacation, sick time, training, and turnover buffer.</em></p>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="pages/soc-operations/l1-operations.html" class="card"><div class="card-icon"><i class="fas fa-user-check"></i></div><h3>L1 Operations</h3><p>Daily work</p></a>
+                    <a href="pages/soc-operations/metrics.html" class="card"><div class="card-icon"><i class="fas fa-chart-line"></i></div><h3>Metrics</h3><p>Track performance</p></a>
+                </div>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

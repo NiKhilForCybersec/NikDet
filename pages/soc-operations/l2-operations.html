@@ -7,244 +7,696 @@
     <title>L2 SOC Operations | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .alert-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-x: auto; }
+        .inefficiency-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .inefficiency-box h4 { margin-top: 0; color: #ef4444; }
+        .solution-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .solution-box h4 { margin-top: 0; color: #22c55e; }
+        .timeline-box { background: var(--bg-secondary); border-left: 3px solid var(--accent-primary); padding: 1rem; margin: 0.5rem 0; }
+        .timeline-box .time { font-weight: bold; color: var(--accent-primary); }
+        .decision-box { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+        .decision-box h4 { margin-top: 0; color: #fbbf24; }
+        .containment-action { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; display: flex; align-items: center; gap: 1rem; }
+        .containment-action .icon { font-size: 1.5rem; }
+        .time-tag { display: inline-block; background: var(--accent-primary); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/soc-operations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/soc-operations/index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
                 <a href="pages/soc-operations/index.html">SOC Operations</a><span class="separator">/</span>
                 <span>L2 Operations</span>
             </div>
 
-            <h1><i class="fas fa-user-shield"></i> L2 SOC Analyst Operations</h1>
-            <p class="lead">Complete guide for L2 analysts: deep investigation techniques, incident handling, mentoring L1, and advancing your career.</p>
-
             <div class="content">
-                <!-- THE L2 ROLE -->
-                <h2 id="role"><i class="fas fa-bullseye"></i> The L2 Analyst Role</h2>
+                <h1><i class="fas fa-user-shield"></i> L2 SOC Analyst Operations</h1>
+                <p class="lead">Real investigation scenarios: what happens after L1 escalates, common investigation pitfalls, and containment decisions.</p>
 
-                <h3>L2 vs L1: The Key Differences</h3>
-                <table>
-                    <thead><tr><th>Aspect</th><th>L1</th><th>L2</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Primary focus</strong></td><td>Triage - Is this real?</td><td>Investigation - What happened?</td></tr>
-                        <tr><td><strong>Time per alert</strong></td><td>5-15 minutes</td><td>30 min - several hours</td></tr>
-                        <tr><td><strong>Decision type</strong></td><td>FP or escalate</td><td>Scope, impact, containment</td></tr>
-                        <tr><td><strong>Tools depth</strong></td><td>Standard queries, predefined</td><td>Custom queries, multiple tools</td></tr>
-                        <tr><td><strong>Autonomy</strong></td><td>Follow playbooks</td><td>Adapt and create approaches</td></tr>
-                        <tr><td><strong>Output</strong></td><td>Closed tickets, escalations</td><td>Investigation reports, containment actions</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>What Makes a Great L2</h3>
-                <table>
-                    <thead><tr><th>Skill</th><th>Why It Matters</th><th>How to Develop</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Investigative mindset</strong></td><td>Attackers hide their tracks; you need to find the full story</td><td>Always ask "what else?", build timelines, follow threads</td></tr>
-                        <tr><td><strong>Tool mastery</strong></td><td>Faster, more thorough investigations</td><td>Learn every feature of your SIEM, EDR, forensic tools</td></tr>
-                        <tr><td><strong>Attack knowledge</strong></td><td>Know what to look for</td><td>Study MITRE ATT&CK, read threat reports, practice in labs</td></tr>
-                        <tr><td><strong>Communication</strong></td><td>Explain findings to technical and non-technical audiences</td><td>Write clear reports, practice presenting findings</td></tr>
-                        <tr><td><strong>Mentoring</strong></td><td>L1 analysts need guidance to grow</td><td>Be patient, explain your thinking, give feedback</td></tr>
-                    </tbody>
-                </table>
-
-                <!-- INVESTIGATION METHODOLOGY -->
-                <h2 id="investigation"><i class="fas fa-search"></i> Investigation Methodology</h2>
-
-                <h3>The Investigation Framework</h3>
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-sitemap"></i> Structured Investigation Approach</div>
-                    <table>
-                        <thead><tr><th>Phase</th><th>Goal</th><th>Key Questions</th><th>Output</th></tr></thead>
-                        <tbody>
-                            <tr><td><strong>1. Scope</strong></td><td>Understand what you're investigating</td><td>What triggered? What's affected? What's the timeline?</td><td>Clear investigation boundaries</td></tr>
-                            <tr><td><strong>2. Collect</strong></td><td>Gather all relevant evidence</td><td>What logs exist? What tools have data? What's the retention?</td><td>Evidence inventory</td></tr>
-                            <tr><td><strong>3. Analyze</strong></td><td>Understand what happened</td><td>What's the attack chain? What's confirmed vs. suspected?</td><td>Timeline of events</td></tr>
-                            <tr><td><strong>4. Scope (again)</strong></td><td>Determine full impact</td><td>How far did attacker get? What's compromised?</td><td>Impact assessment</td></tr>
-                            <tr><td><strong>5. Contain</strong></td><td>Stop the threat</td><td>What actions stop the attack? What's the business impact?</td><td>Containment actions</td></tr>
-                            <tr><td><strong>6. Document</strong></td><td>Record findings</td><td>What's the full narrative? What's the evidence?</td><td>Investigation report</td></tr>
-                        </tbody>
-                    </table>
+                <!-- TABLE OF CONTENTS -->
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                    <ol>
+                        <li><a href="#real-investigations">Real Investigation Scenarios</a></li>
+                        <li><a href="#inefficiencies">Common L2 Inefficiencies</a></li>
+                        <li><a href="#investigation-queries">Investigation Query Patterns</a></li>
+                        <li><a href="#containment">Containment Decisions</a></li>
+                        <li><a href="#escalation-handling">Handling L1 Escalations</a></li>
+                        <li><a href="#documentation">Investigation Documentation</a></li>
+                    </ol>
                 </div>
 
-                <h3>Building Attack Timelines</h3>
-                <table>
-                    <thead><tr><th>Step</th><th>How</th><th>Why</th></tr></thead>
-                    <tbody>
-                        <tr><td>Start with known event</td><td>Alert timestamp, confirmed malicious activity</td><td>Anchor point for investigation</td></tr>
-                        <tr><td>Work backwards</td><td>How did attacker get here? What was the entry point?</td><td>Find initial access, understand full attack</td></tr>
-                        <tr><td>Work forwards</td><td>What happened after? Lateral movement? Persistence?</td><td>Find full scope of compromise</td></tr>
-                        <tr><td>Correlate across sources</td><td>Match timestamps across EDR, SIEM, network, auth logs</td><td>Complete picture from all angles</td></tr>
-                        <tr><td>Note gaps</td><td>Where is data missing? What can't you prove?</td><td>Understand investigation limitations</td></tr>
-                    </tbody>
-                </table>
+                <!-- SECTION 1: REAL INVESTIGATIONS -->
+                <h2 id="real-investigations"><i class="fas fa-search"></i> Real Investigation Scenarios</h2>
 
-                <!-- HANDLING ESCALATIONS -->
-                <h2 id="escalations"><i class="fas fa-arrow-down"></i> Handling L1 Escalations</h2>
+                <p>These are actual investigations L2 handles, with step-by-step approach:</p>
 
-                <h3>What to Expect from L1</h3>
-                <table>
-                    <thead><tr><th>Good Escalation</th><th>Poor Escalation</th><th>How to Coach</th></tr></thead>
-                    <tbody>
-                        <tr><td>Clear description of alert</td><td>Just forwarded the raw alert</td><td>"Always include the alert details and your initial assessment"</td></tr>
-                        <tr><td>What they already checked</td><td>No indication of work done</td><td>"Tell me what you looked at so I don't duplicate effort"</td></tr>
-                        <tr><td>Their assessment (even if uncertain)</td><td>"I don't know, you figure it out"</td><td>"It's okay to be unsure, but tell me what you think"</td></tr>
-                        <tr><td>Relevant IOCs/artifacts</td><td>No supporting data</td><td>"Include hashes, IPs, usernames - the basics"</td></tr>
-                        <tr><td>Time sensitivity noted</td><td>No urgency indication</td><td>"Let me know if this is urgent"</td></tr>
-                    </tbody>
-                </table>
+                <div class="scenario-box">
+                    <h4>Investigation A: Phishing Compromise (L1 escalated PowerShell alert) <span class="time-tag">1-2 hours</span></h4>
+                    
+                    <p><strong>L1 Escalation:</strong></p>
+                    <div class="alert-example">
+<pre>Escalating: Suspicious PowerShell on WKSTN-PC042
+User: mike.wilson
+Finding: Outlook spawned encoded PowerShell (download cradle)
+Target URL: http://10.0.0.5/stager
+Checked: Decoded command, confirmed malicious intent
+Need: Full investigation, possible isolation</pre>
+                    </div>
 
-                <h3>Escalation Response Framework</h3>
-                <table>
-                    <thead><tr><th>First</th><th>Then</th><th>Finally</th></tr></thead>
-                    <tbody>
-                        <tr><td>Acknowledge receipt</td><td>Review L1's work (don't repeat it)</td><td>Provide feedback on escalation quality</td></tr>
-                        <tr><td>Assess urgency</td><td>Dive deeper into suspicious findings</td><td>Communicate findings back</td></tr>
-                        <tr><td>Ask clarifying questions if needed</td><td>Expand investigation scope</td><td>Document for knowledge base</td></tr>
-                    </tbody>
-                </table>
+                    <p><strong>L2 Investigation Steps:</strong></p>
 
-                <!-- CONTAINMENT DECISIONS -->
-                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Decision Making</h2>
+                    <p><strong>Step 1: Verify and expand timeline (15 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Get full process tree around the event
+DeviceProcessEvents
+| where DeviceName == "WKSTN-PC042"
+| where TimeGenerated between (datetime(2025-01-04 14:00) .. datetime(2025-01-04 15:00))
+| project TimeGenerated, FileName, ProcessCommandLine, 
+    InitiatingProcessFileName, InitiatingProcessCommandLine, AccountName
+| order by TimeGenerated asc</pre>
+                    </div>
 
-                <h3>The Containment Dilemma</h3>
-                <div class="info-box warning">
-                    <div class="info-box-title"><i class="fas fa-balance-scale"></i> Speed vs. Impact</div>
-                    <p style="margin: 0.5rem 0;">Every containment action has tradeoffs. Faster containment = less damage from attacker, but potentially more business disruption.</p>
-                    <table>
-                        <thead><tr><th>Contain Fast If...</th><th>Investigate More First If...</th></tr></thead>
-                        <tbody>
-                            <tr><td>Active data exfiltration</td><td>Historical alert, attack already over</td></tr>
-                            <tr><td>Ransomware spreading</td><td>Single system, no spread indicators</td></tr>
-                            <tr><td>C2 communication active</td><td>Blocked threat, no execution</td></tr>
-                            <tr><td>Critical system compromised</td><td>Low-value target, contained impact</td></tr>
-                            <tr><td>Credential theft in progress</td><td>Need to understand scope first</td></tr>
-                        </tbody>
-                    </table>
+                    <p><strong>What you find:</strong></p>
+                    <div class="timeline-box">
+                        <p><span class="time">14:28:12</span> - outlook.exe opens attachment "Invoice_Jan.docm"</p>
+                        <p><span class="time">14:28:15</span> - WINWORD.EXE spawns from outlook.exe</p>
+                        <p><span class="time">14:28:22</span> - powershell.exe spawns from WINWORD.EXE (macro executed)</p>
+                        <p><span class="time">14:28:23</span> - PowerShell runs encoded download cradle</p>
+                        <p><span class="time">14:28:24</span> - Connection attempt to 10.0.0.5:80</p>
+                    </div>
+
+                    <p><strong>Step 2: Did the download succeed? (10 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Check network connections
+DeviceNetworkEvents
+| where DeviceName == "WKSTN-PC042"
+| where TimeGenerated > datetime(2025-01-04 14:28)
+| where RemoteIP == "10.0.0.5" or RemoteUrl contains "10.0.0.5"
+| project TimeGenerated, ActionType, RemoteIP, RemotePort, RemoteUrl, InitiatingProcessFileName</pre>
+                    </div>
+
+                    <p><strong>Result:</strong> Connection was BLOCKED by proxy/firewall. No successful download. ✓</p>
+
+                    <p><strong>Step 3: Any persistence or lateral movement? (15 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Check for persistence mechanisms
+DeviceRegistryEvents
+| where DeviceName == "WKSTN-PC042"
+| where TimeGenerated > datetime(2025-01-04 14:28)
+| where RegistryKey contains "Run" or RegistryKey contains "Services"
+| project TimeGenerated, ActionType, RegistryKey, RegistryValueName, RegistryValueData
+
+// Check for scheduled tasks
+DeviceProcessEvents
+| where DeviceName == "WKSTN-PC042"
+| where FileName in ("schtasks.exe", "at.exe")
+| project TimeGenerated, ProcessCommandLine</pre>
+                    </div>
+
+                    <p><strong>Result:</strong> No persistence found. Attack stopped at download stage. ✓</p>
+
+                    <p><strong>Step 4: Find the malicious email (10 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Find the phishing email
+EmailEvents
+| where RecipientEmailAddress == "mike.wilson@company.com"
+| where TimeGenerated between (datetime(2025-01-04 14:00) .. datetime(2025-01-04 14:30))
+| where AttachmentCount > 0
+| project TimeGenerated, SenderFromAddress, Subject, AttachmentCount, ThreatTypes</pre>
+                    </div>
+
+                    <p><strong>Result:</strong> Email from "invoices@legtimate-vendor.com" (typosquat) with Invoice_Jan.docm</p>
+
+                    <p><strong>Step 5: Check for other recipients (10 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Did anyone else get this email?
+EmailEvents
+| where SenderFromAddress == "invoices@legtimate-vendor.com"
+| where TimeGenerated > ago(7d)
+| summarize Recipients=make_set(RecipientEmailAddress), Count=count() by Subject
+| where Count > 1</pre>
+                    </div>
+
+                    <p><strong>Result:</strong> 5 other users received similar emails. Need to check if anyone else clicked.</p>
+
+                    <div class="decision-box">
+                        <h4>🎯 L2 Decision Point</h4>
+                        <p><strong>Finding:</strong> Attack was blocked. No persistence. But 5 other users received same phishing.</p>
+                        <p><strong>Actions:</strong></p>
+                        <ol>
+                            <li>No need to isolate WKSTN-PC042 (attack blocked)</li>
+                            <li>Block sender domain at email gateway</li>
+                            <li>Search for clicks from other 5 recipients</li>
+                            <li>Send awareness reminder to targeted users</li>
+                            <li>Add 10.0.0.5 to blocklist (investigate if internal - could be compromised host)</li>
+                        </ol>
+                    </div>
+
+                    <p><strong>Investigation Summary:</strong></p>
+                    <div class="alert-example">
+<pre>INVESTIGATION REPORT
+
+Incident: Phishing attempt with malicious macro
+Status: Contained - Attack blocked by network controls
+
+Timeline:
+- 14:28: mike.wilson received phishing email from typosquat domain
+- 14:28: Opened Word attachment, macro executed PowerShell download cradle
+- 14:28: Download attempt to 10.0.0.5 BLOCKED by proxy
+
+Scope:
+- Affected: mike.wilson (WKSTN-PC042) - no compromise
+- Related: 5 additional users received similar phishing emails
+- No persistence or lateral movement detected
+
+Actions Taken:
+- Blocked sender domain at email gateway
+- Added 10.0.0.5 to network blocklist
+- Verified other 5 recipients did not click
+- User awareness email sent
+
+Root Cause: Phishing email bypassed email security (new domain)
+Recommendation: Review email filtering rules for attachment types</pre>
+                    </div>
                 </div>
 
-                <h3>Containment Options and Impacts</h3>
-                <table>
-                    <thead><tr><th>Action</th><th>Stops</th><th>Business Impact</th><th>When to Use</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Isolate endpoint</strong></td>
-                            <td>All network communication</td>
-                            <td>User can't work, but device preserved</td>
-                            <td>Confirmed malware, active threat</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Disable account</strong></td>
-                            <td>All access for that user</td>
-                            <td>User locked out completely</td>
-                            <td>Confirmed account compromise</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Reset password + revoke sessions</strong></td>
-                            <td>Current attacker access</td>
-                            <td>User must re-authenticate</td>
-                            <td>Credential theft, less disruptive than disable</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Block IP/domain</strong></td>
-                            <td>Communication to that destination</td>
-                            <td>Low if attacker-controlled</td>
-                            <td>Known C2, attacker infrastructure</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Network segment isolation</strong></td>
-                            <td>Spread to/from segment</td>
-                            <td>Significant - whole segment offline</td>
-                            <td>Worm, fast-spreading threat</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="scenario-box">
+                    <h4>Investigation B: Compromised Account (Impossible Travel confirmed real) <span class="time-tag">2-4 hours</span></h4>
+                    
+                    <p><strong>L1 Escalation:</strong></p>
+                    <div class="alert-example">
+<pre>Escalating: Impossible Travel for david.chen
+Login 1: New York at 09:00 (normal location)
+Login 2: Russia at 09:45
+Checked: Not VPN, not cloud service
+User confirms NOT in Russia
+Possible account compromise</pre>
+                    </div>
 
-                <!-- WHAT IF SCENARIOS -->
-                <h2 id="what-if"><i class="fas fa-random"></i> L2 Decision Scenarios</h2>
+                    <p><strong>L2 Investigation Steps:</strong></p>
 
-                <table>
-                    <thead><tr><th>Scenario</th><th>Considerations</th><th>Likely Action</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>L1 escalates but you think it's FP</strong></td>
-                            <td>L1 might see something you don't. Verify before dismissing. Use as teaching opportunity.</td>
-                            <td>Investigate briefly, explain reasoning to L1</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Attack happened days ago, just discovered</strong></td>
-                            <td>Attacker may have achieved goals. Focus on: Did they persist? What did they access?</td>
-                            <td>Full investigation before containment (attacker already got what they wanted)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Executive endpoint compromised</strong></td>
-                            <td>High-value target. BEC risk. Sensitive data access. Political sensitivity.</td>
-                            <td>Immediate escalation, careful containment with leadership buy-in</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Can't determine scope - keep finding more</strong></td>
-                            <td>Investigation expanding. Need to balance thoroughness with response speed.</td>
-                            <td>Contain what you know, continue investigating, escalate if overwhelming</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Business pushes back on containment</strong></td>
-                            <td>They have context you don't. But security is your job.</td>
-                            <td>Document the risk clearly, escalate to management if needed</td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <p><strong>Step 1: Immediate containment (5 min)</strong></p>
+                    <div class="containment-action">
+                        <div class="icon">🔒</div>
+                        <div>
+                            <strong>Reset password + Revoke sessions</strong>
+                            <p>User confirmed not in Russia = confirmed compromise. Stop attacker access NOW.</p>
+                        </div>
+                    </div>
 
-                <!-- WHEN TO ESCALATE TO L3/IR -->
-                <h2 id="escalate-up"><i class="fas fa-arrow-up"></i> When to Escalate to L3/IR</h2>
+                    <p><strong>Step 2: What did the attacker do? (30 min)</strong></p>
+                    <div class="alert-example">
+<pre>// All activity from the Russian IP
+let attackerIP = "185.156.xxx.xxx";
+union SigninLogs, AADNonInteractiveUserSignInLogs
+| where IPAddress == attackerIP
+| where TimeGenerated > ago(7d)
+| project TimeGenerated, UserPrincipalName, AppDisplayName, ResultType, 
+    Location, ClientAppUsed, DeviceDetail
+| order by TimeGenerated asc</pre>
+                    </div>
 
-                <div class="info-box danger">
-                    <div class="info-box-title">Escalate to L3 or IR Team When:</div>
-                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                        <li>Domain controller or critical infrastructure compromised</li>
-                        <li>Evidence of data exfiltration</li>
-                        <li>Ransomware deployment (confirmed or imminent)</li>
-                        <li>Multiple systems/users compromised (campaign)</li>
-                        <li>Can't contain the threat with available tools</li>
-                        <li>Nation-state or advanced threat indicators</li>
-                        <li>Legal/regulatory implications (breach notification needed)</li>
-                        <li>Investigation exceeds your expertise</li>
+                    <p><strong>What you find:</strong></p>
+                    <div class="timeline-box">
+                        <p><span class="time">09:45</span> - Login to Outlook Web (success)</p>
+                        <p><span class="time">09:46</span> - Login to SharePoint (success)</p>
+                        <p><span class="time">09:47</span> - Login to Azure Portal (success)</p>
+                        <p><span class="time">09:52</span> - Failed login to admin portal (MFA blocked)</p>
+                    </div>
+
+                    <p><strong>Step 3: Check email activity (20 min)</strong></p>
+                    <div class="alert-example">
+<pre>// What did attacker do in email?
+OfficeActivity
+| where UserId == "david.chen@company.com"
+| where ClientIP == "185.156.xxx.xxx"
+| where TimeGenerated > ago(24h)
+| project TimeGenerated, Operation, Item, ResultStatus
+| order by TimeGenerated asc</pre>
+                    </div>
+
+                    <p><strong>Findings:</strong></p>
+                    <ul>
+                        <li>Created inbox rule to forward all emails to external address</li>
+                        <li>Read 47 emails in 7 minutes (automated scraping)</li>
+                        <li>Downloaded 3 attachments</li>
+                    </ul>
+
+                    <p><strong>Step 4: Check for persistence (15 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Check for mailbox rules (persistence)
+OfficeActivity
+| where UserId == "david.chen@company.com"
+| where Operation in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")
+| project TimeGenerated, Operation, Parameters, ClientIP</pre>
+                    </div>
+
+                    <p><strong>Found:</strong> Inbox rule forwarding to "david.chen.backup@protonmail.com" - DELETE THIS!</p>
+
+                    <p><strong>Step 5: Check SharePoint/OneDrive access (15 min)</strong></p>
+                    <div class="alert-example">
+<pre>// What files were accessed?
+OfficeActivity
+| where UserId == "david.chen@company.com"
+| where ClientIP == "185.156.xxx.xxx"
+| where Operation in ("FileDownloaded", "FileAccessed", "FileSyncDownloadedFull")
+| project TimeGenerated, Operation, SourceFileName, Site_Url</pre>
+                    </div>
+
+                    <p><strong>Found:</strong> Downloaded "Q4 Financial Report.xlsx", "Customer List.xlsx", "Contract_ACME.pdf"</p>
+
+                    <div class="decision-box">
+                        <h4>🎯 L2 Decision Point: This is a Data Breach</h4>
+                        <p><strong>Escalate to L3/IR Team:</strong></p>
+                        <ul>
+                            <li>Confirmed data exfiltration (sensitive files downloaded)</li>
+                            <li>Email forwarding rule = ongoing data leak</li>
+                            <li>May require breach notification</li>
+                        </ul>
+                    </div>
+
+                    <p><strong>Immediate Actions:</strong></p>
+                    <ol>
+                        <li>✓ Password reset + session revoke (done)</li>
+                        <li>✓ Delete malicious inbox rule</li>
+                        <li>✓ Enable MFA if not already</li>
+                        <li>Block the attacker IP at firewall</li>
+                        <li>Preserve email logs for legal</li>
+                        <li>Escalate for breach assessment</li>
+                    </ol>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Investigation C: Internal Reconnaissance (Unusual AD queries) <span class="time-tag">1-2 hours</span></h4>
+                    
+                    <p><strong>L1 Escalation:</strong></p>
+                    <div class="alert-example">
+<pre>Alert: Enumeration of domain admins
+User: svc_backup (service account)
+Activity: LDAP query for Domain Admins group members
+Source: SERVER-DB01
+Unusual: Service account shouldn't be querying AD groups</pre>
+                    </div>
+
+                    <p><strong>L2 Investigation:</strong></p>
+
+                    <p><strong>Step 1: Is this normal for this service account? (10 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Check historical behavior of svc_backup
+IdentityQueryEvents
+| where AccountName == "svc_backup"
+| where TimeGenerated > ago(30d)
+| summarize QueryTypes=make_set(QueryType), 
+    QueryTargets=make_set(QueryTarget), 
+    Count=count() by bin(TimeGenerated, 1d)
+| order by TimeGenerated desc</pre>
+                    </div>
+
+                    <p><strong>Finding:</strong> This account has NEVER queried Domain Admins before. First time in 30 days. 🚨</p>
+
+                    <p><strong>Step 2: What else is this account doing? (15 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Full activity timeline
+union IdentityQueryEvents, IdentityLogonEvents, DeviceProcessEvents, DeviceNetworkEvents
+| where AccountName == "svc_backup" or InitiatingProcessAccountName == "svc_backup"
+| where TimeGenerated > ago(24h)
+| project TimeGenerated, ActionType, DeviceName, ProcessCommandLine, 
+    QueryType, QueryTarget, DestinationIPAddress
+| order by TimeGenerated asc</pre>
+                    </div>
+
+                    <p><strong>Timeline found:</strong></p>
+                    <div class="timeline-box">
+                        <p><span class="time">02:15</span> - Normal backup job ran on SERVER-DB01</p>
+                        <p><span class="time">03:45</span> - svc_backup logged into SERVER-WEB01 (unusual!)</p>
+                        <p><span class="time">03:46</span> - BloodHound-like LDAP queries started</p>
+                        <p><span class="time">03:47</span> - Queried Domain Admins, Enterprise Admins</p>
+                        <p><span class="time">03:48</span> - Queried all computers in domain</p>
+                        <p><span class="time">03:50</span> - Queried SPNs (Kerberoasting prep?)</p>
+                    </div>
+
+                    <p><strong>Step 3: How did attacker get svc_backup credentials? (20 min)</strong></p>
+                    <div class="alert-example">
+<pre>// Check for credential access on servers where svc_backup runs
+DeviceProcessEvents
+| where DeviceName in ("SERVER-DB01", "SERVER-WEB01")
+| where TimeGenerated > ago(7d)
+| where FileName in ("mimikatz.exe", "procdump.exe", "secretsdump.py") 
+    or ProcessCommandLine contains "sekurlsa" 
+    or ProcessCommandLine contains "lsass"
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine, AccountName</pre>
+                    </div>
+
+                    <p><strong>Found:</strong> procdump.exe ran on SERVER-DB01 targeting lsass.exe 2 days ago!</p>
+
+                    <div class="decision-box">
+                        <h4>🎯 This is Active Compromise - Escalate Immediately</h4>
+                        <p><strong>Attack chain identified:</strong></p>
+                        <ol>
+                            <li>Attacker compromised SERVER-DB01 (how? need to investigate)</li>
+                            <li>Dumped credentials using procdump (got svc_backup creds)</li>
+                            <li>Used svc_backup to pivot and enumerate AD</li>
+                            <li>Likely preparing for privilege escalation (queried SPNs = Kerberoasting)</li>
+                        </ol>
+                        <p><strong>Immediate containment:</strong></p>
+                        <ul>
+                            <li>Disable svc_backup account</li>
+                            <li>Isolate SERVER-DB01 and SERVER-WEB01</li>
+                            <li>Reset all admin passwords (attacker may have harvested)</li>
+                            <li>Engage IR team - this is a domain compromise in progress</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: COMMON INEFFICIENCIES -->
+                <h2 id="inefficiencies"><i class="fas fa-clock"></i> Common L2 Inefficiencies</h2>
+
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #1: Repeating L1's Work</h4>
+                    <p><strong>Problem:</strong> L2 receives escalation, ignores L1's findings, starts investigation from scratch. Wastes 20-30 minutes duplicating effort.</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Build on L1's Work</h4>
+                    <ul>
+                        <li>Read the escalation notes completely</li>
+                        <li>Trust (but verify quickly) L1's findings</li>
+                        <li>Start from where L1 stopped, not from zero</li>
+                        <li>If L1 checked user legitimacy, don't recheck - expand the investigation</li>
                     </ul>
                 </div>
 
-                <!-- MENTORING L1 -->
-                <h2 id="mentoring"><i class="fas fa-chalkboard-teacher"></i> Mentoring L1 Analysts</h2>
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #2: Tunnel Vision on Single Alert</h4>
+                    <p><strong>Problem:</strong> L2 focuses only on the escalated alert, misses related activity that shows larger attack.</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Always Pivot</h4>
+                    <p>For every investigation, ask:</p>
+                    <ul>
+                        <li>What happened BEFORE this alert? (How did attacker get here?)</li>
+                        <li>What happened AFTER? (What's the impact?)</li>
+                        <li>Are there other alerts for this user/host/IP?</li>
+                        <li>Did this affect other systems?</li>
+                    </ul>
+                </div>
 
-                <h3>Effective Mentoring Practices</h3>
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #3: Investigating Then Containing</h4>
+                    <p><strong>Problem:</strong> Spending 2 hours investigating while attack is still active. Attacker continues to exfiltrate data.</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Contain First If Active Threat</h4>
+                    <table>
+                        <tr><td><strong>Active threat (credentials stolen, C2 active)</strong></td><td>→ Contain FIRST, investigate after</td></tr>
+                        <tr><td><strong>Historical event (attack was days ago)</strong></td><td>→ Investigate first (attacker already finished)</td></tr>
+                        <tr><td><strong>Blocked attack (no successful execution)</strong></td><td>→ Investigate for scope, no urgent containment</td></tr>
+                    </table>
+                </div>
+
+                <div class="inefficiency-box">
+                    <h4>❌ Inefficiency #4: Not Using Saved Queries</h4>
+                    <p><strong>Problem:</strong> Writing the same investigation queries from scratch every time. "What processes ran on this host" query written 100 times.</p>
+                </div>
+                <div class="solution-box">
+                    <h4>✓ Solution: Build Query Library</h4>
+                    <ul>
+                        <li>Save common investigation queries with variables</li>
+                        <li>Create investigation templates for common scenarios</li>
+                        <li>Share with team - don't reinvent the wheel</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 3: INVESTIGATION QUERIES -->
+                <h2 id="investigation-queries"><i class="fas fa-terminal"></i> Investigation Query Patterns</h2>
+
+                <h3>User Investigation (Sentinel/KQL)</h3>
+                <div class="alert-example">
+<pre>// TEMPLATE: Full user activity investigation
+let targetUser = "john.doe@company.com";
+let investigationWindow = 24h;
+
+// 1. Authentication activity
+SigninLogs
+| where TimeGenerated > ago(investigationWindow)
+| where UserPrincipalName =~ targetUser
+| project TimeGenerated, ResultType, ResultDescription, IPAddress, 
+    Location, AppDisplayName, ClientAppUsed, DeviceDetail
+| order by TimeGenerated desc;
+
+// 2. Email activity
+OfficeActivity
+| where TimeGenerated > ago(investigationWindow)
+| where UserId =~ targetUser
+| where Operation in ("MailItemsAccessed", "Send", "Create", "UpdateInboxRules")
+| project TimeGenerated, Operation, Item, ClientIP;
+
+// 3. File activity
+OfficeActivity
+| where TimeGenerated > ago(investigationWindow)
+| where UserId =~ targetUser
+| where Operation contains "File"
+| project TimeGenerated, Operation, SourceFileName, Site_Url, ClientIP;
+
+// 4. Related alerts
+SecurityAlert
+| where TimeGenerated > ago(7d)
+| where Entities contains targetUser
+| project TimeGenerated, AlertName, Severity, Status</pre>
+                </div>
+
+                <h3>Host Investigation (Sentinel/KQL)</h3>
+                <div class="alert-example">
+<pre>// TEMPLATE: Full host investigation
+let targetHost = "WKSTN-PC042";
+let investigationWindow = 24h;
+
+// 1. Process execution
+DeviceProcessEvents
+| where TimeGenerated > ago(investigationWindow)
+| where DeviceName =~ targetHost
+| project TimeGenerated, FileName, ProcessCommandLine, 
+    InitiatingProcessFileName, AccountName, SHA256
+| order by TimeGenerated desc;
+
+// 2. Network connections
+DeviceNetworkEvents
+| where TimeGenerated > ago(investigationWindow)
+| where DeviceName =~ targetHost
+| where ActionType == "ConnectionSuccess"
+| project TimeGenerated, RemoteIP, RemotePort, RemoteUrl, 
+    InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by TimeGenerated desc;
+
+// 3. File activity
+DeviceFileEvents
+| where TimeGenerated > ago(investigationWindow)
+| where DeviceName =~ targetHost
+| where ActionType in ("FileCreated", "FileModified", "FileRenamed")
+| project TimeGenerated, ActionType, FileName, FolderPath, 
+    InitiatingProcessFileName, SHA256;
+
+// 4. Logon activity
+DeviceLogonEvents
+| where TimeGenerated > ago(investigationWindow)
+| where DeviceName =~ targetHost
+| project TimeGenerated, ActionType, AccountName, LogonType, 
+    RemoteIP, IsLocalAdmin</pre>
+                </div>
+
+                <h3>Splunk Equivalents</h3>
+                <div class="alert-example">
+<pre>// User investigation
+index=* user="john.doe@company.com" earliest=-24h
+| stats count by sourcetype, action, src_ip, app
+| sort -count
+
+// Host investigation
+index=* host="WKSTN-PC042" earliest=-24h
+| stats count by sourcetype, EventCode, process_name, dest_ip
+| sort -count
+
+// Process execution
+index=windows sourcetype="WinEventLog:Security" EventCode=4688 host="WKSTN-PC042"
+| table _time, user, process_name, process, parent_process_name
+| sort -_time</pre>
+                </div>
+
+                <!-- SECTION 4: CONTAINMENT -->
+                <h2 id="containment"><i class="fas fa-shield-alt"></i> Containment Decisions</h2>
+
+                <h3>Containment Decision Matrix</h3>
                 <table>
-                    <thead><tr><th>Do</th><th>Don't</th><th>Why</th></tr></thead>
+                    <thead><tr><th>Situation</th><th>Containment Action</th><th>Business Impact</th></tr></thead>
                     <tbody>
-                        <tr><td>Explain your thought process</td><td>Just give answers</td><td>They need to learn how to think, not just what to do</td></tr>
-                        <tr><td>Review their escalations constructively</td><td>Criticize harshly or ignore</td><td>Feedback is how they improve</td></tr>
-                        <tr><td>Let them try things (with guardrails)</td><td>Do everything yourself</td><td>Learning requires practice</td></tr>
-                        <tr><td>Acknowledge when they do well</td><td>Only point out mistakes</td><td>Positive reinforcement builds confidence</td></tr>
-                        <tr><td>Be available for questions</td><td>"Figure it out yourself" always</td><td>Being stuck wastes time and frustrates</td></tr>
-                        <tr><td>Push them appropriately</td><td>Let them stay in comfort zone</td><td>Growth requires challenge</td></tr>
+                        <tr>
+                            <td>Confirmed account compromise</td>
+                            <td>Reset password + Revoke sessions</td>
+                            <td>User must re-login, low impact</td>
+                        </tr>
+                        <tr>
+                            <td>Malware executing on endpoint</td>
+                            <td>Isolate device from network</td>
+                            <td>User offline, moderate impact</td>
+                        </tr>
+                        <tr>
+                            <td>Ransomware detected</td>
+                            <td>Isolate segment, disable accounts</td>
+                            <td>HIGH - business disruption</td>
+                        </tr>
+                        <tr>
+                            <td>Data exfiltration in progress</td>
+                            <td>Block destination IP/domain</td>
+                            <td>Low if attacker-controlled</td>
+                        </tr>
+                        <tr>
+                            <td>Phishing - user clicked but attack blocked</td>
+                            <td>None required</td>
+                            <td>No impact</td>
+                        </tr>
+                        <tr>
+                            <td>Suspicious but unconfirmed</td>
+                            <td>Monitor closely, prepare containment</td>
+                            <td>No impact</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <!-- PATH TO L3 -->
-                <h2 id="growth"><i class="fas fa-chart-line"></i> Path to L3 / Specialization</h2>
+                <h3>How to Isolate (MDE)</h3>
+                <div class="alert-example">
+<pre>1. Microsoft 365 Defender Portal
+2. Devices → Select device
+3. "..." menu → Isolate Device
+4. Select isolation type:
+   - Full: No network access except to Defender service
+   - Selective: Block specific IPs/ports
+5. Add comment for audit trail
+6. Click Isolate
 
-                <h3>Growth Paths from L2</h3>
+To release: Same menu → "Release from isolation"</pre>
+                </div>
+
+                <h3>How to Reset/Revoke (Entra ID)</h3>
+                <div class="alert-example">
+<pre>1. Entra ID → Users → Select user
+2. Reset password: "Reset password" button
+3. Revoke sessions: "Revoke sessions" button
+4. Block sign-in (if needed): "Block sign-in" under properties
+
+PowerShell method:
+# Reset password
+Set-AzureADUserPassword -ObjectId "user@company.com" -ForceChangePasswordNextLogin $true
+
+# Revoke all sessions
+Revoke-AzureADUserAllRefreshToken -ObjectId "user@company.com"</pre>
+                </div>
+
+                <!-- SECTION 5: HANDLING ESCALATIONS -->
+                <h2 id="escalation-handling"><i class="fas fa-arrow-down"></i> Handling L1 Escalations</h2>
+
+                <h3>Good vs Poor Escalations</h3>
                 <table>
-                    <thead><tr><th>Path</th><th>Focus Areas</th><th>Skills to Develop</th></tr></thead>
+                    <thead><tr><th>Good Escalation</th><th>Poor Escalation</th><th>How to Coach L1</th></tr></thead>
                     <tbody>
-                        <tr><td><strong>L3 Senior Analyst</strong></td><td>Advanced threats, IR lead, hunting</td><td>Malware analysis, forensics, threat intel</td></tr>
-                        <tr><td><strong>Detection Engineer</strong></td><td>Building and tuning detections</td><td>Query languages, attack techniques, automation</td></tr>
-                        <tr><td><strong>Threat Hunter</strong></td><td>Proactive threat discovery</td><td>Hypothesis development, data analysis, creativity</td></tr>
-                        <tr><td><strong>Incident Response</strong></td><td>Major incident handling</td><td>Forensics, crisis management, communication</td></tr>
-                        <tr><td><strong>SOC Lead/Manager</strong></td><td>Team leadership, operations</td><td>Management, metrics, stakeholder communication</td></tr>
+                        <tr>
+                            <td>Clear summary of alert</td>
+                            <td>Just forwarded raw alert</td>
+                            <td>"Include your assessment, not just the alert"</td>
+                        </tr>
+                        <tr>
+                            <td>What they checked</td>
+                            <td>No indication of work done</td>
+                            <td>"Tell me what you looked at so I don't duplicate"</td>
+                        </tr>
+                        <tr>
+                            <td>Their hypothesis</td>
+                            <td>"I don't know, you figure it out"</td>
+                            <td>"It's okay to be wrong, but tell me what you think"</td>
+                        </tr>
+                        <tr>
+                            <td>Urgency level noted</td>
+                            <td>No priority indication</td>
+                            <td>"Let me know if this is time-sensitive"</td>
+                        </tr>
                     </tbody>
                 </table>
+
+                <h3>When to Push Back to L1</h3>
+                <ul>
+                    <li>Escalation has zero investigation done → "What did you check? Start with the 5-minute triage."</li>
+                    <li>Known FP pattern → "Check the FP doc - this is documented as benign. But good catch asking!"</li>
+                    <li>Missing basic info → "Can you add the relevant IOCs before I dig in?"</li>
+                </ul>
+
+                <!-- SECTION 6: DOCUMENTATION -->
+                <h2 id="documentation"><i class="fas fa-file-alt"></i> Investigation Documentation</h2>
+
+                <h3>Investigation Report Template</h3>
+                <div class="alert-example">
+<pre>INVESTIGATION REPORT
+====================
+
+Summary: [One sentence description]
+Status: [Confirmed Incident / False Positive / Inconclusive]
+Severity: [Critical / High / Medium / Low]
+Date: [Investigation date]
+Analyst: [Your name]
+
+TIMELINE
+--------
+[Time] - [Event description]
+[Time] - [Event description]
+...
+
+FINDINGS
+--------
+What happened:
+- [Key finding 1]
+- [Key finding 2]
+
+Affected assets:
+- [User/device/system]
+
+Indicators of Compromise:
+- [IP, hash, domain, etc.]
+
+IMPACT ASSESSMENT
+-----------------
+Data accessed: [Yes/No - what data?]
+Persistence established: [Yes/No]
+Lateral movement: [Yes/No]
+
+ACTIONS TAKEN
+-------------
+1. [Containment action]
+2. [Remediation action]
+...
+
+ROOT CAUSE
+----------
+[How did this happen?]
+
+RECOMMENDATIONS
+---------------
+1. [Preventive measure]
+2. [Detection improvement]
+...</pre>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="pages/soc-operations/l1-operations.html" class="card"><div class="card-icon"><i class="fas fa-user-check"></i></div><h3>L1 Operations</h3><p>Initial triage</p></a>
+                    <a href="pages/soc-operations/l3-operations.html" class="card"><div class="card-icon"><i class="fas fa-user-secret"></i></div><h3>L3 Operations</h3><p>Advanced threats</p></a>
+                    <a href="pages/soc-operations/incident-response.html" class="card"><div class="card-icon"><i class="fas fa-fire-extinguisher"></i></div><h3>Incident Response</h3><p>Major incidents</p></a>
+                </div>
 
             </div>
         </div>

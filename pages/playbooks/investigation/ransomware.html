@@ -7,21 +7,109 @@
     <title>Ransomware Investigation Playbook | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/playbooks/investigation/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/playbooks/investigation/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
                 <span>Ransomware Investigation</span>
             </div>
 
             <h1><i class="fas fa-lock"></i> Ransomware Investigation Playbook</h1>
             <p class="lead">Critical investigation procedures for ransomware incidents. Time-sensitive - every minute counts.</p>
+
+            <div class="diagram-box">
+🔴🔴🔴 RANSOMWARE RESPONSE - FIRST 60 MINUTES 🔴🔴🔴
+═══════════════════════════════════════════════════════════════════════════════
+
+MINUTE 0-5: CONTAIN IMMEDIATELY
+─────────────────────────────────────────────────────────────────────────────
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  1. NETWORK ISOLATE affected systems (EDR isolation or unplug)            │
+│  2. DO NOT power off (preserves memory evidence)                          │
+│  3. IDENTIFY patient zero (first infected system)                         │
+│  4. BLOCK any C2 IPs at firewall                                          │
+│  5. ESCALATE to incident commander                                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+MINUTE 5-15: STOP THE SPREAD
+─────────────────────────────────────────────────────────────────────────────
+
+  PATIENT ZERO                    OTHER SYSTEMS
+  (first infected)                     │
+        │                              │
+        ▼                              ▼
+  ┌──────────────┐              ┌──────────────┐
+  │   ISOLATE    │              │  Still OK?   │
+  │   NOW        │              │              │
+  └──────────────┘              └──────┬───────┘
+                                       │
+                         ┌─────────────┼─────────────┐
+                         │             │             │
+                         ▼             ▼             ▼
+                    ┌─────────┐  ┌─────────┐   ┌─────────┐
+                    │ Infected│  │ Unknown │   │  Clean  │
+                    │ ISOLATE │  │ ISOLATE │   │ MONITOR │
+                    └─────────┘  └─────────┘   └─────────┘
+
+  DISABLE:
+  • Compromised accounts (domain admins first!)
+  • Network shares temporarily (stop spread via SMB)
+  • Any GPO that might be deploying ransomware
+
+
+MINUTE 15-60: ASSESS SCOPE
+─────────────────────────────────────────────────────────────────────────────
+
+  Questions to answer:
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ HOW MANY systems affected?                                              │
+  │ ├─► Check EDR console - any other detections?                          │
+  │ ├─► Check file servers - encrypted files?                              │
+  │ └─► Check domain controllers - compromised?                            │
+  │                                                                         │
+  │ HOW did they get in?                                                    │
+  │ ├─► Phishing? Check email logs                                         │
+  │ ├─► Exposed RDP? Check 3389 connections                                │
+  │ ├─► VPN compromise? Check VPN logs                                     │
+  │ └─► Supply chain? Check recent software installs                       │
+  │                                                                         │
+  │ WHAT is the ransomware variant?                                        │
+  │ ├─► Check ransom note filename/content                                 │
+  │ ├─► Check encrypted file extension                                     │
+  │ └─► ID Ransomware website                                              │
+  │                                                                         │
+  │ DO WE HAVE BACKUPS?                                                     │
+  │ ├─► Are backups offline/air-gapped?                                    │
+  │ ├─► When was last good backup?                                         │
+  │ └─► Are backups encrypted too?                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+TYPICAL RANSOMWARE ATTACK TIMELINE:
+═══════════════════════════════════════════════════════════════════════════════
+
+Day 1-3:        Day 4-7:         Day 7-14:        Day 14+:
+INITIAL ACCESS  PERSISTENCE      LATERAL          DEPLOYMENT
+─────────────── ──────────────── ──────────────── ─────────────────
+Phishing        Backdoor         Credential       Disable AV
+RDP exposed     Scheduled task   dumping          Delete backups
+VPN creds       New admin acct   Move to DC       Encrypt everything
+                                 Map network      Ransom note
+
+🔴 AVERAGE DWELL TIME: 4-21 DAYS
+   By the time ransomware deploys, they've been in your network for WEEKS
+            </div>
 
             <div class="content">
                 <!-- CRITICAL ALERT -->

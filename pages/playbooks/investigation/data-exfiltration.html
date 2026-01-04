@@ -7,21 +7,123 @@
     <title>Data Exfiltration Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/playbooks/investigation/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/playbooks/investigation/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
                 <span>Data Exfiltration</span>
             </div>
 
             <h1><i class="fas fa-file-export"></i> Data Exfiltration Investigation</h1>
             <p class="lead">Investigating potential unauthorized data transfer out of the organization.</p>
+
+            <div class="diagram-box">
+DATA EXFILTRATION METHODS
+═══════════════════════════════════════════════════════════════════════════════
+
+NETWORK-BASED EXFILTRATION:
+─────────────────────────────────────────────────────────────────────────────
+
+1. HTTPS TO CLOUD STORAGE (Most common - hard to detect)
+   
+   Compromised Host                        Cloud Service
+         │                                      │
+         │ ── HTTPS POST (encrypted) ─────────►│
+         │    data.zip to dropbox.com           │
+         │                                      │
+   
+   Detection: Volume anomaly, unusual cloud destinations
+
+
+2. DNS TUNNELING (Sneaky - bypasses many controls)
+   
+   Compromised Host                        Attacker DNS Server
+         │                                      │
+         │ ── "aGVsbG8.exfil.evil.com" ────────►│
+         │    (data encoded in subdomain)       │
+         │                                      │
+   
+   Detection: High DNS query volume, long subdomain names
+
+
+3. EMAIL ATTACHMENT (Insider threat common)
+   
+   User's Mailbox                          External Email
+         │                                      │
+         │ ── customer_list.xlsx ──────────────►│
+         │    via personal Gmail                │
+         │                                      │
+   
+   Detection: DLP alerts, unusual attachment patterns
+
+
+4. PHYSICAL/REMOVABLE MEDIA (Insider threat)
+   
+   Workstation                             USB Drive
+         │                                      │
+         │ ── Copy to E:\ ────────────────────►│
+         │    (bypasses network monitoring)     │
+         │                                      │
+   
+   Detection: USB device events, file copy to removable media
+
+
+EXFILTRATION INDICATORS:
+═══════════════════════════════════════════════════════════════════════════════
+
+VOLUME ANOMALIES:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Normal: User uploads 50MB/day                                             │
+│  Alert:  Same user uploads 5GB in one hour                                │
+│                                                                             │
+│  ████████████████████████████████████████████████████████████████ 5GB     │
+│  █████ 50MB (normal)                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+DESTINATION ANOMALIES:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Normal destinations: OneDrive, SharePoint, approved cloud apps            │
+│  Suspicious: Personal Dropbox, Mega.nz, unknown file sharing               │
+│                                                                             │
+│  Normal:     sharepoint.com   ✓                                           │
+│  Suspicious: mega.nz          🔴 Not approved                             │
+│  Suspicious: file.io          🔴 Anonymous file sharing                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+TIMING ANOMALIES:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Normal business: 9 AM - 6 PM                                              │
+│  Suspicious: Large transfers at 3 AM                                       │
+│  Suspicious: Weekend bulk downloads                                        │
+│  Suspicious: Right after resignation notice                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+INVESTIGATION CHECKLIST:
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ □ WHAT was transferred? (File names, types, sensitivity)                   │
+│ □ HOW MUCH data? (Volume in MB/GB)                                         │
+│ □ WHERE did it go? (Destination IP/domain/service)                         │
+│ □ WHO did it? (User account, device)                                       │
+│ □ WHEN did it happen? (Timeline, duration)                                 │
+│ □ WHY might this be legitimate? (Business justification?)                  │
+│ □ Is this ONGOING? (Still happening? Stop it!)                             │
+│ □ What ELSE did this user/system access? (Scope)                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+            </div>
 
             <div class="content">
                 <!-- WHY THIS MATTERS -->

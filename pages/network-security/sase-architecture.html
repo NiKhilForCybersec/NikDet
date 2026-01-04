@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SASE Architecture | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .architecture-diagram { background: #1a1a2e; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; white-space: pre; }
+        .component-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .vs-table { width: 100%; }
+        .vs-table td { padding: 0.75rem; }
+        .old-way { background: rgba(239, 68, 68, 0.1); }
+        .new-way { background: rgba(34, 197, 94, 0.1); }
+        .interview-tip { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+        .interview-tip h4 { margin-top: 0; color: #fbbf24; }
+    </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Network Security</a><span class="separator">/</span>
+                <span>SASE Architecture</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-cloud"></i> SASE Architecture</h1>
+                <p class="lead">Secure Access Service Edge - the convergence of networking and security delivered from the cloud. Understand the complete architecture, components, and when to use it.</p>
+
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                    <ol>
+                        <li><a href="#what-is-sase">What is SASE?</a></li>
+                        <li><a href="#why-sase">Why SASE? The Problem It Solves</a></li>
+                        <li><a href="#components">SASE Components Deep Dive</a></li>
+                        <li><a href="#architecture">Architecture Patterns</a></li>
+                        <li><a href="#vendors">Vendor Comparison</a></li>
+                        <li><a href="#implementation">Implementation Considerations</a></li>
+                    </ol>
+                </div>
+
+                <!-- WHAT IS SASE -->
+                <h2 id="what-is-sase"><i class="fas fa-question-circle"></i> What is SASE?</h2>
+
+                <div class="interview-tip">
+                    <h4>💡 Interview Answer</h4>
+                    <p>"SASE, pronounced 'sassy', is a cloud-delivered architecture that converges network connectivity (like SD-WAN) with network security services (like SWG, CASB, ZTNA, and FWaaS) into a single, globally distributed cloud platform. It was defined by Gartner in 2019 to address the shift from data center-centric to cloud and remote work-centric environments."</p>
+                </div>
+
+                <h3>SASE = Network as a Service + Security as a Service</h3>
+
+                <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              SASE CLOUD PLATFORM                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────┐    ┌─────────────────────────────┐        │
+│  │    NETWORK SERVICES         │    │    SECURITY SERVICES         │        │
+│  │                             │    │                              │        │
+│  │  • SD-WAN                   │    │  • Secure Web Gateway (SWG)  │        │
+│  │  • WAN Optimization         │    │  • Cloud Access Security     │        │
+│  │  • Quality of Service       │    │    Broker (CASB)             │        │
+│  │  • Global Backbone          │    │  • Zero Trust Network        │        │
+│  │  • Traffic Routing          │    │    Access (ZTNA)             │        │
+│  │                             │    │  • Firewall as a Service     │        │
+│  │                             │    │  • Data Loss Prevention      │        │
+│  │                             │    │  • Threat Protection         │        │
+│  └─────────────────────────────┘    └─────────────────────────────┘        │
+│                                                                              │
+│                    ┌─────────────────────────────┐                          │
+│                    │    IDENTITY & POLICY        │                          │
+│                    │  • User Identity            │                          │
+│                    │  • Device Posture           │                          │
+│                    │  • Unified Policy Engine    │                          │
+│                    └─────────────────────────────┘                          │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+          ┌───────────────────────────┼───────────────────────────┐
+          │                           │                           │
+          ▼                           ▼                           ▼
+   ┌─────────────┐           ┌─────────────┐           ┌─────────────┐
+   │   BRANCH    │           │   REMOTE    │           │    DATA     │
+   │   OFFICE    │           │   USERS     │           │   CENTER    │
+   │             │           │             │           │             │
+   │  SD-WAN     │           │  Agent/     │           │  Connector  │
+   │  Appliance  │           │  Clientless │           │             │
+   └─────────────┘           └─────────────┘           └─────────────┘
+</div>
+
+                <!-- WHY SASE -->
+                <h2 id="why-sase"><i class="fas fa-lightbulb"></i> Why SASE? The Problem It Solves</h2>
+
+                <h3>The Old Way vs. The New Way</h3>
+                <table class="vs-table">
+                    <thead><tr><th>Traditional Architecture</th><th>SASE Architecture</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td class="old-way">
+                                <strong>❌ Hairpinning traffic through data center</strong><br>
+                                Remote user → VPN → Data Center → Internet<br>
+                                <em>Result: High latency, poor user experience</em>
+                            </td>
+                            <td class="new-way">
+                                <strong>✓ Direct-to-cloud with security</strong><br>
+                                Remote user → Nearest SASE PoP → Internet/Apps<br>
+                                <em>Result: Low latency, great experience</em>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="old-way">
+                                <strong>❌ Multiple point solutions</strong><br>
+                                Separate VPN, firewall, proxy, CASB, DLP<br>
+                                <em>Result: Complex, expensive, gaps in coverage</em>
+                            </td>
+                            <td class="new-way">
+                                <strong>✓ Unified platform</strong><br>
+                                Single vendor, single policy, single console<br>
+                                <em>Result: Simplified, consistent security</em>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="old-way">
+                                <strong>❌ Castle-and-moat security</strong><br>
+                                Trust everyone inside the network<br>
+                                <em>Result: Lateral movement after breach</em>
+                            </td>
+                            <td class="new-way">
+                                <strong>✓ Zero Trust</strong><br>
+                                Verify every user, device, and request<br>
+                                <em>Result: Minimized blast radius</em>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="old-way">
+                                <strong>❌ Capacity planning nightmare</strong><br>
+                                Buy hardware for peak load + 3 years growth<br>
+                                <em>Result: Overprovisioned or bottlenecked</em>
+                            </td>
+                            <td class="new-way">
+                                <strong>✓ Elastic cloud scale</strong><br>
+                                Scales automatically with demand<br>
+                                <em>Result: Pay for what you use</em>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="scenario-box">
+                    <h4>Real-World Problem SASE Solves</h4>
+                    <p><strong>Scenario:</strong> Company has 5,000 employees. Pre-COVID, 90% worked from office. Now 70% work remotely.</p>
+                    
+                    <p><strong>Old approach problems:</strong></p>
+                    <ul>
+                        <li>VPN concentrators overwhelmed - 10x the load they were sized for</li>
+                        <li>Users in Asia connecting to US data center for Zoom = terrible quality</li>
+                        <li>Split tunneling created security gaps</li>
+                        <li>No visibility into home network security</li>
+                    </ul>
+                    
+                    <p><strong>SASE solution:</strong></p>
+                    <ul>
+                        <li>Users connect to nearest cloud PoP (Zscaler has 150+ globally)</li>
+                        <li>All traffic inspected regardless of location</li>
+                        <li>Direct access to SaaS apps (no hairpin through data center)</li>
+                        <li>Consistent security policy everywhere</li>
+                    </ul>
+                </div>
+
+                <!-- COMPONENTS -->
+                <h2 id="components"><i class="fas fa-puzzle-piece"></i> SASE Components Deep Dive</h2>
+
+                <div class="component-card">
+                    <h4>1. SD-WAN (Software-Defined Wide Area Network)</h4>
+                    <p><strong>What it does:</strong> Intelligently routes traffic across multiple WAN connections (MPLS, broadband, LTE)</p>
+                    <p><strong>Key capabilities:</strong></p>
+                    <ul>
+                        <li>Application-aware routing (prioritize Zoom over downloads)</li>
+                        <li>Automatic failover between connections</li>
+                        <li>WAN optimization and deduplication</li>
+                        <li>Centralized management and visibility</li>
+                    </ul>
+                    <p><strong>Vendors:</strong> VMware VeloCloud, Cisco Viptela, Palo Alto Prisma SD-WAN, Fortinet</p>
+                </div>
+
+                <div class="component-card">
+                    <h4>2. SWG (Secure Web Gateway)</h4>
+                    <p><strong>What it does:</strong> Protects users from web threats, enforces acceptable use policy</p>
+                    <p><strong>Key capabilities:</strong></p>
+                    <ul>
+                        <li>URL filtering (block malicious/inappropriate sites)</li>
+                        <li>SSL/TLS inspection (decrypt to inspect for threats)</li>
+                        <li>Malware scanning and sandboxing</li>
+                        <li>Data loss prevention</li>
+                        <li>Bandwidth control</li>
+                    </ul>
+                    <p><strong>Vendors:</strong> Zscaler ZIA, Cisco Umbrella, Symantec WSS, Netskope</p>
+                    <p><em>→ Deep dive: <a href="swg-zia.html">SWG & ZIA</a></em></p>
+                </div>
+
+                <div class="component-card">
+                    <h4>3. CASB (Cloud Access Security Broker)</h4>
+                    <p><strong>What it does:</strong> Provides visibility and control over SaaS application usage</p>
+                    <p><strong>Key capabilities:</strong></p>
+                    <ul>
+                        <li>Shadow IT discovery (find unsanctioned apps)</li>
+                        <li>Inline and API-based protection</li>
+                        <li>DLP for cloud apps (prevent sensitive data upload)</li>
+                        <li>User behavior analytics</li>
+                        <li>Compliance monitoring</li>
+                    </ul>
+                    <p><strong>Deployment modes:</strong></p>
+                    <ul>
+                        <li><strong>Inline (Proxy):</strong> Traffic passes through CASB - real-time blocking</li>
+                        <li><strong>API:</strong> Connects to SaaS APIs - scans data at rest, can't block real-time</li>
+                        <li><strong>Hybrid:</strong> Both - best coverage</li>
+                    </ul>
+                    <p><strong>Vendors:</strong> Netskope, Microsoft Defender for Cloud Apps, Zscaler, Palo Alto</p>
+                </div>
+
+                <div class="component-card">
+                    <h4>4. ZTNA (Zero Trust Network Access)</h4>
+                    <p><strong>What it does:</strong> Provides secure access to private applications without VPN</p>
+                    <p><strong>Key capabilities:</strong></p>
+                    <ul>
+                        <li>Identity-based access (user + device + context)</li>
+                        <li>Application-level access (not network-level)</li>
+                        <li>Invisible to internet (apps not exposed)</li>
+                        <li>Continuous validation (not just at login)</li>
+                    </ul>
+                    <p><strong>Vendors:</strong> Zscaler ZPA, Palo Alto Prisma Access, Cloudflare Access, Okta</p>
+                    <p><em>→ Deep dive: <a href="ztna-zpa.html">ZTNA & ZPA</a></em></p>
+                </div>
+
+                <div class="component-card">
+                    <h4>5. FWaaS (Firewall as a Service)</h4>
+                    <p><strong>What it does:</strong> Cloud-delivered next-gen firewall capabilities</p>
+                    <p><strong>Key capabilities:</strong></p>
+                    <ul>
+                        <li>Stateful inspection</li>
+                        <li>IPS/IDS</li>
+                        <li>Application control</li>
+                        <li>DNS security</li>
+                    </ul>
+                    <p><strong>Vendors:</strong> Zscaler Cloud Firewall, Palo Alto Prisma Access, Cisco Umbrella</p>
+                </div>
+
+                <!-- ARCHITECTURE PATTERNS -->
+                <h2 id="architecture"><i class="fas fa-sitemap"></i> Architecture Patterns</h2>
+
+                <h3>Pattern 1: Full SASE (Cloud-Native)</h3>
+                <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                         SASE CLOUD                               │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              SINGLE VENDOR PLATFORM                      │    │
+│  │   SD-WAN │ SWG │ CASB │ ZTNA │ FWaaS │ DLP │ Sandbox   │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+         │                    │                    │
+    ┌────┴────┐          ┌────┴────┐         ┌────┴────┐
+    │ Branch  │          │ Remote  │         │  Cloud  │
+    │ (Agent) │          │ (Agent) │         │  Apps   │
+    └─────────┘          └─────────┘         └─────────┘
+
+Best for: Greenfield, cloud-first organizations
+Example: Zscaler (ZIA + ZPA + SD-WAN partner)
+</div>
+
+                <h3>Pattern 2: Hybrid SASE (Existing Infrastructure)</h3>
+                <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                         SASE CLOUD                               │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │         SWG │ CASB │ ZTNA │ Cloud Firewall              │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+         │                    │                    │
+    ┌────┴────┐          ┌────┴────┐         ┌────┴────┐
+    │ Branch  │          │ Remote  │         │  Data   │
+    │ (Exist- │          │ (Agent) │         │ Center  │
+    │  ing    │          └─────────┘         │ (Exist- │
+    │ SD-WAN) │                              │  ing    │
+    │         │                              │  NGFW)  │
+    └─────────┘                              └─────────┘
+
+Best for: Organizations with recent SD-WAN or firewall investments
+Example: Keep Cisco SD-WAN + Add Zscaler for security
+</div>
+
+                <h3>Pattern 3: SASE Lite (Security Focus Only)</h3>
+                <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                         SASE CLOUD                               │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                    SWG │ ZTNA                            │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                         ┌────┴────┐
+                         │ Remote  │
+                         │ Users   │
+                         │ (Agent) │
+                         └─────────┘
+
+Best for: Remote workforce security without network transformation
+Example: Deploy Zscaler ZIA + ZPA for remote users only
+</div>
+
+                <!-- VENDORS -->
+                <h2 id="vendors"><i class="fas fa-building"></i> Vendor Comparison</h2>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>Strengths</th>
+                            <th>Considerations</th>
+                            <th>Best For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Zscaler</strong></td>
+                            <td>
+                                • Pure cloud-native architecture<br>
+                                • Largest global PoP network<br>
+                                • Strong ZTNA (ZPA)<br>
+                                • ThreatLabz research
+                            </td>
+                            <td>
+                                • No native SD-WAN (partners)<br>
+                                • Premium pricing<br>
+                                • Complex licensing
+                            </td>
+                            <td>Large enterprises, security-first approach</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Palo Alto Prisma</strong></td>
+                            <td>
+                                • Full stack (SASE + CASB + CSPM)<br>
+                                • Native SD-WAN (CloudGenix)<br>
+                                • Strong threat intel (Unit 42)<br>
+                                • Integration with NGFW
+                            </td>
+                            <td>
+                                • Multiple acquisitions = integration work<br>
+                                • Complex product naming<br>
+                                • Can be expensive
+                            </td>
+                            <td>Existing Palo Alto customers, full platform</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cisco</strong></td>
+                            <td>
+                                • Umbrella DNS security excellent<br>
+                                • Strong SD-WAN (Viptela/Meraki)<br>
+                                • Integration with Cisco network<br>
+                                • Duo for identity
+                            </td>
+                            <td>
+                                • SASE still maturing<br>
+                                • Multiple products to integrate<br>
+                                • Complex licensing
+                            </td>
+                            <td>Cisco-heavy environments</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Netskope</strong></td>
+                            <td>
+                                • Best-in-class CASB<br>
+                                • Strong DLP<br>
+                                • Good user experience<br>
+                                • Inline + API coverage
+                            </td>
+                            <td>
+                                • Smaller PoP network<br>
+                                • SD-WAN via partners<br>
+                                • Less mature ZTNA
+                            </td>
+                            <td>CASB-first, data protection focus</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloudflare</strong></td>
+                            <td>
+                                • Massive edge network<br>
+                                • Developer-friendly<br>
+                                • Competitive pricing<br>
+                                • Fast innovation
+                            </td>
+                            <td>
+                                • Enterprise features maturing<br>
+                                • Less comprehensive DLP<br>
+                                • Limited CASB
+                            </td>
+                            <td>Tech-forward companies, cost-conscious</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- IMPLEMENTATION -->
+                <h2 id="implementation"><i class="fas fa-cogs"></i> Implementation Considerations</h2>
+
+                <div class="scenario-box">
+                    <h4>Phase 1: Remote Users (Quick Win)</h4>
+                    <p><strong>Timeline:</strong> 2-4 weeks</p>
+                    <p><strong>Deploy:</strong> SWG + ZTNA for remote workers</p>
+                    <p><strong>Value:</strong> Immediate security for work-from-home, replace VPN</p>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Phase 2: Branch Offices</h4>
+                    <p><strong>Timeline:</strong> 2-6 months</p>
+                    <p><strong>Deploy:</strong> SD-WAN + route traffic through SASE</p>
+                    <p><strong>Value:</strong> Eliminate MPLS costs, direct cloud access</p>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Phase 3: Full Transformation</h4>
+                    <p><strong>Timeline:</strong> 6-18 months</p>
+                    <p><strong>Deploy:</strong> Retire on-prem proxies, decommission VPN</p>
+                    <p><strong>Value:</strong> Simplified architecture, consistent policy</p>
+                </div>
+
+                <h3>Common Implementation Challenges</h3>
+                <table>
+                    <thead><tr><th>Challenge</th><th>Impact</th><th>Solution</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>SSL inspection breaks apps</td>
+                            <td>Apps fail, users complain</td>
+                            <td>Bypass list for problematic apps, certificate pinning handling</td>
+                        </tr>
+                        <tr>
+                            <td>Legacy apps incompatible</td>
+                            <td>Can't access via ZTNA</td>
+                            <td>App Connector, Browser Isolation, or keep legacy VPN for specific apps</td>
+                        </tr>
+                        <tr>
+                            <td>Agent deployment</td>
+                            <td>Users without agent = no protection</td>
+                            <td>MDM deployment, PAC files for managed devices, agentless for guests</td>
+                        </tr>
+                        <tr>
+                            <td>Policy migration</td>
+                            <td>Thousands of firewall rules to migrate</td>
+                            <td>Start with allow-all, log, then tighten based on actual traffic</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="interview-tip">
+                    <h4>💡 Interview Tip: SASE vs Traditional</h4>
+                    <p>Be ready to explain why an organization would choose SASE:</p>
+                    <ul>
+                        <li><strong>Remote workforce:</strong> "We had 20% remote, now 70%. VPN can't scale."</li>
+                        <li><strong>Cloud adoption:</strong> "Most apps are SaaS. Why backhaul to data center?"</li>
+                        <li><strong>Cost:</strong> "MPLS is expensive. SD-WAN + SASE saves 40%."</li>
+                        <li><strong>Complexity:</strong> "We have 15 security tools. SASE consolidates to 1."</li>
+                    </ul>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="ztna-zpa.html" class="card"><div class="card-icon"><i class="fas fa-user-shield"></i></div><h3>ZTNA & ZPA</h3><p>Zero Trust deep dive</p></a>
+                    <a href="swg-zia.html" class="card"><div class="card-icon"><i class="fas fa-globe"></i></div><h3>SWG & ZIA</h3><p>Secure Web Gateway</p></a>
+                    <a href="interview-qa.html" class="card"><div class="card-icon"><i class="fas fa-comments"></i></div><h3>Interview Q&A</h3><p>Practice questions</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

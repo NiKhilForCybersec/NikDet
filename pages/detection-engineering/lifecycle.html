@@ -8,8 +8,10 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
         .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
         .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .apex-story { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); }
         .alert-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-x: auto; }
         .bad-practice { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
         .bad-practice h4 { margin-top: 0; color: #ef4444; }
@@ -18,6 +20,9 @@
         .lifecycle-step { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-primary); }
         .lifecycle-step h4 { margin-top: 0; }
         .time-estimate { background: var(--accent-primary); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+        .nav-story { background: rgba(99, 102, 241, 0.1); border-radius: 8px; padding: 1rem; margin: 2rem 0; }
+        .nav-story h4 { margin-top: 0; }
+        .detection-card { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; }
     </style>
 </head>
 <body>
@@ -28,424 +33,582 @@
         <div class="content-page">
             <div class="breadcrumb">
                 <a href="index.html">Home</a><span class="separator">/</span>
-                <a href="pages/detection-engineering/index.html">Detection Engineering</a><span class="separator">/</span>
+                <a href="index.html">Detection Engineering</a><span class="separator">/</span>
                 <span>Lifecycle</span>
             </div>
 
             <div class="content">
                 <h1><i class="fas fa-sync-alt"></i> Detection Engineering Lifecycle</h1>
-                <p class="lead">Real-world detection development: from threat intel to production rule, including common failures and how to avoid them.</p>
+                <p class="lead">Follow Apex Financial as they build detections based on their assessment - from research to production deployment.</p>
 
-                <div class="info-box">
-                    <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
+                <div class="diagram-box">
+DETECTION ENGINEERING LIFECYCLE
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+  │  1. THREAT  │     │ 2. RESEARCH │     │  3. WRITE   │     │  4. TEST    │
+  │  PRIORITY   │────►│  TECHNIQUE  │────►│  INITIAL    │────►│  AGAINST    │
+  │             │     │             │     │   QUERY     │     │  HISTORY    │
+  └─────────────┘     └─────────────┘     └─────────────┘     └──────┬──────┘
+        │                                                            │
+        │  What attacks                                              │
+        │  matter to US?                                             ▼
+        │                                       ┌────────────────────────────┐
+        │                                       │ Too noisy? ──► Tune query │
+        │                                       │ Missing hits? ──► Broaden │
+        │                                       │ Good? ──► Continue        │
+        │                                       └────────────────┬───────────┘
+        │                                                        │
+        │                                                        ▼
+  ┌─────┴───────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐              │
+  │  │ 7. MONITOR  │     │ 6. DEPLOY   │     │5. DOCUMENT  │              │
+  │  │  & TUNE     │◄────│  TO PROD    │◄────│   RUNBOOK   │◄─────────────┤
+  │  │             │     │             │     │             │              │
+  │  └──────┬──────┘     └─────────────┘     └─────────────┘              │
+  │         │                                                              │
+  │         │                                                              │
+  │         ▼                                                              │
+  │  ┌─────────────────────────────────────────────────────────────────┐  │
+  │  │                    CONTINUOUS IMPROVEMENT                        │  │
+  │  │                                                                  │  │
+  │  │  • Track False Positive rate                                    │  │
+  │  │  • Process tuning requests from SOC                             │  │
+  │  │  • Update based on new intelligence                             │  │
+  │  │  • Quarterly review and revalidation                            │  │
+  │  └─────────────────────────────────────────────────────────────────┘  │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+TIME INVESTMENT PER DETECTION:
+─────────────────────────────────────────────────────────────────────────────
+Step 1-2: Research & Analysis      ──►  2-4 hours
+Step 3-4: Write & Test Query       ──►  2-4 hours
+Step 5:   Documentation            ──►  1-2 hours
+Step 6:   Deployment               ──►  1 hour
+Step 7:   Ongoing monitoring       ──►  15 min/week
+                                        ────────────
+                              TOTAL:    6-11 hours per quality detection
+                </div>
+
+                <div class="nav-story">
+                    <h4>📖 The Apex Financial Story</h4>
+                    <p>This is <strong>Part 2 of 4</strong> in a connected case study:</p>
                     <ol>
-                        <li><a href="#real-process">Real Detection Development Process</a></li>
-                        <li><a href="#common-failures">Common Detection Failures</a></li>
-                        <li><a href="#example-detection">Full Example: Building a Detection</a></li>
-                        <li><a href="#tuning">Tuning in Production</a></li>
-                        <li><a href="#maintenance">Detection Maintenance</a></li>
+                        <li><a href="company-assessment.html">Company Assessment</a> - Understanding the environment and risks</li>
+                        <li><strong>Detection Engineering</strong> (You are here) - Building detections based on assessment</li>
+                        <li><a href="sigma-rules.html">Writing Detections</a> - Creating actual detection rules</li>
+                        <li><a href="coverage-analysis.html">Coverage Analysis</a> - Measuring detection coverage</li>
                     </ol>
                 </div>
 
-                <!-- SECTION 1: REAL PROCESS -->
-                <h2 id="real-process"><i class="fas fa-route"></i> Real Detection Development Process</h2>
+                <!-- APEX STORY: PRIORITY #1 -->
+                <h2 id="apex-detection-1"><i class="fas fa-building"></i> Apex Financial: Building Priority #1 Detection</h2>
 
-                <p>Here's how detection engineering actually works in organizations:</p>
-
-                <div class="lifecycle-step">
-                    <h4>Step 1: Identify Detection Need <span class="time-estimate">1-4 hours</span></h4>
-                    <p><strong>Triggers in real organizations:</strong></p>
-                    <ul>
-                        <li>Threat intel report mentions technique you can't detect</li>
-                        <li>Purple team exercise finds gap</li>
-                        <li>Incident post-mortem: "Why didn't we detect this?"</li>
-                        <li>MITRE ATT&CK coverage review shows gaps</li>
-                        <li>Analyst says "I wish we had an alert for X"</li>
-                    </ul>
-                    <div class="scenario-box">
-                        <h4>Real Example: Detection Need Identified</h4>
-                        <p>Purple team ran Mimikatz during exercise. SOC didn't detect it until 2 hours later when analyst noticed unusual process. Post-mortem action item: "Create detection for LSASS access."</p>
-                    </div>
+                <div class="scenario-box apex-story">
+                    <h4>🏢 Apex Financial - Month 1: BEC Prevention</h4>
+                    <p>After the $340,000 wire fraud incident, Apex's top priority is detecting email-based attacks. The detection engineering team starts with: <strong>Suspicious Inbox Rule Creation</strong></p>
+                    <p><em>This was the exact technique the attacker used - creating a rule to forward payment-related emails.</em></p>
                 </div>
 
+                <div class="diagram-box">
+THE ATTACK APEX EXPERIENCED - BEC VIA INBOX RULE
+═══════════════════════════════════════════════════════════════════════════════
+
+DAY 1: CREDENTIAL THEFT
+─────────────────────────────────────────────────────────────────────────────
+   Attacker                            CFO (victim)
+      │                                     │
+      │  Phishing email                     │
+      │  "DocuSign: Review invoice"         │
+      ├────────────────────────────────────►│
+      │                                     │
+      │                     Clicks link ────┤
+      │                     Enters creds    │
+      │◄────────────────────────────────────┤
+      │                                     │
+   Now has CFO's                            │
+   credentials                              │
+
+
+DAY 2: PERSISTENCE (THE TECHNIQUE WE NEED TO DETECT)
+─────────────────────────────────────────────────────────────────────────────
+   Attacker logs into CFO's mailbox
+         │
+         │  Creates inbox rule:
+         │  ┌────────────────────────────────────────────────────────┐
+         │  │ Name: "."  (single dot - hard to see)                 │
+         │  │ Condition: Subject contains "payment" OR "wire"       │
+         │  │            OR "transfer" OR "invoice"                 │
+         │  │ Action: Forward to cfo.backup2024@protonmail.com      │
+         │  └────────────────────────────────────────────────────────┘
+         │
+         └───► NOW ATTACKER SEES ALL PAYMENT EMAILS
+               CFO DOESN'T KNOW THEY'RE BEING FORWARDED
+
+
+DAYS 3-14: RECONNAISSANCE
+─────────────────────────────────────────────────────────────────────────────
+   Attacker silently monitors forwarded emails:
+   • Learns vendor names
+   • Learns payment patterns
+   • Learns internal contacts
+   • Waits for the right moment
+
+
+DAY 15: THE STRIKE
+─────────────────────────────────────────────────────────────────────────────
+   Attacker                            Accounts Payable
+      │                                     │
+      │  Email from "CFO" (spoofed)         │
+      │  "Urgent: Change vendor bank        │
+      │   details for Friday payment"       │
+      ├────────────────────────────────────►│
+      │                                     │
+      │                     Changes bank ───┤
+      │                     details         │
+      │                                     │
+      │                     Sends $340K ────┼─────► ATTACKER'S BANK
+      │                                     │
+
+
+DETECTION OPPORTUNITY: DAY 2 - INBOX RULE CREATION
+═══════════════════════════════════════════════════════════════════════════════
+If Apex had this detection, they would have caught:
+• External forwarding address (protonmail.com = NOT apex domain)
+• Suspicious keywords in rule conditions (payment, wire, transfer)
+• Rule name that's hard to notice (single character)
+
+RESULT: 13-day head start to respond, $340K saved
+                </div>
+
+                <!-- STEP 1: RESEARCH -->
                 <div class="lifecycle-step">
-                    <h4>Step 2: Research the Technique <span class="time-estimate">2-8 hours</span></h4>
-                    <p><strong>What you need to understand:</strong></p>
-                    <ul>
-                        <li>How does the attack work technically?</li>
-                        <li>What artifacts does it leave?</li>
-                        <li>What logs capture this activity?</li>
-                        <li>What's the legitimate use (false positive potential)?</li>
-                    </ul>
+                    <h4>Step 1: Research the Technique <span class="time-estimate">2 hours</span></h4>
+                    
+                    <p><strong>Detection Engineer's Research Notes:</strong></p>
                     <div class="alert-example">
-<pre>Research for LSASS Access Detection:
+<pre><strong>TECHNIQUE RESEARCH: Malicious Inbox Rules</strong>
 
-ATTACK MECHANICS:
-- Mimikatz uses OpenProcess() to access lsass.exe
-- Requires SeDebugPrivilege
-- Reads memory to extract credentials
+MITRE ATT&CK: T1564.008 (Email Hiding Rules), T1114.003 (Email Forwarding Rule)
 
-ARTIFACTS:
-- Windows Security Event 4663 (Object Access) - if auditing enabled
-- Sysmon Event 10 (Process Access) - best visibility
-- EDR telemetry (DeviceProcessEvents in MDE)
+HOW ATTACKERS USE THIS:
+1. Compromise email account (phishing, password spray)
+2. Create inbox rule to:
+   - Forward emails to external address (data exfil)
+   - Delete emails containing certain keywords (hide tracks)
+   - Move emails to hidden folder (hide from user)
+3. Monitor silently for days/weeks
+4. Strike when opportunity arises (BEC, wire fraud)
 
-LEGITIMATE ACCESS:
-- Windows Defender
-- Antivirus products
-- System processes (csrss.exe, services.exe)
-- WerFault.exe (crash dumps)
+WHAT OUR ATTACKER DID (from incident report):
+- Rule name: "." (single dot - hard to notice)
+- Condition: Subject contains "payment" OR "wire" OR "transfer" OR "invoice"
+- Action: Forward to "cfo.backup2024@protonmail.com"
 
-LOG SOURCES AVAILABLE:
-✓ MDE DeviceProcessEvents - have this
-✓ Sysmon - deployed on 70% of endpoints
-✗ Windows 4663 - not configured (would need GPO change)</pre>
+LOG SOURCES:
+✓ OfficeActivity (Operation: New-InboxRule, Set-InboxRule, UpdateInboxRules)
+✓ Microsoft 365 Audit Logs
+✓ Exchange Online PowerShell logs
+
+LEGITIMATE INBOX RULES (False Positive sources):
+- Users creating rules for newsletters, folders
+- IT creating rules for shared mailboxes
+- Automated rules from third-party apps (Slack notifications, etc.)
+
+SUSPICIOUS INDICATORS:
+- Forwarding to external domain
+- Rule conditions about money/payments
+- Rule name is blank, dot, or random characters
+- Rule created shortly after first login from new location
+- Rule created outside business hours</pre>
                     </div>
                 </div>
 
+                <!-- STEP 2: INITIAL QUERY -->
                 <div class="lifecycle-step">
-                    <h4>Step 3: Write Initial Query <span class="time-estimate">1-4 hours</span></h4>
-                    <p><strong>Start broad, then narrow:</strong></p>
+                    <h4>Step 2: Write Initial Query <span class="time-estimate">1 hour</span></h4>
+                    
+                    <div class="diagram-box">
+QUERY EVOLUTION - FROM NOISY TO PRODUCTION-READY
+═══════════════════════════════════════════════════════════════════════════════
+
+VERSION 1: Too Broad
+─────────────────────────────────────────────────────────────────────────────
+Query: "Show me ALL inbox rules"
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  847 events in 7 days                                                   │
+  │  ████████████████████████████████████████████████████████████████████  │
+  │                                                                         │
+  │  99% legitimate (newsletters, folder organization, etc.)               │
+  │  UNUSABLE - SOC would drown in alerts                                  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+VERSION 2: Better - Focus on Forwarding
+─────────────────────────────────────────────────────────────────────────────
+Query: "Show me inbox rules that FORWARD emails"
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  23 events in 7 days                                                    │
+  │  █████                                                                  │
+  │                                                                         │
+  │  Still includes internal forwarding (user → assistant)                 │
+  │  BETTER - but still too many false positives                           │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+VERSION 3: Production-Ready
+─────────────────────────────────────────────────────────────────────────────
+Query: "Forward to EXTERNAL domain" + "Suspicious keywords" + "Red flags"
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  3 events in 7 days                                                     │
+  │  █                                                                      │
+  │                                                                         │
+  │  1 policy violation (unauthorized forwarding)                          │
+  │  2 tuned out (legitimate vendors)                                      │
+  │  USABLE - SOC can handle this volume                                   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+THE LAYERING APPROACH:
+─────────────────────────────────────────────────────────────────────────────
+Start broad, then add filters:
+
+  All inbox rules (847)
+         │
+         │ + Forwarding only
+         ▼
+  Forwarding rules (23)
+         │
+         │ + External domains only
+         ▼
+  External forwarding (8)
+         │
+         │ + NOT trusted vendors
+         ▼
+  Suspicious external (5)
+         │
+         │ + Suspicious keywords OR red flags
+         ▼
+  HIGH CONFIDENCE ALERTS (3)
+                    </div>
+                    
+                    <p><strong>Version 1: Too Broad</strong></p>
                     <div class="alert-example">
-<pre>// Version 1: Too broad - will have tons of FPs
-DeviceProcessEvents
-| where FileName == "lsass.exe"
-
-// Version 2: Better - focus on access events
-DeviceEvents
-| where ActionType == "ProcessAccess"
-| where FileName == "lsass.exe"
-
-// Version 3: Filter out known legitimate
-DeviceEvents
-| where ActionType == "ProcessAccess"
-| where FileName == "lsass.exe"
-| where InitiatingProcessFileName !in ("MsMpEng.exe", "csrss.exe", "services.exe", "svchost.exe", "WerFault.exe")
-| where InitiatingProcessFolderPath !startswith "C:\\Program Files\\Windows Defender"</pre>
+<pre>// This will fire for EVERY inbox rule - way too noisy
+OfficeActivity
+| where Operation in ("New-InboxRule", "Set-InboxRule")
+| project TimeGenerated, UserId, Operation, Parameters</pre>
                     </div>
-                </div>
+                    <p><em>Result: 847 events in 7 days - mostly legitimate rules. Too noisy.</em></p>
 
-                <div class="lifecycle-step">
-                    <h4>Step 4: Test Against Historical Data <span class="time-estimate">2-4 hours</span></h4>
-                    <p><strong>Critical step most people skip:</strong></p>
+                    <p><strong>Version 2: Focus on External Forwarding</strong></p>
                     <div class="alert-example">
-<pre>// Run query against 30 days of data
-DeviceEvents
-| where TimeGenerated > ago(30d)
-| where ActionType == "ProcessAccess"
-| where FileName == "lsass.exe"
-| where InitiatingProcessFileName !in ("MsMpEng.exe", "csrss.exe", "services.exe", "svchost.exe", "WerFault.exe")
-| summarize Count=count(), Hosts=dcount(DeviceName) by InitiatingProcessFileName, InitiatingProcessFolderPath
-| order by Count desc
+<pre>// Better - focus on forwarding rules
+OfficeActivity
+| where Operation in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")
+| extend RuleParameters = tostring(Parameters)
+| where RuleParameters contains "ForwardTo" or RuleParameters contains "RedirectTo"
+| project TimeGenerated, UserId, Operation, RuleParameters, ClientIP</pre>
+                    </div>
+                    <p><em>Result: 23 events in 7 days - much better, but includes internal forwarding.</em></p>
 
-// Results show what would have fired:
-// vmtoolsd.exe - 4,521 events (VMware tools - FP, add to exclusion)
-// cbdefense.exe - 2,103 events (Carbon Black - FP, add to exclusion)  
-// taskhostw.exe - 847 events (legitimate Windows - FP, add to exclusion)
-// procdump.exe - 3 events (SUSPICIOUS - investigate these!)
-// mimikatz.exe - 1 event (TRUE POSITIVE - from purple team)</pre>
+                    <p><strong>Version 3: External Domains Only + Suspicious Patterns</strong></p>
+                    <div class="alert-example">
+<pre>// Production-ready detection
+let suspiciousKeywords = dynamic(["payment", "wire", "transfer", "invoice", "bank", "account"]);
+let trustedDomains = dynamic(["apexfinancial.com", "apex-financial.com"]);
+OfficeActivity
+| where TimeGenerated > ago(1h)
+| where Operation in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")
+| extend RuleParameters = tostring(Parameters)
+| where RuleParameters contains "ForwardTo" or RuleParameters contains "RedirectTo"
+// Extract the forwarding address
+| extend ForwardTo = extract(@'"ForwardTo":\s*"([^"]+)"', 1, RuleParameters)
+| extend ForwardDomain = tostring(split(ForwardTo, "@")[1])
+// Filter to external domains
+| where ForwardDomain != "" and not(ForwardDomain has_any (trustedDomains))
+// Check for suspicious conditions
+| extend HasSuspiciousCondition = RuleParameters has_any (suspiciousKeywords)
+// Add context
+| extend RuleName = extract(@'"Name":\s*"([^"]*)"', 1, RuleParameters)
+| project 
+    TimeGenerated,
+    UserId,
+    Operation,
+    RuleName,
+    ForwardTo,
+    ForwardDomain,
+    HasSuspiciousCondition,
+    ClientIP,
+    RuleParameters</pre>
                     </div>
                 </div>
 
+                <!-- STEP 3: HISTORICAL TESTING -->
                 <div class="lifecycle-step">
-                    <h4>Step 5: Validate with Red Team <span class="time-estimate">1-2 hours</span></h4>
-                    <p><strong>Does it actually catch the attack?</strong></p>
+                    <h4>Step 3: Test Against Historical Data <span class="time-estimate">2 hours</span></h4>
+                    
+                    <p><strong>Running query against 30 days of Apex data:</strong></p>
+                    <div class="alert-example">
+<pre>HISTORICAL TEST RESULTS (30 days)
+================================
+
+Total matches: 12
+
+Breakdown:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ UserId              │ ForwardDomain        │ Suspicious │ Assessment       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ john.sales@apex...  │ gmail.com            │ No         │ FP - Personal    │
+│ mary.hr@apex...     │ gmail.com            │ No         │ FP - Personal    │
+│ shared.info@apex... │ hubspot.com          │ No         │ FP - Marketing   │
+│ shared.info@apex... │ hubspot.com          │ No         │ FP - Marketing   │
+│ cfo@apex...         │ protonmail.com       │ YES        │ TRUE POSITIVE!   │ ← The actual attack
+│ exec.assistant@...  │ outlook.com          │ No         │ FP - Personal    │
+│ it.helpdesk@apex... │ servicenow.com       │ No         │ FP - IT System   │
+│ it.helpdesk@apex... │ servicenow.com       │ No         │ FP - IT System   │
+│ billing@apex...     │ quickbooks.com       │ No         │ FP - Finance sys │
+│ sarah.finance@...   │ yahoo.com            │ YES        │ INVESTIGATE      │ ← Suspicious!
+│ legal.shared@apex...│ externallawfirm.com  │ No         │ FP - Known vendor│
+│ mike.advisor@apex...│ gmail.com            │ No         │ FP - Personal    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Key findings:
+✓ Detection WOULD have caught the March attack (cfo@ to protonmail)
+⚠️ Also found suspicious rule for sarah.finance - needs investigation!
+⚠️ 9 false positives - need tuning</pre>
+                    </div>
+
+                    <p><strong>Tuning based on results:</strong></p>
                     <ul>
-                        <li>Run the actual attack in test environment</li>
-                        <li>Verify alert fires</li>
-                        <li>Check for evasions (does renaming the tool bypass detection?)</li>
+                        <li>Add known business systems to exclusion: hubspot.com, servicenow.com, quickbooks.com</li>
+                        <li>Add known partner domains: externallawfirm.com</li>
+                        <li>Personal email forwarding (gmail, outlook) - keep alerting but lower severity</li>
+                        <li>Flag protonmail, tutanota, guerrillamail as HIGH (privacy-focused = suspicious)</li>
                     </ul>
-                    <div class="scenario-box">
-                        <h4>Validation Results</h4>
-                        <p>✓ Detected: mimikatz.exe</p>
-                        <p>✓ Detected: procdump.exe -ma lsass.exe</p>
-                        <p>✗ Missed: mimikatz renamed to notepad.exe (need to add behavior-based detection)</p>
-                        <p>✗ Missed: comsvcs.dll MiniDump method (different technique, need separate rule)</p>
+
+                    <div class="good-practice">
+                        <h4>✓ Bonus Finding!</h4>
+                        <p>While testing, found sarah.finance has a forwarding rule with suspicious keywords. Investigated - turns out she set this up to track invoices at home. <strong>Not malicious but policy violation.</strong> HR notified, user trained.</p>
                     </div>
                 </div>
 
+                <!-- STEP 4: VALIDATION -->
                 <div class="lifecycle-step">
-                    <h4>Step 6: Deploy to Production <span class="time-estimate">30 min - 2 hours</span></h4>
-                    <p><strong>Deployment options:</strong></p>
-                    <table>
-                        <tr><td><strong>Silent mode first</strong></td><td>Rule runs but doesn't alert - just logs matches</td></tr>
-                        <tr><td><strong>Low severity initially</strong></td><td>Deploy as Informational, upgrade after tuning</td></tr>
-                        <tr><td><strong>Limited scope</strong></td><td>Enable for subset of hosts first</td></tr>
-                    </table>
+                    <h4>Step 4: Validate with Red Team <span class="time-estimate">1 hour</span></h4>
+                    
+                    <p><strong>Red team simulation in test environment:</strong></p>
+                    <div class="alert-example">
+<pre>RED TEAM VALIDATION
+===================
+
+Test 1: Exact attack replication
+- Created rule forwarding "payment" emails to attacker@protonmail.com
+- Result: ✓ DETECTED within 5 minutes
+
+Test 2: Evasion attempt - no keywords
+- Created rule forwarding ALL emails to attacker@gmail.com  
+- Result: ✓ DETECTED (external forwarding without suspicious keywords = Medium)
+
+Test 3: Evasion attempt - internal-looking domain
+- Created rule forwarding to attacker@apex-financial-backup.com (typosquat)
+- Result: ✓ DETECTED (domain not in trusted list)
+
+Test 4: Evasion attempt - rule via PowerShell
+- Created rule using New-InboxRule PowerShell command
+- Result: ✓ DETECTED (same Operation logged)
+
+Test 5: Evasion attempt - modify existing rule
+- Used Set-InboxRule to add forwarding to existing legitimate rule
+- Result: ✓ DETECTED (Set-InboxRule operation captured)
+
+VALIDATION: PASSED - Detection catches known attack and evasion attempts</pre>
+                    </div>
                 </div>
 
-                <!-- SECTION 2: COMMON FAILURES -->
+                <!-- STEP 5: DOCUMENTATION -->
+                <div class="lifecycle-step">
+                    <h4>Step 5: Document the Detection <span class="time-estimate">30 min</span></h4>
+                    
+                    <div class="alert-example">
+<pre>DETECTION DOCUMENTATION
+=======================
+
+Name: Suspicious Email Forwarding Rule Created
+ID: APEX-DET-001
+MITRE ATT&CK: T1564.008, T1114.003
+Severity: High (external + suspicious keywords) / Medium (external only)
+Status: Production
+
+DESCRIPTION:
+Detects creation or modification of inbox rules that forward email to 
+external domains, particularly when rule conditions reference financial 
+keywords. This technique was used in the March 2024 BEC incident.
+
+DATA SOURCES:
+- OfficeActivity (Microsoft 365 Unified Audit Log)
+- Operations: New-InboxRule, Set-InboxRule, UpdateInboxRules
+
+DETECTION LOGIC:
+1. Inbox rule created/modified with forwarding action
+2. Forwarding destination is external domain (not in trusted list)
+3. If rule conditions contain financial keywords → High severity
+4. If forwarding to privacy-focused email → High severity
+
+FALSE POSITIVE SOURCES:
+- HubSpot marketing integration
+- ServiceNow IT ticketing
+- QuickBooks/accounting systems
+- Known partner/vendor domains
+- Personal email forwarding (legitimate but policy concern)
+
+INVESTIGATION STEPS:
+1. Identify the user - is this their account or compromised?
+2. Check recent sign-in activity for unusual locations/IPs
+3. Review the rule conditions and forwarding destination
+4. Check if user is aware they created this rule
+5. If suspicious, check for other indicators of compromise
+
+RESPONSE ACTIONS:
+- High severity: Disable rule immediately, investigate account
+- Medium severity: Notify user, verify legitimacy within 4 hours
+
+EXCLUSIONS:
+- Forwarding to: hubspot.com, servicenow.com, quickbooks.com, [vendor list]
+- Users: shared.info@ (marketing automation)
+
+CREATED BY: Detection Engineering Team
+CREATED DATE: April 15, 2024
+LAST REVIEWED: [Quarterly review date]</pre>
+                    </div>
+                </div>
+
+                <!-- STEP 6: DEPLOYMENT -->
+                <div class="lifecycle-step">
+                    <h4>Step 6: Deploy to Production <span class="time-estimate">1 hour</span></h4>
+                    
+                    <p><strong>Deployment steps at Apex:</strong></p>
+                    <ol>
+                        <li>Create Analytics Rule in Microsoft Sentinel</li>
+                        <li>Set severity mapping (High for suspicious keywords, Medium otherwise)</li>
+                        <li>Configure alert grouping (by UserId)</li>
+                        <li>Create automated enrichment playbook (add user details, recent sign-ins)</li>
+                        <li>Set up notification to SOC Teams channel</li>
+                        <li>Monitor for 48 hours in "silent mode" (logs but doesn't alert)</li>
+                        <li>After validation, enable full alerting</li>
+                    </ol>
+                </div>
+
+                <!-- MONTH 1 RESULTS -->
+                <h2 id="month1-results"><i class="fas fa-chart-bar"></i> Apex Month 1 Results</h2>
+
+                <div class="scenario-box apex-story">
+                    <h4>🏢 Apex Financial - End of Month 1</h4>
+                    <p>Detection engineering team delivered 6 new detections for BEC prevention:</p>
+                    
+                    <div class="detection-card">
+                        <strong>APEX-DET-001:</strong> Suspicious Email Forwarding Rule
+                        <br><small>High/Medium severity | 3 alerts in first month (1 policy violation, 2 FP tuned)</small>
+                    </div>
+                    <div class="detection-card">
+                        <strong>APEX-DET-002:</strong> Impossible Travel Detection
+                        <br><small>High severity | 7 alerts (2 true positives - traveling users without VPN)</small>
+                    </div>
+                    <div class="detection-card">
+                        <strong>APEX-DET-003:</strong> OAuth App Consent (External)
+                        <br><small>Medium severity | 12 alerts (all FP - needed tuning for Zoom, Slack)</small>
+                    </div>
+                    <div class="detection-card">
+                        <strong>APEX-DET-004:</strong> MFA Fatigue Attack (Multiple Denials)
+                        <br><small>High severity | 0 alerts (good - no attacks)</small>
+                    </div>
+                    <div class="detection-card">
+                        <strong>APEX-DET-005:</strong> Email Accessed from Unusual Location
+                        <br><small>Medium severity | 23 alerts (mostly VPN, tuning needed)</small>
+                    </div>
+                    <div class="detection-card">
+                        <strong>APEX-DET-006:</strong> Bulk Email Access (>100 emails in 5 min)
+                        <br><small>Medium severity | 4 alerts (2 legitimate - executives reviewing, 2 suspicious)</small>
+                    </div>
+
+                    <p><strong>Coverage improvement:</strong> BEC-related MITRE techniques covered increased from 15% to 72%</p>
+                </div>
+
+                <!-- COMMON FAILURES -->
                 <h2 id="common-failures"><i class="fas fa-exclamation-triangle"></i> Common Detection Failures</h2>
 
                 <div class="bad-practice">
-                    <h4>❌ Failure 1: Deploy Without Testing</h4>
-                    <p><strong>What happens:</strong> Engineer writes rule, deploys to production same day. Rule fires 500 times overnight. SOC is flooded, disables rule, loses trust in detection engineering.</p>
-                    <p><strong>Real example:</strong> "Detect PowerShell with encoded commands" rule deployed without exclusions. SCCM runs encoded PowerShell on every endpoint nightly = 10,000 alerts.</p>
-                </div>
-                <div class="good-practice">
-                    <h4>✓ Fix: Always Test Against 30 Days Historical</h4>
-                    <p>Run query against historical data. If it returns >100 results/day, you need more tuning before deployment.</p>
+                    <h4>❌ Failure 1: Deploy Without Historical Testing</h4>
+                    <p><strong>What happens:</strong> Engineer writes rule, deploys same day. Rule fires 500 times overnight. SOC disables it, loses trust in detection engineering.</p>
+                    <p><strong>Apex avoided this by:</strong> Running every detection against 30 days of historical data before deployment.</p>
                 </div>
 
                 <div class="bad-practice">
                     <h4>❌ Failure 2: Too Specific (Easily Evaded)</h4>
                     <p><strong>What happens:</strong> Rule detects "mimikatz.exe" by filename. Attacker renames to "notepad.exe" and bypasses detection.</p>
-                </div>
-                <div class="good-practice">
-                    <h4>✓ Fix: Detect Behavior, Not Tools</h4>
-                    <p>Instead of filename, detect: process accessing LSASS + not in allowlist + suspicious parent process. Works regardless of tool name.</p>
+                    <p><strong>Apex approach:</strong> Detect behaviors (forwarding to external domain) not specific indicators (protonmail.com).</p>
                 </div>
 
                 <div class="bad-practice">
                     <h4>❌ Failure 3: No Documentation</h4>
-                    <p><strong>What happens:</strong> Rule fires, analyst doesn't know what it means or how to investigate. Closes as FP without proper triage.</p>
-                </div>
-                <div class="good-practice">
-                    <h4>✓ Fix: Every Rule Needs</h4>
-                    <ul>
-                        <li>Description: What attack does this detect?</li>
-                        <li>Investigation steps: What should analyst check?</li>
-                        <li>False positive guidance: Known benign triggers</li>
-                        <li>Response actions: What to do if true positive</li>
-                    </ul>
+                    <p><strong>What happens:</strong> Rule fires, analyst doesn't know what it means. Closes as FP.</p>
+                    <p><strong>Apex approach:</strong> Every detection includes investigation steps, FP guidance, and response actions.</p>
                 </div>
 
-                <div class="bad-practice">
-                    <h4>❌ Failure 4: Set and Forget</h4>
-                    <p><strong>What happens:</strong> Rule deployed, never reviewed. Environment changes, new software deployed, rule now fires 200 FPs/day. No one noticed until SOC complained.</p>
-                </div>
-                <div class="good-practice">
-                    <h4>✓ Fix: Scheduled Reviews</h4>
-                    <p>Monthly: Review top 10 noisiest rules. Quarterly: Full detection catalog review. After incidents: Did our detections fire? Why/why not?</p>
-                </div>
-
-                <!-- SECTION 3: FULL EXAMPLE -->
-                <h2 id="example-detection"><i class="fas fa-code"></i> Full Example: Building a Detection</h2>
-
-                <div class="scenario-box">
-                    <h4>Scenario: Detect Kerberoasting</h4>
-                    <p><strong>Trigger:</strong> Penetration test found Kerberoasting not detected. Need to create detection.</p>
-                </div>
-
-                <p><strong>Step 1: Research</strong></p>
-                <div class="alert-example">
-<pre>KERBEROASTING MECHANICS:
-- Attacker requests TGS tickets for service accounts
-- Requests use RC4 encryption (weaker, crackable offline)
-- Normal users rarely request many TGS tickets
-
-DETECTION APPROACH:
-- Event 4769: Kerberos Service Ticket Operations
-- Filter: RC4 encryption (0x17)
-- Filter: High volume requests from single user
-- Filter: Requests for multiple different SPNs
-
-FALSE POSITIVE SOURCES:
-- Service accounts legitimately requesting tickets
-- Monitoring tools that scan AD
-- Admin scripts that enumerate services</pre>
-                </div>
-
-                <p><strong>Step 2: Initial Query</strong></p>
-                <div class="alert-example">
-<pre>// Sentinel KQL
-SecurityEvent
-| where EventID == 4769
-| where TicketEncryptionType == "0x17"  // RC4
-| where ServiceName !endswith "$"  // Exclude machine accounts
-| summarize 
-    TicketCount = count(),
-    UniqueServices = dcount(ServiceName),
-    Services = make_set(ServiceName, 10)
-    by Account, IpAddress, bin(TimeGenerated, 1h)
-| where TicketCount > 10 and UniqueServices > 5</pre>
-                </div>
-
-                <p><strong>Step 3: Test Against Historical Data</strong></p>
-                <div class="alert-example">
-<pre>// 30-day test results:
-// 
-// Account                    | TicketCount | UniqueServices | Assessment
-// ---------------------------|-------------|----------------|------------
-// svc_monitoring             | 847         | 156            | FP - monitoring tool
-// admin_john                 | 23          | 8              | INVESTIGATE
-// YOURCOMPANY\scanner        | 412         | 89             | FP - vuln scanner
-// 
-// Tuning needed: Exclude svc_monitoring, YOURCOMPANY\scanner</pre>
-                </div>
-
-                <p><strong>Step 4: Final Detection Rule</strong></p>
-                <div class="alert-example">
-<pre>// Production Kerberoasting Detection
-let excludedAccounts = dynamic(["svc_monitoring", "YOURCOMPANY\\scanner", "svc_backup"]);
-SecurityEvent
-| where TimeGenerated > ago(1h)
-| where EventID == 4769
-| where TicketEncryptionType == "0x17"
-| where ServiceName !endswith "$"
-| where Account !in (excludedAccounts)
-| summarize 
-    TicketCount = count(),
-    UniqueServices = dcount(ServiceName),
-    Services = make_set(ServiceName, 10),
-    TargetIPs = make_set(IpAddress)
-    by Account, bin(TimeGenerated, 1h)
-| where TicketCount > 10 and UniqueServices > 5
-| extend AlertSeverity = case(
-    UniqueServices > 20, "High",
-    UniqueServices > 10, "Medium",
-    "Low"
-)</pre>
-                </div>
-
-                <p><strong>Step 5: Documentation</strong></p>
-                <div class="alert-example">
-<pre>DETECTION: Kerberoasting Activity
-MITRE ATT&CK: T1558.003
-SEVERITY: Medium (escalate to High if >20 services targeted)
-
-DESCRIPTION:
-Detects potential Kerberoasting attack where user requests multiple 
-Kerberos service tickets with RC4 encryption in short time period.
-
-INVESTIGATION STEPS:
-1. Identify the source account - is this a normal user or service account?
-2. Check if the account was recently compromised (password reset, unusual login)
-3. Review the targeted services - are they high-privilege service accounts?
-4. Check for other suspicious activity from same source IP
-5. If confirmed, assume targeted service account credentials may be compromised
-
-FALSE POSITIVES:
-- Vulnerability scanners (excluded by account name)
-- Monitoring tools (excluded by account name)
-- Admin scripts performing AD enumeration
-
-RESPONSE:
-- If confirmed: Reset passwords for all targeted service accounts
-- Enable AES-only authentication for service accounts
-- Review service account permissions</pre>
-                </div>
-
-                <!-- SECTION 4: TUNING -->
+                <!-- TUNING EXAMPLE -->
                 <h2 id="tuning"><i class="fas fa-sliders-h"></i> Tuning in Production</h2>
 
-                <h3>Tuning Request Process</h3>
                 <div class="scenario-box">
-                    <h4>Real Tuning Request</h4>
+                    <h4>Real Tuning Request from Apex SOC</h4>
                     <div class="alert-example">
-<pre>From: SOC Analyst
-Subject: Tuning Request - Suspicious PowerShell Alert
+<pre>TUNING REQUEST
+==============
+Detection: APEX-DET-005 (Email Accessed from Unusual Location)
+Submitted by: L1 Analyst Sarah
+Date: April 28, 2024
 
-Alert Name: Suspicious PowerShell Encoded Command
-False Positive Rate: ~80% (40 alerts/day, 32 are FP)
+PROBLEM:
+23 alerts in 2 weeks. 18 were VPN users (legitimate).
+Wasting ~2 hours/week investigating false positives.
 
-Pattern Identified:
-- All FPs come from SCCM server (SCCM-PROD-01)
-- Command is software deployment script
-- Runs daily at 2 AM
+PATTERN IDENTIFIED:
+- All FPs have source IP in range 10.255.x.x (corporate VPN)
+- VPN exit shows as different geolocation than user's home
+- Users are legitimate, just working remotely via VPN
 
-Requested Change:
-Exclude processes where:
-- ParentProcess = "CcmExec.exe" (SCCM agent)
-- SourceHost = "SCCM-PROD-01"
+REQUESTED CHANGE:
+Exclude sign-ins where IPAddress matches corporate VPN range (10.255.0.0/16)
 
-Verification:
-- Confirmed with SCCM admin this is legitimate
-- Will not impact detection of attacker-initiated encoded PS</pre>
+VERIFICATION:
+- Confirmed with IT: 10.255.x.x is VPN pool
+- Reviewed 5 "true" alerts - none from VPN range
+- Change will not impact detection of actual attacks
+
+APPROVED BY: Detection Engineering Lead
+IMPLEMENTED: April 29, 2024
+RESULT: FP rate dropped from 78% to 22%</pre>
                     </div>
                 </div>
 
-                <h3>Tuning Decision Framework</h3>
-                <table>
-                    <thead><tr><th>Scenario</th><th>Action</th><th>Risk</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td>Known legitimate software causing FPs</td>
-                            <td>Add to exclusion list</td>
-                            <td>Low - verify software is legitimate</td>
-                        </tr>
-                        <tr>
-                            <td>Specific host causing all FPs</td>
-                            <td>Exclude host OR investigate why</td>
-                            <td>Medium - could be compromised host</td>
-                        </tr>
-                        <tr>
-                            <td>Rule too sensitive overall</td>
-                            <td>Adjust thresholds</td>
-                            <td>Medium - might miss attacks</td>
-                        </tr>
-                        <tr>
-                            <td>Can't tune without breaking detection</td>
-                            <td>Accept noise OR disable rule</td>
-                            <td>High - document decision</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- SECTION 5: MAINTENANCE -->
-                <h2 id="maintenance"><i class="fas fa-tools"></i> Detection Maintenance</h2>
-
-                <h3>Monthly Review Checklist</h3>
-                <table>
-                    <thead><tr><th>Check</th><th>Query/Method</th><th>Action</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td>Top 10 noisiest rules</td>
-                            <td>Alert volume by rule name</td>
-                            <td>Review for tuning opportunities</td>
-                        </tr>
-                        <tr>
-                            <td>Rules with 0 alerts</td>
-                            <td>Rules that haven't fired in 30d</td>
-                            <td>Verify still working (test), or remove if obsolete</td>
-                        </tr>
-                        <tr>
-                            <td>Low TP rate rules</td>
-                            <td>FP rate by rule</td>
-                            <td>Rules with >90% FP rate need attention</td>
-                        </tr>
-                        <tr>
-                            <td>Coverage gaps</td>
-                            <td>MITRE ATT&CK mapping</td>
-                            <td>Identify techniques with no coverage</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h3>After Every Incident</h3>
-                <div class="alert-example">
-<pre>POST-INCIDENT DETECTION REVIEW
-
-Incident: INC-2025-0104 - Phishing leading to credential theft
-Date: January 4, 2025
-
-DETECTION ANALYSIS:
-1. What alerted us to this incident?
-   → User reported suspicious email (not detected by us)
-
-2. Should we have detected this earlier?
-   → Yes - attacker accessed OWA from unusual location 2 days before report
-
-3. What detections SHOULD have fired?
-   → "Impossible Travel" - was disabled due to high FP rate
-   → "New Inbox Rule" - did fire, but was closed as FP incorrectly
-
-4. What new detections do we need?
-   → Detection for email forwarding to external domains
-   → Better impossible travel with VPN exclusions
-
-ACTION ITEMS:
-[ ] Re-enable Impossible Travel with additional tuning
-[ ] Create detection for external email forwarding rules
-[ ] Review why "New Inbox Rule" alert was closed as FP</pre>
+                <!-- NEXT IN STORY -->
+                <div class="nav-story">
+                    <h4>📖 Continue the Story</h4>
+                    <p>Now see the actual detection rules Apex created:</p>
+                    <p><strong>Next:</strong> <a href="sigma-rules.html">Writing Detections</a> - Sigma rules and KQL queries from Apex</p>
                 </div>
 
                 <!-- RELATED -->
                 <h2><i class="fas fa-link"></i> Related</h2>
                 <div class="card-grid">
-                    <a href="pages/detection-engineering/testing.html" class="card"><div class="card-icon"><i class="fas fa-vial"></i></div><h3>Testing</h3><p>Validate detections</p></a>
-                    <a href="pages/detection-engineering/sigma-rules.html" class="card"><div class="card-icon"><i class="fas fa-file-code"></i></div><h3>Sigma Rules</h3><p>Portable detections</p></a>
-                    <a href="pages/detection-engineering/coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-chart-pie"></i></div><h3>Coverage</h3><p>MITRE mapping</p></a>
+                    <a href="company-assessment.html" class="card"><div class="card-icon"><i class="fas fa-building"></i></div><h3>Company Assessment</h3><p>Apex profile</p></a>
+                    <a href="testing.html" class="card"><div class="card-icon"><i class="fas fa-vial"></i></div><h3>Testing</h3><p>Validate detections</p></a>
+                    <a href="coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-chart-pie"></i></div><h3>Coverage Analysis</h3><p>Measure coverage</p></a>
                 </div>
 
             </div>

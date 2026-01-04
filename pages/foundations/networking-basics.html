@@ -4,223 +4,591 @@
     <base href="/NikDet/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Networking Basics | SOC Compendium</title>
+    <title>Networking Basics - Visual Guide | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .why-matters { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .why-matters h4 { margin: 0 0 0.5rem 0; color: #fbbf24; }
+        .analogy-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .analogy-box h4 { margin: 0 0 0.5rem 0; color: #22c55e; }
+        .security-note { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .security-note h4 { margin: 0 0 0.5rem 0; color: #ef4444; }
+        .key-insight { background: var(--bg-secondary); border-radius: 8px; padding: 1rem 1.5rem; margin: 1.5rem 0; border: 1px solid var(--accent-primary); }
+        .port-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid var(--accent-primary); }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/foundations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/foundations/index.html">Home</a><span class="separator">/</span><a href="pages/foundations/index.html">Foundations</a><span class="separator">/</span><span>Networking Basics</span></div>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Foundations</a><span class="separator">/</span>
+                <span>Networking Basics</span>
+            </div>
+
             <div class="content">
-                <h1>Networking Basics for Security Analysts</h1>
-                <p class="lead">Understanding how networks work is essential for SOC work. You'll analyze network traffic daily, so these concepts must be second nature.</p>
+                <h1><i class="fas fa-network-wired"></i> Networking Basics - Visual Guide</h1>
+                <p class="lead">As a SOC analyst, you'll analyze network traffic every day. This guide visualizes core networking concepts and shows exactly why they matter for security.</p>
 
-                <h2>The OSI Model (Simplified)</h2>
-                <p>Network communication happens in layers. Each layer has a specific job:</p>
-                <table>
-                    <thead><tr><th>Layer</th><th>Name</th><th>What It Does</th><th>Security Relevance</th><th>Examples</th></tr></thead>
-                    <tbody>
-                        <tr><td>7</td><td><strong>Application</strong></td><td>User-facing applications</td><td>Application attacks, malware C2</td><td>HTTP, HTTPS, DNS, SMTP, FTP</td></tr>
-                        <tr><td>6</td><td><strong>Presentation</strong></td><td>Data formatting, encryption</td><td>SSL/TLS attacks</td><td>SSL, TLS, JPEG, ASCII</td></tr>
-                        <tr><td>5</td><td><strong>Session</strong></td><td>Session management</td><td>Session hijacking</td><td>NetBIOS, RPC</td></tr>
-                        <tr><td>4</td><td><strong>Transport</strong></td><td>End-to-end communication</td><td>Port scanning, SYN floods</td><td>TCP, UDP</td></tr>
-                        <tr><td>3</td><td><strong>Network</strong></td><td>Routing between networks</td><td>IP spoofing, routing attacks</td><td>IP, ICMP, IPSec</td></tr>
-                        <tr><td>2</td><td><strong>Data Link</strong></td><td>Local network communication</td><td>ARP spoofing, MAC flooding</td><td>Ethernet, MAC addresses</td></tr>
-                        <tr><td>1</td><td><strong>Physical</strong></td><td>Physical transmission</td><td>Physical tampering</td><td>Cables, wireless signals</td></tr>
-                    </tbody>
-                </table>
-                <p><strong>Memory trick:</strong> "Please Do Not Throw Sausage Pizza Away" (Physical → Application)</p>
+                <!-- ==================== WHY NETWORKING MATTERS ==================== -->
+                <h2><i class="fas fa-question-circle"></i> Why Networking Knowledge is Essential</h2>
 
-                <h2>IP Addresses</h2>
-                <p>Every device on a network has an IP address - like a phone number for computers.</p>
-                
-                <h3>IPv4 Addresses</h3>
-                <p>Format: Four numbers (0-255) separated by dots. Example: <code>192.168.1.100</code></p>
-                
-                <h3>Private vs Public IP Ranges</h3>
-                <table>
-                    <thead><tr><th>Range</th><th>Type</th><th>Use</th></tr></thead>
-                    <tbody>
-                        <tr><td><code>10.0.0.0 - 10.255.255.255</code></td><td>Private (Class A)</td><td>Large internal networks</td></tr>
-                        <tr><td><code>172.16.0.0 - 172.31.255.255</code></td><td>Private (Class B)</td><td>Medium internal networks</td></tr>
-                        <tr><td><code>192.168.0.0 - 192.168.255.255</code></td><td>Private (Class C)</td><td>Small internal networks, home</td></tr>
-                        <tr><td><code>127.0.0.0 - 127.255.255.255</code></td><td>Loopback</td><td>Local machine (localhost)</td></tr>
-                        <tr><td>Everything else</td><td>Public</td><td>Internet-routable addresses</td></tr>
-                    </tbody>
-                </table>
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Why This Matters for SOC</div>
-                    <p style="margin: 0.5rem 0 0 0;">When analyzing traffic, you need to quickly identify: Is this internal-to-internal? Internal-to-external? External-to-internal? The answer changes your investigation approach.</p>
+                <div class="diagram-box">
+WHAT YOU'LL ANALYZE DAILY AS A SOC ANALYST
+═══════════════════════════════════════════════════════════════════════════════
+
+Firewall Log:
+  src_ip=10.50.100.42 dst_ip=185.220.101.34 dst_port=443 action=ALLOW
+
+Questions you need to answer IMMEDIATELY:
+─────────────────────────────────────────────────────────────────────────────
+• 10.50.100.42 - Is this internal or external? (Internal - private range)
+• 185.220.101.34 - Is this internal or external? (External - public IP)
+• Port 443 - What service? (HTTPS - encrypted web)
+• What does this mean? (Internal host connecting to external server)
+• Is this suspicious? (Depends on context!)
+
+Without networking knowledge: "I don't know what any of this means"
+With networking knowledge: "Internal workstation making HTTPS connection to
+                           external server - let me check if that IP is malicious"
+
+
+DNS Log:
+  query=evil-domain.com type=A response=185.220.101.34
+
+Questions:
+• What's an A record? (Domain → IP address mapping)
+• Why would malware use DNS? (C2 communication, data exfil)
+• What's suspicious here? (Unknown domain resolving to suspicious IP)
+
+
+Network Alert:
+  "SYN flood detected from 203.0.113.50 targeting 10.1.1.100:80"
+
+Questions:
+• What's a SYN flood? (TCP handshake abuse - denial of service)
+• Why is this bad? (Overwhelming the server)
+• What's the attacker's goal? (Take the service offline)
                 </div>
 
-                <h2>Ports and Protocols</h2>
-                <p>Ports are like apartment numbers - they tell traffic which application to go to on a server.</p>
-                
-                <h3>Must-Know Ports for SOC Analysts</h3>
-                <table>
-                    <thead><tr><th>Port</th><th>Protocol</th><th>Service</th><th>Security Notes</th></tr></thead>
-                    <tbody>
-                        <tr><td>20, 21</td><td>TCP</td><td>FTP</td><td>Unencrypted, avoid using</td></tr>
-                        <tr><td>22</td><td>TCP</td><td>SSH</td><td>Secure remote access; brute force target</td></tr>
-                        <tr><td>23</td><td>TCP</td><td>Telnet</td><td>Unencrypted, never use</td></tr>
-                        <tr><td>25</td><td>TCP</td><td>SMTP</td><td>Email sending; spam, phishing</td></tr>
-                        <tr><td>53</td><td>TCP/UDP</td><td>DNS</td><td>Name resolution; DNS tunneling, DGA</td></tr>
-                        <tr><td>80</td><td>TCP</td><td>HTTP</td><td>Unencrypted web; C2, malware download</td></tr>
-                        <tr><td>88</td><td>TCP/UDP</td><td>Kerberos</td><td>Windows auth; Kerberoasting, golden ticket</td></tr>
-                        <tr><td>110</td><td>TCP</td><td>POP3</td><td>Email retrieval</td></tr>
-                        <tr><td>135</td><td>TCP</td><td>RPC</td><td>Windows RPC; lateral movement</td></tr>
-                        <tr><td>137-139</td><td>TCP/UDP</td><td>NetBIOS</td><td>Windows networking; should be internal only</td></tr>
-                        <tr><td>143</td><td>TCP</td><td>IMAP</td><td>Email retrieval</td></tr>
-                        <tr><td>389</td><td>TCP/UDP</td><td>LDAP</td><td>Directory services; AD enumeration</td></tr>
-                        <tr><td>443</td><td>TCP</td><td>HTTPS</td><td>Encrypted web; encrypted C2</td></tr>
-                        <tr><td>445</td><td>TCP</td><td>SMB</td><td>File sharing; EternalBlue, lateral movement</td></tr>
-                        <tr><td>636</td><td>TCP</td><td>LDAPS</td><td>Encrypted LDAP</td></tr>
-                        <tr><td>1433</td><td>TCP</td><td>MSSQL</td><td>SQL Server; SQL injection target</td></tr>
-                        <tr><td>3306</td><td>TCP</td><td>MySQL</td><td>MySQL database</td></tr>
-                        <tr><td>3389</td><td>TCP</td><td>RDP</td><td>Remote desktop; brute force, lateral movement</td></tr>
-                        <tr><td>5432</td><td>TCP</td><td>PostgreSQL</td><td>PostgreSQL database</td></tr>
-                        <tr><td>5985, 5986</td><td>TCP</td><td>WinRM</td><td>Windows remote management; lateral movement</td></tr>
-                        <tr><td>8080</td><td>TCP</td><td>HTTP Alt</td><td>Alternative HTTP; proxies, web apps</td></tr>
-                    </tbody>
-                </table>
+                <!-- ==================== THE OSI MODEL ==================== -->
+                <h2><i class="fas fa-layer-group"></i> The OSI Model - How Networks Are Built</h2>
 
-                <h3>TCP vs UDP</h3>
-                <table>
-                    <thead><tr><th>TCP</th><th>UDP</th></tr></thead>
-                    <tbody>
-                        <tr><td>Connection-oriented (handshake)</td><td>Connectionless (fire and forget)</td></tr>
-                        <tr><td>Reliable - guarantees delivery</td><td>Unreliable - no delivery guarantee</td></tr>
-                        <tr><td>Slower but accurate</td><td>Faster but may lose packets</td></tr>
-                        <tr><td>Web, email, file transfer</td><td>DNS, streaming, VoIP, gaming</td></tr>
-                    </tbody>
-                </table>
+                <p>Network communication happens in layers. Each layer does one job and talks to the layers above and below it.</p>
 
-                <h2>DNS (Domain Name System)</h2>
-                <p>DNS translates human-readable names to IP addresses. When you visit google.com, DNS tells your browser the IP address.</p>
-                
-                <h3>How DNS Works</h3>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">User types google.com</div>
-                            <p>Browser needs to find the IP address for google.com</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Check local cache</div>
-                            <p>Computer checks if it already knows the answer</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Query DNS server</div>
-                            <p>Asks configured DNS server (ISP, corporate, or public like 8.8.8.8)</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">DNS resolution</div>
-                            <p>DNS server finds answer (may query other DNS servers)</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Response returned</div>
-                            <p>IP address (e.g., 142.250.80.46) sent back to user</p>
-                        </div>
-                    </div>
+                <div class="diagram-box">
+THE OSI MODEL - VISUALIZED
+═══════════════════════════════════════════════════════════════════════════════
+
+Think of it like sending a letter:
+
+YOU WRITE A LETTER
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 7 - APPLICATION                                                       │
+│ "What do you want to say?"                                                  │
+│                                                                             │
+│ This is where you interact. Web browsers, email, file transfers.           │
+│ Protocols: HTTP, HTTPS, DNS, SMTP, FTP, SSH                                │
+│                                                                             │
+│ Security: Application attacks, malware C2, data exfiltration               │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 6 - PRESENTATION                                                      │
+│ "How should the data look?"                                                 │
+│                                                                             │
+│ Formats data, handles encryption. Think: translator.                        │
+│ Functions: SSL/TLS encryption, compression, encoding                        │
+│                                                                             │
+│ Security: SSL/TLS attacks, certificate issues                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 5 - SESSION                                                           │
+│ "Keep the conversation going"                                               │
+│                                                                             │
+│ Manages connections between applications. Start, maintain, end.             │
+│ Functions: Session establishment, synchronization                           │
+│                                                                             │
+│ Security: Session hijacking, token theft                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 4 - TRANSPORT                                                         │
+│ "Make sure it gets there correctly"                                         │
+│                                                                             │
+│ Reliable delivery (TCP) or fast delivery (UDP). Ports live here.           │
+│ Protocols: TCP (reliable), UDP (fast)                                       │
+│                                                                             │
+│ Security: Port scanning, SYN floods, service enumeration                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 3 - NETWORK                                                           │
+│ "Find the best route"                                                       │
+│                                                                             │
+│ Routing between networks. IP addresses live here.                           │
+│ Protocols: IP, ICMP (ping), routing protocols                               │
+│                                                                             │
+│ Security: IP spoofing, ICMP attacks, routing manipulation                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 2 - DATA LINK                                                         │
+│ "Talk to neighbors"                                                         │
+│                                                                             │
+│ Communication within local network. MAC addresses live here.                │
+│ Protocols: Ethernet, Wi-Fi, ARP                                             │
+│                                                                             │
+│ Security: ARP spoofing, MAC flooding, VLAN hopping                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LAYER 1 - PHYSICAL                                                          │
+│ "The actual wires and signals"                                              │
+│                                                                             │
+│ Cables, wireless signals, electrical/optical transmission.                  │
+│ Components: Cables, hubs, wireless signals                                  │
+│                                                                             │
+│ Security: Physical access, wiretapping, jamming                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+MEMORY TRICK: "Please Do Not Throw Sausage Pizza Away"
+                Physical → Data Link → Network → Transport → Session → 
+                Presentation → Application
                 </div>
 
-                <h3>DNS Security Concerns</h3>
-                <table>
-                    <thead><tr><th>Attack</th><th>Description</th><th>Detection</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>DNS Tunneling</strong></td><td>Hiding data/C2 in DNS queries</td><td>Long queries, high volume, unusual TXT records</td></tr>
-                        <tr><td><strong>DGA (Domain Generation Algorithm)</strong></td><td>Malware generates random domain names</td><td>Random-looking domains, high NXDomain responses</td></tr>
-                        <tr><td><strong>DNS Hijacking</strong></td><td>Redirecting DNS to malicious server</td><td>Unexpected DNS server responses</td></tr>
-                        <tr><td><strong>Typosquatting</strong></td><td>Domains similar to legitimate ones</td><td>Domains like g00gle.com, googel.com</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>HTTP/HTTPS</h2>
-                <p>HTTP is how browsers communicate with web servers. HTTPS is HTTP + encryption (TLS).</p>
-                
-                <h3>HTTP Methods</h3>
-                <table>
-                    <thead><tr><th>Method</th><th>Purpose</th><th>Security Note</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>GET</strong></td><td>Retrieve data</td><td>Parameters visible in URL</td></tr>
-                        <tr><td><strong>POST</strong></td><td>Submit data</td><td>Data in body, less visible</td></tr>
-                        <tr><td><strong>PUT</strong></td><td>Update/upload data</td><td>Can be used for webshell upload</td></tr>
-                        <tr><td><strong>DELETE</strong></td><td>Remove data</td><td>Dangerous if exposed</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>HTTP Response Codes</h3>
-                <table>
-                    <thead><tr><th>Code</th><th>Meaning</th><th>Security Relevance</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>200</strong></td><td>OK - Success</td><td>Normal response</td></tr>
-                        <tr><td><strong>301/302</strong></td><td>Redirect</td><td>May redirect to malicious site</td></tr>
-                        <tr><td><strong>401</strong></td><td>Unauthorized</td><td>Auth required</td></tr>
-                        <tr><td><strong>403</strong></td><td>Forbidden</td><td>Access denied</td></tr>
-                        <tr><td><strong>404</strong></td><td>Not Found</td><td>Scanning detection (many 404s)</td></tr>
-                        <tr><td><strong>500</strong></td><td>Server Error</td><td>May indicate attack or vulnerability</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Network Devices</h2>
-                <table>
-                    <thead><tr><th>Device</th><th>Function</th><th>OSI Layer</th><th>Security Role</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Switch</strong></td><td>Connects devices on same network</td><td>Layer 2</td><td>VLAN segmentation, port security</td></tr>
-                        <tr><td><strong>Router</strong></td><td>Connects different networks</td><td>Layer 3</td><td>ACLs, routing security</td></tr>
-                        <tr><td><strong>Firewall</strong></td><td>Filters traffic based on rules</td><td>Layer 3-7</td><td>Block malicious traffic</td></tr>
-                        <tr><td><strong>IDS/IPS</strong></td><td>Detects (IDS) or blocks (IPS) attacks</td><td>Layer 3-7</td><td>Signature-based detection</td></tr>
-                        <tr><td><strong>Proxy</strong></td><td>Intermediary for web traffic</td><td>Layer 7</td><td>Content filtering, inspection</td></tr>
-                        <tr><td><strong>Load Balancer</strong></td><td>Distributes traffic across servers</td><td>Layer 4-7</td><td>DDoS mitigation</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Network Analysis Commands</h2>
-                <p>Commands every SOC analyst should know:</p>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Check your IP address</span>
-ipconfig (Windows) / ifconfig or ip a (Linux)
-
-<span style="color: #6aa3f7;"># Test connectivity</span>
-ping 8.8.8.8
-
-<span style="color: #6aa3f7;"># Trace route to destination</span>
-tracert 8.8.8.8 (Windows) / traceroute 8.8.8.8 (Linux)
-
-<span style="color: #6aa3f7;"># DNS lookup</span>
-nslookup google.com
-dig google.com (Linux)
-
-<span style="color: #6aa3f7;"># Show active connections</span>
-netstat -ano (Windows) / ss -tuln (Linux)
-
-<span style="color: #6aa3f7;"># Show listening ports</span>
-netstat -an | findstr LISTENING (Windows)
-
-<span style="color: #6aa3f7;"># ARP cache (IP to MAC mapping)</span>
-arp -a</pre>
+                <div class="analogy-box">
+                    <h4>🏠 Analogy: The Postal System</h4>
+                    <ul>
+                        <li><strong>Layer 7 (Application):</strong> You write the letter content</li>
+                        <li><strong>Layer 6 (Presentation):</strong> You translate it if needed</li>
+                        <li><strong>Layer 5 (Session):</strong> The ongoing correspondence</li>
+                        <li><strong>Layer 4 (Transport):</strong> Registered mail vs regular (reliable vs fast)</li>
+                        <li><strong>Layer 3 (Network):</strong> The address on the envelope (routing)</li>
+                        <li><strong>Layer 2 (Data Link):</strong> The local mail carrier</li>
+                        <li><strong>Layer 1 (Physical):</strong> The mail truck and roads</li>
+                    </ul>
                 </div>
 
-                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
-                    <a href="pages/foundations/security-fundamentals.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Security Fundamentals</a>
-                    <a href="pages/foundations/operating-systems.html" class="btn btn-primary">Next: Operating Systems <i class="fas fa-arrow-right"></i></a>
+                <!-- ==================== IP ADDRESSES ==================== -->
+                <h2><i class="fas fa-map-marker-alt"></i> IP Addresses - The Internet Phone Numbers</h2>
+
+                <div class="diagram-box">
+IP ADDRESSES EXPLAINED
+═══════════════════════════════════════════════════════════════════════════════
+
+IPv4 Address Format:
+────────────────────
+   192  .  168  .    1  .  100
+    │       │       │      │
+    │       │       │      └── Host (0-255)
+    │       │       └───────── Subnet
+    │       └───────────────── Network part
+    └───────────────────────── Network part
+
+Each number: 0-255 (8 bits = 1 byte)
+Total: 4 bytes = 32 bits
+
+
+PRIVATE vs PUBLIC - CRITICAL FOR SOC
+═══════════════════════════════════════════════════════════════════════════════
+
+PRIVATE RANGES (Internal networks - NOT internet routable):
+────────────────────────────────────────────────────────────────────────────────
+┌────────────────────────────┬──────────────────┬────────────────────────────┐
+│ RANGE                      │ CLASS            │ TYPICAL USE                │
+├────────────────────────────┼──────────────────┼────────────────────────────┤
+│ 10.0.0.0 - 10.255.255.255  │ Class A Private  │ Large enterprises          │
+│ 172.16.0.0 - 172.31.255.255│ Class B Private  │ Medium networks            │
+│ 192.168.0.0-192.168.255.255│ Class C Private  │ Small networks, home WiFi  │
+└────────────────────────────┴──────────────────┴────────────────────────────┘
+
+SPECIAL RANGES:
+────────────────────────────────────────────────────────────────────────────────
+127.0.0.0 - 127.255.255.255  │ Loopback         │ localhost (your machine)
+169.254.0.0 - 169.254.255.255│ APIPA            │ No DHCP - auto-assigned
+224.0.0.0 - 239.255.255.255  │ Multicast        │ Group communication
+
+EVERYTHING ELSE = PUBLIC (internet routable)
+
+
+WHY THIS MATTERS FOR SOC:
+═══════════════════════════════════════════════════════════════════════════════
+
+When you see traffic, immediately classify:
+
+  INTERNAL → INTERNAL (10.x to 10.x)
+  ──────────────────────────────────
+  Normal: File shares, Active Directory
+  Suspicious: Lateral movement between workstations
+  
+  INTERNAL → EXTERNAL (10.x to 203.x)
+  ──────────────────────────────────
+  Normal: Web browsing, cloud services
+  Suspicious: Unknown IPs, C2 traffic, data exfil
+  
+  EXTERNAL → INTERNAL (203.x to 10.x)
+  ──────────────────────────────────
+  Normal: Responses to internal requests
+  Suspicious: Unsolicited inbound = port scan, attack attempt
+  
+  EXTERNAL → EXTERNAL (rare to see)
+  ──────────────────────────────────
+  You shouldn't see this in your logs
+  If you do: misconfiguration or you're monitoring internet backbone
+
+
+QUICK REFERENCE:
+────────────────────────────────────────────────────────────────────────────────
+Starts with 10.?        → Internal (private)
+Starts with 172.16-31.? → Internal (private)
+Starts with 192.168.?   → Internal (private)
+Starts with 127.?       → Localhost
+Anything else?          → External (public internet)
+                </div>
+
+                <!-- ==================== PORTS ==================== -->
+                <h2><i class="fas fa-door-open"></i> Ports - The Application Addresses</h2>
+
+                <div class="diagram-box">
+HOW PORTS WORK
+═══════════════════════════════════════════════════════════════════════════════
+
+IP address = which computer
+Port = which application on that computer
+
+Think of it like an apartment building:
+  IP Address: 192.168.1.100 = The building address
+  Port: 443 = Apartment number
+
+
+  SERVER: 192.168.1.100
+  ┌────────────────────────────────────────────────────────────────────────────┐
+  │                                                                            │
+  │   Port 22 ──► SSH Service          "Knock on door 22 for remote access"  │
+  │   Port 80 ──► Web Server (HTTP)    "Knock on door 80 for website"        │
+  │   Port 443 ──► Web Server (HTTPS)  "Knock on door 443 for secure website"│
+  │   Port 3389 ──► RDP Service        "Knock on door 3389 for remote desktop"│
+  │                                                                            │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+When you see: 192.168.1.100:443
+              └─── IP ───┘ └port
+
+
+PORT RANGES:
+────────────────────────────────────────────────────────────────────────────────
+0 - 1023       Well-known ports    Reserved for common services
+1024 - 49151   Registered ports    Assigned to specific applications
+49152 - 65535  Dynamic/Private     Temporary connections (ephemeral)
+                </div>
+
+                <h3>Critical Ports for SOC Analysts</h3>
+
+                <div class="diagram-box">
+PORTS YOU MUST KNOW
+═══════════════════════════════════════════════════════════════════════════════
+
+FILE TRANSFER & REMOTE ACCESS:
+────────────────────────────────────────────────────────────────────────────────
+Port 20,21  FTP      File Transfer (UNENCRYPTED - legacy, risky)
+Port 22     SSH      Secure Shell (encrypted remote access, file transfer)
+Port 23     Telnet   Remote access (UNENCRYPTED - NEVER use!)
+Port 3389   RDP      Remote Desktop Protocol (Windows remote access)
+
+🔴 Security note: SSH and RDP are brute force targets!
+   Alert on: Failed login attempts to these ports
+
+
+WEB:
+────────────────────────────────────────────────────────────────────────────────
+Port 80     HTTP     Web traffic (unencrypted)
+Port 443    HTTPS    Web traffic (encrypted)
+Port 8080   HTTP-Alt Alternative web (often proxies, development)
+Port 8443   HTTPS-Alt Alternative HTTPS
+
+🔴 Security note: Most C2 traffic uses 80/443 to blend in!
+   Alert on: Beaconing patterns, connections to suspicious domains
+
+
+EMAIL:
+────────────────────────────────────────────────────────────────────────────────
+Port 25     SMTP     Send email (server to server)
+Port 587    SMTP     Send email (client to server, modern)
+Port 110    POP3     Receive email (download and delete)
+Port 143    IMAP     Receive email (synchronized)
+Port 993    IMAPS    IMAP over SSL
+Port 995    POP3S    POP3 over SSL
+
+🔴 Security note: Port 25 outbound from workstations = suspicious
+   Normal users use 587, not 25
+
+
+WINDOWS/ACTIVE DIRECTORY:
+────────────────────────────────────────────────────────────────────────────────
+Port 53     DNS      Domain name resolution
+Port 88     Kerberos Windows authentication
+Port 135    RPC      Remote Procedure Call
+Port 137-139 NetBIOS Windows networking (legacy)
+Port 389    LDAP     Directory services (Active Directory)
+Port 445    SMB      File shares, lateral movement risk!
+Port 636    LDAPS    LDAP over SSL
+Port 3268   GC       Global Catalog (AD)
+
+🔴 Security note: 
+   - SMB (445) = EternalBlue, lateral movement
+   - Kerberos (88) = Kerberoasting, Golden Ticket
+   - LDAP (389) = AD enumeration
+
+
+DATABASE:
+────────────────────────────────────────────────────────────────────────────────
+Port 1433   MSSQL    Microsoft SQL Server
+Port 1521   Oracle   Oracle Database
+Port 3306   MySQL    MySQL Database
+Port 5432   PostgreSQL PostgreSQL Database
+Port 27017  MongoDB  MongoDB
+
+🔴 Security note: Databases should NEVER be exposed to internet
+   Alert on: External IPs connecting to database ports
+                </div>
+
+                <div class="security-note">
+                    <h4>🔒 Port Security Rules of Thumb</h4>
+                    <ul>
+                        <li><strong>Workstation → Port 445 → Another Workstation:</strong> Suspicious! Lateral movement.</li>
+                        <li><strong>External → Any internal port except 443:</strong> Why? Should be blocked by firewall.</li>
+                        <li><strong>Internal → External Port 22, 3389:</strong> Someone remoting OUT. Legitimate or C2?</li>
+                        <li><strong>High port numbers (>10000) as destinations:</strong> Often C2 trying to evade detection.</li>
+                    </ul>
+                </div>
+
+                <!-- ==================== TCP/UDP ==================== -->
+                <h2><i class="fas fa-exchange-alt"></i> TCP vs UDP - Two Ways to Talk</h2>
+
+                <div class="diagram-box">
+TCP vs UDP - THE KEY DIFFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+TCP (Transmission Control Protocol) - "Reliable Phone Call"
+────────────────────────────────────────────────────────────────────────────────
+
+Before sending data, TCP establishes a connection (the "3-way handshake"):
+
+  CLIENT                                SERVER
+     │                                     │
+     │ ─────── SYN ──────────────────────► │  "Can we talk?"
+     │                                     │
+     │ ◄────── SYN-ACK ─────────────────── │  "Yes, I'm ready"
+     │                                     │
+     │ ─────── ACK ──────────────────────► │  "Great, let's go"
+     │                                     │
+     │ ═══════ DATA ═════════════════════► │  Now data flows
+     │ ◄═════════════════════════════════ │
+     │                                     │
+
+Features:
+✓ Guaranteed delivery (retransmits lost packets)
+✓ Ordered (packets arrive in sequence)
+✓ Error checking
+✗ Slower (overhead from acknowledgments)
+
+Used for: Web (HTTP/HTTPS), Email, File Transfer, SSH
+"I need to make sure you got everything correctly"
+
+
+UDP (User Datagram Protocol) - "Fast Shouting"
+────────────────────────────────────────────────────────────────────────────────
+
+No connection - just send and hope:
+
+  CLIENT                                SERVER
+     │                                     │
+     │ ─────── DATA ─────────────────────► │  "Here's data!"
+     │ ─────── DATA ─────────────────────► │  "More data!"
+     │ ─────── DATA ─────────────────────► │  "Even more!"
+     │                                     │
+     │  (No response needed, no checking)  │
+
+Features:
+✓ Fast (no handshake, no waiting)
+✓ Low overhead
+✗ No guarantee of delivery
+✗ No order guarantee
+
+Used for: DNS, Video streaming, VoIP, Gaming
+"Speed matters more than perfection"
+
+
+SECURITY IMPLICATIONS:
+═══════════════════════════════════════════════════════════════════════════════
+
+TCP SYN FLOOD ATTACK:
+────────────────────────────────────────────────────────────────────────────────
+Attacker sends thousands of SYN packets but never completes handshake:
+
+  ATTACKER                              TARGET
+     │                                     │
+     │ ─────── SYN ──────────────────────► │  Server allocates memory
+     │ ─────── SYN ──────────────────────► │  Server allocates memory
+     │ ─────── SYN ──────────────────────► │  Server allocates memory
+     │ ─────── SYN ──────────────────────► │  Server allocates memory
+     │              ...thousands more...    │
+     │                                     │  Server runs out of memory!
+     │                                     │  DENIAL OF SERVICE
+
+Detection: Many half-open connections from same source
+
+
+UDP AMPLIFICATION ATTACK:
+────────────────────────────────────────────────────────────────────────────────
+Attacker spoofs victim's IP, asks servers for large responses:
+
+  ATTACKER                DNS SERVER              VICTIM
+     │                        │                      │
+     │ "Send big response    │                      │
+     │  to VICTIM's IP"      │                      │
+     │ ───────────────────►  │                      │
+     │                        │  HUGE RESPONSE       │
+     │                        │ ─────────────────►   │ Overwhelmed!
+     
+Small request → Large response → Multiply effect × thousands of servers
+
+Detection: Large UDP responses to hosts that didn't request them
+                </div>
+
+                <!-- ==================== DNS ==================== -->
+                <h2><i class="fas fa-globe"></i> DNS - The Internet's Phone Book</h2>
+
+                <div class="diagram-box">
+HOW DNS WORKS
+═══════════════════════════════════════════════════════════════════════════════
+
+You type: www.google.com
+Your computer needs: 142.250.80.46 (the IP address)
+
+How it gets resolved:
+
+  YOUR COMPUTER                              DNS SERVERS
+       │                                          │
+       │  "What's the IP for www.google.com?"    │
+       │ ──────────────────────────────────────► │ Local DNS (ISP)
+       │                                          │
+       │  (If not cached, asks root servers)      │
+       │                                          │
+       │ ◄────────────────────────────────────── │
+       │  "It's 142.250.80.46"                   │
+       │                                          │
+       │  Now your browser connects to that IP    │
+
+
+DNS RECORD TYPES (You'll see these in logs):
+═══════════════════════════════════════════════════════════════════════════════
+
+TYPE     MEANING                  EXAMPLE
+────────────────────────────────────────────────────────────────────────────────
+A        Domain → IPv4            google.com → 142.250.80.46
+AAAA     Domain → IPv6            google.com → 2607:f8b0:4004:800::200e
+CNAME    Alias to another name    www.google.com → google.com
+MX       Mail server              google.com mail → smtp.google.com
+TXT      Text record              SPF, DKIM, verification strings
+NS       Name server              Who handles DNS for this domain
+PTR      Reverse lookup           142.250.80.46 → google.com
+
+
+WHY DNS IS CRITICAL FOR SECURITY:
+═══════════════════════════════════════════════════════════════════════════════
+
+MALWARE USES DNS FOR:
+────────────────────────────────────────────────────────────────────────────────
+
+1. COMMAND & CONTROL
+   Malware queries: evil-c2-server.com
+   Gets back: IP of current C2 server
+   
+   Detection: Queries to suspicious/newly-registered domains
+
+2. DOMAIN GENERATION ALGORITHMS (DGA)
+   Malware generates random domain names:
+   - asd7f8g9h.com
+   - jk3l4m5n6.com
+   - qw7er8ty9.com
+   
+   One of them is the real C2 - hard to block all
+   
+   Detection: High volume of NXDOMAIN (not found) responses
+
+3. DNS TUNNELING
+   Hide data in DNS queries:
+   
+   Query: c2VjcmV0ZGF0YQ.evil.com
+          └── base64 encoded data!
+   
+   Exfiltrate data right through the firewall (port 53 usually allowed)
+   
+   Detection: Unusually long subdomain strings, high query volume
+
+4. DNS HIJACKING
+   Attacker changes DNS response:
+   
+   Victim asks: "Where is bankofamerica.com?"
+   Attacker answers: "It's at 185.220.101.34" (attacker's server)
+   Victim goes to fake site, enters credentials
+   
+   Detection: Unexpected DNS responses, certificate warnings
+
+
+SUSPICIOUS DNS PATTERNS TO WATCH:
+═══════════════════════════════════════════════════════════════════════════════
+
+🔴 High volume queries from single host
+🔴 Queries to newly registered domains
+🔴 Many NXDOMAIN responses (DGA indicator)
+🔴 Very long subdomain strings (tunneling)
+🔴 Queries to TXT records for non-email domains
+🔴 Direct DNS to external servers (bypassing internal DNS)
+                </div>
+
+                <!-- ==================== KEY TAKEAWAYS ==================== -->
+                <h2><i class="fas fa-graduation-cap"></i> Key Takeaways</h2>
+
+                <div class="key-insight">
+                    <h4>Networking Quick Reference for SOC</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Concept</th><th>Remember</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>10.x, 172.16-31.x, 192.168.x</strong></td><td>Private/internal IPs</td></tr>
+                            <tr><td><strong>Port 22, 3389</strong></td><td>Remote access (SSH, RDP) - brute force targets</td></tr>
+                            <tr><td><strong>Port 80, 443</strong></td><td>Web traffic - where C2 hides</td></tr>
+                            <tr><td><strong>Port 445</strong></td><td>SMB - lateral movement risk</td></tr>
+                            <tr><td><strong>Port 53</strong></td><td>DNS - can be tunneling</td></tr>
+                            <tr><td><strong>TCP 3-way handshake</strong></td><td>SYN → SYN-ACK → ACK (can be abused for DoS)</td></tr>
+                            <tr><td><strong>Many NXDOMAIN</strong></td><td>DGA malware indicator</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Navigation -->
+                <div class="card-grid">
+                    <a href="operating-systems.html" class="card"><div class="card-icon"><i class="fas fa-desktop"></i></div><h3>Operating Systems</h3><p>Windows & Linux for SOC</p></a>
+                    <a href="attack-basics.html" class="card"><div class="card-icon"><i class="fas fa-skull-crossbones"></i></div><h3>How Attacks Work</h3><p>Attack patterns to know</p></a>
+                    <a href="windows-events.html" class="card"><div class="card-icon"><i class="fas fa-list"></i></div><h3>Windows Events</h3><p>Event IDs to know</p></a>
                 </div>
 
             </div>

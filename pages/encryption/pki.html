@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PKI Infrastructure | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Encryption</a><span class="separator">/</span><span>PKI Infrastructure</span></div>
+            <div class="content">
+                <h1><i class="fas fa-sitemap"></i> PKI Infrastructure Deep Dive</h1>
+                <p class="lead">Complete guide to Public Key Infrastructure - certificate authorities, chain of trust, validation, revocation, and enterprise PKI deployment.</p>
+
+                <div class="diagram-box">
+THE PKI TRUST PROBLEM AND SOLUTION
+═══════════════════════════════════════════════════════════════════════════════
+
+THE PROBLEM:
+─────────────────────────────────────────────────────────────────────────────
+
+  You connect to https://bank.com
+  Server sends you a public key
+  
+  Question: How do you know this is really bank.com's key?
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  You ───────► "bank.com" ◄─────── Attacker (Man-in-the-Middle)        │
+  │       │                     │                                          │
+  │       │  Request: bank.com  │                                          │
+  │       │                     ▼                                          │
+  │       │            ┌─────────────────┐                                 │
+  │       │            │ Attacker sends  │                                 │
+  │       │            │ THEIR public key│                                 │
+  │       │            │ claiming to be  │                                 │
+  │       │            │ bank.com        │                                 │
+  │       │            └────────┬────────┘                                 │
+  │       │                     │                                          │
+  │       ◄─────────────────────┘                                          │
+  │                                                                         │
+  │  Without PKI, you can't tell the difference!                           │
+  │  Attacker decrypts your traffic, re-encrypts to real bank.            │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+THE SOLUTION: CERTIFICATES + CERTIFICATE AUTHORITIES
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  A CERTIFICATE is a signed document that says:                         │
+  │                                                                         │
+  │  ┌─────────────────────────────────────────────────────────────────┐   │
+  │  │                                                                  │   │
+  │  │  "This public key: [ABC123...]                                  │   │
+  │  │   belongs to: bank.com                                          │   │
+  │  │                                                                  │   │
+  │  │   Valid from: Jan 1, 2024                                       │   │
+  │  │   Valid until: Dec 31, 2024                                     │   │
+  │  │                                                                  │   │
+  │  │   Signed by: DigiCert (Certificate Authority)"                  │   │
+  │  │              ─────────────────────────────────                  │   │
+  │  │              CA's digital signature proves                      │   │
+  │  │              this cert is legitimate                            │   │
+  │  │                                                                  │   │
+  │  └─────────────────────────────────────────────────────────────────┘   │
+  │                                                                         │
+  │  Your browser trusts DigiCert (pre-installed in trust store)           │
+  │  → DigiCert signed this certificate                                    │
+  │  → Therefore this really is bank.com's key                             │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+CERTIFICATE CHAIN OF TRUST:
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                           ROOT CA                                       │
+  │                                                                         │
+  │   • Self-signed certificate (signs its own cert)                       │
+  │   • Pre-installed in browsers/OS (~150 root CAs)                       │
+  │   • Extremely protected (offline, HSM, physical security)             │
+  │   • Validity: 20-30 years                                              │
+  │   • Example: "DigiCert Global Root G2"                                │
+  │                                                                         │
+  │   Subject:  DigiCert Global Root G2                                    │
+  │   Issuer:   DigiCert Global Root G2   ◄── Same (self-signed)          │
+  │                         🔐                                              │
+  └───────────────────────────┬─────────────────────────────────────────────┘
+                              │
+                              │ Signs (creates)
+                              ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                      INTERMEDIATE CA                                    │
+  │                                                                         │
+  │   • Signed by Root CA                                                  │
+  │   • Does daily certificate issuance                                    │
+  │   • If compromised, can be revoked (limits damage)                    │
+  │   • Validity: 5-10 years                                               │
+  │   • Example: "DigiCert TLS RSA SHA256 2020 CA1"                       │
+  │                                                                         │
+  │   Subject:  DigiCert TLS RSA SHA256 2020 CA1                          │
+  │   Issuer:   DigiCert Global Root G2   ◄── Signed by Root             │
+  │                         🔐                                              │
+  └───────────────────────────┬─────────────────────────────────────────────┘
+                              │
+                              │ Signs (issues)
+                              ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    END-ENTITY CERTIFICATE                               │
+  │                                                                         │
+  │   • Signed by Intermediate CA                                          │
+  │   • Your server's certificate                                          │
+  │   • Contains your public key and domain                                │
+  │   • Validity: 1 year (397 days max since 2020)                        │
+  │   • Example: "*.bank.com"                                              │
+  │                                                                         │
+  │   Subject:  *.bank.com                                                 │
+  │   Issuer:   DigiCert TLS RSA SHA256 2020 CA1   ◄── Signed by Intermediate
+  │   SAN:      *.bank.com, bank.com                                       │
+  │                         🔓 (public key)                                │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+CERTIFICATE VALIDATION PROCESS:
+═══════════════════════════════════════════════════════════════════════════════
+
+  Browser receives certificate from server...
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ STEP 1: BUILD CHAIN                                                    │
+  │─────────────────────────────────────────────────────────────────────────│
+  │                                                                         │
+  │   Server cert ─────► Signed by Intermediate? ─────► YES                │
+  │                                                       │                │
+  │   Intermediate ────► Signed by Root? ─────────────► YES                │
+  │                                                       │                │
+  │   Root ────────────► In browser's trust store? ───► YES ✓              │
+  │                                                                         │
+  │   Chain valid!                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ STEP 2: CHECK VALIDITY PERIOD                                          │
+  │─────────────────────────────────────────────────────────────────────────│
+  │                                                                         │
+  │   Current time: 2024-06-15                                             │
+  │                                                                         │
+  │   Not Before: 2024-01-01   ◄── Is current time AFTER this?    YES ✓   │
+  │   Not After:  2024-12-31   ◄── Is current time BEFORE this?   YES ✓   │
+  │                                                                         │
+  │   Certificate not expired!                                             │
+  └─────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ STEP 3: CHECK DOMAIN NAME                                              │
+  │─────────────────────────────────────────────────────────────────────────│
+  │                                                                         │
+  │   URL accessed: https://www.bank.com/login                             │
+  │   Domain: www.bank.com                                                 │
+  │                                                                         │
+  │   Certificate Subject: CN=*.bank.com                                   │
+  │   Certificate SAN: DNS:*.bank.com, DNS:bank.com                        │
+  │                                                                         │
+  │   Does *.bank.com match www.bank.com?   YES ✓                         │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ STEP 4: CHECK REVOCATION STATUS                                        │
+  │─────────────────────────────────────────────────────────────────────────│
+  │                                                                         │
+  │   Methods:                                                              │
+  │   • OCSP (Online Certificate Status Protocol) - Real-time check       │
+  │   • CRL (Certificate Revocation List) - Periodic download             │
+  │   • OCSP Stapling - Server provides OCSP response                     │
+  │                                                                         │
+  │   Certificate revoked?   NO ✓                                         │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │   ALL CHECKS PASS   │
+                    │   🔒 SECURE         │
+                    │   Connection        │
+                    │   Established       │
+                    └─────────────────────┘
+                </div>
+
+                <h2 id="revocation"><i class="fas fa-ban"></i> Certificate Revocation</h2>
+
+                <div class="diagram-box">
+CERTIFICATE REVOCATION METHODS
+═══════════════════════════════════════════════════════════════════════════════
+
+WHY REVOKE?
+─────────────────────────────────────────────────────────────────────────────
+  • Private key compromised (stolen, leaked)
+  • Employee left company (for client certs)
+  • Certificate issued incorrectly
+  • Domain ownership changed
+  • CA compromise
+
+
+CRL (Certificate Revocation List):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  CA periodically publishes list of revoked certificates               │
+  │                                                                         │
+  │  ┌──────────────────────────────────────────────────────────┐         │
+  │  │ CRL - Certificate Revocation List                        │         │
+  │  │                                                          │         │
+  │  │ Issuer: DigiCert TLS CA                                 │         │
+  │  │ This Update: 2024-06-15 00:00:00                        │         │
+  │  │ Next Update: 2024-06-16 00:00:00                        │         │
+  │  │                                                          │         │
+  │  │ Revoked Certificates:                                   │         │
+  │  │   Serial: 0x1234ABCD  Revoked: 2024-06-10  Reason: keyCompromise
+  │  │   Serial: 0x5678EFGH  Revoked: 2024-06-12  Reason: cessationOfOperation
+  │  │   Serial: 0x9ABCIJKL  Revoked: 2024-06-14  Reason: affiliationChanged
+  │  │   ...                                                    │         │
+  │  └──────────────────────────────────────────────────────────┘         │
+  │                                                                         │
+  │  PROS:                           CONS:                                 │
+  │  • Works offline (cached)        • Can be large (megabytes)           │
+  │  • Simple implementation         • Update delay (hours/days)          │
+  │                                  • Privacy concern (reveals access)   │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+OCSP (Online Certificate Status Protocol):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  Client    ────────────►    OCSP Responder    ◄────────────   CA      │
+  │                                                                         │
+  │  1. Client: "Is certificate serial 0x1234ABCD revoked?"               │
+  │                                                                         │
+  │  2. OCSP Responder: "Certificate status: GOOD"                        │
+  │                  or "Certificate status: REVOKED"                      │
+  │                  or "Certificate status: UNKNOWN"                      │
+  │                                                                         │
+  │  PROS:                           CONS:                                 │
+  │  • Real-time status              • Requires online access             │
+  │  • Small response size           • Privacy (CA sees what you access) │
+  │  • Up-to-date info               • Extra latency (network request)   │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+OCSP STAPLING (OCSP Must-Staple):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  Server periodically fetches OCSP response from CA                    │
+  │  Server includes ("staples") OCSP response in TLS handshake           │
+  │                                                                         │
+  │                                                                         │
+  │  Server ───► OCSP Responder: "What's my cert status?"                 │
+  │         ◄─── Response: "Status: GOOD, valid for 7 days"               │
+  │                                                                         │
+  │  (Server caches this response)                                         │
+  │                                                                         │
+  │  Client ───► Server: TLS handshake                                    │
+  │         ◄─── Server: Certificate + Stapled OCSP response              │
+  │                                                                         │
+  │  Client validates OCSP response signature (from CA)                   │
+  │  No need to contact OCSP responder directly!                          │
+  │                                                                         │
+  │  PROS:                                                                 │
+  │  • Privacy preserved (CA doesn't see client access)                   │
+  │  • Faster (no extra network request)                                  │
+  │  • Server bears the cost, not client                                  │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+CERTIFICATE TRANSPARENCY (CT):
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  Public, append-only logs of ALL issued certificates                   │
+  │                                                                         │
+  │  CA issues cert ───► Must submit to CT logs ───► Anyone can search    │
+  │                                                                         │
+  │  Purpose:                                                               │
+  │  • Detect mis-issued certificates                                      │
+  │  • Detect CA compromise                                                │
+  │  • Monitor your domains for unauthorized certs                        │
+  │                                                                         │
+  │  Search CT logs: https://crt.sh/?q=%.example.com                      │
+  │                                                                         │
+  │  Chrome requires CT for all public certificates since 2018            │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h2 id="enterprise"><i class="fas fa-building"></i> Enterprise PKI</h2>
+
+                <div class="diagram-box">
+ENTERPRISE PKI ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+TWO-TIER PKI (RECOMMENDED):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                         ROOT CA (OFFLINE)                               │
+  │                                                                         │
+  │   • Powered OFF normally (air-gapped)                                  │
+  │   • Only brought online to sign Issuing CA cert                       │
+  │   • Key stored in HSM                                                  │
+  │   • Physical security: safe, limited access                           │
+  │   • 20+ year validity                                                  │
+  │                                                                         │
+  │   Compromise = TOTAL PKI REBUILD                                       │
+  └───────────────────────────────┬─────────────────────────────────────────┘
+                                  │
+            Signs once (during setup, renewal)
+                                  │
+                                  ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    ISSUING/SUBORDINATE CA (ONLINE)                      │
+  │                                                                         │
+  │   • Always online, issues certificates                                 │
+  │   • Key in HSM                                                         │
+  │   • If compromised, revoke and replace (Root stays safe)              │
+  │   • 5-10 year validity                                                 │
+  │                                                                         │
+  └───────────────────────────────┬─────────────────────────────────────────┘
+                                  │
+              Issues certificates daily
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+          ▼                       ▼                       ▼
+   ┌─────────────┐        ┌─────────────┐        ┌─────────────┐
+   │ Web Server  │        │  User/Wifi  │        │  Code       │
+   │ Certificates│        │  Certificates│        │  Signing    │
+   └─────────────┘        └─────────────┘        └─────────────┘
+
+
+MICROSOFT AD CS HIERARCHY:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  Active Directory Forest                                               │
+  │  ├── Domain: corp.example.com                                         │
+  │  │   ├── Standalone Root CA (Offline)                                 │
+  │  │   │   └── YOURCOMPANY-ROOT-CA                                      │
+  │  │   │                                                                 │
+  │  │   └── Enterprise Subordinate CA (Online)                           │
+  │  │       └── YOURCOMPANY-ISSUING-CA                                   │
+  │  │           ├── Certificate Templates                                │
+  │  │           │   ├── User                                             │
+  │  │           │   ├── Computer                                         │
+  │  │           │   ├── Web Server                                       │
+  │  │           │   ├── Code Signing                                     │
+  │  │           │   └── Smart Card Logon                                 │
+  │  │           │                                                         │
+  │  │           └── Auto-enrollment via Group Policy                     │
+  │  │                                                                     │
+  │  └── Trust with AD = Automatic root trust for domain members          │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+CERTIFICATE USES IN ENTERPRISE:
+═══════════════════════════════════════════════════════════════════════════════
+
+  USE CASE                    CERTIFICATE TYPE         TEMPLATE
+  ─────────────────────────────────────────────────────────────────────────────
+  HTTPS internal sites        Web Server               Web Server
+  Email encryption/signing    User S/MIME              User
+  VPN authentication          User/Computer            User, Computer
+  Wireless (802.1X)           User/Computer            User, Computer
+  Smart card logon            User                     Smart Card Logon
+  Code signing                Code Signing             Code Signing
+  Document signing            User                     User
+  IPSec                       Computer                 IPSec
+  LDAPS (secure AD)           Domain Controller        Domain Controller Auth
+  Device management           Computer                 Workstation Auth
+                </div>
+
+                <h2><i class="fas fa-terminal"></i> PKI Commands</h2>
+
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# VIEW AND VERIFY CERTIFICATES
+# ═══════════════════════════════════════════════════════════════════════════
+
+# View certificate details
+openssl x509 -in cert.pem -text -noout
+
+# View certificate chain from website
+openssl s_client -connect example.com:443 -showcerts
+
+# Verify certificate against CA
+openssl verify -CAfile ca-bundle.crt certificate.crt
+
+# Check certificate expiration
+openssl x509 -in cert.pem -noout -enddate
+
+# Extract public key from certificate
+openssl x509 -in cert.pem -pubkey -noout > pubkey.pem
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CERTIFICATE REVOCATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Check OCSP status
+openssl ocsp -issuer intermediate.crt -cert server.crt \
+    -url http://ocsp.digicert.com -resp_text
+
+# Download and check CRL
+curl -O http://crl.digicert.com/DigiCertTLSRSASHA2562020CA1.crl
+openssl crl -in DigiCertTLSRSASHA2562020CA1.crl -text -noout
+
+# ═══════════════════════════════════════════════════════════════════════════
+# INTERNAL CA SETUP (OpenSSL)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Create Root CA
+openssl genrsa -aes256 -out root-ca.key 4096
+openssl req -x509 -new -nodes -key root-ca.key -sha256 -days 7300 \
+    -out root-ca.crt -subj "/C=US/O=MyCompany/CN=MyCompany Root CA"
+
+# Create Intermediate CA
+openssl genrsa -aes256 -out intermediate-ca.key 4096
+openssl req -new -key intermediate-ca.key \
+    -out intermediate-ca.csr \
+    -subj "/C=US/O=MyCompany/CN=MyCompany Issuing CA"
+
+# Sign Intermediate with Root
+openssl x509 -req -in intermediate-ca.csr -CA root-ca.crt -CAkey root-ca.key \
+    -CAcreateserial -out intermediate-ca.crt -days 3650 -sha256
+
+# Issue server certificate
+openssl genrsa -out server.key 2048
+openssl req -new -key server.key -out server.csr \
+    -subj "/C=US/O=MyCompany/CN=server.example.com"
+openssl x509 -req -in server.csr -CA intermediate-ca.crt -CAkey intermediate-ca.key \
+    -CAcreateserial -out server.crt -days 365 -sha256</pre></div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="index.html">Encryption Fundamentals</a></li>
+                    <li><a href="certificates-guide.html">Certificate Management Guide</a></li>
+                    <li><a href="tls-ssl.html">TLS/SSL Configuration</a></li>
+                    <li><a href="../iam/index.html">Identity & Access Management</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

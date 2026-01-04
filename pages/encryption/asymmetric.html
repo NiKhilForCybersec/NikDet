@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asymmetric Encryption Deep Dive | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Encryption</a><span class="separator">/</span><span>Asymmetric Encryption</span></div>
+            <div class="content">
+                <h1><i class="fas fa-key"></i> Asymmetric Encryption Deep Dive</h1>
+                <p class="lead">Complete technical guide to public key cryptography - RSA, elliptic curves, digital signatures, and key exchange protocols.</p>
+
+                <div class="diagram-box">
+ASYMMETRIC CRYPTOGRAPHY - THE KEY INSIGHT
+═══════════════════════════════════════════════════════════════════════════════
+
+THE REVOLUTIONARY IDEA (Diffie & Hellman, 1976):
+─────────────────────────────────────────────────────────────────────────────
+
+  What if you could create TWO MATHEMATICALLY RELATED keys where:
+  
+  • What one key encrypts, ONLY the other can decrypt
+  • You CANNOT derive one key from the other (computationally infeasible)
+  • You can share one key publicly without compromising the other
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │   KEY GENERATION:                                                       │
+  │                                                                         │
+  │   Random Numbers ──► Mathematical Algorithm ──► KEY PAIR               │
+  │                      (RSA, ECDSA, etc.)                                │
+  │                             │                                          │
+  │                      ┌──────┴──────┐                                   │
+  │                      ▼             ▼                                   │
+  │                 ┌─────────┐   ┌─────────┐                              │
+  │                 │ PUBLIC  │   │ PRIVATE │                              │
+  │                 │   KEY   │   │   KEY   │                              │
+  │                 │   🔓    │   │   🔐    │                              │
+  │                 └─────────┘   └─────────┘                              │
+  │                      │             │                                   │
+  │                      │             └──► NEVER share                    │
+  │                      │                  Store encrypted                │
+  │                      │                  Use HSM for high value         │
+  │                      │                                                 │
+  │                      └──► Share freely!                                │
+  │                           Put on website                               │
+  │                           Email signature                              │
+  │                           Key servers                                  │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+THREE PRIMARY USES:
+═══════════════════════════════════════════════════════════════════════════════
+
+  USE 1: ENCRYPTION (Confidentiality)
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  "I want to send a message that ONLY Bob can read"
+  
+  Alice                                                            Bob
+    │                                                               │
+    │  Gets Bob's PUBLIC key 🔓                   Has PRIVATE key 🔐│
+    │  (from website, keyserver)                                    │
+    │                                                               │
+    │  "Secret"  ──► [Encrypt with 🔓] ──► "X7k9m..."             │
+    │                                           │                   │
+    │                                           └─────────────────► │
+    │                                                               │
+    │                                 "X7k9m..."  ──► [Decrypt with 🔐]
+    │                                                       │       │
+    │                                                       ▼       │
+    │                                                  "Secret"     │
+    │                                                               │
+    │  SECURITY: Even if attacker has Bob's public key, they       │
+    │            CANNOT decrypt. Only private key works.            │
+
+
+  USE 2: DIGITAL SIGNATURES (Authentication + Integrity)
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  "I want to prove THIS MESSAGE is from ME and wasn't modified"
+  
+  Alice                                                            Bob
+    │                                                               │
+    │  Has own PRIVATE key 🔐                 Gets Alice's PUBLIC 🔓│
+    │                                                               │
+    │  "Contract"                                                   │
+    │      │                                                        │
+    │      ├───► [Hash] ───► "abc123..."                           │
+    │      │                      │                                 │
+    │      │           [Sign with 🔐]                               │
+    │      │                      │                                 │
+    │      │                      ▼                                 │
+    │      │               "SigXYZ..."                              │
+    │      │                      │                                 │
+    │      └──────────┬───────────┘                                 │
+    │                 │                                             │
+    │   { message: "Contract",  ───────────────────────────────────►│
+    │     signature: "SigXYZ..." }                                  │
+    │                                                               │
+    │                                         [Verify with 🔓]      │
+    │                                         1. Hash message       │
+    │                                         2. Decrypt signature  │
+    │                                         3. Compare hashes     │
+    │                                         Match = Valid! ✓      │
+
+
+  USE 3: KEY EXCHANGE (Diffie-Hellman)
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  "We want to agree on a SHARED SECRET over an insecure channel"
+  
+  Alice                                                            Bob
+    │                                                               │
+    │  Generate: private a, public A                Generate: private b, public B
+    │                                                               │
+    │  ────────────────── Send A ──────────────────────────────►   │
+    │  ◄────────────────── Send B ─────────────────────────────    │
+    │                                                               │
+    │  Compute: B^a mod p                      Compute: A^b mod p   │
+    │           = (g^b)^a mod p                        = (g^a)^b mod p
+    │           = g^(ab) mod p                         = g^(ab) mod p
+    │                 │                                      │      │
+    │                 └───────── SAME VALUE! ────────────────┘      │
+    │                       (Shared Secret)                         │
+    │                                                               │
+    │  Attacker sees: A, B (public values)                         │
+    │  Attacker CANNOT compute: g^(ab) mod p without a or b        │
+    │  (Discrete logarithm problem - computationally infeasible)   │
+                </div>
+
+                <h2 id="rsa"><i class="fas fa-calculator"></i> RSA Algorithm</h2>
+
+                <div class="diagram-box">
+RSA - RIVEST-SHAMIR-ADLEMAN (1977)
+═══════════════════════════════════════════════════════════════════════════════
+
+MATHEMATICAL BASIS:
+─────────────────────────────────────────────────────────────────────────────
+
+  Security relies on: FACTORING LARGE NUMBERS IS HARD
+  
+  Easy:   Multiply two primes:     p × q = n
+          7 × 13 = 91              (instant)
+  
+  Hard:   Factor a large number:   n = ? × ?
+          Find p and q given n     (years for large n)
+  
+  RSA uses primes so large (1024+ bits each) that factoring n
+  would take longer than the age of the universe.
+
+
+KEY GENERATION (Simplified):
+─────────────────────────────────────────────────────────────────────────────
+
+  1. Choose two large random primes: p, q
+  
+  2. Compute n = p × q                    (this is the MODULUS)
+  
+  3. Compute φ(n) = (p-1)(q-1)            (Euler's totient)
+  
+  4. Choose e (public exponent)            (commonly 65537)
+     such that gcd(e, φ(n)) = 1
+  
+  5. Compute d = e⁻¹ mod φ(n)             (private exponent)
+     d × e ≡ 1 (mod φ(n))
+  
+  PUBLIC KEY:  (n, e)    ← Share this
+  PRIVATE KEY: (n, d)    ← Keep secret!
+  
+  DESTROY p, q, φ(n) after key generation (not needed, dangerous to keep)
+
+
+ENCRYPTION AND DECRYPTION:
+─────────────────────────────────────────────────────────────────────────────
+
+  Plaintext M (converted to number < n)
+  
+  ENCRYPT:    C = M^e mod n        (using public key)
+  
+  DECRYPT:    M = C^d mod n        (using private key)
+  
+  
+  WHY IT WORKS (math magic):
+  
+  M^(e×d) mod n = M^1 mod n = M
+  
+  Because: e × d ≡ 1 (mod φ(n))    (by Euler's theorem)
+
+
+RSA KEY SIZES:
+═══════════════════════════════════════════════════════════════════════════════
+
+  Key Size    Security    Status              Notes
+  ─────────────────────────────────────────────────────────────────────────────
+  512-bit     ~56 bits    ❌ BROKEN           Factored in 1999
+  1024-bit    ~80 bits    ❌ WEAK             Factored with effort, avoid!
+  2048-bit    ~112 bits   ✅ MINIMUM          Current standard, OK until ~2030
+  3072-bit    ~128 bits   ✅ GOOD             Recommended for new systems
+  4096-bit    ~140 bits   ✅ STRONG           High security, slower
+  
+  RECOMMENDATION: Use 2048-bit minimum, 3072-bit or 4096-bit for long-term
+
+
+RSA PADDING (CRITICAL!):
+═══════════════════════════════════════════════════════════════════════════════
+
+  RAW RSA (no padding) is INSECURE:
+  • Same message always produces same ciphertext
+  • Mathematical attacks possible
+  • Padding oracle attacks
+  
+  ALWAYS USE PADDING:
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ For ENCRYPTION:                                                         │
+  │   OAEP (Optimal Asymmetric Encryption Padding) ✅ Use this!            │
+  │   PKCS#1 v1.5 ⚠️ Legacy, vulnerable to Bleichenbacher attack          │
+  │                                                                         │
+  │ For SIGNATURES:                                                         │
+  │   PSS (Probabilistic Signature Scheme) ✅ Use this!                    │
+  │   PKCS#1 v1.5 ⚠️ Still used, but PSS is better                        │
+  └─────────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h2 id="ecc"><i class="fas fa-circle-notch"></i> Elliptic Curve Cryptography</h2>
+
+                <div class="diagram-box">
+ELLIPTIC CURVE CRYPTOGRAPHY (ECC)
+═══════════════════════════════════════════════════════════════════════════════
+
+MATHEMATICAL BASIS:
+─────────────────────────────────────────────────────────────────────────────
+
+  Security relies on: ELLIPTIC CURVE DISCRETE LOGARITHM PROBLEM
+  
+  Elliptic curve equation: y² = x³ + ax + b
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │         │    ╭──╮                                                      │
+  │         │   ╱    ╲     Points on curve form a GROUP                    │
+  │    y    │  │      │    Can "add" points together                       │
+  │         │  │      │                                                    │
+  │         │   ╲    ╱     Point addition has special geometric rules      │
+  │         │    ╰──╯                                                      │
+  │         │                                                              │
+  │         └──────────── x                                                │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  ECDLP (Elliptic Curve Discrete Log Problem):
+  
+  Given: Base point G, Public point P where P = k × G
+  Find:  Private scalar k
+  
+  EASY:   Compute P = k × G (scalar multiplication)
+  HARD:   Find k given P and G (discrete log - infeasible for large k)
+
+
+WHY ECC IS BETTER THAN RSA:
+═══════════════════════════════════════════════════════════════════════════════
+
+  SAME SECURITY, SMALLER KEYS:
+  
+  RSA Key Size    ECC Key Size    Security Level
+  ─────────────────────────────────────────────────────────────────────────────
+  1024 bits       160 bits        ~80 bits        ❌ Weak
+  2048 bits       224 bits        ~112 bits       ✅ Current minimum
+  3072 bits       256 bits        ~128 bits       ✅ Recommended
+  7680 bits       384 bits        ~192 bits       ✅ High security
+  15360 bits      521 bits        ~256 bits       ✅ Very high security
+  
+  
+  BENEFITS OF SMALLER KEYS:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ • Faster key generation                                                │
+  │ • Faster signing and verification                                      │
+  │ • Less bandwidth (important for IoT, mobile, TLS)                     │
+  │ • Smaller certificates                                                 │
+  │ • Better for constrained devices                                       │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+COMMON CURVES:
+═══════════════════════════════════════════════════════════════════════════════
+
+  NIST CURVES (P-xxx):
+  ─────────────────────────────────────────────────────────────────────────────
+  P-256 (secp256r1, prime256v1)    256-bit    ✅ Most common, TLS default
+  P-384 (secp384r1)                384-bit    ✅ Higher security
+  P-521 (secp521r1)                521-bit    ✅ Highest NIST security
+  
+  CURVE25519 (Modern):
+  ─────────────────────────────────────────────────────────────────────────────
+  X25519                           ~128-bit   ✅ Key exchange (ECDH)
+  Ed25519                          ~128-bit   ✅ Signatures (EdDSA)
+  
+  ADVANTAGES OF CURVE25519:
+  • Designed to be easy to implement correctly
+  • Constant-time operations (side-channel resistant)
+  • No NSA involvement (some distrust NIST curves)
+  • Deterministic signatures (no random number needed per signature)
+  • Used by: SSH, Signal, WireGuard, TLS 1.3
+
+
+KEY GENERATION (ECC):
+─────────────────────────────────────────────────────────────────────────────
+
+  1. Choose curve (e.g., P-256, Curve25519)
+  
+  2. Generate random private key: d (256-bit number)
+  
+  3. Compute public key: Q = d × G
+     (G is the curve's base point, × is scalar multiplication)
+  
+  PRIVATE KEY: d (256-bit integer)
+  PUBLIC KEY:  Q (point on curve, two 256-bit coordinates, or compressed)
+
+
+ECDSA vs EdDSA:
+═══════════════════════════════════════════════════════════════════════════════
+
+  ECDSA (Elliptic Curve Digital Signature Algorithm):
+  ─────────────────────────────────────────────────────────────────────────────
+  • Used with NIST curves (P-256, P-384)
+  • Requires random number per signature
+  • If random number is weak/reused → PRIVATE KEY LEAKS!
+    (Sony PS3 hack: reused random, private key extracted)
+  • Widely deployed (TLS, Bitcoin)
+  
+  
+  EdDSA (Edwards-curve Digital Signature Algorithm):
+  ─────────────────────────────────────────────────────────────────────────────
+  • Used with Edwards curves (Ed25519, Ed448)
+  • DETERMINISTIC: No random number needed per signature!
+  • Derives "random" from hash of private key + message
+  • Much safer to implement correctly
+  • Faster
+  • Used by: SSH (ed25519), Signal, modern systems
+  
+  RECOMMENDATION: Use Ed25519 for new systems
+                </div>
+
+                <h2 id="commands"><i class="fas fa-terminal"></i> Practical Commands</h2>
+
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# RSA KEY OPERATIONS
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Generate RSA private key
+openssl genrsa -out private.pem 4096
+
+# Generate with password protection
+openssl genrsa -aes256 -out private.pem 4096
+
+# Extract public key
+openssl rsa -in private.pem -pubout -out public.pem
+
+# View key details
+openssl rsa -in private.pem -text -noout
+
+# Encrypt file with RSA public key (small files only!)
+openssl rsautl -encrypt -pubin -inkey public.pem -in secret.txt -out encrypted.bin
+
+# Decrypt with private key
+openssl rsautl -decrypt -inkey private.pem -in encrypted.bin -out decrypted.txt
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ECDSA KEY OPERATIONS
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Generate ECDSA P-256 private key
+openssl ecparam -genkey -name prime256v1 -out ec-private.pem
+
+# Generate P-384 key
+openssl ecparam -genkey -name secp384r1 -out ec-private.pem
+
+# Extract public key
+openssl ec -in ec-private.pem -pubout -out ec-public.pem
+
+# View curve and key details
+openssl ec -in ec-private.pem -text -noout
+
+# List available curves
+openssl ecparam -list_curves
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ED25519 KEY OPERATIONS (SSH)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Generate Ed25519 SSH key
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# Convert SSH key to PEM format
+ssh-keygen -p -m PEM -f ~/.ssh/id_ed25519
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DIGITAL SIGNATURES
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Sign file with RSA private key
+openssl dgst -sha256 -sign private.pem -out signature.bin message.txt
+
+# Verify signature with public key
+openssl dgst -sha256 -verify public.pem -signature signature.bin message.txt
+
+# Sign with ECDSA
+openssl dgst -sha256 -sign ec-private.pem -out sig.bin message.txt
+
+# Verify ECDSA signature
+openssl dgst -sha256 -verify ec-public.pem -signature sig.bin message.txt
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PYTHON - RSA and ECDSA
+# ═══════════════════════════════════════════════════════════════════════════
+
+from cryptography.hazmat.primitives.asymmetric import rsa, ec, padding
+from cryptography.hazmat.primitives import hashes, serialization
+
+# Generate RSA key pair
+private_key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=4096
+)
+public_key = private_key.public_key()
+
+# RSA Encryption (with OAEP padding - ALWAYS use padding!)
+ciphertext = public_key.encrypt(
+    b"Secret message",
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+    )
+)
+
+# RSA Decryption
+plaintext = private_key.decrypt(
+    ciphertext,
+    padding.OAEP(
+        mgf=padding.MGF1(algorithm=hashes.SHA256()),
+        algorithm=hashes.SHA256(),
+        label=None
+    )
+)
+
+# Generate ECDSA key pair (P-256)
+ec_private = ec.generate_private_key(ec.SECP256R1())
+ec_public = ec_private.public_key()
+
+# Sign with ECDSA
+signature = ec_private.sign(
+    b"Message to sign",
+    ec.ECDSA(hashes.SHA256())
+)
+
+# Verify signature
+ec_public.verify(signature, b"Message to sign", ec.ECDSA(hashes.SHA256()))</pre></div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="index.html">Encryption Fundamentals</a></li>
+                    <li><a href="symmetric.html">Symmetric Encryption</a></li>
+                    <li><a href="hashing.html">Hashing & Password Storage</a></li>
+                    <li><a href="pki.html">PKI Infrastructure</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

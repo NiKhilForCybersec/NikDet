@@ -328,7 +328,13 @@ function injectSidebar() {
                 <div class="sidebar-section-header"><i class="fas fa-lock section-icon"></i><span>Encryption & Certs</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
                     <li><a href="pages/encryption/index.html">Encryption Overview</a></li>
-                    <li><a href="pages/encryption/certificates-guide.html">Certificate Guide</a></li>
+                    <li><a href="pages/encryption/symmetric.html">Symmetric Encryption</a></li>
+                    <li><a href="pages/encryption/asymmetric.html">Asymmetric Encryption</a></li>
+                    <li><a href="pages/encryption/hashing.html">Hashing & Passwords</a></li>
+                    <li><a href="pages/encryption/tls-ssl.html">TLS/SSL Deep Dive</a></li>
+                    <li><a href="pages/encryption/pki.html">PKI Infrastructure</a></li>
+                    <li><a href="pages/encryption/certificates-guide.html">Certificate Management</a></li>
+                    <li><a href="pages/encryption/crypto-attacks.html">Crypto Attacks</a></li>
                 </ul>
             </div>
             <!-- SECURITY ARCHITECTURE -->
@@ -357,6 +363,19 @@ function injectSidebar() {
                     <li><a href="pages/security-architecture/security-decisions-guide.html">Decisions Guide</a></li>
                     <li><a href="pages/security-architecture/security-faq.html">Security FAQ</a></li>
                     <li><a href="pages/security-architecture/troubleshooting-security.html">Troubleshooting</a></li>
+                </ul>
+            </div>
+            <!-- SASE & ZERO TRUST -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-cloud-bolt section-icon"></i><span>SASE & Zero Trust</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/network-security/index.html">SASE Overview</a></li>
+                    <li><a href="pages/network-security/sase-architecture.html">SASE Architecture</a></li>
+                    <li><a href="pages/network-security/ztna-zpa.html">ZTNA & Zscaler ZPA</a></li>
+                    <li><a href="pages/network-security/swg-zia.html">SWG & Zscaler ZIA</a></li>
+                    <li><a href="pages/network-security/deployment-scenarios.html">Deployment Scenarios</a></li>
+                    <li><a href="pages/network-security/troubleshooting.html">Troubleshooting</a></li>
+                    <li><a href="pages/network-security/interview-qa.html">Interview Q&A</a></li>
                 </ul>
             </div>
             <!-- FRAMEWORKS -->

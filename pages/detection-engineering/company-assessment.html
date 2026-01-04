@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Assessment - Apex Financial Case Study | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .company-profile { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border-radius: 12px; padding: 2rem; margin: 1.5rem 0; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .company-profile h3 { margin-top: 0; color: var(--accent-primary); }
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .risk-high { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 0.5rem 0; }
+        .risk-medium { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 0.5rem 0; }
+        .risk-low { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 0.5rem 0; }
+        .asset-table { width: 100%; }
+        .crown-jewel { background: rgba(239, 68, 68, 0.1); }
+        .finding-box { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .timeline-step { display: flex; gap: 1rem; margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; }
+        .timeline-step .step-num { background: var(--accent-primary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .nav-story { background: rgba(99, 102, 241, 0.1); border-radius: 8px; padding: 1rem; margin: 2rem 0; }
+        .nav-story h4 { margin-top: 0; }
+    </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Detection Engineering</a><span class="separator">/</span>
+                <span>Company Assessment</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-building"></i> Detection Assessment Case Study</h1>
+                <p class="lead">Follow Apex Financial Services through a complete detection engineering journey - from initial assessment to full coverage analysis.</p>
+
+                <div class="nav-story">
+                    <h4>📖 The Apex Financial Story</h4>
+                    <p>This is <strong>Part 1 of 4</strong> in a connected case study:</p>
+                    <ol>
+                        <li><strong>Company Assessment</strong> (You are here) - Understanding the environment and risks</li>
+                        <li><a href="lifecycle.html">Detection Engineering</a> - Building detections based on assessment</li>
+                        <li><a href="sigma-rules.html">Writing Detections</a> - Creating actual detection rules</li>
+                        <li><a href="coverage-analysis.html">Coverage Analysis</a> - Measuring detection coverage</li>
+                    </ol>
+                </div>
+
+                <!-- COMPANY PROFILE -->
+                <h2 id="company"><i class="fas fa-id-card"></i> Company Profile: Apex Financial Services</h2>
+
+                <div class="company-profile">
+                    <h3>🏢 Apex Financial Services</h3>
+                    <table>
+                        <tr><td><strong>Industry:</strong></td><td>Financial Services (Wealth Management)</td></tr>
+                        <tr><td><strong>Size:</strong></td><td>2,500 employees across 12 offices</td></tr>
+                        <tr><td><strong>Headquarters:</strong></td><td>Chicago, IL</td></tr>
+                        <tr><td><strong>IT Environment:</strong></td><td>Hybrid (60% cloud, 40% on-premises)</td></tr>
+                        <tr><td><strong>Compliance:</strong></td><td>SOX, SEC regulations, state privacy laws</td></tr>
+                        <tr><td><strong>Security Team:</strong></td><td>8-person SOC, 4 security engineers</td></tr>
+                        <tr><td><strong>SIEM:</strong></td><td>Microsoft Sentinel</td></tr>
+                        <tr><td><strong>EDR:</strong></td><td>Microsoft Defender for Endpoint</td></tr>
+                    </table>
+                </div>
+
+                <!-- THE INCIDENT THAT STARTED IT ALL -->
+                <h2 id="incident"><i class="fas fa-fire"></i> The Wake-Up Call</h2>
+
+                <div class="scenario-box">
+                    <h4>🚨 The Incident: March 2024</h4>
+                    <p>Three months ago, Apex experienced a security incident that exposed gaps in their detection capabilities:</p>
+                    
+                    <div class="finding-box">
+<pre><strong>INCIDENT SUMMARY: BEC Attack Leading to Wire Fraud</strong>
+
+Timeline:
+- Day 1: CFO received phishing email (bypassed email security)
+- Day 1: CFO clicked link, entered credentials on fake O365 page
+- Day 2-14: Attacker monitored CFO's email silently
+- Day 14: Attacker created inbox rule forwarding payment-related emails
+- Day 21: Attacker sent spoofed email as "vendor" with new bank details
+- Day 22: Finance wired $340,000 to fraudulent account
+- Day 23: Real vendor called asking about payment - fraud discovered
+
+Detection Failures:
+❌ Phishing email not detected (new domain, no reputation)
+❌ Credential theft not detected (no impossible travel alert)
+❌ Inbox rule creation not detected (no monitoring)
+❌ Unusual email access patterns not detected
+❌ Wire transfer to new account not flagged
+
+How It Was Discovered:
+- Legitimate vendor called asking where their payment was
+- NOT detected by security tools</pre>
+                    </div>
+
+                    <p><strong>Impact:</strong></p>
+                    <ul>
+                        <li>$340,000 lost (partially recovered through bank)</li>
+                        <li>SEC notification required</li>
+                        <li>Board demanded security improvements</li>
+                        <li>CISO given budget for detection engineering program</li>
+                    </ul>
+                </div>
+
+                <!-- ENVIRONMENT ASSESSMENT -->
+                <h2 id="environment"><i class="fas fa-network-wired"></i> Environment Assessment</h2>
+
+                <h3>Infrastructure Overview</h3>
+                <table>
+                    <thead><tr><th>Component</th><th>Details</th><th>Log Source</th><th>Coverage</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Identity</strong></td>
+                            <td>Entra ID (Azure AD) + on-prem AD (hybrid)</td>
+                            <td>Entra ID logs, Security Events</td>
+                            <td>✓ Full</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email</strong></td>
+                            <td>Microsoft 365 Exchange Online</td>
+                            <td>Office 365 audit logs</td>
+                            <td>⚠️ Partial (not all events)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Endpoints</strong></td>
+                            <td>2,100 Windows, 400 Mac</td>
+                            <td>MDE, some Sysmon</td>
+                            <td>✓ Windows / ⚠️ Mac</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Servers</strong></td>
+                            <td>120 Windows Server, 45 Linux</td>
+                            <td>MDE, Security Events</td>
+                            <td>✓ Windows / ❌ Linux</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Network</strong></td>
+                            <td>Palo Alto firewalls, Zscaler for cloud</td>
+                            <td>Firewall logs, Zscaler</td>
+                            <td>✓ Full</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud</strong></td>
+                            <td>Azure (primary), some AWS</td>
+                            <td>Azure Activity, limited AWS</td>
+                            <td>✓ Azure / ❌ AWS</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Applications</strong></td>
+                            <td>Salesforce, SAP, custom trading platform</td>
+                            <td>Limited app logs</td>
+                            <td>❌ Minimal</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Crown Jewels Identification</h3>
+                <p>What would hurt Apex the most if compromised?</p>
+
+                <table class="asset-table">
+                    <thead><tr><th>Asset</th><th>Type</th><th>Data Classification</th><th>Impact if Compromised</th></tr></thead>
+                    <tbody>
+                        <tr class="crown-jewel">
+                            <td><strong>Trading Platform (APEX-TRADE)</strong></td>
+                            <td>Custom Application</td>
+                            <td>Confidential</td>
+                            <td>CRITICAL - Client trades, market manipulation risk</td>
+                        </tr>
+                        <tr class="crown-jewel">
+                            <td><strong>Client Database (SQL-PROD-01)</strong></td>
+                            <td>SQL Server</td>
+                            <td>PII, Financial</td>
+                            <td>CRITICAL - 50,000 client records, SSN, account numbers</td>
+                        </tr>
+                        <tr class="crown-jewel">
+                            <td><strong>Domain Controllers</strong></td>
+                            <td>AD Infrastructure</td>
+                            <td>Infrastructure</td>
+                            <td>CRITICAL - Full domain compromise</td>
+                        </tr>
+                        <tr class="crown-jewel">
+                            <td><strong>Wire Transfer System</strong></td>
+                            <td>SAP Integration</td>
+                            <td>Financial</td>
+                            <td>CRITICAL - Direct financial loss (as proven)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email System</strong></td>
+                            <td>M365 Exchange</td>
+                            <td>Confidential</td>
+                            <td>HIGH - BEC risk, data exfiltration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Executive Endpoints</strong></td>
+                            <td>Workstations</td>
+                            <td>Confidential</td>
+                            <td>HIGH - Target for spearphishing, BEC</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- THREAT ASSESSMENT -->
+                <h2 id="threats"><i class="fas fa-user-secret"></i> Threat Assessment</h2>
+
+                <h3>Who Would Target Apex?</h3>
+
+                <div class="risk-high">
+                    <h4>🔴 HIGH RISK: Financially Motivated Criminals</h4>
+                    <p><strong>Motivation:</strong> Direct financial gain through BEC, ransomware, or data theft</p>
+                    <p><strong>Capability:</strong> Moderate - use commodity tools, phishing kits</p>
+                    <p><strong>Likelihood:</strong> HIGH - already happened once</p>
+                    <p><strong>Primary TTPs:</strong></p>
+                    <ul>
+                        <li>Phishing for credentials (T1566)</li>
+                        <li>Business Email Compromise (T1534)</li>
+                        <li>Ransomware deployment (T1486)</li>
+                    </ul>
+                </div>
+
+                <div class="risk-medium">
+                    <h4>🟡 MEDIUM RISK: Insider Threats</h4>
+                    <p><strong>Motivation:</strong> Financial gain, revenge, competitor espionage</p>
+                    <p><strong>Capability:</strong> High - legitimate access, knows systems</p>
+                    <p><strong>Likelihood:</strong> MEDIUM - financial industry has higher insider risk</p>
+                    <p><strong>Primary TTPs:</strong></p>
+                    <ul>
+                        <li>Data exfiltration to personal accounts (T1567)</li>
+                        <li>Privilege abuse (T1078)</li>
+                        <li>Access to client data before resignation</li>
+                    </ul>
+                </div>
+
+                <div class="risk-medium">
+                    <h4>🟡 MEDIUM RISK: Nation-State (Economic Espionage)</h4>
+                    <p><strong>Motivation:</strong> Market intelligence, client information</p>
+                    <p><strong>Capability:</strong> Very High - advanced tools, patient</p>
+                    <p><strong>Likelihood:</strong> LOW-MEDIUM - not primary target but financial sector is targeted</p>
+                    <p><strong>Primary TTPs:</strong></p>
+                    <ul>
+                        <li>Spearphishing with zero-days (T1566.001)</li>
+                        <li>Supply chain compromise (T1195)</li>
+                        <li>Long-term persistence (T1053, T1543)</li>
+                    </ul>
+                </div>
+
+                <!-- CURRENT DETECTION GAPS -->
+                <h2 id="gaps"><i class="fas fa-exclamation-circle"></i> Current Detection Gaps</h2>
+
+                <p>Based on the incident and environment assessment, here are the critical gaps:</p>
+
+                <table>
+                    <thead><tr><th>Gap</th><th>Risk</th><th>Related Incident Finding</th><th>Priority</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>No email rule monitoring</strong></td>
+                            <td>BEC, data exfil</td>
+                            <td>Attacker created forwarding rule undetected</td>
+                            <td>🔴 P1</td>
+                        </tr>
+                        <tr>
+                            <td><strong>No impossible travel detection</strong></td>
+                            <td>Account compromise</td>
+                            <td>CFO account accessed from Russia, not detected</td>
+                            <td>🔴 P1</td>
+                        </tr>
+                        <tr>
+                            <td><strong>No OAuth app monitoring</strong></td>
+                            <td>Persistence, data access</td>
+                            <td>Not exploited but common BEC persistence</td>
+                            <td>🔴 P1</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Limited credential dumping detection</strong></td>
+                            <td>Lateral movement</td>
+                            <td>N/A but critical gap</td>
+                            <td>🟡 P2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>No Linux server monitoring</strong></td>
+                            <td>Server compromise</td>
+                            <td>N/A but 45 servers unmonitored</td>
+                            <td>🟡 P2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>No data exfiltration detection</strong></td>
+                            <td>Data theft</td>
+                            <td>N/A but insider threat concern</td>
+                            <td>🟡 P2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>AWS not integrated</strong></td>
+                            <td>Cloud compromise</td>
+                            <td>N/A but growing cloud footprint</td>
+                            <td>🟢 P3</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- DETECTION PRIORITIES -->
+                <h2 id="priorities"><i class="fas fa-list-ol"></i> Detection Priorities</h2>
+
+                <p>Based on the assessment, here's the detection engineering roadmap:</p>
+
+                <div class="timeline-step">
+                    <div class="step-num">1</div>
+                    <div>
+                        <strong>Month 1: BEC Prevention (Post-Incident)</strong>
+                        <p>Email rule monitoring, impossible travel, OAuth app consent, MFA bypass detection</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step">
+                    <div class="step-num">2</div>
+                    <div>
+                        <strong>Month 2: Identity Protection</strong>
+                        <p>Credential dumping, Kerberoasting, Pass-the-Hash, privileged account abuse</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step">
+                    <div class="step-num">3</div>
+                    <div>
+                        <strong>Month 3: Endpoint Threats</strong>
+                        <p>Ransomware indicators, LOLBin abuse, persistence mechanisms, lateral movement</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step">
+                    <div class="step-num">4</div>
+                    <div>
+                        <strong>Month 4: Data Protection</strong>
+                        <p>Large file transfers, cloud storage uploads, unusual database queries, insider threat indicators</p>
+                    </div>
+                </div>
+
+                <div class="timeline-step">
+                    <div class="step-num">5</div>
+                    <div>
+                        <strong>Month 5-6: Infrastructure Gaps</strong>
+                        <p>Linux server monitoring, AWS integration, application logging improvements</p>
+                    </div>
+                </div>
+
+                <!-- NEXT STEPS -->
+                <div class="nav-story">
+                    <h4>📖 Continue the Story</h4>
+                    <p>Now that we've assessed Apex Financial's environment and identified detection priorities, continue to:</p>
+                    <p><strong>Next:</strong> <a href="lifecycle.html">Detection Engineering Lifecycle</a> - See how Apex builds detections for their top priority gaps</p>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="lifecycle.html" class="card"><div class="card-icon"><i class="fas fa-sync-alt"></i></div><h3>Detection Lifecycle</h3><p>Build detections</p></a>
+                    <a href="coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-chart-pie"></i></div><h3>Coverage Analysis</h3><p>Measure coverage</p></a>
+                    <a href="crown-jewels.html" class="card"><div class="card-icon"><i class="fas fa-gem"></i></div><h3>Crown Jewels</h3><p>Asset identification</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

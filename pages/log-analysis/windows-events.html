@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
         .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
         .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
         .log-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; white-space: pre; }
@@ -28,13 +29,106 @@
         <div class="content-page">
             <div class="breadcrumb">
                 <a href="index.html">Home</a><span class="separator">/</span>
-                <a href="pages/log-analysis/index.html">Log Analysis</a><span class="separator">/</span>
+                <a href="index.html">Log Analysis</a><span class="separator">/</span>
                 <span>Windows Events</span>
             </div>
 
             <div class="content">
                 <h1><i class="fab fa-windows"></i> Windows Event Log Analysis</h1>
                 <p class="lead">Real Windows event analysis: what events actually look like, how to spot attacks, and common investigation patterns.</p>
+
+                <div class="diagram-box">
+WINDOWS EVENT LOGS - THE BIG PICTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+Windows generates events in different LOGS:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            WINDOWS EVENT LOGS                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  SECURITY LOG                    SYSTEM LOG            APPLICATION LOG     │
+│  (Most important for SOC)        (OS events)           (App events)        │
+│  ─────────────────────           ────────────          ────────────        │
+│  • Logons (4624, 4625)           • Service start/stop  • App crashes       │
+│  • Account changes               • Driver issues       • App errors        │
+│  • Process creation              • Hardware events     • Updates           │
+│  • Privilege use                 • Boot events                             │
+│  • Audit policy changes                                                     │
+│                                                                             │
+│  POWERSHELL LOG                  SYSMON LOG (if installed)                 │
+│  ─────────────────               ────────────────────────                  │
+│  • Script execution              • Process creation (much better)          │
+│  • Module loading                • Network connections                     │
+│  • Script block content          • File creation                           │
+│                                  • Registry changes                        │
+│                                  • DNS queries                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+THE MOST IMPORTANT EVENT IDs (MEMORIZE THESE):
+═══════════════════════════════════════════════════════════════════════════════
+
+AUTHENTICATION:
+  4624 ──► Successful logon    │ "Who logged in?"
+  4625 ──► Failed logon        │ "Who tried and failed?"
+  4648 ──► Explicit creds      │ "RunAs, lateral movement"
+  4672 ──► Admin privileges    │ "Admin logon!"
+  
+PROCESS EXECUTION:
+  4688 ──► Process created     │ "What ran?" (ENABLE THIS!)
+  
+ACCOUNT CHANGES:
+  4720 ──► Account created     │ "New account = persistence?"
+  4728 ──► Added to group      │ "Privilege escalation?"
+  4732 ──► Added to local grp  │ "Local admin?"
+
+KERBEROS (Domain):
+  4768 ──► TGT requested       │ "Initial auth to domain"
+  4769 ──► Service ticket      │ "Kerberoasting?"
+  4776 ──► NTLM auth           │ "Legacy auth, pass-the-hash"
+                </div>
+
+                <div class="diagram-box">
+LOGON TYPE - CRITICAL FOR UNDERSTANDING 4624/4625
+═══════════════════════════════════════════════════════════════════════════════
+
+When you see Event 4624/4625, the LOGON TYPE tells you HOW they logged in:
+
+TYPE   NAME             HOW IT WORKS                     WHAT TO LOOK FOR
+─────────────────────────────────────────────────────────────────────────────
+ 2     Interactive      Keyboard at console              Normal user logon
+ 3     Network          SMB, file share access           Lateral movement!
+ 4     Batch            Scheduled task                   Persistence mechanism
+ 5     Service          Service starting                 Service accounts
+ 7     Unlock           Workstation unlock               Normal
+ 8     NetworkCleartext IIS Basic Auth                   Rare, check why
+ 9     NewCredentials   RunAs /netonly                   Suspicious if unexpected
+10     RemoteInteractive RDP                             Remote access
+11     CachedInteractive Cached creds (offline)          Laptop offline logon
+
+
+ATTACK DETECTION CHEATSHEET:
+─────────────────────────────────────────────────────────────────────────────
+
+🔴 Brute Force:
+   Multiple 4625 (failed) → Same username → Different source IPs
+   
+🔴 Password Spray:
+   Multiple 4625 (failed) → Different usernames → Same source IP → Same time
+   
+🔴 Lateral Movement:
+   4624 Type 3 → From internal IP → To multiple servers → Admin account
+   
+🔴 Pass-the-Hash:
+   4624 Type 3 → 4776 (NTLM) → Admin account → No 4768 (no Kerberos TGT)
+   
+🔴 Kerberoasting:
+   4769 → Many service tickets → From one account → Short time period
+   
+🔴 Persistence:
+   4720 (account created) → Then 4732 (added to admin group)
+                </div>
 
                 <div class="info-box">
                     <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
@@ -343,9 +437,9 @@ SecurityEvent
                 <!-- RELATED -->
                 <h2><i class="fas fa-link"></i> Related</h2>
                 <div class="card-grid">
-                    <a href="pages/log-analysis/sysmon.html" class="card"><div class="card-icon"><i class="fas fa-eye"></i></div><h3>Sysmon</h3><p>Enhanced logging</p></a>
-                    <a href="pages/references/kql-library.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Library</h3><p>Query templates</p></a>
-                    <a href="pages/playbooks/index.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>Playbooks</h3><p>Investigation guides</p></a>
+                    <a href="sysmon.html" class="card"><div class="card-icon"><i class="fas fa-eye"></i></div><h3>Sysmon</h3><p>Enhanced logging</p></a>
+                    <a href="kql-library.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Library</h3><p>Query templates</p></a>
+                    <a href="index.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>Playbooks</h3><p>Investigation guides</p></a>
                 </div>
 
             </div>

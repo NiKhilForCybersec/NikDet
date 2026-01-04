@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TLS/SSL Deep Dive | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Encryption</a><span class="separator">/</span><span>TLS/SSL</span></div>
+            <div class="content">
+                <h1><i class="fas fa-shield-alt"></i> TLS/SSL Deep Dive</h1>
+                <p class="lead">Complete technical guide to Transport Layer Security - handshakes, cipher suites, configuration, and security hardening.</p>
+
+                <div class="diagram-box">
+TLS 1.3 vs TLS 1.2 HANDSHAKE COMPARISON
+═══════════════════════════════════════════════════════════════════════════════
+
+TLS 1.2 HANDSHAKE (2 Round Trips):
+─────────────────────────────────────────────────────────────────────────────
+
+  Client                                                          Server
+    │                                                                │
+    │ ──────────── ClientHello ─────────────────────────────────► │ 
+    │              (TLS version, ciphers, random)                   │ RTT 1
+    │ ◄─────────── ServerHello ──────────────────────────────────  │
+    │              Certificate                                       │
+    │              ServerKeyExchange                                 │
+    │              ServerHelloDone                                   │
+    │                                                                │
+    │ ──────────── ClientKeyExchange ───────────────────────────► │
+    │              ChangeCipherSpec                                  │ RTT 2
+    │              Finished                                          │
+    │ ◄─────────── ChangeCipherSpec ─────────────────────────────  │
+    │              Finished                                          │
+    │                                                                │
+    │ ◄═══════════ Application Data ════════════════════════════► │
+    
+    TOTAL: 2 round trips before data can be sent
+
+
+TLS 1.3 HANDSHAKE (1 Round Trip):
+─────────────────────────────────────────────────────────────────────────────
+
+  Client                                                          Server
+    │                                                                │
+    │ ──────────── ClientHello + KeyShare ──────────────────────► │
+    │              (Includes DH public value upfront!)              │ RTT 1
+    │ ◄─────────── ServerHello + KeyShare ───────────────────────  │
+    │              {EncryptedExtensions}                            │
+    │              {Certificate}                                     │
+    │              {CertificateVerify}                              │
+    │              {Finished}                                        │
+    │                                                                │
+    │ ──────────── {Finished} ──────────────────────────────────► │
+    │ ◄═══════════ Application Data ════════════════════════════► │
+    
+    TOTAL: 1 round trip (50% faster!)
+    
+    { } = Encrypted
+
+
+TLS 1.3 0-RTT (Zero Round Trip Time) RESUMPTION:
+─────────────────────────────────────────────────────────────────────────────
+
+  For repeat connections (session resumption):
+  
+  Client                                                          Server
+    │                                                                │
+    │ ──────────── ClientHello + KeyShare ──────────────────────► │
+    │              + Early Data (0-RTT)         ← Data sent        │ RTT 0!
+    │              + PSK Identity               immediately!        │
+    │                                                                │
+    │ ◄═══════════ Application Data ════════════════════════════► │
+    
+    ⚠️  WARNING: 0-RTT data can be replayed! Only for idempotent requests.
+        Safe: GET requests
+        Unsafe: POST, PUT, DELETE (could be replayed)
+
+
+WHAT TLS 1.3 REMOVED (Good Riddance!):
+═══════════════════════════════════════════════════════════════════════════════
+
+  ❌ REMOVED                          WHY
+  ─────────────────────────────────────────────────────────────────────────────
+  Static RSA key exchange            No forward secrecy - if key compromised,
+                                     all past traffic can be decrypted
+  
+  DES, 3DES, RC4                     Broken or weak ciphers
+  
+  MD5, SHA-1 in signatures           Collision attacks proven
+  
+  CBC mode ciphers                   Padding oracle attacks (POODLE, Lucky13)
+  
+  Compression                        CRIME/BREACH attacks
+  
+  Renegotiation                      Attack vector, complexity
+  
+  Custom DH groups                   Logjam attack on weak groups
+  
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  ✅ TLS 1.3 ONLY ALLOWS:
+  • AEAD ciphers (AES-GCM, ChaCha20-Poly1305)
+  • Ephemeral key exchange (ECDHE, DHE) - Forward secrecy mandatory!
+  • SHA-256 or stronger hashes
+                </div>
+
+                <h2 id="ciphersuites"><i class="fas fa-cogs"></i> Cipher Suites Explained</h2>
+
+                <div class="diagram-box">
+CIPHER SUITE ANATOMY
+═══════════════════════════════════════════════════════════════════════════════
+
+TLS 1.2 CIPHER SUITE FORMAT:
+─────────────────────────────────────────────────────────────────────────────
+
+  TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+  ─── ───── ─── ──── ─── ─── ───────────
+   │    │    │    │   │   │      │
+   │    │    │    │   │   │      └──► PRF/HMAC Hash: SHA-384
+   │    │    │    │   │   │           (Pseudorandom function)
+   │    │    │    │   │   │
+   │    │    │    │   │   └─────────► Mode: GCM (Authenticated)
+   │    │    │    │   │               Provides integrity + encryption
+   │    │    │    │   │
+   │    │    │    │   └─────────────► Key Size: 256-bit
+   │    │    │    │
+   │    │    │    └─────────────────► Symmetric Cipher: AES
+   │    │    │                        (Bulk data encryption)
+   │    │    │
+   │    │    └──────────────────────► Authentication: RSA
+   │    │                             (Server certificate uses RSA key)
+   │    │
+   │    └───────────────────────────► Key Exchange: ECDHE
+   │                                  Elliptic Curve Diffie-Hellman Ephemeral
+   │                                  (Forward secrecy!)
+   │
+   └────────────────────────────────► Protocol: TLS
+
+
+TLS 1.3 CIPHER SUITE FORMAT (Simplified):
+─────────────────────────────────────────────────────────────────────────────
+
+  TLS_AES_256_GCM_SHA384
+  ─── ─── ─── ──────────
+   │   │   │      │
+   │   │   │      └──► Hash: SHA-384
+   │   │   │
+   │   │   └─────────► Mode: GCM
+   │   │
+   │   └─────────────► Key Size: 256-bit
+   │
+   └─────────────────► Symmetric Cipher: AES
+  
+  Key exchange is negotiated separately (always ECDHE/DHE)
+  Authentication is always via certificate (RSA or ECDSA)
+
+
+RECOMMENDED CIPHER SUITES:
+═══════════════════════════════════════════════════════════════════════════════
+
+  TLS 1.3 (All good - just pick):
+  ─────────────────────────────────────────────────────────────────────────────
+  TLS_AES_256_GCM_SHA384           ✅ Best security
+  TLS_CHACHA20_POLY1305_SHA256     ✅ Best for mobile/no AES-NI
+  TLS_AES_128_GCM_SHA256           ✅ Good, slightly faster
+  
+  
+  TLS 1.2 (Be selective!):
+  ─────────────────────────────────────────────────────────────────────────────
+  ✅ RECOMMENDED:
+  TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384    ECDSA cert + ECDHE + AES-GCM
+  TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384      RSA cert + ECDHE + AES-GCM
+  TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+  TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+  TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+  TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+  
+  ⚠️  ACCEPTABLE (legacy compatibility):
+  TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384      CBC mode - less preferred
+  TLS_DHE_RSA_WITH_AES_256_GCM_SHA384        DHE slower than ECDHE
+  
+  ❌ AVOID:
+  TLS_RSA_WITH_AES_256_CBC_SHA               No forward secrecy!
+  TLS_RSA_WITH_3DES_EDE_CBC_SHA              3DES weak, no FS
+  Anything with RC4, DES, MD5, SHA-1
+
+
+FORWARD SECRECY EXPLAINED:
+═══════════════════════════════════════════════════════════════════════════════
+
+  WITHOUT Forward Secrecy (Static RSA):
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  Year 1: Attacker records encrypted traffic (can't read it yet)
+  
+  Year 5: Attacker steals server's RSA private key
+          (breach, quantum computer, legal order, etc.)
+  
+  Result: Attacker decrypts ALL recorded traffic from past 5 years!
+          Server key was used directly in key exchange.
+  
+  
+  WITH Forward Secrecy (Ephemeral DH):
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  Each connection:
+  • Generate NEW temporary DH key pair
+  • Use for this session only
+  • Delete after session ends
+  
+  Server private key only used for AUTHENTICATION (signature)
+  Not for key exchange!
+  
+  Year 5: Attacker steals server's RSA private key
+  
+  Result: Attacker can impersonate server going forward
+          BUT cannot decrypt past recorded traffic!
+          Those session keys are gone forever.
+  
+  
+  ECDHE = Elliptic Curve Diffie-Hellman EPHEMERAL
+                                        ─────────
+                                        New keys each session!
+                </div>
+
+                <h2 id="config"><i class="fas fa-sliders-h"></i> Secure TLS Configuration</h2>
+
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# NGINX - Modern TLS Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+
+# /etc/nginx/conf.d/ssl.conf
+
+# Protocols - TLS 1.2 minimum, prefer TLS 1.3
+ssl_protocols TLSv1.2 TLSv1.3;
+
+# Cipher suites - Modern, secure ciphers only
+ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+
+# Let client choose preferred cipher (for TLS 1.3 compatibility)
+ssl_prefer_server_ciphers off;
+
+# SSL session cache for performance
+ssl_session_cache shared:SSL:10m;
+ssl_session_timeout 1d;
+ssl_session_tickets off;  # Disable for forward secrecy
+
+# OCSP Stapling - Faster certificate validation
+ssl_stapling on;
+ssl_stapling_verify on;
+resolver 8.8.8.8 8.8.4.4 valid=300s;
+resolver_timeout 5s;
+
+# DH parameters (for DHE ciphers)
+ssl_dhparam /etc/nginx/dhparam.pem;  # Generate: openssl dhparam -out dhparam.pem 4096
+
+# Security headers
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "SAMEORIGIN" always;
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# APACHE - Modern TLS Configuration  
+# ═══════════════════════════════════════════════════════════════════════════
+
+# /etc/apache2/mods-available/ssl.conf
+
+SSLProtocol all -SSLv3 -TLSv1 -TLSv1.1
+SSLCipherSuite ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+SSLHonorCipherOrder off
+SSLSessionTickets off
+
+SSLUseStapling On
+SSLStaplingCache "shmcb:logs/ssl_stapling(32768)"
+
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# IIS - Modern TLS Configuration (PowerShell)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Disable old protocols
+$protocols = @('SSL 2.0', 'SSL 3.0', 'TLS 1.0', 'TLS 1.1')
+foreach ($protocol in $protocols) {
+    New-Item "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$protocol\Server" -Force
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$protocol\Server" -Name 'Enabled' -Value 0
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$protocol\Server" -Name 'DisabledByDefault' -Value 1
+}
+
+# Enable TLS 1.2 and 1.3
+$enableProtocols = @('TLS 1.2', 'TLS 1.3')
+foreach ($protocol in $enableProtocols) {
+    New-Item "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$protocol\Server" -Force
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\$protocol\Server" -Name 'Enabled' -Value 1
+}</pre></div>
+
+                <h2 id="testing"><i class="fas fa-vial"></i> TLS Testing</h2>
+
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# TESTING TLS CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Quick test - show certificate and connection details
+openssl s_client -connect example.com:443 -tls1_3
+
+# Test specific TLS versions
+openssl s_client -connect example.com:443 -tls1_2
+openssl s_client -connect example.com:443 -tls1_3
+openssl s_client -connect example.com:443 -tls1_1  # Should fail if disabled
+
+# Show supported ciphers
+nmap --script ssl-enum-ciphers -p 443 example.com
+
+# Comprehensive SSL test (install testssl.sh)
+./testssl.sh example.com
+
+# Check certificate details
+echo | openssl s_client -connect example.com:443 2>/dev/null | \
+    openssl x509 -noout -text
+
+# Check expiration
+echo | openssl s_client -connect example.com:443 2>/dev/null | \
+    openssl x509 -noout -dates
+
+# Verify certificate chain
+openssl s_client -connect example.com:443 -showcerts
+
+# Test with specific SNI (Server Name Indication)
+openssl s_client -connect example.com:443 -servername example.com
+
+# Online testing
+# https://www.ssllabs.com/ssltest/   - Qualys SSL Labs (A+ rating target)
+# https://www.immuniweb.com/ssl/     - Alternative scanner</pre></div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="index.html">Encryption Fundamentals</a></li>
+                    <li><a href="certificates-guide.html">Certificate Management Guide</a></li>
+                    <li><a href="pki.html">PKI Infrastructure</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -7,16 +7,19 @@
     <title>C2 Detection Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/playbooks/investigation/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/playbooks/investigation/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
                 <span>C2 Detection</span>
             </div>
 
@@ -38,6 +41,97 @@
                     <span class="mitre-tag">T1090</span>
                     <span class="mitre-tag">T1102</span>
                 </div>
+            </div>
+
+            <div class="diagram-box">
+COMMAND & CONTROL (C2) - HOW IT WORKS
+═══════════════════════════════════════════════════════════════════════════════
+
+     ATTACKER'S                                    COMPROMISED
+     C2 SERVER                                     ENDPOINT
+         │                                              │
+         │◄─────────────── BEACON ─────────────────────│
+         │                 "I'm alive, any commands?"   │
+         │                                              │
+         │────────────── COMMAND ──────────────────────►│
+         │               "Run whoami"                   │
+         │                                              │
+         │◄─────────────── RESPONSE ───────────────────│
+         │               "NT AUTHORITY\SYSTEM"          │
+         │                                              │
+         │────────────── COMMAND ──────────────────────►│
+         │               "Download mimikatz.exe"        │
+         │                                              │
+         │◄─────────────── DATA EXFIL ─────────────────│
+         │               credential_dump.txt            │
+         │                                              │
+
+BEACONING: Regular check-ins from malware to C2 server
+           Interval examples: 60 sec, 5 min, random jitter
+
+
+C2 DETECTION PATTERNS:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. BEACONING (Regular intervals)
+─────────────────────────────────────────────────────────────────────────────
+   Time:  09:00  09:05  09:10  09:15  09:20  09:25  09:30
+          │      │      │      │      │      │      │
+          ▼      ▼      ▼      ▼      ▼      ▼      ▼
+   Conn:  ●      ●      ●      ●      ●      ●      ●
+          
+   SUSPICIOUS: Same destination, regular intervals, 24/7
+
+
+2. DNS TUNNELING (Data in DNS queries)
+─────────────────────────────────────────────────────────────────────────────
+   Normal DNS:    "www.google.com"
+   Tunneling:     "aGVsbG8gd29ybGQ.data.evil.com"
+                   └──────────────┘
+                   Base64-encoded data in subdomain!
+                   
+   SUSPICIOUS: Long subdomain, high query volume, unusual TXT records
+
+
+3. PROTOCOL ABUSE (HTTP/HTTPS hiding C2)
+─────────────────────────────────────────────────────────────────────────────
+   Looks like:    GET /images/logo.png HTTP/1.1
+   Actually:      Commands encoded in cookies, headers, or response
+   
+   SUSPICIOUS: High frequency, odd User-Agents, large response to small request
+
+
+COMMON C2 FRAMEWORKS AND THEIR SIGNATURES:
+═══════════════════════════════════════════════════════════════════════════════
+
+COBALT STRIKE                    SLIVER                 MYTHIC
+─────────────────               ───────                 ──────
+• Default 60s beacon            • WireGuard-like       • Agent-based
+• Malleable C2 profiles           protocol             • Custom payloads
+• Named pipes for SMB           • mTLS encrypted       • Various C2 types
+• HTTPS common                  • DNS, HTTP, mTLS      • Modular
+
+DETECTION CLUES:
+• JA3/JA3S fingerprints (TLS client/server signatures)
+• Unusual process → network relationships
+• Beacon timing patterns
+• Known C2 domain/IP reputation
+
+
+INVESTIGATION CHECKLIST:
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ □ ISOLATE the host immediately                                             │
+│ □ PRESERVE network logs before they roll                                   │
+│ □ IDENTIFY the process making connections                                  │
+│ □ CHECK threat intel on destination IP/domain                              │
+│ □ ANALYZE beacon interval pattern                                          │
+│ □ SEARCH for same IOC across environment                                   │
+│ □ FIND patient zero and initial access vector                              │
+│ □ BLOCK C2 at firewall                                                     │
+│ □ HUNT for persistence mechanisms                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
             </div>
 
             <div class="content">

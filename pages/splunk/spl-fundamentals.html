@@ -7,17 +7,109 @@
     <title>SPL Fundamentals | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/splunk/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/splunk/index.html">Home</a><span class="separator">/</span><a href="pages/splunk/index.html">Splunk</a><span class="separator">/</span><span>SPL Fundamentals</span></div>
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Splunk</a><span class="separator">/</span><span>SPL Fundamentals</span></div>
             <div class="content">
                 <h1>SPL Fundamentals</h1>
                 <p class="lead">Master the Search Processing Language for effective security investigations and threat detection.</p>
+
+                <div class="diagram-box">
+SPL (SPLUNK SEARCH PROCESSING LANGUAGE) - THE PIPELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+Data flows through PIPES, each command transforms and passes to the next:
+
+  INDEX           FILTER          AGGREGATE       TRANSFORM       OUTPUT
+    │               │                │               │              │
+    ▼               ▼                ▼               ▼              ▼
+┌────────┐     ┌────────┐      ┌────────┐      ┌────────┐     ┌────────┐
+│ Raw    │ ──► │ where  │  ──► │ stats  │  ──► │ sort   │ ──► │Results │
+│ Events │  |  │EventCode│  |  │count by│  |   │ -count │     │        │
+│1M rows │     │ =4625  │      │Account │      │        │     │ 25 rows│
+└────────┘     └────────┘      └────────┘      └────────┘     └────────┘
+
+
+SPL QUERY EXAMPLE:
+─────────────────────────────────────────────────────────────────────────────
+
+index=security sourcetype=WinEventLog:Security EventCode=4625
+| stats count by Account_Name, Source_Network_Address
+| where count > 10
+| sort -count
+| head 20
+
+  │ index=security          → Search in "security" index
+  │ sourcetype=...          → Filter to Windows Security logs
+  │ EventCode=4625          → Failed logon events
+  │ stats count by...       → Group and count
+  │ where count > 10        → Filter aggregated results
+  │ sort -count             → Sort descending
+  └ head 20                 → Top 20 results
+
+
+ESSENTIAL SPL COMMANDS:
+═══════════════════════════════════════════════════════════════════════════════
+
+SEARCHING:
+─────────────────────────────────────────────────────────────────────────────
+  index=         Specify which index to search
+  sourcetype=    Filter by data type
+  search         Find keywords (implicit at start)
+  
+  Example: index=security "mimikatz" OR "credential"
+
+
+FILTERING:
+─────────────────────────────────────────────────────────────────────────────
+  where          Filter with expressions
+                 | where count > 100
+  
+  dedup          Remove duplicates
+                 | dedup src_ip
+
+
+AGGREGATING:
+─────────────────────────────────────────────────────────────────────────────
+  stats          Calculate statistics
+                 | stats count, avg(bytes) by user
+  
+  timechart      Statistics over time
+                 | timechart count by EventCode
+
+
+TRANSFORMING:
+─────────────────────────────────────────────────────────────────────────────
+  eval           Create/modify fields
+                 | eval MB = bytes/1024/1024
+  
+  table          Select columns
+                 | table _time, user, action
+
+
+SOC PATTERNS:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Failed Logons by Account:
+   index=security EventCode=4625
+   | stats count by Account_Name
+   | sort -count
+
+2. Outbound Traffic by Destination:
+   index=network dest_port=443
+   | stats sum(bytes) as TotalBytes by dest_ip
+   | sort -TotalBytes
+
+3. Process Execution Timeline:
+   index=endpoint sourcetype=sysmon EventCode=1
+   | table _time, User, ParentImage, Image, CommandLine
+                </div>
 
                 <h2>Search Pipeline Architecture</h2>
                 <p>SPL uses a pipe-based architecture where each command transforms data and passes it to the next:</p>

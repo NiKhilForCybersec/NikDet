@@ -4,24 +4,27 @@
     <base href="/NikDet/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sigma Rules Guide | SOC Compendium</title>
+    <title>Writing Detections - Apex Case Study | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .concept-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
-        .concept-box h3 { color: var(--accent-primary); margin-top: 0; }
-        .analogy-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
-        .analogy-box .label { color: #22c55e; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; }
-        .code-explained { background: var(--card-bg); border-radius: 8px; margin: 1rem 0; overflow: hidden; }
-        .code-explained .code-section { background: #1a1a2e; padding: 1rem; }
-        .code-explained .explain-section { padding: 1rem; border-top: 1px solid var(--border-color); }
-        .line-explain { display: grid; grid-template-columns: auto 1fr; gap: 1rem; margin: 0.5rem 0; align-items: start; }
-        .line-explain code { background: #1a1a2e; padding: 0.25rem 0.5rem; border-radius: 4px; white-space: nowrap; }
-        .conversion-box { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
-        .conversion-flow { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; padding: 1rem; }
-        .conversion-flow .item { background: var(--accent-primary); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-align: center; }
-        .conversion-flow .arrow { font-size: 1.5rem; color: var(--text-muted); }
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .apex-story { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); }
+        .alert-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap; }
+        .nav-story { background: rgba(99, 102, 241, 0.1); border-radius: 8px; padding: 1rem; margin: 2rem 0; }
+        .nav-story h4 { margin-top: 0; }
+        .detection-header { background: var(--accent-primary); color: white; padding: 0.5rem 1rem; border-radius: 8px 8px 0 0; font-weight: bold; }
+        .detection-body { background: var(--card-bg); border: 1px solid var(--accent-primary); border-top: none; border-radius: 0 0 8px 8px; padding: 1rem; margin-bottom: 1.5rem; }
+        .tag { display: inline-block; background: var(--bg-secondary); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin: 0.2rem; }
+        .tag.high { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .tag.medium { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .tag.mitre { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+        .month-header { background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); color: white; padding: 1rem; border-radius: 8px; margin: 2rem 0 1rem 0; }
+        .detection-list { display: grid; gap: 0.5rem; }
+        .detection-item { background: var(--card-bg); padding: 0.75rem 1rem; border-radius: 8px; border-left: 3px solid var(--accent-primary); }
     </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
@@ -29,385 +32,558 @@
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/detection-engineering/index.html">Detection Engineering</a><span class="separator">/</span><span>Sigma Rules</span></div>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Detection Engineering</a><span class="separator">/</span>
+                <span>Writing Detections</span>
+            </div>
+
             <div class="content">
-                <h1><i class="fas fa-file-code" style="color: var(--accent-primary);"></i> Sigma Rules - Complete Guide</h1>
-                <p class="lead">Learn how to write detection rules that work across any SIEM platform.</p>
+                <h1><i class="fas fa-file-code"></i> Writing Detections - Apex Case Study</h1>
+                <p class="lead">See the actual detection rules Apex Financial created based on their assessment - Sigma rules, KQL queries, and production configurations.</p>
 
-                <!-- WHAT IS SIGMA -->
-                <div class="concept-box">
-                    <h3><i class="fas fa-question-circle"></i> What is Sigma?</h3>
-                    <p><strong>Sigma</strong> is a universal language for writing detection rules. You write a rule once in Sigma format, then convert it to work in any SIEM (Splunk, Sentinel, Elastic, QRadar, etc.).</p>
-                    
-                    <p><strong>The Problem Sigma Solves:</strong></p>
-                    <ul>
-                        <li>Every SIEM has its own query language (SPL, KQL, Lucene, AQL...)</li>
-                        <li>Sharing rules between teams/organizations is hard</li>
-                        <li>Switching SIEMs means rewriting all your rules</li>
-                    </ul>
-                    
-                    <p><strong>Sigma's Solution:</strong> Write once, convert to any format!</p>
-                </div>
-
-                <!-- ANALOGY -->
-                <div class="analogy-box">
-                    <div class="label"><i class="fas fa-lightbulb"></i> Think of it like this</div>
-                    <p><strong>Sigma is like a universal translator for security rules:</strong></p>
-                    <ul>
-                        <li>You write a document in "Universal Security Language" (Sigma)</li>
-                        <li>A converter translates it to "Splunk-ese", "Sentinel-speak", or "Elastic-lingo"</li>
-                        <li>The meaning stays the same, just the language changes</li>
-                    </ul>
-                    <p>Like writing a book once and having it automatically translated into every language!</p>
-                </div>
-
-                <!-- HOW CONVERSION WORKS -->
-                <h2><i class="fas fa-exchange-alt"></i> How Sigma Conversion Works</h2>
-
-                <div class="conversion-flow">
-                    <div class="item">📝 Sigma Rule<br><small>(YAML format)</small></div>
-                    <div class="arrow">→</div>
-                    <div class="item">⚙️ Converter<br><small>(sigma-cli)</small></div>
-                    <div class="arrow">→</div>
-                    <div class="item">🔍 SIEM Query<br><small>(KQL/SPL/etc)</small></div>
-                </div>
-
-                <table>
-                    <thead>
-                        <tr><th>Your SIEM</th><th>Sigma Converts To</th><th>Example Output</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><strong>Microsoft Sentinel</strong></td><td>KQL</td><td><code>SecurityEvent | where EventID == 4625</code></td></tr>
-                        <tr><td><strong>Splunk</strong></td><td>SPL</td><td><code>index=windows EventCode=4625</code></td></tr>
-                        <tr><td><strong>Elastic</strong></td><td>Lucene/EQL</td><td><code>event.code:4625</code></td></tr>
-                        <tr><td><strong>QRadar</strong></td><td>AQL</td><td><code>SELECT * WHERE EventID=4625</code></td></tr>
-                    </tbody>
-                </table>
-
-                <!-- SIGMA RULE ANATOMY -->
-                <h2><i class="fas fa-microscope"></i> Anatomy of a Sigma Rule</h2>
-
-                <p>Let's break down a real Sigma rule piece by piece:</p>
-
-                <div class="code-explained">
-                    <div class="code-section">
-<pre style="margin: 0; font-size: 0.8rem;"><code>title: Failed Login Attempts
-id: 12345678-1234-1234-1234-123456789012
-status: production
-description: Detects multiple failed login attempts which may indicate brute force
-author: Your Name
-date: 2024/01/15
-references:
-    - https://attack.mitre.org/techniques/T1110/
-
-logsource:
-    product: windows
-    service: security
-
-detection:
-    selection:
-        EventID: 4625
-    condition: selection | count() > 5
-
-falsepositives:
-    - Users forgetting passwords
-    - Service accounts with expired credentials
-
-level: medium
-
-tags:
-    - attack.credential_access
-    - attack.t1110</code></pre>
-                    </div>
-                    <div class="explain-section">
-                        <h4 style="margin-top: 0;">Line-by-Line Explanation:</h4>
-                        
-                        <div class="line-explain">
-                            <code>title:</code>
-                            <span>Human-readable name for the rule</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>id:</code>
-                            <span>Unique identifier (UUID) - never changes even if rule is updated</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>status:</code>
-                            <span>experimental → test → production (maturity level)</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>logsource:</code>
-                            <span>What type of logs this rule searches (Windows Security logs)</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>detection:</code>
-                            <span>The actual detection logic - what pattern to find</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>selection:</code>
-                            <span>Name for this part of the logic (look for EventID 4625)</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>condition:</code>
-                            <span>When to alert: when selection matches more than 5 times</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>falsepositives:</code>
-                            <span>Known legitimate reasons this might fire (helps analysts)</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>level:</code>
-                            <span>Severity: informational → low → medium → high → critical</span>
-                        </div>
-                        <div class="line-explain">
-                            <code>tags:</code>
-                            <span>MITRE ATT&CK mapping for categorization</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- DETECTION LOGIC -->
-                <h2><i class="fas fa-brain"></i> Understanding Detection Logic</h2>
-
-                <h3>Basic Matching</h3>
-                <div class="code-explained">
-                    <div class="code-section">
-<pre style="margin: 0;"><code>detection:
-    selection:
-        EventID: 4625
-        TargetUserName: 'Administrator'
-    condition: selection</code></pre>
-                    </div>
-                    <div class="explain-section">
-                        <strong>Meaning:</strong> Alert when EventID is 4625 AND TargetUserName is 'Administrator'
-                        <br><strong>Plain English:</strong> "Someone failed to log in as Administrator"
-                    </div>
-                </div>
-
-                <h3>OR Logic (Multiple Values)</h3>
-                <div class="code-explained">
-                    <div class="code-section">
-<pre style="margin: 0;"><code>detection:
-    selection:
-        EventID:
-            - 4625
-            - 4771
-            - 4776
-    condition: selection</code></pre>
-                    </div>
-                    <div class="explain-section">
-                        <strong>Meaning:</strong> Alert when EventID is 4625 OR 4771 OR 4776
-                        <br><strong>Plain English:</strong> "Any of these authentication failure event types"
-                    </div>
-                </div>
-
-                <h3>AND + OR Combined</h3>
-                <div class="code-explained">
-                    <div class="code-section">
-<pre style="margin: 0;"><code>detection:
-    selection:
-        EventID: 1
-        Image|endswith:
-            - '\powershell.exe'
-            - '\pwsh.exe'
-    filter:
-        ParentImage|endswith: '\explorer.exe'
-    condition: selection and not filter</code></pre>
-                    </div>
-                    <div class="explain-section">
-                        <strong>Meaning:</strong> Alert when:
-                        <ul style="margin: 0.5rem 0;">
-                            <li>EventID is 1 (Process Creation) AND</li>
-                            <li>Process is PowerShell AND</li>
-                            <li>Parent is NOT Explorer (user-initiated is normal)</li>
-                        </ul>
-                        <strong>Plain English:</strong> "PowerShell launched by something other than a user clicking it"
-                    </div>
-                </div>
-
-                <!-- MODIFIERS -->
-                <h2><i class="fas fa-filter"></i> String Modifiers (Pattern Matching)</h2>
-
-                <table>
-                    <thead>
-                        <tr><th>Modifier</th><th>What It Does</th><th>Example</th><th>Matches</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>|contains</code></td>
-                            <td>Value appears anywhere in field</td>
-                            <td><code>CommandLine|contains: '-enc'</code></td>
-                            <td>"powershell <strong>-enc</strong> ABC123"</td>
-                        </tr>
-                        <tr>
-                            <td><code>|startswith</code></td>
-                            <td>Field starts with value</td>
-                            <td><code>Image|startswith: 'C:\Temp'</code></td>
-                            <td>"<strong>C:\Temp</strong>\malware.exe"</td>
-                        </tr>
-                        <tr>
-                            <td><code>|endswith</code></td>
-                            <td>Field ends with value</td>
-                            <td><code>Image|endswith: '.exe'</code></td>
-                            <td>"C:\Windows\notepad<strong>.exe</strong>"</td>
-                        </tr>
-                        <tr>
-                            <td><code>|re</code></td>
-                            <td>Regular expression match</td>
-                            <td><code>CommandLine|re: '\d{4,}'</code></td>
-                            <td>Any 4+ digit number</td>
-                        </tr>
-                        <tr>
-                            <td><code>|base64</code></td>
-                            <td>Decode and match Base64</td>
-                            <td><code>CommandLine|base64: 'http'</code></td>
-                            <td>Encoded URLs</td>
-                        </tr>
-                        <tr>
-                            <td><code>|all</code></td>
-                            <td>ALL values must match</td>
-                            <td><code>CommandLine|all|contains: ['-enc', '-w', 'hidden']</code></td>
-                            <td>Must have ALL three</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- REAL EXAMPLES -->
-                <h2><i class="fas fa-code"></i> Real-World Examples</h2>
-
-                <h3>Example 1: Detect Encoded PowerShell</h3>
-                <div class="code-explained">
-                    <div class="code-section">
-<pre style="margin: 0;"><code>title: Suspicious Encoded PowerShell Command
-logsource:
-    category: process_creation
-    product: windows
-detection:
-    selection:
-        Image|endswith:
-            - '\powershell.exe'
-            - '\pwsh.exe'
-        CommandLine|contains:
-            - ' -enc '
-            - ' -encodedcommand '
-            - ' -e '
-    condition: selection
-level: high
-tags:
-    - attack.execution
-    - attack.t1059.001</code></pre>
-                    </div>
-                    <div class="explain-section">
-                        <strong>What This Detects:</strong> PowerShell running with encoded commands - a common attacker technique to hide malicious scripts.
-                        <br><strong>Why It's Suspicious:</strong> Normal users rarely use encoded commands. Attackers use them to bypass simple string matching.
-                    </div>
-                </div>
-
-                <h3>Example 2: Detect certutil Download</h3>
-                <div class="code-explained">
-                    <div class="code-section">
-<pre style="margin: 0;"><code>title: Certutil Used to Download File
-logsource:
-    category: process_creation
-    product: windows
-detection:
-    selection:
-        Image|endswith: '\certutil.exe'
-        CommandLine|contains:
-            - 'urlcache'
-            - '-f http'
-            - '-f https'
-    condition: selection
-level: high
-tags:
-    - attack.command_and_control
-    - attack.t1105</code></pre>
-                    </div>
-                    <div class="explain-section">
-                        <strong>What This Detects:</strong> Using certutil.exe to download files - a Living-off-the-Land technique.
-                        <br><strong>Why It's Suspicious:</strong> certutil is meant for certificate management, not downloading files. Attackers abuse it because it's signed by Microsoft.
-                    </div>
-                </div>
-
-                <!-- CONVERTING RULES -->
-                <h2><i class="fas fa-exchange-alt"></i> Converting Sigma Rules</h2>
-
-                <h3>Using sigma-cli (Command Line)</h3>
-                <div class="code-explained">
-                    <div class="code-section">
-<pre style="margin: 0;"><code># Install sigma-cli
-pip install sigma-cli
-
-# Convert to Splunk SPL
-sigma convert -t splunk rule.yml
-
-# Convert to Microsoft Sentinel KQL
-sigma convert -t microsoft365defender rule.yml
-
-# Convert to Elastic Query
-sigma convert -t elasticsearch rule.yml
-
-# Convert entire folder
-sigma convert -t splunk ./rules/ -o splunk_rules.txt</code></pre>
-                    </div>
-                    <div class="explain-section">
-                        <strong>Output Example (Splunk):</strong>
-                        <pre style="background: #1a1a2e; padding: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;"><code>index=windows EventCode=1 (Image="*\\powershell.exe" OR Image="*\\pwsh.exe") (CommandLine="* -enc *" OR CommandLine="* -encodedcommand *")</code></pre>
-                    </div>
-                </div>
-
-                <!-- WHERE TO FIND RULES -->
-                <h2><i class="fas fa-download"></i> Where to Find Sigma Rules</h2>
-
-                <table>
-                    <thead>
-                        <tr><th>Source</th><th>Description</th><th>Best For</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>SigmaHQ</strong></td>
-                            <td>Official repository with 1000s of community rules</td>
-                            <td>Starting point, comprehensive coverage</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Atomic Red Team</strong></td>
-                            <td>Rules paired with attack simulations</td>
-                            <td>Testing and validation</td>
-                        </tr>
-                        <tr>
-                            <td><strong>SOC Prime</strong></td>
-                            <td>Community + commercial rules marketplace</td>
-                            <td>Emerging threats, premium content</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Your Own</strong></td>
-                            <td>Rules based on your incidents and environment</td>
-                            <td>Custom threats, environment-specific</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- BEST PRACTICES -->
-                <h2><i class="fas fa-check-circle"></i> Best Practices</h2>
-
-                <div class="info-box tip">
-                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Writing Good Sigma Rules</div>
+                <div class="nav-story">
+                    <h4>📖 The Apex Financial Story</h4>
+                    <p>This is <strong>Part 3 of 4</strong> in a connected case study:</p>
                     <ol>
-                        <li><strong>Be specific:</strong> Include enough conditions to reduce false positives</li>
-                        <li><strong>Document well:</strong> Future you will thank past you for good descriptions</li>
-                        <li><strong>Test before deploying:</strong> Convert and run against historical data first</li>
-                        <li><strong>Include false positives:</strong> List known legitimate matches to help analysts</li>
-                        <li><strong>Map to MITRE:</strong> Always tag with ATT&CK techniques</li>
-                        <li><strong>Start with existing rules:</strong> Don't reinvent the wheel - check SigmaHQ first</li>
+                        <li><a href="company-assessment.html">Company Assessment</a> - Understanding the environment and risks</li>
+                        <li><a href="lifecycle.html">Detection Engineering</a> - Building detections based on assessment</li>
+                        <li><strong>Writing Detections</strong> (You are here) - Creating actual detection rules</li>
+                        <li><a href="coverage-analysis.html">Coverage Analysis</a> - Measuring detection coverage</li>
                     </ol>
                 </div>
 
-                <!-- RELATED -->
-                <h2><i class="fas fa-link"></i> Related Topics</h2>
+                <!-- MONTH 1 DETECTIONS -->
+                <div class="month-header">
+                    <h2 style="margin: 0;"><i class="fas fa-calendar"></i> Month 1: BEC Prevention Detections</h2>
+                    <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Priority after the $340,000 wire fraud incident</p>
+                </div>
 
+                <!-- DETECTION 1 -->
+                <div class="detection-header">
+                    APEX-DET-001: Suspicious Email Forwarding Rule Created
+                </div>
+                <div class="detection-body">
+                    <p><span class="tag mitre">T1564.008</span> <span class="tag mitre">T1114.003</span> <span class="tag high">High Severity</span></p>
+                    <p><strong>Why this detection:</strong> This is exactly what the attacker did - created an inbox rule to forward payment-related emails to an external address.</p>
+                    
+                    <h4>Sigma Rule</h4>
+                    <div class="alert-example">title: Suspicious Email Forwarding Rule to External Domain
+id: apex-det-001
+status: production
+description: Detects creation of inbox rules that forward emails to external domains, especially with financial keywords
+author: Apex Detection Engineering
+date: 2024/04/15
+references:
+    - Internal incident INC-2024-0315-001
+logsource:
+    product: m365
+    service: exchange
+detection:
+    selection:
+        Operation:
+            - 'New-InboxRule'
+            - 'Set-InboxRule'
+            - 'UpdateInboxRules'
+    filter_internal:
+        Parameters|contains:
+            - 'apexfinancial.com'
+            - 'apex-financial.com'
+    condition: selection and not filter_internal
+fields:
+    - UserId
+    - Operation
+    - Parameters
+    - ClientIP
+falsepositives:
+    - Legitimate forwarding to known partners
+    - Marketing automation (HubSpot, etc.)
+level: high
+tags:
+    - attack.collection
+    - attack.t1114.003
+    - attack.defense_evasion
+    - attack.t1564.008</div>
+
+                    <h4>Microsoft Sentinel KQL (Production)</h4>
+                    <div class="alert-example">// APEX-DET-001: Suspicious Email Forwarding Rule
+// Production query running every 15 minutes
+
+let trustedDomains = dynamic(["apexfinancial.com", "apex-financial.com", "hubspot.com", "servicenow.com"]);
+let suspiciousKeywords = dynamic(["payment", "wire", "transfer", "invoice", "bank", "ach", "routing"]);
+let highRiskDomains = dynamic(["protonmail.com", "tutanota.com", "guerrillamail.com", "tempmail.com"]);
+
+OfficeActivity
+| where TimeGenerated > ago(15m)
+| where Operation in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")
+| extend RuleParams = tostring(Parameters)
+| where RuleParams contains "ForwardTo" or RuleParams contains "RedirectTo" or RuleParams contains "ForwardAsAttachmentTo"
+// Extract forwarding address
+| extend ForwardTo = extract(@'"ForwardTo":\s*\[?"?([^"\],]+)"?\]?', 1, RuleParams)
+| extend ForwardDomain = tostring(split(ForwardTo, "@")[1])
+// Skip internal domains
+| where ForwardDomain != "" and not(ForwardDomain has_any (trustedDomains))
+// Check for suspicious patterns
+| extend HasFinancialKeywords = RuleParams has_any (suspiciousKeywords)
+| extend IsHighRiskDomain = ForwardDomain has_any (highRiskDomains)
+| extend RuleName = extract(@'"Name":\s*"([^"]*)"', 1, RuleParams)
+// Calculate severity
+| extend Severity = case(
+    IsHighRiskDomain and HasFinancialKeywords, "Critical",
+    IsHighRiskDomain or HasFinancialKeywords, "High",
+    "Medium"
+)
+| project
+    TimeGenerated,
+    UserId,
+    Operation,
+    RuleName,
+    ForwardTo,
+    ForwardDomain,
+    HasFinancialKeywords,
+    IsHighRiskDomain,
+    Severity,
+    ClientIP,
+    RuleParams</div>
+
+                    <h4>Investigation Steps (for SOC analysts)</h4>
+                    <div class="alert-example">1. CHECK USER LEGITIMACY
+   - Is this the user's own mailbox or a shared mailbox?
+   - Contact user: "Did you create a forwarding rule to [address]?"
+   
+2. CHECK RECENT SIGN-IN ACTIVITY
+   SigninLogs
+   | where UserPrincipalName == "[affected_user]"
+   | where TimeGenerated > ago(7d)
+   | project TimeGenerated, Location, IPAddress, AppDisplayName, ResultType
+   
+3. IF USER DIDN'T CREATE IT → ACCOUNT COMPROMISED
+   - Reset password immediately
+   - Revoke all sessions
+   - Delete the malicious rule
+   - Check for other indicators (OAuth apps, MFA changes)
+   
+4. IF USER DID CREATE IT
+   - Medium severity: Personal email forwarding - policy violation, notify HR
+   - Review if sensitive data could have been forwarded</div>
+                </div>
+
+                <!-- DETECTION 2 -->
+                <div class="detection-header">
+                    APEX-DET-002: Impossible Travel Detection
+                </div>
+                <div class="detection-body">
+                    <p><span class="tag mitre">T1078</span> <span class="tag high">High Severity</span></p>
+                    <p><strong>Why this detection:</strong> The attacker accessed the CFO's account from Russia while CFO was in Chicago. If we had this detection, we would have caught it on Day 1.</p>
+                    
+                    <h4>Microsoft Sentinel KQL</h4>
+                    <div class="alert-example">// APEX-DET-002: Impossible Travel Detection
+// Custom implementation (not using built-in, more control over tuning)
+
+let vpnRanges = dynamic(["10.255.0.0/16", "172.16.100.0/24"]);  // Apex VPN ranges
+let trustedLocations = dynamic(["United States", "Canada"]);     // Normal work locations
+let maxSpeedKmh = 900;  // Faster than commercial flight = suspicious
+
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0  // Successful logins only
+| where IPAddress !startswith "10.255."  // Exclude VPN
+| project TimeGenerated, UserPrincipalName, IPAddress, Location, 
+    Latitude = toreal(LocationDetails.geoCoordinates.latitude),
+    Longitude = toreal(LocationDetails.geoCoordinates.longitude)
+| sort by UserPrincipalName, TimeGenerated asc
+| extend PrevTime = prev(TimeGenerated, 1), 
+         PrevLat = prev(Latitude, 1), 
+         PrevLong = prev(Longitude, 1),
+         PrevLocation = prev(Location, 1),
+         PrevUser = prev(UserPrincipalName, 1)
+| where UserPrincipalName == PrevUser  // Same user
+| extend TimeDiffHours = datetime_diff('hour', TimeGenerated, PrevTime)
+| where TimeDiffHours > 0 and TimeDiffHours < 24
+// Calculate distance (simplified)
+| extend DistanceKm = geo_distance_2points(Longitude, Latitude, PrevLong, PrevLat) / 1000
+| extend RequiredSpeedKmh = DistanceKm / TimeDiffHours
+| where RequiredSpeedKmh > maxSpeedKmh
+// Exclude known travel patterns
+| where not(Location in (trustedLocations) and PrevLocation in (trustedLocations))
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    CurrentLocation = Location,
+    PreviousLocation = PrevLocation,
+    TimeDiffHours,
+    DistanceKm = round(DistanceKm, 0),
+    RequiredSpeedKmh = round(RequiredSpeedKmh, 0),
+    CurrentIP = IPAddress</div>
+                </div>
+
+                <!-- DETECTION 3 -->
+                <div class="detection-header">
+                    APEX-DET-003: Suspicious OAuth App Consent
+                </div>
+                <div class="detection-body">
+                    <p><span class="tag mitre">T1550.001</span> <span class="tag medium">Medium Severity</span></p>
+                    <p><strong>Why this detection:</strong> After BEC, attackers often add OAuth apps for persistence. Even if password is reset, the malicious app retains access.</p>
+                    
+                    <h4>Microsoft Sentinel KQL</h4>
+                    <div class="alert-example">// APEX-DET-003: OAuth Application Consent
+// Detects when users consent to third-party applications
+
+let approvedApps = dynamic([
+    "Microsoft Teams", "Zoom", "Slack", "Salesforce", 
+    "Adobe Sign", "DocuSign", "Workday"
+]);
+
+AuditLogs
+| where TimeGenerated > ago(1h)
+| where OperationName == "Consent to application"
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend AppId = tostring(TargetResources[0].id)
+| extend UserPrincipalName = tostring(InitiatedBy.user.userPrincipalName)
+| extend Permissions = tostring(AdditionalDetails)
+| where AppName !in (approvedApps)
+// High risk: Mail.Read, Mail.Send, Files.ReadWrite
+| extend HasMailPermission = Permissions contains "Mail"
+| extend HasFilePermission = Permissions contains "Files"
+| extend Severity = case(
+    HasMailPermission and HasFilePermission, "High",
+    HasMailPermission or HasFilePermission, "Medium",
+    "Low"
+)
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    AppName,
+    AppId,
+    HasMailPermission,
+    HasFilePermission,
+    Severity,
+    Permissions</div>
+                </div>
+
+                <!-- MONTH 2 DETECTIONS -->
+                <div class="month-header">
+                    <h2 style="margin: 0;"><i class="fas fa-calendar"></i> Month 2: Identity & Credential Protection</h2>
+                    <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Protecting against credential theft and lateral movement</p>
+                </div>
+
+                <!-- DETECTION 4 -->
+                <div class="detection-header">
+                    APEX-DET-017: LSASS Memory Access Detection
+                </div>
+                <div class="detection-body">
+                    <p><span class="tag mitre">T1003.001</span> <span class="tag high">High Severity</span></p>
+                    <p><strong>Why this detection:</strong> Mimikatz, procdump targeting LSASS - the most common credential dumping technique.</p>
+                    
+                    <h4>Microsoft Sentinel KQL (MDE)</h4>
+                    <div class="alert-example">// APEX-DET-017: LSASS Memory Access
+// Detects processes accessing LSASS memory (credential dumping)
+
+let trustedProcesses = dynamic([
+    "MsMpEng.exe",      // Windows Defender
+    "csrss.exe",        // Windows subsystem
+    "services.exe",     // Service Control Manager
+    "lsass.exe",        // Self-access
+    "svchost.exe",      // Windows services
+    "WerFault.exe",     // Crash dumps (legitimate)
+    "wininit.exe",      // Windows init
+    "MpCmdRun.exe"      // Defender command line
+]);
+
+let trustedPaths = dynamic([
+    "C:\\Program Files\\Windows Defender",
+    "C:\\Program Files\\Microsoft Security Client",
+    "C:\\Windows\\System32"
+]);
+
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| where FileName =~ "lsass.exe" or ProcessCommandLine contains "lsass"
+| where ActionType == "ProcessAccessed" or 
+        ProcessCommandLine contains "-ma lsass" or  // procdump
+        ProcessCommandLine contains "sekurlsa" or    // mimikatz
+        ProcessCommandLine contains "minidump"       // comsvcs.dll method
+| extend InitProcess = InitiatingProcessFileName
+| extend InitPath = InitiatingProcessFolderPath
+| where InitProcess !in (trustedProcesses)
+| where not(InitPath has_any (trustedPaths))
+| project
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    InitiatingProcessFileName,
+    InitiatingProcessCommandLine,
+    InitiatingProcessFolderPath,
+    ProcessCommandLine
+| extend AlertSeverity = "High"
+| extend AlertTitle = "Potential Credential Dumping - LSASS Access"</div>
+
+                    <h4>Sigma Rule</h4>
+                    <div class="alert-example">title: LSASS Memory Access for Credential Dumping
+id: apex-det-017
+status: production
+description: Detects processes accessing LSASS memory which may indicate credential dumping
+author: Apex Detection Engineering
+logsource:
+    category: process_access
+    product: windows
+detection:
+    selection:
+        TargetImage|endswith: '\lsass.exe'
+        GrantedAccess|contains:
+            - '0x1010'   # PROCESS_VM_READ + PROCESS_QUERY_INFORMATION
+            - '0x1410'
+            - '0x1F0FFF' # PROCESS_ALL_ACCESS
+            - '0x1F1FFF'
+    filter_legitimate:
+        SourceImage|endswith:
+            - '\MsMpEng.exe'
+            - '\csrss.exe'
+            - '\services.exe'
+            - '\svchost.exe'
+    condition: selection and not filter_legitimate
+level: high
+tags:
+    - attack.credential_access
+    - attack.t1003.001</div>
+                </div>
+
+                <!-- DETECTION 5 -->
+                <div class="detection-header">
+                    APEX-DET-019: Kerberoasting Detection
+                </div>
+                <div class="detection-body">
+                    <p><span class="tag mitre">T1558.003</span> <span class="tag high">High Severity</span></p>
+                    <p><strong>Why this detection:</strong> Apex has 47 service accounts. Kerberoasting could compromise all of them offline.</p>
+                    
+                    <h4>Microsoft Sentinel KQL</h4>
+                    <div class="alert-example">// APEX-DET-019: Kerberoasting Detection
+// Detects high volume TGS requests with RC4 encryption
+
+let excludedAccounts = dynamic([
+    "svc_monitoring",       // Legitimate monitoring
+    "APEX\\svc_scanner",    // Vulnerability scanner
+    "healthcheck"           // Health check account
+]);
+
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| where EventID == 4769  // Kerberos Service Ticket Operation
+| where TicketEncryptionType == "0x17"  // RC4 - weak, targeted by Kerberoasting
+| where ServiceName !endswith "$"  // Exclude machine accounts
+| where TargetUserName !in (excludedAccounts)
+| summarize 
+    TicketCount = count(),
+    UniqueServices = dcount(ServiceName),
+    ServicesList = make_set(ServiceName, 20),
+    SourceIPs = make_set(IpAddress)
+    by TargetUserName, bin(TimeGenerated, 5m)
+| where TicketCount > 15 and UniqueServices > 5  // Threshold: more than 15 requests for 5+ different services
+| extend Severity = case(
+    UniqueServices > 20, "Critical",
+    UniqueServices > 10, "High",
+    "Medium"
+)
+| project
+    TimeGenerated,
+    SuspectedAttacker = TargetUserName,
+    TicketCount,
+    UniqueServicesTargeted = UniqueServices,
+    ServicesList,
+    SourceIPs,
+    Severity</div>
+                </div>
+
+                <!-- MONTH 3 DETECTIONS -->
+                <div class="month-header">
+                    <h2 style="margin: 0;"><i class="fas fa-calendar"></i> Month 3: Endpoint & Ransomware Protection</h2>
+                    <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Detecting malicious execution and ransomware precursors</p>
+                </div>
+
+                <!-- DETECTION 6 -->
+                <div class="detection-header">
+                    APEX-DET-011: Suspicious Encoded PowerShell
+                </div>
+                <div class="detection-body">
+                    <p><span class="tag mitre">T1059.001</span> <span class="tag high">High Severity</span></p>
+                    <p><strong>Why this detection:</strong> Most malware uses encoded PowerShell to evade detection.</p>
+                    
+                    <h4>Microsoft Sentinel KQL</h4>
+                    <div class="alert-example">// APEX-DET-011: Suspicious Encoded PowerShell Execution
+
+let sccmServer = "SCCM-PROD-01.apexfinancial.com";  // Exclude SCCM deployments
+
+DeviceProcessEvents
+| where TimeGenerated > ago(1h)
+| where FileName in~ ("powershell.exe", "pwsh.exe")
+| where ProcessCommandLine contains "-enc" or 
+        ProcessCommandLine contains "-encodedcommand" or
+        ProcessCommandLine contains "-e " or
+        ProcessCommandLine contains "FromBase64String"
+// Exclude known legitimate sources
+| where DeviceName != sccmServer
+| where InitiatingProcessFileName !in~ ("CcmExec.exe", "svchost.exe")
+// Check for suspicious patterns
+| extend HasDownloadCradle = ProcessCommandLine has_any ("WebClient", "DownloadString", "DownloadFile", "Invoke-WebRequest", "IWR", "wget", "curl")
+| extend HasHiddenWindow = ProcessCommandLine has_any ("-w hidden", "-windowstyle hidden", "-nop", "-noprofile")
+| extend FromOfficeApp = InitiatingProcessFileName in~ ("WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE", "OUTLOOK.EXE")
+// Calculate severity
+| extend Severity = case(
+    FromOfficeApp, "Critical",  // Office spawning encoded PS = very bad
+    HasDownloadCradle and HasHiddenWindow, "High",
+    HasDownloadCradle or HasHiddenWindow, "Medium",
+    "Low"
+)
+| where Severity in ("Critical", "High", "Medium")  // Filter out Low
+| project
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    InitiatingProcessFileName,
+    ProcessCommandLine,
+    HasDownloadCradle,
+    HasHiddenWindow,
+    FromOfficeApp,
+    Severity</div>
+                </div>
+
+                <!-- DETECTION 7 -->
+                <div class="detection-header">
+                    APEX-DET-027: Ransomware Precursor - Shadow Copy Deletion
+                </div>
+                <div class="detection-body">
+                    <p><span class="tag mitre">T1490</span> <span class="tag high">Critical Severity</span></p>
+                    <p><strong>Why this detection:</strong> Ransomware always deletes shadow copies before encrypting. This gives us early warning.</p>
+                    
+                    <h4>Microsoft Sentinel KQL</h4>
+                    <div class="alert-example">// APEX-DET-027: Shadow Copy Deletion (Ransomware Indicator)
+// This is a CRITICAL detection - shadow copy deletion almost always precedes ransomware
+
+DeviceProcessEvents
+| where TimeGenerated > ago(15m)  // Check frequently
+| where FileName in~ ("vssadmin.exe", "wmic.exe", "wbadmin.exe", "bcdedit.exe", "powershell.exe")
+| where ProcessCommandLine has_any (
+    "delete shadows",           // vssadmin delete shadows
+    "shadowcopy delete",        // wmic shadowcopy delete
+    "delete catalog",           // wbadmin delete catalog
+    "recoveryenabled no",       // bcdedit /set recoveryenabled no
+    "Win32_ShadowCopy",         // WMI shadow copy access
+    "resize shadowstorage"      // Resize to 0
+)
+| project
+    TimeGenerated,
+    DeviceName,
+    AccountName,
+    FileName,
+    ProcessCommandLine,
+    InitiatingProcessFileName,
+    InitiatingProcessCommandLine
+| extend AlertTitle = "CRITICAL: Ransomware Precursor Detected - Shadow Copy Manipulation"
+| extend AlertSeverity = "Critical"
+| extend RecommendedAction = "IMMEDIATELY isolate device and investigate. Do NOT reboot."</div>
+                </div>
+
+                <!-- COMPLETE DETECTION INVENTORY -->
+                <h2 id="inventory"><i class="fas fa-list"></i> Complete Apex Detection Inventory</h2>
+
+                <p>All 47 detections created over 6 months:</p>
+
+                <h3>BEC Prevention (Month 1) - 6 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-001:</strong> Suspicious Email Forwarding Rule <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-002:</strong> Impossible Travel Detection <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-003:</strong> Suspicious OAuth App Consent <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-004:</strong> MFA Fatigue Attack <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-005:</strong> Email Access from Unusual Location <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-006:</strong> Bulk Email Access <span class="tag medium">Medium</span></div>
+                </div>
+
+                <h3>Phishing & Initial Access (Month 1-2) - 4 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-007:</strong> Malicious Email Attachment Indicators <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-008:</strong> Phishing URL Click Tracking <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-009:</strong> First-time Login from Country <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-010:</strong> VPN Login Anomalies <span class="tag medium">Medium</span></div>
+                </div>
+
+                <h3>Execution Detection (Month 3) - 6 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-011:</strong> Encoded PowerShell Execution <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-012:</strong> PowerShell Download Cradle <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-013:</strong> Suspicious CMD Patterns <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-033:</strong> LOLBin Abuse (certutil, bitsadmin) <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-034:</strong> MSHTA Execution <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-035:</strong> Regsvr32 AppLocker Bypass <span class="tag high">High</span></div>
+                </div>
+
+                <h3>Persistence Detection (Month 3) - 5 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-014:</strong> Suspicious Scheduled Task Created <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-015:</strong> New Service Installation <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-016:</strong> Registry Run Key Modification <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-036:</strong> Startup Folder Modification <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-037:</strong> WMI Event Subscription <span class="tag high">High</span></div>
+                </div>
+
+                <h3>Credential Access (Month 2) - 8 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-017:</strong> LSASS Memory Access <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-018:</strong> NTDS.dit Access <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-019:</strong> Kerberoasting <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-020:</strong> Brute Force Detection <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-021:</strong> Token Theft Indicators <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-038:</strong> DCSync Attack <span class="tag high">Critical</span></div>
+                    <div class="detection-item"><strong>APEX-DET-039:</strong> AS-REP Roasting <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-040:</strong> SAM Database Access <span class="tag high">High</span></div>
+                </div>
+
+                <h3>Lateral Movement (Month 4) - 6 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-022:</strong> RDP to Unusual Target <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-023:</strong> Admin Share Access <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-024:</strong> WinRM Usage Detection <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-025:</strong> Pass-the-Hash (Type 9 Logon) <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-041:</strong> PsExec Execution <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-042:</strong> DCOM Lateral Movement <span class="tag medium">Medium</span></div>
+                </div>
+
+                <h3>Data Collection & Exfiltration (Month 4) - 6 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-026:</strong> Cloud Storage Upload <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-030:</strong> Large File Download <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-031:</strong> Unusual Database Query <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-043:</strong> Archive Creation Before Exfil <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-044:</strong> DNS Tunneling Indicators <span class="tag high">High</span></div>
+                    <div class="detection-item"><strong>APEX-DET-045:</strong> Unusual Outbound Port Usage <span class="tag medium">Medium</span></div>
+                </div>
+
+                <h3>Ransomware & Impact (Month 5) - 4 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-027:</strong> Shadow Copy Deletion <span class="tag high">Critical</span></div>
+                    <div class="detection-item"><strong>APEX-DET-028:</strong> Mass File Encryption <span class="tag high">Critical</span></div>
+                    <div class="detection-item"><strong>APEX-DET-046:</strong> BCDEdit Recovery Disable <span class="tag high">Critical</span></div>
+                    <div class="detection-item"><strong>APEX-DET-047:</strong> Ransom Note Detection <span class="tag high">Critical</span></div>
+                </div>
+
+                <h3>Insider Threat (Month 6) - 2 Detections</h3>
+                <div class="detection-list">
+                    <div class="detection-item"><strong>APEX-DET-032:</strong> After-Hours Sensitive Data Access <span class="tag medium">Medium</span></div>
+                    <div class="detection-item"><strong>APEX-DET-029:</strong> New Vendor Bank Details (Wire Fraud) <span class="tag high">High</span></div>
+                </div>
+
+                <!-- NEXT IN STORY -->
+                <div class="nav-story">
+                    <h4>📖 Continue the Story</h4>
+                    <p>Now see how these 47 detections translate to coverage:</p>
+                    <p><strong>Next:</strong> <a href="coverage-analysis.html">Coverage Analysis</a> - MITRE ATT&CK coverage and gap analysis</p>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
                 <div class="card-grid">
-                    <a href="pages/detection-engineering/testing.html" class="card"><div class="card-icon"><i class="fas fa-vial"></i></div><h3>Detection Testing</h3><p>Validate your rules work</p></a>
-                    <a href="pages/detection-engineering/coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-map"></i></div><h3>Coverage Analysis</h3><p>Map rules to ATT&CK</p></a>
-                    <a href="pages/references/kql-library.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>KQL Library</h3><p>Ready-to-use Sentinel queries</p></a>
+                    <a href="lifecycle.html" class="card"><div class="card-icon"><i class="fas fa-sync-alt"></i></div><h3>Detection Lifecycle</h3><p>How to build</p></a>
+                    <a href="coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-chart-pie"></i></div><h3>Coverage Analysis</h3><p>Measure coverage</p></a>
+                    <a href="kql-library.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Library</h3><p>More queries</p></a>
                 </div>
 
             </div>

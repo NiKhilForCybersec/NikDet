@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hashing & Password Security | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Encryption</a><span class="separator">/</span><span>Hashing</span></div>
+            <div class="content">
+                <h1><i class="fas fa-fingerprint"></i> Hashing & Password Security</h1>
+                <p class="lead">Complete guide to cryptographic hash functions, password storage best practices, and common attacks.</p>
+
+                <div class="diagram-box">
+CRYPTOGRAPHIC HASH FUNCTIONS - FUNDAMENTALS
+═══════════════════════════════════════════════════════════════════════════════
+
+WHAT A HASH FUNCTION DOES:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │   ANY INPUT                              FIXED OUTPUT                   │
+  │   (any size)                             (always same length)           │
+  │        │                                        │                       │
+  │        ▼                                        ▼                       │
+  │   ┌─────────────────────────────────────────────────────────────────┐  │
+  │   │ "Hi"             ──►[HASH]──► 8f434346648f6b96df89dda901c5176b10a6d839│
+  │   │ "Hello World"    ──►[HASH]──► a591a6d40bf420404a011733cfb7b190d62c65bf│
+  │   │ [5 GB Video]     ──►[HASH]──► 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b│
+  │   │ "Hi" (again)     ──►[HASH]──► 8f434346648f6b96df89dda901c5176b10a6d839│
+  │   └─────────────────────────────────────────────────────────────────┘  │
+  │                                        │                                │
+  │                Same input = Same output (DETERMINISTIC)                │
+  │                                                                         │
+  │   CANNOT reverse: Hash → Original Input (ONE-WAY function)             │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+FIVE CRITICAL PROPERTIES:
+═══════════════════════════════════════════════════════════════════════════════
+
+  1. DETERMINISTIC
+     ─────────────────────────────────────────────────────────────────────────
+     Same input ALWAYS produces same output
+     Hash("Hello") today = Hash("Hello") tomorrow = Hash("Hello") forever
+  
+  
+  2. FIXED OUTPUT SIZE
+     ─────────────────────────────────────────────────────────────────────────
+     SHA-256 always outputs 256 bits (64 hex characters)
+     Regardless of input size: 1 byte or 1 terabyte → same output size
+  
+  
+  3. ONE-WAY (Pre-image Resistance)
+     ─────────────────────────────────────────────────────────────────────────
+     Given hash H, computationally infeasible to find input M where Hash(M) = H
+     Cannot "reverse" a hash to get original input
+  
+  
+  4. AVALANCHE EFFECT
+     ─────────────────────────────────────────────────────────────────────────
+     Tiny change in input → COMPLETELY DIFFERENT output
+     
+     "Hello"  ──► 185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969
+     "hello"  ──► 2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  COMPLETELY DIFFERENT (just one capital letter changed!)
+  
+  
+  5. COLLISION RESISTANCE
+     ─────────────────────────────────────────────────────────────────────────
+     Extremely hard to find two different inputs with same hash
+     
+     Finding M1 ≠ M2 where Hash(M1) = Hash(M2) should take ~2^(n/2) operations
+     For SHA-256: ~2^128 operations (practically impossible)
+
+
+HASH ALGORITHM STATUS:
+═══════════════════════════════════════════════════════════════════════════════
+
+  Algorithm   Output     Speed        Status         Use Case
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  MD5         128 bits   Very Fast    ❌ BROKEN      NEVER for security
+                                                     (Collisions since 2004)
+                                                     OK for non-security checksums
+  
+  SHA-1       160 bits   Fast         ❌ BROKEN      NEVER (SHAttered 2017)
+                                                     Practical collisions exist
+  
+  SHA-256     256 bits   Fast         ✅ STANDARD    TLS, certificates, signing
+                                                     Blockchain, integrity checks
+  
+  SHA-384     384 bits   Fast         ✅ STRONG      Government, high security
+  
+  SHA-512     512 bits   Fast         ✅ STRONG      When longer hash needed
+  
+  SHA-3       Variable   Medium       ✅ MODERN      Backup if SHA-2 breaks
+                                                     Different internal design
+  
+  BLAKE2      Variable   Very Fast    ✅ MODERN      Performance-critical apps
+                                                     Faster than SHA-256
+  
+  BLAKE3      Variable   Extreme      ✅ NEWEST      Highly parallel
+                                                     File hashing, verification
+                </div>
+
+                <h2 id="passwords"><i class="fas fa-lock"></i> Password Hashing</h2>
+
+                <div class="danger-box">
+                    <h4><i class="fas fa-skull-crossbones"></i> Critical: Password Hashing is DIFFERENT!</h4>
+                    <p>Regular hash functions (SHA-256, etc.) are designed to be FAST. For passwords, you need functions designed to be SLOW. Using SHA-256 for passwords is a critical security mistake!</p>
+                </div>
+
+                <div class="diagram-box">
+PASSWORD HASHING - WHY REGULAR HASHES FAIL
+═══════════════════════════════════════════════════════════════════════════════
+
+THE PROBLEM WITH FAST HASHES:
+─────────────────────────────────────────────────────────────────────────────
+
+  ❌ WRONG: Store SHA-256(password) in database
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  User registers:                                                        │
+  │  password: "password123"                                                │
+  │  stored:   SHA256("password123") = ef92b778bafe771e89245b89ecbc08a44a808│
+  │                                                                         │
+  │  ATTACK SCENARIO:                                                       │
+  │                                                                         │
+  │  1. Attacker steals database                                           │
+  │  2. Has list of hashed passwords                                       │
+  │  3. Runs dictionary/brute force attack:                                │
+  │                                                                         │
+  │     Modern GPU: ~10 BILLION SHA-256 hashes per second                  │
+  │                                                                         │
+  │     Dictionary attack (10 million common passwords):                   │
+  │     Time: 10,000,000 / 10,000,000,000 = 0.001 seconds                  │
+  │                                                                         │
+  │     Brute force 8-char lowercase:                                      │
+  │     26^8 = 208 billion combinations                                    │
+  │     Time: 208,000,000,000 / 10,000,000,000 = 20 seconds                │
+  │                                                                         │
+  │  RESULT: Most passwords cracked in minutes to hours                    │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+THE SOLUTION: PASSWORD HASHING FUNCTIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+  ✅ RIGHT: Store bcrypt/Argon2(password, salt, parameters)
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  PASSWORD HASH FUNCTIONS ARE INTENTIONALLY SLOW                        │
+  │                                                                         │
+  │  Password + Salt + Parameters                                          │
+  │         │                                                               │
+  │         ▼                                                               │
+  │  ┌───────────────────────────────────────────────────────────┐         │
+  │  │              SLOW HASH FUNCTION                           │         │
+  │  │                                                           │         │
+  │  │  • Iterations: Run algorithm many times (stretching)     │         │
+  │  │  • Memory: Require significant RAM (memory-hard)         │         │
+  │  │  • Time: Each hash takes 100ms - 1 second                │         │
+  │  │                                                           │         │
+  │  └───────────────────────────────────────────────────────────┘         │
+  │         │                                                               │
+  │         ▼                                                               │
+  │  $argon2id$v=19$m=65536,t=3,p=4$salt$hash                              │
+  │                                                                         │
+  │                                                                         │
+  │  ATTACK SCENARIO WITH SLOW HASH:                                       │
+  │                                                                         │
+  │  Each hash: 100ms (100 milliseconds)                                   │
+  │  Rate: 10 hashes per second (vs 10 billion!)                          │
+  │                                                                         │
+  │  Dictionary attack (10 million passwords):                             │
+  │  Time: 10,000,000 / 10 = 1,000,000 seconds = 11.5 DAYS                │
+  │                                                                         │
+  │  Brute force 8-char lowercase:                                        │
+  │  Time: 208,000,000,000 / 10 = 20.8 billion seconds = 660 YEARS        │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+SALT - PREVENTING RAINBOW TABLES:
+═══════════════════════════════════════════════════════════════════════════════
+
+  WITHOUT SALT (BAD):
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  User1: password123 → Hash("password123") → abc123...
+  User2: password123 → Hash("password123") → abc123...  ← SAME!
+  User3: password123 → Hash("password123") → abc123...  ← SAME!
+  
+  PROBLEM 1: Same password = Same hash
+             Crack one, get all users with that password
+  
+  PROBLEM 2: Rainbow tables
+             Pre-compute Hash(common_password) for millions of passwords
+             Instant lookup: hash → password
+  
+  
+  WITH SALT (GOOD):
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  Salt = Random bytes, unique per user, stored with hash
+  
+  User1: password123 + "x7Km9p2L" → Hash → abc123...
+  User2: password123 + "Qr4nT8bZ" → Hash → def456...  ← DIFFERENT!
+  User3: password123 + "Wv6jY3cN" → Hash → ghi789...  ← DIFFERENT!
+  
+  BENEFITS:
+  ✅ Same password → Different hashes
+  ✅ Rainbow tables useless (would need table per salt)
+  ✅ Each user must be attacked individually
+
+
+PASSWORD HASH ALGORITHM COMPARISON:
+═══════════════════════════════════════════════════════════════════════════════
+
+  Algorithm    Design         Hardware Resistance    Status
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  bcrypt       1999           CPU-hard               ✅ GOOD
+               Blowfish-based Good GPU resistance   Widely deployed
+               Max 72 chars   Still recommended     
+  
+  scrypt       2009           Memory-hard            ✅ GOOD
+               CPU + RAM      Better GPU resistance Good alternative
+                              Tunable memory        
+  
+  Argon2id     2015           Memory + CPU hard      ✅ BEST
+               PHC winner     Best GPU resistance   Use for new systems
+               Hybrid mode    Most configurable     
+  
+  PBKDF2       2000           CPU-hard only          ⚠️ LEGACY
+               SHA-based      NO memory hardness    Still compliant
+                              GPUs can attack       (NIST, FIPS)
+  
+  
+  RECOMMENDATION: Argon2id > bcrypt > scrypt > PBKDF2
+                </div>
+
+                <h2 id="argon2"><i class="fas fa-shield-alt"></i> Argon2 Deep Dive</h2>
+
+                <div class="diagram-box">
+ARGON2 - THE CURRENT BEST PRACTICE
+═══════════════════════════════════════════════════════════════════════════════
+
+ARGON2 VARIANTS:
+─────────────────────────────────────────────────────────────────────────────
+
+  Argon2d    Data-dependent memory access
+             Maximum GPU/ASIC resistance
+             Vulnerable to side-channel attacks
+             Use for: Cryptocurrency mining
+  
+  Argon2i    Data-independent memory access
+             Side-channel resistant
+             Less GPU resistance
+             Use for: Password hashing in hostile environments
+  
+  Argon2id   HYBRID - Best of both!
+             First half: Argon2i (side-channel resistant)
+             Second half: Argon2d (GPU resistant)
+             Use for: EVERYTHING (recommended default)
+
+
+ARGON2 PARAMETERS:
+═══════════════════════════════════════════════════════════════════════════════
+
+  $argon2id$v=19$m=65536,t=3,p=4$c2FsdDEyMzQ$WdHzsdoJL4RyN....
+  ────────── ─── ─────── ─── ─── ──────────── ─────────────────
+      │       │     │     │   │       │              │
+      │       │     │     │   │       │              └─ Hash output (base64)
+      │       │     │     │   │       │
+      │       │     │     │   │       └─ Salt (base64)
+      │       │     │     │   │
+      │       │     │     │   └─ Parallelism (lanes/threads): 4
+      │       │     │     │
+      │       │     │     └─ Time cost (iterations): 3
+      │       │     │
+      │       │     └─ Memory cost: 65536 KB = 64 MB
+      │       │
+      │       └─ Version: 19 (0x13)
+      │
+      └─ Algorithm variant: argon2id
+
+
+RECOMMENDED PARAMETERS:
+─────────────────────────────────────────────────────────────────────────────
+
+  MINIMUM (for most applications):
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Memory:     64 MB   (m=65536)                                          │
+  │ Time:       3       (t=3, iterations)                                  │
+  │ Parallelism: 4      (p=4, threads)                                     │
+  │                                                                         │
+  │ Approximate time: ~100ms on modern CPU                                 │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  HIGH SECURITY (banking, critical systems):
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Memory:     256 MB  (m=262144)                                         │
+  │ Time:       4       (t=4)                                              │
+  │ Parallelism: 8      (p=8)                                              │
+  │                                                                         │
+  │ Approximate time: ~500ms on modern CPU                                 │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  TUNING RULE:
+  1. Set memory as high as your system allows
+  2. Set time so login takes ~0.5-1 second
+  3. Set parallelism to number of CPU cores
+                </div>
+
+                <h2 id="attacks"><i class="fas fa-skull-crossbones"></i> Password Attacks</h2>
+
+                <div class="diagram-box">
+PASSWORD ATTACK METHODS
+═══════════════════════════════════════════════════════════════════════════════
+
+DICTIONARY ATTACK:
+─────────────────────────────────────────────────────────────────────────────
+  Try common passwords from wordlists:
+  
+  password, 123456, qwerty, admin, letmein, welcome, monkey...
+  
+  + Variations: Password, PASSWORD, p@ssword, Password1, Password123!
+  
+  Defense: Password complexity requirements, breach databases check
+
+
+BRUTE FORCE:
+─────────────────────────────────────────────────────────────────────────────
+  Try all possible combinations:
+  
+  8 chars lowercase:     26^8   = 208 billion
+  8 chars + uppercase:   52^8   = 53 trillion
+  8 chars + digits:      62^8   = 218 trillion
+  8 chars + symbols:     95^8   = 6.6 quadrillion
+  12 chars full:         95^12  = 540 septillion
+  
+  Defense: Long passwords (12+ chars), slow hash functions
+
+
+RAINBOW TABLES:
+─────────────────────────────────────────────────────────────────────────────
+  Pre-computed hash → password lookup tables
+  
+  Trade storage for computation time
+  Table for 8-char alphanumeric: ~100 GB
+  
+  Defense: SALT (makes rainbow tables useless)
+
+
+CREDENTIAL STUFFING:
+─────────────────────────────────────────────────────────────────────────────
+  Use breached username/password from Site A to try on Site B
+  
+  Works because: People reuse passwords!
+  
+  Defense: Unique passwords per site, MFA, breach monitoring
+
+
+PASS-THE-HASH:
+─────────────────────────────────────────────────────────────────────────────
+  Windows/NTLM: Use stolen hash directly without cracking
+  
+  Network auth accepts hash, not plaintext password
+  
+  Defense: Credential Guard, disable NTLM, privileged access management
+
+
+GPU CRACKING SPEEDS (2024 approximate):
+═══════════════════════════════════════════════════════════════════════════════
+
+  Algorithm        Speed (per GPU)        With 8x GPUs
+  ─────────────────────────────────────────────────────────────────────────────
+  MD5              ~60 billion/sec        480 billion/sec
+  SHA-1            ~20 billion/sec        160 billion/sec
+  SHA-256          ~10 billion/sec        80 billion/sec
+  NTLM             ~100 billion/sec       800 billion/sec
+  bcrypt (cost 10) ~30,000/sec            240,000/sec
+  Argon2 (64MB)    ~10/sec                80/sec
+  
+  THIS IS WHY SLOW HASHES MATTER!
+                </div>
+
+                <h2 id="implementation"><i class="fas fa-code"></i> Implementation Examples</h2>
+
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# PYTHON - ARGON2 (RECOMMENDED)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# pip install argon2-cffi
+
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+# Create hasher with secure parameters
+ph = PasswordHasher(
+    time_cost=3,           # Iterations
+    memory_cost=65536,     # 64 MB
+    parallelism=4,         # Threads
+    hash_len=32,           # Output length
+    salt_len=16            # Salt length
+)
+
+# Hash password (salt automatically generated and included)
+hash = ph.hash("user_password")
+# Returns: $argon2id$v=19$m=65536,t=3,p=4$salt$hash
+
+# Verify password
+try:
+    ph.verify(hash, "user_password")
+    print("Password correct!")
+except VerifyMismatchError:
+    print("Invalid password!")
+
+# Check if rehash needed (parameters changed)
+if ph.check_needs_rehash(hash):
+    new_hash = ph.hash("user_password")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PYTHON - BCRYPT
+# ═══════════════════════════════════════════════════════════════════════════
+
+# pip install bcrypt
+
+import bcrypt
+
+# Hash password
+password = b"user_password"
+salt = bcrypt.gensalt(rounds=12)  # Cost factor 12 (~250ms)
+hash = bcrypt.hashpw(password, salt)
+
+# Verify password
+if bcrypt.checkpw(password, hash):
+    print("Password correct!")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NODE.JS - ARGON2
+# ═══════════════════════════════════════════════════════════════════════════
+
+// npm install argon2
+
+const argon2 = require('argon2');
+
+// Hash password
+const hash = await argon2.hash("user_password", {
+    type: argon2.argon2id,
+    memoryCost: 65536,  // 64 MB
+    timeCost: 3,
+    parallelism: 4
+});
+
+// Verify password
+if (await argon2.verify(hash, "user_password")) {
+    console.log("Password correct!");
+}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# COMMAND LINE - TESTING
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Generate SHA-256 hash (NOT for passwords!)
+echo -n "Hello" | sha256sum
+
+# Generate bcrypt hash
+htpasswd -nbB username password
+
+# Verify file integrity with SHA-256
+sha256sum file.txt > file.txt.sha256
+sha256sum -c file.txt.sha256</pre></div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="index.html">Encryption Fundamentals</a></li>
+                    <li><a href="symmetric.html">Symmetric Encryption</a></li>
+                    <li><a href="crypto-attacks.html">Cryptographic Attacks</a></li>
+                    <li><a href="../iam/index.html">Identity & Access Management</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

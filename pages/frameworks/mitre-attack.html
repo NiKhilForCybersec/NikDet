@@ -7,21 +7,97 @@
     <title>MITRE ATT&CK Framework | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/frameworks/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/frameworks/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/frameworks/index.html">Frameworks</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Frameworks</a><span class="separator">/</span>
                 <span>MITRE ATT&CK</span>
             </div>
 
             <h1><i class="fas fa-chess"></i> MITRE ATT&CK Framework</h1>
             <p class="lead">Understanding and applying the MITRE ATT&CK framework for detection, hunting, and security operations.</p>
+
+            <div class="diagram-box">
+MITRE ATT&CK - THE ATTACK LIFECYCLE
+═══════════════════════════════════════════════════════════════════════════════
+
+ATT&CK maps attacker behavior into TACTICS (the "why") and TECHNIQUES (the "how"):
+
+ATTACK PROGRESSION (Left to Right):
+─────────────────────────────────────────────────────────────────────────────
+
+ TA0043      TA0042       TA0001       TA0002      TA0003       TA0004
+┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
+│Recon   │─►│Resource│─►│Initial │─►│Execu-  │─►│Persist-│─►│Priv    │
+│        │  │Develop │  │Access  │  │tion    │  │ence    │  │Escal   │
+└────────┘  └────────┘  └────────┘  └────────┘  └────────┘  └────────┘
+ Gather      Setup       Get in      Run code   Stay in     Get more
+ intel       infra                              longer      power
+    
+ TA0005      TA0006       TA0007       TA0008      TA0009      TA0011
+┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
+│Defense │─►│Cred    │─►│Discov- │─►│Lateral │─►│Collec- │─►│Command │
+│Evasion │  │Access  │  │ery     │  │Movement│  │tion    │  │Control │
+└────────┘  └────────┘  └────────┘  └────────┘  └────────┘  └────────┘
+ Avoid       Steal       Find        Move       Gather      Communicate
+ detection   creds       targets     around     data        w/ attacker
+
+                                                 TA0010      TA0040
+                                               ┌────────┐  ┌────────┐
+                                               │Exfil-  │─►│Impact  │
+                                               │tration │  │        │
+                                               └────────┘  └────────┘
+                                                Steal       Damage
+                                                data        (ransomware)
+
+
+STRUCTURE: TACTICS → TECHNIQUES → SUB-TECHNIQUES
+─────────────────────────────────────────────────────────────────────────────
+
+TACTIC: Initial Access (TA0001) - "How do they get in?"
+    │
+    ├── TECHNIQUE: T1566 - Phishing
+    │       │
+    │       ├── T1566.001 - Spearphishing Attachment
+    │       ├── T1566.002 - Spearphishing Link
+    │       └── T1566.003 - Spearphishing via Service
+    │
+    ├── TECHNIQUE: T1190 - Exploit Public-Facing Application
+    │
+    └── TECHNIQUE: T1078 - Valid Accounts
+            │
+            ├── T1078.001 - Default Accounts
+            ├── T1078.002 - Domain Accounts
+            ├── T1078.003 - Local Accounts
+            └── T1078.004 - Cloud Accounts
+
+
+HOW TO USE ATT&CK FOR DETECTION:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. MAP YOUR DETECTIONS:
+   ┌─────────────────────────────────────────────────────────────────────────┐
+   │ Detection Rule: "Encoded PowerShell Execution"                         │
+   │ MITRE: T1059.001 (PowerShell) + T1027 (Obfuscated Files)              │
+   └─────────────────────────────────────────────────────────────────────────┘
+
+2. IDENTIFY GAPS:
+   ┌─────────────────────────────────────────────────────────────────────────┐
+   │ T1053 Scheduled Task    ████████████████████  85% coverage            │
+   │ T1078 Valid Accounts    ████████              40% coverage ← GAP!     │
+   │ T1003 Credential Dump   ████████████████      75% coverage            │
+   └─────────────────────────────────────────────────────────────────────────┘
+
+3. PRIORITIZE BY THREAT:
+   "APT29 uses T1078, T1053, T1059 - we need to improve T1078 coverage"
+            </div>
 
             <div class="content">
                 <!-- WHY ATT&CK MATTERS -->

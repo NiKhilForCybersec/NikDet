@@ -7,21 +7,123 @@
     <title>Lateral Movement Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/playbooks/investigation/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="investigation/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/playbooks/investigation/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="investigation/index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
                 <span>Lateral Movement</span>
             </div>
 
             <h1><i class="fas fa-project-diagram"></i> Lateral Movement Investigation</h1>
             <p class="lead">Investigating unauthorized movement between systems - a critical indicator of active intrusion.</p>
+
+            <div class="diagram-box">
+LATERAL MOVEMENT - WHAT IT LOOKS LIKE
+═══════════════════════════════════════════════════════════════════════════════
+
+NORMAL ADMIN PATTERN:
+─────────────────────────────────────────────────────────────────────────────
+                                    ┌──────────────┐
+                                    │ Jump Server  │
+                                    │ (authorized) │
+                                    └──────┬───────┘
+                                           │
+              ┌────────────────────────────┼────────────────────────────┐
+              │                            │                            │
+              ▼                            ▼                            ▼
+       ┌──────────────┐           ┌──────────────┐            ┌──────────────┐
+       │   Server A   │           │   Server B   │            │   Server C   │
+       │   (managed)  │           │   (managed)  │            │   (managed)  │
+       └──────────────┘           └──────────────┘            └──────────────┘
+
+       IT Admin → Logs into Jump Server → RDP/SSH to servers they manage
+       ✅ Expected, documented, from known source
+
+
+ATTACKER LATERAL MOVEMENT:
+─────────────────────────────────────────────────────────────────────────────
+
+       ┌──────────────┐
+       │  WORKSTATION │  User clicked phishing link
+       │  (Patient 0) │  Attacker has foothold
+       └──────┬───────┘
+              │
+              │ 1. Credential dump (Mimikatz)
+              │    Found: john.admin (Domain Admin!)
+              │
+              ├────────────► 2. PsExec to DC01
+              │                     │
+              │                     ▼
+              │              ┌──────────────┐
+              │              │     DC01     │  Now has Domain Admin
+              │              │ (compromised)│  Can access EVERYTHING
+              │              └──────────────┘
+              │
+              ├────────────► 3. RDP to FILE-SERVER
+              │                     │
+              │                     ▼
+              │              ┌──────────────┐
+              │              │ FILE-SERVER  │  Exfiltrating data
+              │              │ (compromised)│
+              │              └──────────────┘
+              │
+              └────────────► 4. WMI to all workstations
+                                    │
+                                    ▼
+                             ┌──────────────┐
+                             │ RANSOMWARE   │  GAME OVER
+                             │  DEPLOYED    │
+                             └──────────────┘
+
+       🔴 Workstation → DC = NEVER NORMAL
+       🔴 Workstation → Workstation = SUSPICIOUS
+       🔴 Multiple targets in short time = ATTACK
+            </div>
+
+            <div class="diagram-box">
+COMMON LATERAL MOVEMENT TECHNIQUES
+═══════════════════════════════════════════════════════════════════════════════
+
+TECHNIQUE           HOW IT WORKS                    DETECTION
+─────────────────────────────────────────────────────────────────────────────
+
+PsExec              Creates service on remote       • Event 7045 (new service)
+                    system, executes command        • EDR: psexec.exe execution
+                    Needs: Admin creds              • Event 4624 Type 3 from unexpected src
+
+SMB + Creds         Access admin shares (C$)        • Event 5140 (share access)
+                    Copy malware, execute           • Event 4624 Type 3
+                    Needs: Admin creds              • Multiple hosts in short time
+
+WMI                 Execute commands remotely       • Event 4624 Type 3
+                    via WMI interface               • wmiprvse.exe spawning processes
+                    Needs: Admin creds              • Sysmon Event 1 with WMI parent
+
+RDP                 Remote desktop connection       • Event 4624 Type 10
+                    Full GUI access                 • Event 1149 (RDP connected)
+                    Needs: Valid creds + RDP open   • mstsc.exe execution
+
+WinRM/PowerShell    Remote PowerShell session      • Event 4624 (Network logon)
+                    Needs: WinRM enabled            • Event 4103/4104 (PS logging)
+                    Very powerful                   • wsmprovhost.exe spawned
+
+Pass-the-Hash       Use NTLM hash directly         • Event 4624 Type 3 + 4776
+                    Without knowing password        • No 4768 (no Kerberos TGT)
+                    Needs: Dumped hash             • NTLM auth to sensitive systems
+
+Pass-the-Ticket     Use stolen Kerberos ticket     • Event 4768/4769 anomalies
+                    Impersonate user                • Ticket used from different IP
+                    Needs: Dumped ticket           • EDR: Mimikatz indicators
+            </div>
 
             <div class="content">
                 <!-- WHY THIS MATTERS -->

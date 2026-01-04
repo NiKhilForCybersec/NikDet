@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symmetric Encryption Deep Dive | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Encryption</a><span class="separator">/</span><span>Symmetric Encryption</span></div>
+            <div class="content">
+                <h1><i class="fas fa-key"></i> Symmetric Encryption Deep Dive</h1>
+                <p class="lead">Complete technical guide to symmetric encryption algorithms, block cipher modes, and real-world implementations.</p>
+
+                <div class="diagram-box">
+SYMMETRIC ENCRYPTION FUNDAMENTALS
+═══════════════════════════════════════════════════════════════════════════════
+
+THE CORE CONCEPT:
+─────────────────────────────────────────────────────────────────────────────
+
+  SAME KEY encrypts and decrypts
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │   Plaintext                    Ciphertext                  Plaintext    │
+  │   "Hello"                      "X7f#2k..."                 "Hello"      │
+  │      │                              │                          ▲       │
+  │      │         🔑 KEY              │         🔑 SAME KEY      │       │
+  │      │           │                  │              │           │       │
+  │      ▼           ▼                  │              ▼           │       │
+  │   ┌─────────────────┐              │        ┌─────────────────┐       │
+  │   │    ENCRYPT      │──────────────┼───────►│    DECRYPT      │───────┘│
+  │   │    (AES-256)    │              │        │    (AES-256)    │        │
+  │   └─────────────────┘              │        └─────────────────┘        │
+  │                                    │                                    │
+  │                              NETWORK                                   │
+  │                         (attacker sees                                 │
+  │                          only ciphertext)                              │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+BLOCK CIPHERS vs STREAM CIPHERS:
+═══════════════════════════════════════════════════════════════════════════════
+
+  BLOCK CIPHER (AES):
+  ─────────────────────────────────────────────────────────────────────────────
+  • Encrypts fixed-size BLOCKS (AES = 128 bits = 16 bytes)
+  • Needs a MODE OF OPERATION for longer data
+  • Widely used, well-studied
+  
+  Plaintext:     [Block 1][Block 2][Block 3][Block 4][Padding]
+                     │        │        │        │        │
+                     ▼        ▼        ▼        ▼        ▼
+  Ciphertext:    [Block 1][Block 2][Block 3][Block 4][Block 5]
+  
+  
+  STREAM CIPHER (ChaCha20):
+  ─────────────────────────────────────────────────────────────────────────────
+  • Generates continuous KEYSTREAM
+  • XOR keystream with plaintext
+  • No padding needed, any length
+  
+  Key + Nonce ──► [Stream Generator] ──► Keystream: 7a3f9c2e...
+                                              │
+  Plaintext:      Hello World                 │
+                       │                      │
+                       ▼                      ▼
+                    [XOR] ◄────────────────────
+                       │
+                       ▼
+  Ciphertext:     X7f#2k9...
+
+
+AES (ADVANCED ENCRYPTION STANDARD):
+═══════════════════════════════════════════════════════════════════════════════
+
+  • Winner of NIST competition (2001)
+  • Replaced DES
+  • Used EVERYWHERE: TLS, disk encryption, file encryption, VPNs
+  
+  KEY SIZES:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ AES-128    128-bit key    10 rounds    ~112-bit security   ✅ Good     │
+  │ AES-192    192-bit key    12 rounds    ~128-bit security   ✅ Good     │
+  │ AES-256    256-bit key    14 rounds    ~140-bit security   ✅ Best     │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  BLOCK SIZE: Always 128 bits (16 bytes)
+  
+  
+  AES INTERNAL STRUCTURE (One Round):
+  ─────────────────────────────────────────────────────────────────────────────
+  
+  ┌─────────────┐
+  │  SubBytes   │  Substitute each byte using S-box (non-linear)
+  └──────┬──────┘
+         ▼
+  ┌─────────────┐
+  │  ShiftRows  │  Shift rows of state matrix
+  └──────┬──────┘
+         ▼
+  ┌─────────────┐
+  │ MixColumns  │  Mix columns using matrix multiplication
+  └──────┬──────┘
+         ▼
+  ┌─────────────┐
+  │ AddRoundKey │  XOR with round key (derived from main key)
+  └─────────────┘
+  
+  Repeat 10/12/14 times (depending on key size)
+                </div>
+
+                <h2 id="modes"><i class="fas fa-cubes"></i> Block Cipher Modes of Operation</h2>
+
+                <div class="diagram-box">
+BLOCK CIPHER MODES - CRITICAL TO UNDERSTAND
+═══════════════════════════════════════════════════════════════════════════════
+
+WHY MODES MATTER:
+  AES encrypts 16 bytes at a time. Your data is longer.
+  HOW you chain blocks together determines security!
+
+
+ECB (Electronic Codebook) - ❌ NEVER USE
+═══════════════════════════════════════════════════════════════════════════════
+
+  Each block encrypted independently with same key:
+  
+  Block 1    Block 2    Block 3    Block 4
+     │          │          │          │
+     ▼          ▼          ▼          ▼
+  [AES-K]    [AES-K]    [AES-K]    [AES-K]
+     │          │          │          │
+     ▼          ▼          ▼          ▼
+  Cipher 1   Cipher 2   Cipher 3   Cipher 4
+  
+  FATAL FLAW: Identical plaintext blocks → Identical ciphertext blocks
+  
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ Original Image:        ECB Encrypted:       CBC/GCM Encrypted:          │
+  │ ┌────────────────┐    ┌────────────────┐   ┌────────────────┐           │
+  │ │   ████████     │    │   ████████     │   │ ▒░▓█▀▄▒░▓█▀▄▒░ │           │
+  │ │   ██    ██     │ →  │   ██    ██     │   │ ░▓█▀▄▒░▓█▀▄▒░▓ │           │
+  │ │   ████████     │    │   ████████     │   │ ▓█▀▄▒░▓█▀▄▒░▓█ │           │
+  │ │      ██        │    │      ██        │   │ █▀▄▒░▓█▀▄▒░▓█▀ │           │
+  │ │      ██        │    │      ██        │   │ ▀▄▒░▓█▀▄▒░▓█▀▄ │           │
+  │ └────────────────┘    └────────────────┘   └────────────────┘           │
+  │    PENGUIN              STILL VISIBLE!        RANDOM NOISE             │
+  │                         (Pattern leaks)       (Secure)                  │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+
+CBC (Cipher Block Chaining) - ⚠️ Legacy, Use GCM Instead
+═══════════════════════════════════════════════════════════════════════════════
+
+  Each block XORed with previous ciphertext before encryption:
+  
+         IV         Cipher 1      Cipher 2      Cipher 3
+         │              │             │             │
+         ▼              ▼             ▼             ▼
+  Block1 ⊕───►[AES-K]──►Cipher1     Block3──►⊕──►[AES-K]──►Cipher3
+                        │                    ▲
+                        │                    │
+                Block2──►⊕──►[AES-K]──►Cipher2
+  
+  IV = Initialization Vector (random, unique per message)
+  ⊕ = XOR operation
+  
+  PROS:
+  ✅ Identical blocks produce different ciphertext
+  ✅ Error in one block affects only that block + next
+  
+  CONS:
+  ❌ Cannot parallelize encryption
+  ❌ Vulnerable to padding oracle attacks (POODLE, Lucky13)
+  ❌ Needs separate MAC for integrity
+
+
+CTR (Counter Mode) - ✅ Good (but use GCM)
+═══════════════════════════════════════════════════════════════════════════════
+
+  Encrypt counter values, XOR with plaintext:
+  
+  Nonce+1        Nonce+2        Nonce+3        Nonce+4
+     │              │              │              │
+     ▼              ▼              ▼              ▼
+  [AES-K]        [AES-K]        [AES-K]        [AES-K]   ← Parallelizable!
+     │              │              │              │
+     ▼              ▼              ▼              ▼
+  Keystream1    Keystream2    Keystream3    Keystream4
+     │              │              │              │
+     ⊕              ⊕              ⊕              ⊕
+     │              │              │              │
+  Block 1       Block 2       Block 3       Block 4
+     │              │              │              │
+     ▼              ▼              ▼              ▼
+  Cipher 1      Cipher 2      Cipher 3      Cipher 4
+  
+  PROS:
+  ✅ Fully parallelizable (fast!)
+  ✅ No padding needed
+  ✅ Can decrypt any block independently
+  
+  CONS:
+  ❌ NONCE REUSE IS CATASTROPHIC (XOR ciphertexts = XOR plaintexts!)
+  ❌ No built-in integrity (needs separate MAC)
+
+
+GCM (Galois/Counter Mode) - ✅ RECOMMENDED
+═══════════════════════════════════════════════════════════════════════════════
+
+  CTR mode + GMAC authentication tag:
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ ENCRYPTION (CTR):                                                       │
+  │                                                                         │
+  │ Nonce+Counter ──►[AES-K]──► Keystream ──► ⊕ ◄── Plaintext              │
+  │                                            │                            │
+  │                                            ▼                            │
+  │                                       Ciphertext                        │
+  │                                            │                            │
+  │ AUTHENTICATION (GHASH):                    │                            │
+  │                                            ▼                            │
+  │ AAD ──►[GHASH]──► Ciphertext ──►[GHASH]──► Auth Tag (128 bits)        │
+  │                                                                         │
+  │ Output: Ciphertext + Authentication Tag                                │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  AAD = Additional Authenticated Data (e.g., headers - not encrypted but authenticated)
+  
+  PROS:
+  ✅ Encryption + Authentication in one operation (AEAD)
+  ✅ Parallelizable (very fast, hardware accelerated)
+  ✅ Detects ANY tampering (auth tag won't verify)
+  ✅ Industry standard: TLS 1.3, IPSec, SSH
+  
+  CONS:
+  ⚠️ Nonce reuse still catastrophic (leaks auth key!)
+  ⚠️ Max 2^39 bits (~64 GB) per key-nonce pair
+
+
+ChaCha20-Poly1305 - ✅ RECOMMENDED (Alternative to AES-GCM)
+═══════════════════════════════════════════════════════════════════════════════
+
+  Stream cipher (ChaCha20) + MAC (Poly1305):
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Key + Nonce ──►[ChaCha20]──► Keystream ──► ⊕ ◄── Plaintext             │
+  │                     │                       │                           │
+  │                     │                       ▼                           │
+  │                     │                  Ciphertext                       │
+  │                     │                       │                           │
+  │                     └──►[Poly1305 Key]      │                           │
+  │                              │              │                           │
+  │                              ▼              ▼                           │
+  │                         [Poly1305 MAC] ◄─────                          │
+  │                              │                                          │
+  │                              ▼                                          │
+  │                         Auth Tag                                        │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  PROS:
+  ✅ Fast without hardware acceleration (great for mobile!)
+  ✅ Simpler design, harder to implement wrong
+  ✅ Used by: TLS 1.3, WireGuard, SSH
+  ✅ Constant-time by design (side-channel resistant)
+  
+  WHEN TO USE:
+  • Devices without AES-NI (older CPUs, mobile, embedded)
+  • Software-only implementations
+  • When you want defense in depth (different algorithm family)
+                </div>
+
+                <h2 id="implementation"><i class="fas fa-code"></i> Implementation Examples</h2>
+
+                <div class="code-block"><pre># ═══════════════════════════════════════════════════════════════════════════
+# PYTHON - AES-256-GCM ENCRYPTION
+# ═══════════════════════════════════════════════════════════════════════════
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
+
+# Generate key (do this ONCE, store securely!)
+key = AESGCM.generate_key(bit_length=256)  # 32 bytes
+
+# Encrypt
+def encrypt(plaintext: bytes, associated_data: bytes = b"") -> tuple:
+    """Encrypt with AES-256-GCM. Returns (nonce, ciphertext)."""
+    nonce = os.urandom(12)  # 96 bits, MUST be unique per encryption!
+    aesgcm = AESGCM(key)
+    ciphertext = aesgcm.encrypt(nonce, plaintext, associated_data)
+    return nonce, ciphertext
+
+# Decrypt
+def decrypt(nonce: bytes, ciphertext: bytes, associated_data: bytes = b"") -> bytes:
+    """Decrypt with AES-256-GCM. Raises exception if tampered."""
+    aesgcm = AESGCM(key)
+    return aesgcm.decrypt(nonce, ciphertext, associated_data)
+
+# Usage
+nonce, encrypted = encrypt(b"Secret message", b"header data")
+decrypted = decrypt(nonce, encrypted, b"header data")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PYTHON - ChaCha20-Poly1305
+# ═══════════════════════════════════════════════════════════════════════════
+
+from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+
+key = ChaCha20Poly1305.generate_key()  # 32 bytes
+chacha = ChaCha20Poly1305(key)
+
+nonce = os.urandom(12)  # 96 bits
+ciphertext = chacha.encrypt(nonce, b"Secret message", b"associated data")
+plaintext = chacha.decrypt(nonce, ciphertext, b"associated data")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# OPENSSL COMMAND LINE
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Encrypt file with AES-256-GCM
+openssl enc -aes-256-gcm -salt -in plaintext.txt -out encrypted.bin \
+    -pass pass:YourPassword
+
+# Decrypt
+openssl enc -d -aes-256-gcm -in encrypted.bin -out decrypted.txt \
+    -pass pass:YourPassword
+
+# Generate random key (32 bytes = 256 bits)
+openssl rand -hex 32
+
+# Encrypt with explicit key and IV
+openssl enc -aes-256-cbc -K $(openssl rand -hex 32) -iv $(openssl rand -hex 16) \
+    -in plain.txt -out encrypted.bin
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NODE.JS - AES-256-GCM
+# ═══════════════════════════════════════════════════════════════════════════
+
+const crypto = require('crypto');
+
+function encrypt(plaintext, key) {
+    const iv = crypto.randomBytes(12);  // 96-bit IV for GCM
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+    
+    let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    const authTag = cipher.getAuthTag();
+    
+    return {
+        iv: iv.toString('hex'),
+        encrypted: encrypted,
+        authTag: authTag.toString('hex')
+    };
+}
+
+function decrypt(encrypted, key, iv, authTag) {
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, 
+        Buffer.from(iv, 'hex'));
+    decipher.setAuthTag(Buffer.from(authTag, 'hex'));
+    
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
+}</pre></div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="index.html">Encryption Fundamentals</a></li>
+                    <li><a href="asymmetric.html">Asymmetric Encryption</a></li>
+                    <li><a href="hashing.html">Hashing & Password Storage</a></li>
+                    <li><a href="tls-ssl.html">TLS/SSL Configuration</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

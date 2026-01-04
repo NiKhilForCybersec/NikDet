@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SASE/ZTNA Troubleshooting Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .issue-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #ef4444; }
+        .issue-card h4 { margin-top: 0; color: #ef4444; }
+        .solution-steps { background: rgba(34, 197, 94, 0.1); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .solution-steps h5 { margin-top: 0; color: #22c55e; }
+        .config-block { background: #0d1117; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; white-space: pre; color: #e6edf3; border: 1px solid #30363d; }
+        .config-block .comment { color: #8b949e; }
+        .config-block .keyword { color: #ff7b72; }
+        .config-block .value { color: #7ee787; }
+        .config-block .string { color: #a5d6ff; }
+        .diagnostic-box { background: rgba(99, 102, 241, 0.1); border-left: 4px solid var(--accent-primary); padding: 1rem; margin: 1rem 0; }
+        .quick-check { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; display: flex; gap: 1rem; align-items: center; }
+        .quick-check .check-icon { font-size: 1.5rem; }
+        .quick-check.pass .check-icon { color: #22c55e; }
+        .quick-check.fail .check-icon { color: #ef4444; }
+        .flowchart { background: #1a1a2e; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.75rem; overflow-x: auto; white-space: pre; }
+    </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Network Security</a><span class="separator">/</span>
+                <span>Troubleshooting</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-wrench"></i> SASE/ZTNA Troubleshooting Guide</h1>
+                <p class="lead">Comprehensive troubleshooting guide for Zscaler ZIA, ZPA, and SASE deployments. Diagnose and resolve common issues quickly.</p>
+
+                <!-- QUICK DIAGNOSTICS -->
+                <h2><i class="fas fa-stethoscope"></i> Quick Diagnostics</h2>
+
+                <h3>First Things to Check</h3>
+                <div class="diagnostic-box">
+                    <strong>1. Is traffic going through Zscaler?</strong>
+                    <p>Visit: <code>http://ip.zscaler.com</code></p>
+                    <p>✅ Should show: "You are accessing the Internet via Zscaler"</p>
+                    <p>❌ If shows your real IP: Traffic not going through Zscaler</p>
+                </div>
+
+                <div class="diagnostic-box">
+                    <strong>2. Is the Client Connector running?</strong>
+                    <p><strong>Windows:</strong> Check system tray for Zscaler icon (should be blue/green)</p>
+                    <p><strong>macOS:</strong> Check menu bar for Zscaler icon</p>
+                    <p>Click icon → "Open Zscaler" → Check status</p>
+                </div>
+
+                <div class="diagnostic-box">
+                    <strong>3. Is the user authenticated?</strong>
+                    <p>Zscaler Client → More → Status</p>
+                    <p>Should show: User email and "Authenticated" status</p>
+                </div>
+
+                <div class="config-block"><span class="comment"># Quick Diagnostic Commands</span>
+
+<span class="comment"># Check Zscaler connectivity</span>
+curl -v http://ip.zscaler.com/
+curl -v https://gateway.zscaler.net/
+
+<span class="comment"># Check SSL inspection (certificate issuer)</span>
+openssl s_client -connect www.google.com:443 2>/dev/null | openssl x509 -noout -issuer
+<span class="comment"># Should show Zscaler if SSL inspection is on</span>
+
+<span class="comment"># Check DNS resolution</span>
+nslookup gateway.zscaler.net
+nslookup mobile.zscaler.net
+
+<span class="comment"># Windows: Check Zscaler services</span>
+Get-Service ZSATunnel, ZSAService
+
+<span class="comment"># macOS: Check Zscaler process</span>
+ps aux | grep -i zscaler
+
+<span class="comment"># Check client logs</span>
+<span class="keyword">Windows:</span> %LOCALAPPDATA%\Zscaler\logs\
+<span class="keyword">macOS:</span> ~/Library/Logs/Zscaler/</div>
+
+                <!-- ZIA ISSUES -->
+                <h2><i class="fas fa-globe"></i> ZIA (Internet Access) Issues</h2>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: Website incorrectly blocked</h4>
+                    <p><strong>Symptom:</strong> Legitimate business site shows Zscaler block page</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Check the block reason:</strong>
+                                <ul>
+                                    <li>Note the URL category shown on block page</li>
+                                    <li>Admin Portal → Analytics → Web Logs → Search for URL</li>
+                                </ul>
+                            </li>
+                            <li><strong>Verify categorization:</strong>
+                                <ul>
+                                    <li>Administration → URL Lookup → Enter URL</li>
+                                    <li>Check if category is correct</li>
+                                </ul>
+                            </li>
+                            <li><strong>Quick fix:</strong> Add URL to custom allow list
+                                <ul>
+                                    <li>Administration → URL Categories → Custom Categories</li>
+                                    <li>Add to "Allowed-Business-Sites" category</li>
+                                </ul>
+                            </li>
+                            <li><strong>Long-term fix:</strong> Submit URL for recategorization
+                                <ul>
+                                    <li>Administration → URL Lookup → Submit for Review</li>
+                                    <li>Takes 24-48 hours</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div class="config-block"><span class="comment"># Add URL to custom allow list</span>
+Administration → URL Categories → Custom Categories → Add
+
+<span class="keyword">Name:</span> <span class="value">Business-Allowed-Sites</span>
+<span class="keyword">URLs:</span>
+  - example-business-site.com
+  - *.partner-company.com
+
+<span class="comment"># Create policy to allow custom category</span>
+Policy → URL & Cloud App Control → Add Rule
+<span class="keyword">Name:</span> <span class="value">Allow-Custom-Business</span>
+<span class="keyword">Action:</span> <span class="value">Allow</span>
+<span class="keyword">URL Categories:</span> <span class="value">Business-Allowed-Sites</span>
+<span class="keyword">Rule Order:</span> <span class="value">Before block rules</span></div>
+                </div>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: Certificate error on HTTPS site</h4>
+                    <p><strong>Symptom:</strong> Browser shows "Your connection is not private" or certificate error</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Check if Zscaler CA is installed:</strong>
+                                <div class="config-block"><span class="comment"># Windows - Check certificate store</span>
+certmgr.msc → Trusted Root Certification Authorities
+Look for "Zscaler Root CA"
+
+<span class="comment"># macOS - Check Keychain</span>
+Keychain Access → System → Certificates
+Look for "Zscaler Root CA" (should show "This certificate is trusted")</div>
+                            </li>
+                            <li><strong>If CA missing:</strong> Deploy via GPO/MDM or download from Zscaler admin portal</li>
+                            <li><strong>If certificate pinning:</strong> Add to SSL bypass list
+                                <div class="config-block">Policy → SSL Inspection → Add Rule
+<span class="keyword">Name:</span> <span class="value">Bypass-Pinned-Apps</span>
+<span class="keyword">Action:</span> <span class="value">Do Not Inspect</span>
+<span class="keyword">URL Categories/Domains:</span>
+  - *.apple.com
+  - *.windowsupdate.com
+  - [problematic site]</div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: Application not working through Zscaler</h4>
+                    <p><strong>Symptom:</strong> Specific app fails, but browser works fine</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Identify the app's traffic:</strong>
+                                <ul>
+                                    <li>Check if app uses non-standard ports</li>
+                                    <li>Check if app has certificate pinning</li>
+                                </ul>
+                            </li>
+                            <li><strong>Check firewall policy:</strong>
+                                <ul>
+                                    <li>Policy → Firewall → Check if app's ports are allowed</li>
+                                </ul>
+                            </li>
+                            <li><strong>Add SSL bypass if needed:</strong>
+                                <div class="config-block"><span class="comment"># Common apps that need SSL bypass</span>
+- Zoom (*.zoom.us)
+- Webex (*.webex.com)
+- Microsoft Teams (*.teams.microsoft.com)
+- Slack desktop (*.slack.com)
+- Banking apps
+- Healthcare portals</div>
+                            </li>
+                            <li><strong>If app uses VPN/tunnel:</strong> May need app-specific bypass</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: Slow browsing performance</h4>
+                    <p><strong>Symptom:</strong> Web pages load slowly, latency is high</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Check which Zscaler DC you're hitting:</strong>
+                                <div class="config-block">curl http://ip.zscaler.com/
+<span class="comment"># Note the data center location</span>
+<span class="comment"># Should be geographically close to user</span></div>
+                            </li>
+                            <li><strong>If distant DC:</strong>
+                                <ul>
+                                    <li>Client Connector → Settings → Check DC selection</li>
+                                    <li>May need to configure preferred DCs</li>
+                                </ul>
+                            </li>
+                            <li><strong>Check SSL inspection overhead:</strong>
+                                <ul>
+                                    <li>Test site with and without SSL inspection</li>
+                                    <li>Consider bypassing high-bandwidth sites (video)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Check local network:</strong>
+                                <ul>
+                                    <li>Run speed test without Zscaler</li>
+                                    <li>Check for local network issues</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- ZPA ISSUES -->
+                <h2><i class="fas fa-user-shield"></i> ZPA (Private Access) Issues</h2>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: User can't access any private apps</h4>
+                    <p><strong>Symptom:</strong> ZPA not working at all, all internal apps fail</p>
+                    
+                    <h4>Troubleshooting Flowchart</h4>
+                    <div class="flowchart">
+User reports ZPA not working
+        │
+        ▼
+┌───────────────────────────────┐
+│ Is Client Connector running?  │
+│ (Check system tray)           │
+└───────────────────────────────┘
+        │
+    ┌───┴───┐
+   No      Yes
+    │       │
+    ▼       ▼
+Start    ┌───────────────────────────────┐
+Client   │ Is user authenticated?        │
+         │ (Client → More → Status)      │
+         └───────────────────────────────┘
+                │
+            ┌───┴───┐
+           No      Yes
+            │       │
+            ▼       ▼
+         Re-auth  ┌───────────────────────────────┐
+         via IdP  │ Is ZPA enabled on client?     │
+                  │ (Settings → ZPA toggle)       │
+                  └───────────────────────────────┘
+                        │
+                    ┌───┴───┐
+                   No      Yes
+                    │       │
+                    ▼       ▼
+                 Enable   ┌───────────────────────────────┐
+                 ZPA      │ Check connectivity to ZPA     │
+                          │ nslookup mobile.zscaler.net   │
+                          └───────────────────────────────┘
+                                │
+                            ┌───┴───┐
+                         Fails    Works
+                            │       │
+                            ▼       ▼
+                        Check    App Connector
+                        network  or Policy issue
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: Specific application not accessible</h4>
+                    <p><strong>Symptom:</strong> Some ZPA apps work, but one specific app doesn't</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Verify Application Segment:</strong>
+                                <div class="config-block"><span class="comment"># Check in ZPA Admin</span>
+Applications → Application Segments
+
+<span class="comment"># Verify:</span>
+✓ App domain/IP is in a segment
+✓ Correct ports included
+✓ Correct Connector Group assigned
+✓ Segment is enabled</div>
+                            </li>
+                            <li><strong>Check Access Policy:</strong>
+                                <div class="config-block">Access Policy → Access Policy
+
+<span class="comment"># Verify:</span>
+✓ User's group has a policy for this app
+✓ Policy action is "Allow"
+✓ Policy is not disabled
+✓ Check rule order (first match wins)</div>
+                            </li>
+                            <li><strong>Check App Connector:</strong>
+                                <div class="config-block">Administration → App Connectors
+
+<span class="comment"># Verify:</span>
+✓ Connector is online (green status)
+✓ Connector can reach the application
+✓ SSH to connector and test:
+  curl -v http://[app-ip]:[port]</div>
+                            </li>
+                            <li><strong>Check ZPA logs:</strong>
+                                <div class="config-block">Analytics → ZPA Logs → User Activity
+
+<span class="comment"># Filter by:</span>
+- User
+- Time range
+- Application
+
+<span class="comment"># Look for:</span>
+- Action: Denied → Check policy
+- Connector: None → App not in segment
+- Error messages</div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: "Access Denied" error</h4>
+                    <p><strong>Symptom:</strong> User sees "Access Denied" when accessing ZPA app</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Check user's group membership:</strong>
+                                <ul>
+                                    <li>Administration → Users → Search for user</li>
+                                    <li>Verify groups are synced from IdP</li>
+                                </ul>
+                            </li>
+                            <li><strong>Check access policy conditions:</strong>
+                                <ul>
+                                    <li>Is user in correct group?</li>
+                                    <li>Does device meet posture requirements?</li>
+                                    <li>Is there a time restriction?</li>
+                                    <li>Is there a location restriction?</li>
+                                </ul>
+                            </li>
+                            <li><strong>Check device posture:</strong>
+                                <div class="config-block"><span class="comment"># On user's device</span>
+Zscaler Client → More → Device Posture
+
+<span class="comment"># Check what's failing:</span>
+❌ Disk encryption: Not enabled
+❌ Antivirus: Not running
+❌ OS version: Too old
+❌ Firewall: Disabled</div>
+                            </li>
+                            <li><strong>If all looks correct:</strong> Check for conflicting deny policy higher in rule order</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: App Connector shows unhealthy</h4>
+                    <p><strong>Symptom:</strong> Connector status is red/unhealthy in admin portal</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Check connector VM:</strong>
+                                <div class="config-block"><span class="comment"># SSH to connector</span>
+ssh admin@[connector-ip]
+
+<span class="comment"># Check service status</span>
+sudo systemctl status zpa-connector
+
+<span class="comment"># Check logs</span>
+sudo journalctl -u zpa-connector -f
+
+<span class="comment"># Check health</span>
+sudo /opt/zscaler/bin/health_check.sh</div>
+                            </li>
+                            <li><strong>Check network connectivity:</strong>
+                                <div class="config-block"><span class="comment"># Can connector reach Zscaler cloud?</span>
+curl -v https://connector.zscaler.net
+
+<span class="comment"># Check DNS</span>
+nslookup connector.zscaler.net
+
+<span class="comment"># Check firewall allows outbound 443</span>
+nc -zv connector.zscaler.net 443</div>
+                            </li>
+                            <li><strong>Common causes:</strong>
+                                <ul>
+                                    <li>Firewall blocking outbound 443</li>
+                                    <li>DNS resolution failing</li>
+                                    <li>Certificate issues (expired, wrong time)</li>
+                                    <li>VM resource constraints (CPU, memory)</li>
+                                </ul>
+                            </li>
+                            <li><strong>Restart connector service:</strong>
+                                <div class="config-block">sudo systemctl restart zpa-connector
+<span class="comment"># Wait 2-3 minutes, check status in admin portal</span></div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- CLIENT CONNECTOR ISSUES -->
+                <h2><i class="fas fa-laptop"></i> Client Connector Issues</h2>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: Client Connector won't install</h4>
+                    <p><strong>Symptom:</strong> Installation fails or stuck</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <div class="config-block"><span class="comment"># Windows</span>
+1. Run installer as Administrator
+2. Check for conflicting software:
+   - Other VPN clients
+   - Antivirus blocking installation
+   - Previous Zscaler installation
+   
+<span class="comment"># Uninstall previous version</span>
+"C:\Program Files\Zscaler\Uninstall.exe" /S
+
+<span class="comment"># Clear registry (if needed)</span>
+reg delete "HKLM\SOFTWARE\Zscaler" /f
+
+<span class="comment"># macOS</span>
+1. Check System Preferences → Security & Privacy
+2. Allow system extension for Zscaler
+3. Grant Full Disk Access for posture checks
+
+<span class="comment"># MDM Deployment Issues</span>
+- Verify package is signed
+- Check MDM deployment logs
+- Ensure required configurations are included</div>
+                    </div>
+                </div>
+
+                <div class="issue-card">
+                    <h4>🔴 Issue: Client shows "Not Connected" or "Connecting..."</h4>
+                    <p><strong>Symptom:</strong> Client stuck in connecting state</p>
+                    
+                    <div class="solution-steps">
+                        <h5>✅ Resolution Steps</h5>
+                        <ol>
+                            <li><strong>Check network connectivity:</strong>
+                                <div class="config-block"><span class="comment"># Can you reach Zscaler?</span>
+ping gateway.zscaler.net
+nslookup mobile.zscaler.net</div>
+                            </li>
+                            <li><strong>Check for network blocks:</strong>
+                                <ul>
+                                    <li>Corporate firewall blocking Zscaler domains</li>
+                                    <li>Captive portal (hotel/airport WiFi)</li>
+                                    <li>Proxy interference</li>
+                                </ul>
+                            </li>
+                            <li><strong>Required Zscaler domains (whitelist on firewall):</strong>
+                                <div class="config-block"><span class="comment"># Must be allowed outbound on port 443</span>
+*.zscaler.net
+*.zscalerone.net  
+*.zscalertwo.net
+*.zscalerthree.net
+*.zscloud.net
+*.zpath.net</div>
+                            </li>
+                            <li><strong>Restart client:</strong>
+                                <div class="config-block"><span class="comment"># Windows</span>
+Restart-Service ZSATunnel, ZSAService
+
+<span class="comment"># macOS</span>
+sudo launchctl unload /Library/LaunchDaemons/com.zscaler.tunnel.plist
+sudo launchctl load /Library/LaunchDaemons/com.zscaler.tunnel.plist</div>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- COMMON SCENARIOS -->
+                <h2><i class="fas fa-clipboard-list"></i> Common Scenario Resolution</h2>
+
+                <table>
+                    <thead><tr><th>Scenario</th><th>Likely Cause</th><th>Quick Fix</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>User traveling, can't connect</td>
+                            <td>Hotel/airport WiFi blocking ports</td>
+                            <td>Use mobile hotspot, or enable fallback ports in client</td>
+                        </tr>
+                        <tr>
+                            <td>New employee can't authenticate</td>
+                            <td>User not synced from IdP</td>
+                            <td>Check SCIM sync, force manual sync</td>
+                        </tr>
+                        <tr>
+                            <td>App worked yesterday, not today</td>
+                            <td>Policy change, certificate expired</td>
+                            <td>Check audit logs for recent changes</td>
+                        </tr>
+                        <tr>
+                            <td>Specific department can't access app</td>
+                            <td>Group not in policy</td>
+                            <td>Verify IdP group membership, check policy</td>
+                        </tr>
+                        <tr>
+                            <td>Browser works, but desktop app fails</td>
+                            <td>Certificate pinning</td>
+                            <td>Add app to SSL bypass list</td>
+                        </tr>
+                        <tr>
+                            <td>VPN and Zscaler conflict</td>
+                            <td>Route collision</td>
+                            <td>Configure proper routing, or disable legacy VPN</td>
+                        </tr>
+                        <tr>
+                            <td>File downloads blocked</td>
+                            <td>ATP file type policy</td>
+                            <td>Check ATP logs, whitelist source if legitimate</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- ESCALATION -->
+                <h2><i class="fas fa-arrow-up"></i> When to Escalate to Zscaler Support</h2>
+
+                <div class="config-block"><span class="comment"># Escalate to Zscaler Support when:</span>
+- App Connector consistently unhealthy despite local fixes
+- Zscaler service outage suspected (check trust.zscaler.com)
+- SSL inspection causing widespread certificate issues
+- Performance degradation across multiple users/locations
+- Bug in client connector behavior
+- SIEM integration not receiving logs
+
+<span class="comment"># Information to Gather Before Opening Ticket:</span>
+1. <span class="keyword">Affected users:</span> How many? Specific users or all?
+2. <span class="keyword">Scope:</span> One location or multiple?
+3. <span class="keyword">Timeline:</span> When did it start? Any changes?
+4. <span class="keyword">Error messages:</span> Exact text from block pages, logs
+5. <span class="keyword">Client logs:</span> Export from Zscaler Client
+6. <span class="keyword">Admin logs:</span> Export from ZIA/ZPA analytics
+7. <span class="keyword">HAR file:</span> Browser network capture (for web issues)
+8. <span class="keyword">Reproduce steps:</span> How to replicate the issue
+
+<span class="comment"># Support Portal:</span> https://help.zscaler.com
+<span class="comment"># Status Page:</span> https://trust.zscaler.com</div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="ztna-zpa.html" class="card"><div class="card-icon"><i class="fas fa-user-shield"></i></div><h3>ZTNA & ZPA</h3><p>Configuration guide</p></a>
+                    <a href="swg-zia.html" class="card"><div class="card-icon"><i class="fas fa-globe"></i></div><h3>SWG & ZIA</h3><p>Configuration guide</p></a>
+                    <a href="interview-qa.html" class="card"><div class="card-icon"><i class="fas fa-comments"></i></div><h3>Interview Q&A</h3><p>Practice questions</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

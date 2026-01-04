@@ -7,17 +7,117 @@
     <title>Privilege Escalation Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/playbooks/investigation/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/playbooks/investigation/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
                 <span>Privilege Escalation</span>
+            </div>
+
+            <div class="diagram-box">
+PRIVILEGE ESCALATION TECHNIQUES
+═══════════════════════════════════════════════════════════════════════════════
+
+GOAL: Standard User → Admin → Domain Admin → Enterprise Admin
+
+     ┌───────────────────────────────────────────────────────────────────────┐
+     │  STANDARD USER          LOCAL ADMIN           DOMAIN ADMIN           │
+     │       │                     │                      │                  │
+     │       │   Escalation        │    Escalation        │                  │
+     │       └────────────────────►└──────────────────────►                  │
+     │                                                                        │
+     │  Limited access         Full local control    Full domain control     │
+     │  No installs            Install software      Create accounts         │
+     │  No system changes      Modify system         Access any system       │
+     │                         Read SAM/LSASS        Deploy to all hosts     │
+     └───────────────────────────────────────────────────────────────────────┘
+
+
+LOCAL PRIVILEGE ESCALATION:
+─────────────────────────────────────────────────────────────────────────────
+
+1. UAC BYPASS (User Account Control)
+   User → Admin without prompt
+   
+   Detection: Event 4688 with suspicious parent-child relationships
+              fodhelper.exe, eventvwr.exe spawning cmd.exe/powershell.exe
+
+
+2. SERVICE EXPLOITATION
+   Misconfigured service → SYSTEM
+   
+   Detection: Event 7045 (new service), service binary outside System32
+              Unquoted service paths, weak service permissions
+
+
+3. DLL HIJACKING
+   Malicious DLL loaded by privileged process
+   
+   Detection: DLL loaded from unusual path, missing DLL loaded from user dir
+
+
+4. TOKEN MANIPULATION
+   Steal token from higher-privileged process
+   
+   Detection: SeDebugPrivilege use, process token modification
+
+
+DOMAIN PRIVILEGE ESCALATION:
+─────────────────────────────────────────────────────────────────────────────
+
+1. CREDENTIAL THEFT (Mimikatz, etc.)
+   
+   User → LSASS → Admin creds in memory
+   
+   Detection: LSASS access (Event 10), Mimikatz command patterns
+
+
+2. KERBEROASTING
+   
+   Any user → Request service tickets → Crack offline → Service account creds
+   
+   Detection: Bulk TGS requests (Event 4769), anomalous Kerberos activity
+
+
+3. GROUP CHANGES
+   
+   User added to privileged group
+   
+   Detection: Event 4728/4732 (member added to group)
+              Especially: Domain Admins, Enterprise Admins, Schema Admins
+
+
+4. GOLDEN TICKET
+   
+   krbtgt hash → Forge any ticket → Permanent domain access
+   
+   Detection: TGT without prior authentication, impossible ticket lifetimes
+
+
+DETECTION EVENTS:
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  EVENT      WHAT IT MEANS                   LOOK FOR                       │
+│  ─────      ─────────────                   ────────                       │
+│  4672       Special privileges assigned     Unexpected accounts with admin │
+│  4728/4732  Added to privileged group       Non-IT users to admin groups  │
+│  4688       Process created                 Suspicious parent-child        │
+│  7045       New service installed           Services from temp dirs        │
+│  4769       Kerberos service ticket         Bulk requests, unusual SPNs   │
+│  4624 + 10  Login type 10 (RemoteInteractive) + LSASS access               │
+│                                                                             │
+│  EDR:       LSASS access, token manipulation, UAC bypass patterns         │
+└─────────────────────────────────────────────────────────────────────────────┘
             </div>
 
             <div class="playbook-header">

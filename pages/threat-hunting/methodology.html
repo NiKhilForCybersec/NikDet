@@ -19,6 +19,7 @@
         .finding-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
         .time-estimate { background: var(--accent-primary); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
     </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
@@ -28,13 +29,101 @@
         <div class="content-page">
             <div class="breadcrumb">
                 <a href="index.html">Home</a><span class="separator">/</span>
-                <a href="pages/threat-hunting/index.html">Threat Hunting</a><span class="separator">/</span>
+                <a href="index.html">Threat Hunting</a><span class="separator">/</span>
                 <span>Methodology</span>
             </div>
 
             <div class="content">
                 <h1><i class="fas fa-crosshairs"></i> Threat Hunting Methodology</h1>
                 <p class="lead">Practical threat hunting: real hunt scenarios, what you actually find, and how to turn findings into value.</p>
+
+                <div class="diagram-box">
+THREAT HUNTING CYCLE
+═══════════════════════════════════════════════════════════════════════════════
+
+              ┌─────────────────────────────────────────────────────────────┐
+              │                                                             │
+              ▼                                                             │
+       ┌─────────────┐                                                      │
+       │ 1. INTEL    │  "What threats are relevant to us?"                 │
+       │             │  • Threat reports (APT groups targeting our sector)  │
+       │             │  • Recent incidents (internal or industry)           │
+       │             │  • New TTPs (MITRE ATT&CK updates)                   │
+       └──────┬──────┘                                                      │
+              │                                                             │
+              ▼                                                             │
+       ┌─────────────┐                                                      │
+       │ 2. HYPOTHE- │  "If attacker X was in our environment..."          │
+       │    SIS      │  • They would use technique Y                        │
+       │             │  • Which would generate artifact Z                   │
+       │             │  • That we could find in data source W               │
+       └──────┬──────┘                                                      │
+              │                                                             │
+              ▼                                                             │
+       ┌─────────────┐                                                      │
+       │ 3. HUNT     │  Actually search the data                           │
+       │             │  • Write queries                                     │
+       │             │  • Analyze results                                   │
+       │             │  • Pivot on findings                                │
+       └──────┬──────┘                                                      │
+              │                                                             │
+              ▼                                                             │
+       ┌─────────────┐                                                      │
+       │ 4. ANALYZE  │  What did we find?                                   │
+       │             │  • True positive? → Incident!                       │
+       │             │  • Suspicious? → Deeper investigation               │
+       │             │  • Benign? → Baseline knowledge                     │
+       │             │  • Nothing? → Hypothesis may be wrong               │
+       └──────┬──────┘                                                      │
+              │                                                             │
+              ▼                                                             │
+       ┌─────────────┐                                                      │
+       │ 5. OUTPUT   │  Turn findings into value                           │
+       │             │  • New detection rules                              │
+       │             │  • Improved coverage                                │
+       │             │  • Updated baselines                                │
+       │             │  • Hunt report                                      │
+       └──────┬──────┘                                                      │
+              │                                                             │
+              └─────────────────────────────────────────────────────────────┘
+
+
+HUNTING vs DETECTION vs INCIDENT RESPONSE:
+═══════════════════════════════════════════════════════════════════════════════
+
+  DETECTION (Reactive)      HUNTING (Proactive)       IR (Reactive)
+  ─────────────────────     ───────────────────       ─────────────────
+  Alert fires               No alert - you go         Alert/Report triggers
+       │                    looking                        │
+       ▼                         │                         ▼
+  Analyst triages                ▼                    Investigate fully
+       │                    Search for threats             │
+       ▼                    you HAVEN'T detected           ▼
+  Close or escalate              │                    Contain, eradicate
+                                 ▼                    recover
+                            Find things detections
+                            missed
+
+
+HYPOTHESIS EXAMPLES:
+═══════════════════════════════════════════════════════════════════════════════
+
+WEAK HYPOTHESIS (Too vague):
+  "Let's look for malware"
+  → What data? What patterns? Too broad to action.
+
+STRONG HYPOTHESIS (Specific & testable):
+  "APT29 has been targeting our sector using OAuth app abuse.
+   If they compromised us, we'd see:
+   - New OAuth apps with Mail.Read permissions
+   - Consented by users who received spearphishing
+   - Apps from suspicious publishers
+   
+   Data source: Azure AD audit logs, email logs
+   Query: Look for OAuth consents in last 30 days with Mail.Read"
+
+  → Specific, testable, actionable!
+                </div>
 
                 <div class="info-box">
                     <div class="info-box-title"><i class="fas fa-list"></i> What's Covered</div>
@@ -392,9 +481,9 @@ VALUE DELIVERED
                 <!-- RELATED -->
                 <h2><i class="fas fa-link"></i> Related</h2>
                 <div class="card-grid">
-                    <a href="pages/threat-hunting/hypothesis.html" class="card"><div class="card-icon"><i class="fas fa-lightbulb"></i></div><h3>Hypothesis</h3><p>Forming hypotheses</p></a>
-                    <a href="pages/threat-hunting/hunt-playbooks.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>Hunt Playbooks</h3><p>Ready-to-use hunts</p></a>
-                    <a href="pages/references/kql-library.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Library</h3><p>Query templates</p></a>
+                    <a href="hypothesis.html" class="card"><div class="card-icon"><i class="fas fa-lightbulb"></i></div><h3>Hypothesis</h3><p>Forming hypotheses</p></a>
+                    <a href="hunt-playbooks.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>Hunt Playbooks</h3><p>Ready-to-use hunts</p></a>
+                    <a href="kql-library.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Library</h3><p>Query templates</p></a>
                 </div>
 
             </div>

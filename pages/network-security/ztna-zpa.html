@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZTNA & Zscaler ZPA Complete Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .config-block { background: #0d1117; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; white-space: pre; color: #e6edf3; border: 1px solid #30363d; }
+        .config-block .comment { color: #8b949e; }
+        .config-block .keyword { color: #ff7b72; }
+        .config-block .string { color: #a5d6ff; }
+        .config-block .value { color: #7ee787; }
+        .interview-tip { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+        .interview-tip h4 { margin-top: 0; color: #fbbf24; }
+        .feature-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-primary); }
+        .feature-card h4 { margin-top: 0; color: var(--accent-primary); }
+        .step-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; display: flex; gap: 1rem; align-items: flex-start; }
+        .step-box .step-num { background: var(--accent-primary); color: white; min-width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .architecture-diagram { background: #1a1a2e; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.7rem; overflow-x: auto; white-space: pre; }
+        .use-case { background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.1)); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .use-case h5 { margin-top: 0; color: #22c55e; }
+        .warning-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .best-practice { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .tab-container { margin: 1.5rem 0; }
+        .tab-buttons { display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; }
+        .tab-btn { background: transparent; border: none; padding: 0.5rem 1rem; cursor: pointer; color: var(--text-secondary); border-radius: 4px 4px 0 0; }
+        .tab-btn.active { background: var(--accent-primary); color: white; }
+        .tab-content { display: none; padding: 1rem 0; }
+        .tab-content.active { display: block; }
+    </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Network Security</a><span class="separator">/</span>
+                <span>ZTNA & ZPA</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-user-shield"></i> ZTNA & Zscaler ZPA Complete Guide</h1>
+                <p class="lead">Complete configuration guide for Zero Trust Network Access with Zscaler Private Access. Includes step-by-step setup, policy configuration, and real-world deployment scenarios.</p>
+
+                <!-- TABLE OF CONTENTS -->
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> Complete Guide Contents</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong>Fundamentals</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#zero-trust-principles">Zero Trust Principles</a></li>
+                                <li><a href="#zpa-architecture">ZPA Architecture</a></li>
+                                <li><a href="#components">Components Deep Dive</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Configuration</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#initial-setup">Initial Setup</a></li>
+                                <li><a href="#app-connectors">App Connector Setup</a></li>
+                                <li><a href="#app-segments">Application Segments</a></li>
+                                <li><a href="#access-policies">Access Policies</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Advanced</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#device-posture">Device Posture</a></li>
+                                <li><a href="#idp-integration">IdP Integration</a></li>
+                                <li><a href="#browser-access">Browser Access</a></li>
+                                <li><a href="#privileged-access">Privileged Access</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Operations</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#use-cases">Real Use Cases</a></li>
+                                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                                <li><a href="#monitoring">Monitoring & Logs</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ZERO TRUST PRINCIPLES -->
+                <h2 id="zero-trust-principles"><i class="fas fa-shield-alt"></i> Zero Trust Principles</h2>
+
+                <div class="interview-tip">
+                    <h4>💡 Interview Answer: What is Zero Trust?</h4>
+                    <p>"Zero Trust is a security model based on 'never trust, always verify.' It assumes breach and verifies each request as if it originates from an untrusted network. Key principles include: verify explicitly (authenticate and authorize based on all available data), use least privilege access (limit user access with Just-In-Time and Just-Enough-Access), and assume breach (minimize blast radius and segment access)."</p>
+                </div>
+
+                <table>
+                    <thead><tr><th>Principle</th><th>Traditional Security</th><th>Zero Trust (ZTNA)</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Trust Model</strong></td>
+                            <td>Trust inside network perimeter</td>
+                            <td>Never trust, always verify</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Access Scope</strong></td>
+                            <td>Network-level (VPN gives subnet access)</td>
+                            <td>Application-level (specific apps only)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Verification</strong></td>
+                            <td>Once at login</td>
+                            <td>Continuous (every request)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Visibility</strong></td>
+                            <td>Apps exposed to internet (VPN endpoint)</td>
+                            <td>Apps invisible (inside-out connection)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Segmentation</strong></td>
+                            <td>Network-based (VLANs)</td>
+                            <td>Identity-based (per-app policies)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- ZPA ARCHITECTURE -->
+                <h2 id="zpa-architecture"><i class="fas fa-sitemap"></i> ZPA Architecture</h2>
+
+                <div class="architecture-diagram">
+═══════════════════════════════════════════════════════════════════════════════════════
+                            ZSCALER PRIVATE ACCESS (ZPA) ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════════════
+
+    ┌─────────────────────────────────────────────────────────────────────────────────┐
+    │                              ZSCALER CLOUD (Global)                              │
+    │  ┌─────────────────────────────────────────────────────────────────────────────┐│
+    │  │                         ZPA PUBLIC SERVICE EDGE                              ││
+    │  │                                                                              ││
+    │  │   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                 ││
+    │  │   │   BROKER     │    │   POLICY     │    │  ANALYTICS   │                 ││
+    │  │   │   SERVICE    │◄──►│   ENGINE     │◄──►│   ENGINE     │                 ││
+    │  │   │              │    │              │    │              │                 ││
+    │  │   │ • User-to-   │    │ • Access     │    │ • Logging    │                 ││
+    │  │   │   App match  │    │   decisions  │    │ • Dashboards │                 ││
+    │  │   │ • Micro-     │    │ • Posture    │    │ • Alerts     │                 ││
+    │  │   │   tunnels    │    │   checks     │    │              │                 ││
+    │  │   └──────────────┘    └──────────────┘    └──────────────┘                 ││
+    │  │                                                                              ││
+    │  │                      150+ Data Centers Worldwide                            ││
+    │  │                      Anycast - Auto-selects nearest                          ││
+    │  └─────────────────────────────────────────────────────────────────────────────┘│
+    └───────────────────────────────────┬─────────────────────────────────────────────┘
+                                        │
+              ┌─────────────────────────┼─────────────────────────────────────────┐
+              │                         │                                         │
+              ▼                         ▼                                         ▼
+    ┌───────────────────┐     ┌───────────────────┐               ┌───────────────────┐
+    │    USER DEVICE    │     │   IDENTITY        │               │   DATA CENTER     │
+    │                   │     │   PROVIDER        │               │   / CLOUD         │
+    │  ┌─────────────┐  │     │                   │               │                   │
+    │  │  Zscaler    │  │     │  ┌─────────────┐  │               │  ┌─────────────┐  │
+    │  │  Client     │──┼────►│  │   Okta      │  │               │  │    App      │  │
+    │  │  Connector  │  │     │  │   Azure AD  │  │               │  │  Connector  │  │
+    │  └─────────────┘  │     │  │   Ping      │  │               │  └──────┬──────┘  │
+    │                   │     │  └─────────────┘  │               │         │         │
+    │  • Enrolled       │     │                   │               │  ┌──────┴──────┐  │
+    │  • Authenticated  │     │  • SAML/OIDC      │               │  │  Internal   │  │
+    │  • Posture OK     │     │  • MFA            │               │  │    Apps     │  │
+    │                   │     │  • Groups         │               │  │             │  │
+    └───────────────────┘     └───────────────────┘               │  │ • SAP       │  │
+                                                                  │  │ • Jira      │  │
+    KEY POINTS:                                                   │  │ • Jenkins   │  │
+    ─────────────                                                 │  │ • SSH       │  │
+    1. App Connector makes OUTBOUND connection (no inbound ports) │  │ • RDP       │  │
+    2. User connects OUTBOUND to Zscaler cloud                    │  │ • File      │  │
+    3. Broker creates microtunnel USER → APP (not network)        │  │   Shares    │  │
+    4. Apps NEVER exposed to internet                             │  └─────────────┘  │
+                                                                  └───────────────────┘
+═══════════════════════════════════════════════════════════════════════════════════════
+</div>
+
+                <!-- COMPONENTS -->
+                <h2 id="components"><i class="fas fa-puzzle-piece"></i> Components Deep Dive</h2>
+
+                <div class="feature-card">
+                    <h4>1. Zscaler Client Connector</h4>
+                    <p><strong>What:</strong> Lightweight agent installed on user endpoints</p>
+                    <p><strong>Platforms:</strong> Windows, macOS, iOS, Android, Linux</p>
+                    
+                    <p><strong>Key Functions:</strong></p>
+                    <ul>
+                        <li>Authenticates user with IdP (SAML/OIDC)</li>
+                        <li>Reports device posture (OS, encryption, AV, firewall)</li>
+                        <li>Intercepts traffic destined for ZPA applications</li>
+                        <li>Creates encrypted tunnel to Zscaler cloud</li>
+                        <li>Handles both ZIA (internet) and ZPA (private apps)</li>
+                    </ul>
+
+                    <div class="config-block"><span class="comment"># Client Connector Requirements</span>
+<span class="keyword">Windows:</span>
+  - Windows 10 1809+ or Windows 11
+  - .NET Framework 4.7.2+
+  - 100 MB disk space
+  - Admin rights for installation
+
+<span class="keyword">macOS:</span>
+  - macOS 10.15 (Catalina) or later
+  - System Extension approval required
+  - Full Disk Access for posture checks
+
+<span class="keyword">Mobile:</span>
+  - iOS 14+ / Android 8+
+  - MDM recommended for enterprise deployment</div>
+                </div>
+
+                <div class="feature-card">
+                    <h4>2. App Connector</h4>
+                    <p><strong>What:</strong> Lightweight VM deployed near your applications</p>
+                    <p><strong>Deployment:</strong> VMware, Hyper-V, AWS, Azure, GCP, Docker, Kubernetes</p>
+                    
+                    <p><strong>Key Functions:</strong></p>
+                    <ul>
+                        <li>Creates outbound tunnel to Zscaler cloud (port 443)</li>
+                        <li>Proxies authorized user traffic to internal apps</li>
+                        <li>No inbound firewall rules required</li>
+                        <li>Health reporting to Zscaler cloud</li>
+                    </ul>
+
+                    <div class="config-block"><span class="comment"># App Connector VM Sizing</span>
+<span class="keyword">Small (up to 2,000 users):</span>
+  vCPU: 2
+  RAM: 4 GB
+  Disk: 8 GB
+
+<span class="keyword">Medium (2,000-5,000 users):</span>
+  vCPU: 4
+  RAM: 8 GB
+  Disk: 16 GB
+
+<span class="keyword">Large (5,000+ users):</span>
+  vCPU: 8
+  RAM: 16 GB
+  Disk: 32 GB
+
+<span class="comment"># Always deploy 2+ connectors per site for HA</span></div>
+
+                    <div class="best-practice">
+                        <strong>Best Practices:</strong>
+                        <ul>
+                            <li>Deploy in same network segment as applications</li>
+                            <li>Minimum 2 connectors per location for redundancy</li>
+                            <li>Place in DMZ or application zone, not user zone</li>
+                            <li>Use Connector Groups to organize by location/function</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- INITIAL SETUP -->
+                <h2 id="initial-setup"><i class="fas fa-play-circle"></i> Initial Setup (Step-by-Step)</h2>
+
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <div>
+                        <strong>Activate ZPA Tenant</strong>
+                        <p>Log into Zscaler admin portal → ZPA Admin Portal → Complete initial setup wizard</p>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <div>
+                        <strong>Configure Identity Provider</strong>
+                        <p>Administration → IdP Configuration → Add IdP (Okta, Azure AD, etc.)</p>
+                        <div class="config-block"><span class="comment"># Example: Azure AD SAML Configuration</span>
+<span class="keyword">Name:</span> <span class="value">Azure-AD-Production</span>
+<span class="keyword">Single Sign-On URL:</span> <span class="string">https://login.microsoftonline.com/{tenant-id}/saml2</span>
+<span class="keyword">Entity ID:</span> <span class="string">https://sts.windows.net/{tenant-id}/</span>
+<span class="keyword">Certificate:</span> <span class="string">[Upload from Azure AD]</span>
+
+<span class="comment"># Required SAML Attributes:</span>
+<span class="keyword">User ID:</span> user.userprincipalname
+<span class="keyword">Groups:</span> user.groups (for policy matching)</div>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">3</div>
+                    <div>
+                        <strong>Deploy App Connectors</strong>
+                        <p>Administration → App Connectors → Add Connector</p>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">4</div>
+                    <div>
+                        <strong>Create Application Segments</strong>
+                        <p>Define which internal apps users can access</p>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">5</div>
+                    <div>
+                        <strong>Create Access Policies</strong>
+                        <p>Define who can access which applications</p>
+                    </div>
+                </div>
+
+                <div class="step-box">
+                    <div class="step-num">6</div>
+                    <div>
+                        <strong>Deploy Client Connector to Users</strong>
+                        <p>Via MDM, GPO, or manual installation</p>
+                    </div>
+                </div>
+
+                <!-- APP CONNECTOR SETUP -->
+                <h2 id="app-connectors"><i class="fas fa-server"></i> App Connector Configuration</h2>
+
+                <h3>Connector Group Setup</h3>
+                <div class="config-block"><span class="comment"># Create Connector Group</span>
+<span class="keyword">Navigation:</span> Administration → App Connectors → Connector Groups → Add
+
+<span class="keyword">Name:</span> <span class="value">DC-Chicago-Connectors</span>
+<span class="keyword">Description:</span> <span class="string">App Connectors in Chicago Data Center</span>
+<span class="keyword">Location:</span> <span class="value">Chicago, IL</span>
+<span class="keyword">Latitude/Longitude:</span> <span class="value">41.8781, -87.6298</span>
+
+<span class="comment"># DNS Settings (Optional - for internal DNS resolution)</span>
+<span class="keyword">DNS Servers:</span> <span class="value">10.1.1.10, 10.1.1.11</span>
+<span class="keyword">DNS Suffix:</span> <span class="string">internal.company.com</span></div>
+
+                <h3>Deploy App Connector VM</h3>
+
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="showTab(event, 'vmware-tab')">VMware</button>
+                        <button class="tab-btn" onclick="showTab(event, 'aws-tab')">AWS</button>
+                        <button class="tab-btn" onclick="showTab(event, 'azure-tab')">Azure</button>
+                        <button class="tab-btn" onclick="showTab(event, 'docker-tab')">Docker</button>
+                    </div>
+                    
+                    <div id="vmware-tab" class="tab-content active">
+                        <div class="config-block"><span class="comment"># VMware Deployment</span>
+
+<span class="comment"># 1. Download OVA from Zscaler portal</span>
+Administration → App Connectors → Download OVA
+
+<span class="comment"># 2. Deploy OVA in vCenter</span>
+- Import OVA
+- Select network (same as internal apps)
+- Configure VM settings (2 vCPU, 4GB RAM minimum)
+
+<span class="comment"># 3. Get Provisioning Key from Zscaler</span>
+App Connectors → Provisioning Keys → Generate Key
+Copy the key (valid for 1 hour by default)
+
+<span class="comment"># 4. Console into VM and complete setup</span>
+- Set hostname
+- Configure static IP (recommended) or DHCP
+- Paste provisioning key
+- Connector registers with Zscaler cloud
+
+<span class="comment"># 5. Verify in Admin Portal</span>
+App Connectors → Should show "Healthy" status</div>
+                    </div>
+                    
+                    <div id="aws-tab" class="tab-content">
+                        <div class="config-block"><span class="comment"># AWS Deployment via CloudFormation</span>
+
+<span class="comment"># 1. Get AMI ID from Zscaler</span>
+Administration → App Connectors → Download → AWS → Get AMI ID
+
+<span class="comment"># 2. Create CloudFormation Stack</span>
+<span class="keyword">AWSTemplateFormatVersion:</span> '2010-09-09'
+<span class="keyword">Resources:</span>
+  <span class="keyword">ZPAConnector:</span>
+    <span class="keyword">Type:</span> AWS::EC2::Instance
+    <span class="keyword">Properties:</span>
+      <span class="keyword">ImageId:</span> <span class="string">ami-xxxxxxxxx</span>  <span class="comment"># Zscaler provided AMI</span>
+      <span class="keyword">InstanceType:</span> <span class="value">t3.medium</span>
+      <span class="keyword">SubnetId:</span> <span class="string">subnet-xxxxxxxx</span>
+      <span class="keyword">SecurityGroupIds:</span>
+        - <span class="string">sg-xxxxxxxx</span>
+      <span class="keyword">UserData:</span>
+        <span class="keyword">Fn::Base64:</span> |
+          #!/bin/bash
+          /opt/zscaler/bin/provision.sh "<span class="string">[PROVISIONING_KEY]</span>"
+
+<span class="comment"># Security Group Requirements (OUTBOUND ONLY)</span>
+<span class="keyword">Outbound:</span>
+  - <span class="value">443/TCP</span> to <span class="string">*.zscaler.net</span>
+  - <span class="value">443/TCP</span> to <span class="string">*.zscalerone.net</span>
+  - <span class="value">443/TCP</span> to <span class="string">*.zscloud.net</span></div>
+                    </div>
+                    
+                    <div id="azure-tab" class="tab-content">
+                        <div class="config-block"><span class="comment"># Azure Deployment</span>
+
+<span class="comment"># 1. Create VM from Azure Marketplace</span>
+Azure Portal → Create Resource → Search "Zscaler App Connector"
+
+<span class="comment"># 2. Configure VM</span>
+<span class="keyword">Size:</span> <span class="value">Standard_D2s_v3</span> (2 vCPU, 8 GB RAM)
+<span class="keyword">VNet:</span> Same as internal applications
+<span class="keyword">Subnet:</span> Application subnet (not user subnet)
+<span class="keyword">Public IP:</span> <span class="value">None</span> (not required)
+
+<span class="comment"># 3. NSG Rules (OUTBOUND ONLY)</span>
+<span class="keyword">Outbound Allow:</span>
+  Priority: 100
+  Port: 443
+  Destination: Internet
+  Action: Allow
+
+<span class="comment"># 4. Provision via Custom Script Extension</span>
+/opt/zscaler/bin/provision.sh "[PROVISIONING_KEY]"</div>
+                    </div>
+                    
+                    <div id="docker-tab" class="tab-content">
+                        <div class="config-block"><span class="comment"># Docker/Kubernetes Deployment</span>
+
+<span class="comment"># Docker Run</span>
+docker run -d \
+  --name zpa-connector \
+  --restart always \
+  -e ZPA_PROVISION_KEY="[YOUR_PROVISIONING_KEY]" \
+  zscaler/zpa-connector:latest
+
+<span class="comment"># Kubernetes Deployment</span>
+<span class="keyword">apiVersion:</span> apps/v1
+<span class="keyword">kind:</span> Deployment
+<span class="keyword">metadata:</span>
+  <span class="keyword">name:</span> zpa-connector
+<span class="keyword">spec:</span>
+  <span class="keyword">replicas:</span> <span class="value">2</span>
+  <span class="keyword">template:</span>
+    <span class="keyword">spec:</span>
+      <span class="keyword">containers:</span>
+      - <span class="keyword">name:</span> zpa-connector
+        <span class="keyword">image:</span> <span class="string">zscaler/zpa-connector:latest</span>
+        <span class="keyword">env:</span>
+        - <span class="keyword">name:</span> ZPA_PROVISION_KEY
+          <span class="keyword">valueFrom:</span>
+            <span class="keyword">secretKeyRef:</span>
+              <span class="keyword">name:</span> zpa-secrets
+              <span class="keyword">key:</span> provision-key
+        <span class="keyword">resources:</span>
+          <span class="keyword">requests:</span>
+            <span class="keyword">memory:</span> <span class="string">"4Gi"</span>
+            <span class="keyword">cpu:</span> <span class="string">"2"</span></div>
+                    </div>
+                </div>
+
+                <!-- APPLICATION SEGMENTS -->
+                <h2 id="app-segments"><i class="fas fa-cube"></i> Application Segments Configuration</h2>
+
+                <p>Application Segments define which internal applications are accessible via ZPA.</p>
+
+                <h3>Creating Application Segments</h3>
+                <div class="config-block"><span class="comment"># Navigation: Applications → Application Segments → Add</span>
+
+<span class="comment"># Example 1: Web Application</span>
+<span class="keyword">Name:</span> <span class="value">HR-Portal</span>
+<span class="keyword">Description:</span> <span class="string">Human Resources self-service portal</span>
+<span class="keyword">Domains:</span>
+  - <span class="string">hr.internal.company.com</span>
+  - <span class="string">hrportal.company.local</span>
+<span class="keyword">TCP Ports:</span> <span class="value">443</span>
+<span class="keyword">Connector Group:</span> <span class="value">DC-Chicago-Connectors</span>
+<span class="keyword">Health Reporting:</span> <span class="value">Enabled</span>
+
+<span class="comment"># Example 2: SSH Access</span>
+<span class="keyword">Name:</span> <span class="value">Linux-Servers-SSH</span>
+<span class="keyword">Description:</span> <span class="string">SSH access to Linux servers</span>
+<span class="keyword">Domains:</span>
+  - <span class="string">*.servers.internal</span>
+<span class="keyword">IP Ranges:</span>
+  - <span class="value">10.1.50.0/24</span>
+<span class="keyword">TCP Ports:</span> <span class="value">22</span>
+<span class="keyword">Connector Group:</span> <span class="value">DC-Chicago-Connectors</span>
+
+<span class="comment"># Example 3: Multi-Port Application (SAP)</span>
+<span class="keyword">Name:</span> <span class="value">SAP-Production</span>
+<span class="keyword">Description:</span> <span class="string">SAP ERP system</span>
+<span class="keyword">Domains:</span>
+  - <span class="string">sap.internal.company.com</span>
+<span class="keyword">IP Ranges:</span>
+  - <span class="value">10.1.100.50</span>
+<span class="keyword">TCP Ports:</span> <span class="value">443, 3200-3299, 8000-8100, 44300</span>
+<span class="keyword">UDP Ports:</span> <span class="value">3200-3299</span>
+<span class="keyword">Connector Group:</span> <span class="value">DC-Chicago-Connectors</span>
+
+<span class="comment"># Example 4: RDP Access to Windows Servers</span>
+<span class="keyword">Name:</span> <span class="value">Windows-Servers-RDP</span>
+<span class="keyword">Description:</span> <span class="string">RDP access to Windows servers</span>
+<span class="keyword">IP Ranges:</span>
+  - <span class="value">10.1.60.0/24</span>
+<span class="keyword">TCP Ports:</span> <span class="value">3389</span>
+<span class="keyword">Connector Group:</span> <span class="value">DC-Chicago-Connectors</span></div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Common Mistakes:</strong>
+                    <ul>
+                        <li>Using wildcards too broadly (*.company.com exposes everything)</li>
+                        <li>Forgetting to include all ports an app needs (SAP uses many)</li>
+                        <li>Not creating separate segments for different security levels</li>
+                        <li>Assigning wrong Connector Group (traffic goes to wrong data center)</li>
+                    </ul>
+                </div>
+
+                <!-- ACCESS POLICIES -->
+                <h2 id="access-policies"><i class="fas fa-key"></i> Access Policies Configuration</h2>
+
+                <p>Access Policies define WHO can access WHICH applications under WHAT conditions.</p>
+
+                <h3>Policy Structure</h3>
+                <div class="config-block"><span class="comment"># Policy Components</span>
+
+<span class="keyword">WHO:</span>        Users and Groups (from IdP)
+<span class="keyword">WHAT:</span>       Application Segments
+<span class="keyword">WHERE:</span>      Client Location (optional)
+<span class="keyword">WHEN:</span>       Time-based conditions (optional)
+<span class="keyword">HOW:</span>        Device Posture requirements
+<span class="keyword">ACTION:</span>     Allow / Deny</div>
+
+                <h3>Policy Configuration Examples</h3>
+                <div class="config-block"><span class="comment"># Navigation: Access Policy → Access Policy → Add Rule</span>
+
+<span class="comment"># Policy 1: HR Team Accesses HR Portal</span>
+<span class="keyword">Name:</span> <span class="value">HR-Team-HR-Portal</span>
+<span class="keyword">Rule Order:</span> <span class="value">1</span>
+<span class="keyword">Action:</span> <span class="value">Allow</span>
+<span class="keyword">Conditions:</span>
+  <span class="keyword">User Groups:</span> <span class="string">"HR Department"</span> (from Okta)
+  <span class="keyword">Application Segments:</span> <span class="value">HR-Portal</span>
+  <span class="keyword">Device Posture:</span> <span class="value">Corporate-Managed</span>
+
+<span class="comment"># Policy 2: IT Admins SSH Access</span>
+<span class="keyword">Name:</span> <span class="value">IT-Admins-SSH</span>
+<span class="keyword">Rule Order:</span> <span class="value">2</span>
+<span class="keyword">Action:</span> <span class="value">Allow</span>
+<span class="keyword">Conditions:</span>
+  <span class="keyword">User Groups:</span> <span class="string">"IT-Administrators", "DevOps-Team"</span>
+  <span class="keyword">Application Segments:</span> <span class="value">Linux-Servers-SSH</span>
+  <span class="keyword">Device Posture:</span> <span class="value">High-Security</span>
+  <span class="keyword">Time Restriction:</span> <span class="value">None</span> (24/7 access)
+
+<span class="comment"># Policy 3: Finance Team SAP (Business Hours Only)</span>
+<span class="keyword">Name:</span> <span class="value">Finance-SAP-BizHours</span>
+<span class="keyword">Rule Order:</span> <span class="value">3</span>
+<span class="keyword">Action:</span> <span class="value">Allow</span>
+<span class="keyword">Conditions:</span>
+  <span class="keyword">User Groups:</span> <span class="string">"Finance-Team"</span>
+  <span class="keyword">Application Segments:</span> <span class="value">SAP-Production</span>
+  <span class="keyword">Device Posture:</span> <span class="value">Corporate-Managed</span>
+  <span class="keyword">Time Restriction:</span> 
+    <span class="keyword">Days:</span> <span class="value">Monday-Friday</span>
+    <span class="keyword">Hours:</span> <span class="value">06:00 - 22:00 EST</span>
+
+<span class="comment"># Policy 4: Contractors Limited Access</span>
+<span class="keyword">Name:</span> <span class="value">Contractors-Project-Apps</span>
+<span class="keyword">Rule Order:</span> <span class="value">4</span>
+<span class="keyword">Action:</span> <span class="value">Allow</span>
+<span class="keyword">Conditions:</span>
+  <span class="keyword">User Groups:</span> <span class="string">"External-Contractors"</span>
+  <span class="keyword">Application Segments:</span> <span class="value">Project-X-Apps</span>
+  <span class="keyword">Device Posture:</span> <span class="value">Basic</span> (or Browser Access only)
+  <span class="keyword">Policy Expiration:</span> <span class="value">2025-06-30</span>
+
+<span class="comment"># Policy 5: Default Deny (ALWAYS LAST)</span>
+<span class="keyword">Name:</span> <span class="value">Default-Deny-All</span>
+<span class="keyword">Rule Order:</span> <span class="value">999</span>
+<span class="keyword">Action:</span> <span class="value">Deny</span>
+<span class="keyword">Conditions:</span> <span class="value">All users, All applications</span>
+<span class="keyword">Log:</span> <span class="value">Enabled</span> (for audit)</div>
+
+                <!-- DEVICE POSTURE -->
+                <h2 id="device-posture"><i class="fas fa-laptop-medical"></i> Device Posture Configuration</h2>
+
+                <p>Device posture profiles verify the security state of devices before granting access.</p>
+
+                <div class="config-block"><span class="comment"># Navigation: Administration → Device Posture → Add Profile</span>
+
+<span class="comment"># Profile 1: High Security (for sensitive apps)</span>
+<span class="keyword">Name:</span> <span class="value">High-Security</span>
+<span class="keyword">Requirements:</span>
+  <span class="keyword">Operating System:</span>
+    - Windows 10 21H2+ or Windows 11
+    - macOS 12 (Monterey)+
+  <span class="keyword">Disk Encryption:</span> <span class="value">Enabled</span>
+    - Windows: BitLocker
+    - macOS: FileVault
+  <span class="keyword">Firewall:</span> <span class="value">Enabled</span>
+  <span class="keyword">Antivirus:</span> <span class="value">Running and updated (within 24 hours)</span>
+  <span class="keyword">Screen Lock:</span> <span class="value">Enabled (max 5 min timeout)</span>
+  <span class="keyword">Domain Joined:</span> <span class="value">Yes</span> (Windows)
+  <span class="keyword">Certificate:</span> <span class="value">Corporate CA certificate present</span>
+  <span class="keyword">Jailbreak/Root:</span> <span class="value">Not detected</span> (mobile)
+
+<span class="comment"># Profile 2: Corporate Managed</span>
+<span class="keyword">Name:</span> <span class="value">Corporate-Managed</span>
+<span class="keyword">Requirements:</span>
+  <span class="keyword">Disk Encryption:</span> <span class="value">Enabled</span>
+  <span class="keyword">Antivirus:</span> <span class="value">Running</span>
+  <span class="keyword">Firewall:</span> <span class="value">Enabled</span>
+  <span class="keyword">MDM Enrolled:</span> <span class="value">Yes</span> (Intune, Jamf, etc.)
+
+<span class="comment"># Profile 3: Basic (BYOD/Contractors)</span>
+<span class="keyword">Name:</span> <span class="value">Basic</span>
+<span class="keyword">Requirements:</span>
+  <span class="keyword">Operating System:</span> <span class="value">Supported version</span>
+  <span class="keyword">Screen Lock:</span> <span class="value">Enabled</span>
+  <span class="keyword">Jailbreak/Root:</span> <span class="value">Not detected</span></div>
+
+                <!-- IDP INTEGRATION -->
+                <h2 id="idp-integration"><i class="fas fa-id-card"></i> Identity Provider Integration</h2>
+
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="showTab(event, 'okta-tab')">Okta</button>
+                        <button class="tab-btn" onclick="showTab(event, 'azuread-tab')">Azure AD</button>
+                        <button class="tab-btn" onclick="showTab(event, 'ping-tab')">Ping Identity</button>
+                    </div>
+                    
+                    <div id="okta-tab" class="tab-content active">
+                        <div class="config-block"><span class="comment"># Okta SAML Configuration</span>
+
+<span class="comment"># In Okta Admin Console:</span>
+1. Applications → Create App Integration
+2. Select SAML 2.0
+3. Configure:
+   <span class="keyword">App Name:</span> <span class="value">Zscaler Private Access</span>
+   <span class="keyword">Single Sign On URL:</span> <span class="string">https://samlsp.private.zscaler.com/saml/SSO</span>
+   <span class="keyword">Audience URI:</span> <span class="string">https://samlsp.private.zscaler.com</span>
+   
+<span class="comment"># Attribute Statements:</span>
+   <span class="keyword">Name:</span> email    <span class="keyword">Value:</span> user.email
+   <span class="keyword">Name:</span> name     <span class="keyword">Value:</span> user.displayName
+   <span class="keyword">Name:</span> groups   <span class="keyword">Value:</span> getFilteredGroups(...)
+
+<span class="comment"># In Zscaler ZPA Admin:</span>
+Administration → IdP Configuration → Add
+<span class="keyword">Name:</span> <span class="value">Okta-Production</span>
+<span class="keyword">SSO URL:</span> <span class="string">[Copy from Okta]</span>
+<span class="keyword">Certificate:</span> <span class="string">[Download from Okta and upload]</span>
+<span class="keyword">SCIM Enabled:</span> <span class="value">Yes</span> (for user/group sync)</div>
+                    </div>
+                    
+                    <div id="azuread-tab" class="tab-content">
+                        <div class="config-block"><span class="comment"># Azure AD Configuration</span>
+
+<span class="comment"># In Azure AD:</span>
+1. Enterprise Applications → New Application
+2. Search "Zscaler Private Access" → Create
+3. Single Sign-On → SAML
+4. Configure:
+   <span class="keyword">Identifier:</span> <span class="string">https://samlsp.private.zscaler.com</span>
+   <span class="keyword">Reply URL:</span> <span class="string">https://samlsp.private.zscaler.com/saml/SSO</span>
+   
+<span class="comment"># Claims:</span>
+   <span class="keyword">emailaddress:</span> user.mail
+   <span class="keyword">name:</span> user.displayname
+   <span class="keyword">groups:</span> user.groups
+
+<span class="comment"># Assign Users/Groups to Application</span>
+Enterprise App → Users and Groups → Add
+
+<span class="comment"># Enable SCIM Provisioning (Recommended)</span>
+Enterprise App → Provisioning → Automatic
+<span class="keyword">Tenant URL:</span> <span class="string">https://scim.private.zscaler.com/scim</span>
+<span class="keyword">Secret Token:</span> <span class="string">[Generate in ZPA Admin]</span></div>
+                    </div>
+                    
+                    <div id="ping-tab" class="tab-content">
+                        <div class="config-block"><span class="comment"># Ping Identity Configuration</span>
+
+<span class="comment"># In PingOne/PingFederate:</span>
+1. Add Application → SAML
+2. Configure:
+   <span class="keyword">ACS URL:</span> <span class="string">https://samlsp.private.zscaler.com/saml/SSO</span>
+   <span class="keyword">Entity ID:</span> <span class="string">https://samlsp.private.zscaler.com</span>
+   
+<span class="comment"># Attribute Mapping:</span>
+   <span class="keyword">subject:</span> Email Address
+   <span class="keyword">name:</span> Full Name
+   <span class="keyword">memberOf:</span> Group Membership
+
+<span class="comment"># Download Metadata and import to ZPA</span></div>
+                    </div>
+                </div>
+
+                <!-- BROWSER ACCESS -->
+                <h2 id="browser-access"><i class="fas fa-globe"></i> Browser Access (Clientless)</h2>
+
+                <p>Allow access to web applications without installing Zscaler Client Connector.</p>
+
+                <div class="config-block"><span class="comment"># Browser Access Configuration</span>
+<span class="keyword">Navigation:</span> Applications → Browser Access → Add
+
+<span class="keyword">Application:</span> <span class="value">HR-Portal</span>
+<span class="keyword">Internal URL:</span> <span class="string">https://hr.internal.company.com</span>
+<span class="keyword">External URL:</span> <span class="string">https://hr.company.zpa.com</span>
+<span class="keyword">Authentication:</span> <span class="value">SAML (via IdP)</span>
+
+<span class="comment"># Access Policy for Browser Access</span>
+<span class="keyword">Name:</span> <span class="value">Browser-Access-HR</span>
+<span class="keyword">Application:</span> <span class="value">HR-Portal (Browser Access)</span>
+<span class="keyword">Users:</span> <span class="value">All Employees</span>
+<span class="keyword">Device Posture:</span> <span class="value">None required</span> (clientless)
+
+<span class="comment"># Features Available:</span>
+✓ Web applications
+✓ HTML5 RDP (remote desktop in browser)
+✓ HTML5 SSH (terminal in browser)
+✗ Native applications (requires client)</div>
+
+                <div class="use-case">
+                    <h5>Use Case: Contractor Access Without Agent</h5>
+                    <p>External contractors need temporary access to project management tool but you can't install software on their devices.</p>
+                    <p><strong>Solution:</strong> Enable Browser Access for the app. Contractors authenticate via IdP, access app in browser. No client installation needed.</p>
+                </div>
+
+                <!-- REAL USE CASES -->
+                <h2 id="use-cases"><i class="fas fa-building"></i> Real-World Use Cases</h2>
+
+                <div class="scenario-box">
+                    <h4>Use Case 1: Replace VPN for Remote Workforce</h4>
+                    <p><strong>Scenario:</strong> 5,000 employees, 70% remote. VPN concentrators at capacity.</p>
+                    
+                    <p><strong>ZPA Solution:</strong></p>
+                    <ol>
+                        <li>Deploy App Connectors in each data center (2 per site)</li>
+                        <li>Create Application Segments for all internal apps</li>
+                        <li>Deploy Zscaler Client Connector via MDM</li>
+                        <li>Migrate users in phases (IT → Power users → All)</li>
+                        <li>Decommission VPN after 3-month parallel run</li>
+                    </ol>
+                    
+                    <p><strong>Results:</strong></p>
+                    <ul>
+                        <li>✅ User experience improved (no VPN connect/disconnect)</li>
+                        <li>✅ Access time reduced from 30 seconds to instant</li>
+                        <li>✅ VPN infrastructure costs eliminated</li>
+                        <li>✅ Security improved (app-level vs network-level access)</li>
+                    </ul>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Use Case 2: M&A Integration (Acquired Company)</h4>
+                    <p><strong>Scenario:</strong> Acquire 500-person company. Need to give them access to corporate SAP within 2 weeks. Network integration will take 6 months.</p>
+                    
+                    <p><strong>ZPA Solution:</strong></p>
+                    <div class="config-block"><span class="comment"># Day 1-3: Prepare</span>
+1. Create new Connector Group: "Acquired-Company-Access"
+2. Create Application Segment: "SAP-Acquired-Access"
+   - Same as existing SAP segment
+   - Different Connector Group for traffic separation
+
+<span class="comment"># Day 3-5: Identity</span>
+3. Federate acquired company's IdP with Zscaler
+   - Or create accounts in corporate IdP
+4. Create User Group: "Acquired-Company-Users"
+
+<span class="comment"># Day 5-7: Policy & Deploy</span>
+5. Create Access Policy:
+   <span class="keyword">Name:</span> <span class="value">Acquired-SAP-Access</span>
+   <span class="keyword">Users:</span> <span class="value">Acquired-Company-Users</span>
+   <span class="keyword">Apps:</span> <span class="value">SAP-Acquired-Access</span>
+   <span class="keyword">Posture:</span> <span class="value">Basic</span>
+6. Deploy Client Connector to acquired company laptops
+
+<span class="comment"># Day 7: Go Live</span>
+- Users can access SAP immediately
+- No network changes required
+- Full audit trail</div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Use Case 3: Privileged Access for IT Administrators</h4>
+                    <p><strong>Scenario:</strong> IT admins need SSH/RDP to servers. Want to record sessions for compliance.</p>
+                    
+                    <p><strong>ZPA Solution:</strong></p>
+                    <div class="config-block"><span class="comment"># Application Segments</span>
+<span class="keyword">Name:</span> <span class="value">Prod-Servers-SSH</span>
+<span class="keyword">IPs:</span> <span class="value">10.1.50.0/24</span>
+<span class="keyword">Ports:</span> <span class="value">22</span>
+
+<span class="keyword">Name:</span> <span class="value">Prod-Servers-RDP</span>
+<span class="keyword">IPs:</span> <span class="value">10.1.60.0/24</span>
+<span class="keyword">Ports:</span> <span class="value">3389</span>
+
+<span class="comment"># Access Policy with Session Recording</span>
+<span class="keyword">Name:</span> <span class="value">IT-Admin-Server-Access</span>
+<span class="keyword">Users:</span> <span class="value">IT-Administrators</span>
+<span class="keyword">Apps:</span> <span class="value">Prod-Servers-SSH, Prod-Servers-RDP</span>
+<span class="keyword">Posture:</span> <span class="value">High-Security</span>
+<span class="keyword">Session Recording:</span> <span class="value">Enabled</span>
+<span class="keyword">MFA:</span> <span class="value">Required for each session</span>
+
+<span class="comment"># Isolation Profile (Optional)</span>
+<span class="keyword">Browser Isolation:</span> <span class="value">Enabled</span>
+<span class="keyword">Copy/Paste:</span> <span class="value">Disabled</span>
+<span class="keyword">Download:</span> <span class="value">Disabled</span></div>
+                </div>
+
+                <!-- TROUBLESHOOTING -->
+                <h2 id="troubleshooting"><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
+
+                <table>
+                    <thead><tr><th>Symptom</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>User can't access any apps</td>
+                            <td>Client Connector not running or not enrolled</td>
+                            <td>Check client status: System tray → Zscaler icon → Status. Re-enroll if needed.</td>
+                        </tr>
+                        <tr>
+                            <td>"Application not available"</td>
+                            <td>App not in Application Segment</td>
+                            <td>Verify domain/IP is in a segment. Check ports are correct.</td>
+                        </tr>
+                        <tr>
+                            <td>"Access Denied"</td>
+                            <td>No policy allows access</td>
+                            <td>Check user's group membership. Verify access policy exists.</td>
+                        </tr>
+                        <tr>
+                            <td>Posture check failing</td>
+                            <td>Device doesn't meet requirements</td>
+                            <td>Run posture check: Client → More → Posture. Fix device compliance.</td>
+                        </tr>
+                        <tr>
+                            <td>Slow performance</td>
+                            <td>Distant App Connector selected</td>
+                            <td>Check which connector is serving traffic. Deploy closer connector.</td>
+                        </tr>
+                        <tr>
+                            <td>Intermittent connectivity</td>
+                            <td>App Connector issues</td>
+                            <td>Check connector health in admin portal. Review connector logs.</td>
+                        </tr>
+                        <tr>
+                            <td>App works for some users, not others</td>
+                            <td>Policy misconfiguration</td>
+                            <td>Compare working vs non-working users. Check group membership.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Diagnostic Commands</h3>
+                <div class="config-block"><span class="comment"># Check Client Connector Status (Windows)</span>
+<span class="keyword">PowerShell:</span>
+Get-Service ZSATunnel, ZSAService
+"C:\Program Files\Zscaler\ZSATunnel\ZSATunnel.exe" --status
+
+<span class="comment"># Check Client Connector Status (macOS)</span>
+<span class="keyword">Terminal:</span>
+/Applications/Zscaler/Zscaler.app/Contents/MacOS/Zscaler --status
+
+<span class="comment"># Client Connector Logs</span>
+<span class="keyword">Windows:</span> %LOCALAPPDATA%\Zscaler\logs
+<span class="keyword">macOS:</span> ~/Library/Logs/Zscaler/
+
+<span class="comment"># Test ZPA connectivity</span>
+curl -v https://gateway.zscaler.net/
+nslookup mobile.zscaler.net
+
+<span class="comment"># App Connector Logs (SSH to connector)</span>
+sudo journalctl -u zpa-connector -f
+sudo /opt/zscaler/bin/health_check.sh</div>
+
+                <!-- MONITORING -->
+                <h2 id="monitoring"><i class="fas fa-chart-line"></i> Monitoring & Logs</h2>
+
+                <h3>Key Metrics to Monitor</h3>
+                <div class="config-block"><span class="comment"># ZPA Dashboard Metrics</span>
+
+<span class="keyword">User Metrics:</span>
+  - Active users (concurrent)
+  - Unique users (daily/weekly)
+  - Authentication success/failure rate
+  - Device posture compliance rate
+
+<span class="keyword">Connector Metrics:</span>
+  - Connector health status
+  - CPU/Memory utilization
+  - Tunnel status
+  - Connections per connector
+
+<span class="keyword">Application Metrics:</span>
+  - Access attempts (allowed/denied)
+  - Most accessed applications
+  - Application latency
+  - Error rates
+
+<span class="keyword">Security Metrics:</span>
+  - Policy violations
+  - Posture check failures
+  - Unauthorized access attempts
+  - Session recordings</div>
+
+                <h3>SIEM Integration</h3>
+                <div class="config-block"><span class="comment"># Log Export to SIEM</span>
+<span class="keyword">Navigation:</span> Administration → Log Streaming → Add
+
+<span class="keyword">Supported SIEM:</span>
+  - Microsoft Sentinel (native connector)
+  - Splunk (HTTP Event Collector)
+  - QRadar (LEEF format)
+  - Chronicle (BigQuery export)
+  - Any SIEM (Syslog/CEF format)
+
+<span class="comment"># Example: Splunk HEC Configuration</span>
+<span class="keyword">Log Type:</span> <span class="value">User Activity, App Connector, Audit</span>
+<span class="keyword">Format:</span> <span class="value">JSON</span>
+<span class="keyword">Destination:</span> <span class="string">https://splunk.company.com:8088/services/collector</span>
+<span class="keyword">Token:</span> <span class="string">[Splunk HEC Token]</span></div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="swg-zia.html" class="card"><div class="card-icon"><i class="fas fa-globe"></i></div><h3>SWG & ZIA</h3><p>Internet access security</p></a>
+                    <a href="sase-architecture.html" class="card"><div class="card-icon"><i class="fas fa-cloud"></i></div><h3>SASE Architecture</h3><p>Full architecture</p></a>
+                    <a href="interview-qa.html" class="card"><div class="card-icon"><i class="fas fa-comments"></i></div><h3>Interview Q&A</h3><p>Practice questions</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+    <script>
+        function showTab(evt, tabId) {
+            const container = evt.target.closest('.tab-container');
+            container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            container.querySelector('#' + tabId).classList.add('active');
+            evt.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

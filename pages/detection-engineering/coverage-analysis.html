@@ -4,378 +4,456 @@
     <base href="/NikDet/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coverage Analysis | SOC Compendium</title>
+    <title>Detection Coverage Analysis | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .apex-story { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); }
+        .alert-example { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; }
+        .coverage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 4px; margin: 1rem 0; }
+        .coverage-cell { padding: 8px 4px; text-align: center; border-radius: 4px; font-size: 0.7rem; }
+        .covered { background: rgba(34, 197, 94, 0.3); color: #22c55e; }
+        .partial { background: rgba(251, 191, 36, 0.3); color: #fbbf24; }
+        .not-covered { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .not-applicable { background: rgba(100, 100, 100, 0.2); color: #888; }
+        .nav-story { background: rgba(99, 102, 241, 0.1); border-radius: 8px; padding: 1rem; margin: 2rem 0; }
+        .nav-story h4 { margin-top: 0; }
+        .metric-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; text-align: center; }
+        .metric-card .value { font-size: 2.5rem; font-weight: bold; color: var(--accent-primary); }
+        .metric-card .label { color: var(--text-secondary); font-size: 0.9rem; }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+        .progress-bar { background: var(--bg-secondary); border-radius: 8px; height: 24px; overflow: hidden; margin: 0.5rem 0; }
+        .progress-fill { height: 100%; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; }
+        .heatmap-row { display: flex; gap: 2px; margin: 2px 0; }
+        .heatmap-cell { width: 24px; height: 24px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; cursor: pointer; }
+        .tactic-label { width: 120px; font-size: 0.75rem; display: flex; align-items: center; }
+        .legend { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+        .legend-color { width: 16px; height: 16px; border-radius: 3px; }
+        .gap-item { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid #ef4444; }
+        .improvement-item { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid #22c55e; }
+    </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/detection-engineering/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/detection-engineering/index.html">Home</a><span class="separator">/</span><a href="pages/detection-engineering/index.html">Detection Engineering</a><span class="separator">/</span><span>Coverage Analysis</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-chart-pie" style="color: var(--accent-warning);"></i> Detection Coverage Analysis</h1>
-                <p class="lead">Map your detections to MITRE ATT&CK to identify gaps and prioritize improvements.</p>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Detection Engineering</a><span class="separator">/</span>
+                <span>Coverage Analysis</span>
             </div>
+
             <div class="content">
-                <h2>What is Coverage Analysis?</h2>
-                <p>Coverage analysis answers the critical question: <strong>"What attacks can we actually detect?"</strong> By mapping your detection rules to the MITRE ATT&CK framework, you can visualize gaps, prioritize development, and communicate security posture to stakeholders.</p>
+                <h1><i class="fas fa-chart-pie"></i> Detection Coverage Analysis</h1>
+                <p class="lead">See how Apex Financial measures their detection coverage after 6 months of detection engineering work.</p>
 
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Why Coverage Analysis Matters</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li><strong>Identify blind spots:</strong> Know which techniques you cannot detect</li>
-                        <li><strong>Prioritize development:</strong> Focus on high-risk gaps first</li>
-                        <li><strong>Measure progress:</strong> Track improvement over time</li>
-                        <li><strong>Communicate to leadership:</strong> Visual representation of security posture</li>
-                        <li><strong>Validate investments:</strong> Justify security tool purchases</li>
-                    </ul>
+                <div class="nav-story">
+                    <h4>📖 The Apex Financial Story</h4>
+                    <p>This is <strong>Part 4 of 4</strong> in a connected case study:</p>
+                    <ol>
+                        <li><a href="company-assessment.html">Company Assessment</a> - Understanding the environment and risks</li>
+                        <li><a href="lifecycle.html">Detection Engineering</a> - Building detections based on assessment</li>
+                        <li><a href="sigma-rules.html">Writing Detections</a> - Creating actual detection rules</li>
+                        <li><strong>Coverage Analysis</strong> (You are here) - Measuring detection coverage</li>
+                    </ol>
                 </div>
 
-                <h2>MITRE ATT&CK Framework Overview</h2>
-                <p>ATT&CK (Adversarial Tactics, Techniques, and Common Knowledge) is the industry standard for categorizing attacker behaviors:</p>
+                <!-- APEX 6-MONTH SUMMARY -->
+                <h2 id="apex-summary"><i class="fas fa-building"></i> Apex Financial: 6-Month Coverage Summary</h2>
 
+                <div class="scenario-box apex-story">
+                    <h4>🏢 Apex Financial - 6 Months After the Incident</h4>
+                    <p>It's been 6 months since the $340,000 BEC incident. The detection engineering team has been working through their roadmap. Let's see how their coverage has improved.</p>
+                </div>
+
+                <!-- KEY METRICS -->
+                <div class="metric-grid">
+                    <div class="metric-card">
+                        <div class="value">47</div>
+                        <div class="label">Total Detections</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="value">68%</div>
+                        <div class="label">MITRE Coverage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="value">94%</div>
+                        <div class="label">Priority Threats Covered</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="value">23%</div>
+                        <div class="label">Avg False Positive Rate</div>
+                    </div>
+                </div>
+
+                <h3>Before vs After</h3>
                 <table>
-                    <thead><tr><th>Level</th><th>Description</th><th>Example</th><th>Count (Enterprise)</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Tactics</strong></td><td>The "why" - attacker's goal</td><td>Credential Access</td><td>14 tactics</td></tr>
-                        <tr><td><strong>Techniques</strong></td><td>The "how" - method to achieve goal</td><td>OS Credential Dumping</td><td>~200 techniques</td></tr>
-                        <tr><td><strong>Sub-techniques</strong></td><td>Specific variation of technique</td><td>LSASS Memory</td><td>~400 sub-techniques</td></tr>
-                        <tr><td><strong>Procedures</strong></td><td>Specific implementation by threat actor</td><td>Mimikatz sekurlsa::logonpasswords</td><td>Thousands</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>The 14 ATT&CK Tactics</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; margin: 1rem 0;">
-                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Reconnaissance</strong><br>TA0043</div>
-                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Resource Dev</strong><br>TA0042</div>
-                    <div style="padding: 0.5rem; background: rgba(240,183,86,0.1); border-left: 3px solid #f0b756; font-size: 0.8rem;"><strong>Initial Access</strong><br>TA0001</div>
-                    <div style="padding: 0.5rem; background: rgba(240,183,86,0.1); border-left: 3px solid #f0b756; font-size: 0.8rem;"><strong>Execution</strong><br>TA0002</div>
-                    <div style="padding: 0.5rem; background: rgba(106,163,247,0.1); border-left: 3px solid #6aa3f7; font-size: 0.8rem;"><strong>Persistence</strong><br>TA0003</div>
-                    <div style="padding: 0.5rem; background: rgba(106,163,247,0.1); border-left: 3px solid #6aa3f7; font-size: 0.8rem;"><strong>Priv Escalation</strong><br>TA0004</div>
-                    <div style="padding: 0.5rem; background: rgba(92,224,196,0.1); border-left: 3px solid #5ce0c4; font-size: 0.8rem;"><strong>Defense Evasion</strong><br>TA0005</div>
-                    <div style="padding: 0.5rem; background: rgba(92,224,196,0.1); border-left: 3px solid #5ce0c4; font-size: 0.8rem;"><strong>Cred Access</strong><br>TA0006</div>
-                    <div style="padding: 0.5rem; background: rgba(167,139,246,0.1); border-left: 3px solid #a78bf6; font-size: 0.8rem;"><strong>Discovery</strong><br>TA0007</div>
-                    <div style="padding: 0.5rem; background: rgba(167,139,246,0.1); border-left: 3px solid #a78bf6; font-size: 0.8rem;"><strong>Lateral Move</strong><br>TA0008</div>
-                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Collection</strong><br>TA0009</div>
-                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>C2</strong><br>TA0011</div>
-                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Exfiltration</strong><br>TA0010</div>
-                    <div style="padding: 0.5rem; background: rgba(240,112,112,0.1); border-left: 3px solid #f07070; font-size: 0.8rem;"><strong>Impact</strong><br>TA0040</div>
-                </div>
-
-                <h2>Building Your Coverage Map</h2>
-
-                <h3>Step 1: Inventory Your Detections</h3>
-                <p>Create a comprehensive list of all detection rules with their ATT&CK mappings:</p>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># detection_inventory.csv</span>
-detection_id,name,technique_id,sub_technique_id,data_source,siem,status
-DET-001,Encoded PowerShell,T1059,T1059.001,Sysmon,Splunk,Active
-DET-002,LSASS Access,T1003,T1003.001,Sysmon,Splunk,Active
-DET-003,Registry Run Keys,T1547,T1547.001,Sysmon,Splunk,Active
-DET-004,Scheduled Task Creation,T1053,T1053.005,Windows Security,Splunk,Active
-DET-005,PsExec Execution,T1021,T1021.002,Sysmon,Splunk,Testing</pre>
-                </div>
-
-                <h3>Step 2: Map to ATT&CK Navigator</h3>
-                <p>Use the ATT&CK Navigator to visualize coverage:</p>
-                <ol>
-                    <li>Go to <a href="https://mitre-attack.github.io/attack-navigator/" target="_blank">ATT&CK Navigator</a></li>
-                    <li>Create new layer</li>
-                    <li>Color techniques based on coverage level</li>
-                    <li>Export as JSON for version control</li>
-                </ol>
-
-                <h3>Navigator Layer JSON Format</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;">{
-  "name": "SOC Detection Coverage",
-  "versions": {
-    "attack": "14",
-    "navigator": "4.9.1"
-  },
-  "domain": "enterprise-attack",
-  "description": "Current detection coverage as of 2025-01",
-  "techniques": [
-    {
-      "techniqueID": "T1059.001",
-      "tactic": "execution",
-      "color": "#5ce0c4",        <span style="color: #6aa3f7;">// Green = Good coverage</span>
-      "comment": "3 detections: encoded PS, download cradle, suspicious args",
-      "score": 3
-    },
-    {
-      "techniqueID": "T1003.001",
-      "tactic": "credential-access",
-      "color": "#5ce0c4",
-      "comment": "2 detections: LSASS access, procdump",
-      "score": 2
-    },
-    {
-      "techniqueID": "T1055",
-      "tactic": "defense-evasion",
-      "color": "#f0b756",        <span style="color: #6aa3f7;">// Yellow = Partial coverage</span>
-      "comment": "1 detection, needs improvement",
-      "score": 1
-    },
-    {
-      "techniqueID": "T1134",
-      "tactic": "privilege-escalation",
-      "color": "#f07070",        <span style="color: #6aa3f7;">// Red = No coverage</span>
-      "comment": "Gap - no detection for token manipulation",
-      "score": 0
-    }
-  ],
-  "gradient": {
-    "colors": ["#f07070", "#f0b756", "#5ce0c4"],
-    "minValue": 0,
-    "maxValue": 3
-  }
-}</pre>
-                </div>
-
-                <h3>Coverage Scoring System</h3>
-                <table>
-                    <thead><tr><th>Score</th><th>Color</th><th>Meaning</th><th>Criteria</th></tr></thead>
-                    <tbody>
-                        <tr><td>0</td><td style="background: rgba(240,112,112,0.3);">Red</td><td>No Coverage</td><td>No detection rules exist</td></tr>
-                        <tr><td>1</td><td style="background: rgba(240,183,86,0.3);">Yellow</td><td>Partial Coverage</td><td>1 detection, basic coverage</td></tr>
-                        <tr><td>2</td><td style="background: rgba(106,163,247,0.3);">Blue</td><td>Good Coverage</td><td>2+ detections, multiple variations</td></tr>
-                        <tr><td>3</td><td style="background: rgba(92,224,196,0.3);">Green</td><td>Strong Coverage</td><td>3+ detections, tested, low FP rate</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Identifying Gaps</h2>
-
-                <h3>Gap Analysis Process</h3>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Export Current Coverage</div>
-                            <p>Generate list of all techniques with detections from your SIEM and detection inventory.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Compare Against Threat Profile</div>
-                            <p>Identify which techniques are used by threat actors targeting your industry.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Prioritize Gaps</div>
-                            <p>Rank gaps by threat relevance, detection feasibility, and data availability.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Create Remediation Plan</div>
-                            <p>Schedule detection development for highest-priority gaps.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <h3>Gap Prioritization Matrix</h3>
-                <table>
-                    <thead><tr><th>Factor</th><th>Weight</th><th>Questions to Ask</th></tr></thead>
+                    <thead><tr><th>Metric</th><th>March 2024 (Before Incident)</th><th>September 2024 (Now)</th><th>Change</th></tr></thead>
                     <tbody>
                         <tr>
-                            <td><strong>Threat Relevance</strong></td>
-                            <td>High</td>
-                            <td>Is this technique used by threat actors targeting our industry?</td>
+                            <td>Total detection rules</td>
+                            <td>12 (mostly vendor defaults)</td>
+                            <td>47 (custom + tuned)</td>
+                            <td style="color: #22c55e;">+292%</td>
                         </tr>
                         <tr>
-                            <td><strong>Data Availability</strong></td>
-                            <td>High</td>
-                            <td>Do we have the logs/telemetry needed to detect this?</td>
+                            <td>MITRE technique coverage</td>
+                            <td>18%</td>
+                            <td>68%</td>
+                            <td style="color: #22c55e;">+50 points</td>
                         </tr>
                         <tr>
-                            <td><strong>Detection Feasibility</strong></td>
-                            <td>Medium</td>
-                            <td>Can we build a reliable detection with acceptable FP rate?</td>
+                            <td>BEC-related coverage</td>
+                            <td>8%</td>
+                            <td>91%</td>
+                            <td style="color: #22c55e;">+83 points</td>
                         </tr>
                         <tr>
-                            <td><strong>Business Impact</strong></td>
-                            <td>Medium</td>
-                            <td>What is the impact if this technique succeeds?</td>
+                            <td>Identity attack coverage</td>
+                            <td>22%</td>
+                            <td>78%</td>
+                            <td style="color: #22c55e;">+56 points</td>
                         </tr>
                         <tr>
-                            <td><strong>Preventive Controls</strong></td>
-                            <td>Low</td>
-                            <td>Do we have preventive controls that reduce risk?</td>
+                            <td>True positive rate</td>
+                            <td>31%</td>
+                            <td>77%</td>
+                            <td style="color: #22c55e;">+46 points</td>
+                        </tr>
+                        <tr>
+                            <td>Mean time to detect (critical)</td>
+                            <td>Never (incident missed)</td>
+                            <td>12 minutes</td>
+                            <td style="color: #22c55e;">Massive improvement</td>
                         </tr>
                     </tbody>
                 </table>
 
-                <h2>Data Source Analysis</h2>
-                <p>Before you can detect a technique, you need the right data:</p>
+                <!-- MITRE COVERAGE HEATMAP -->
+                <h2 id="heatmap"><i class="fas fa-th"></i> MITRE ATT&CK Coverage Heatmap</h2>
 
-                <h3>Common Data Sources for Detection</h3>
+                <p>This heatmap shows Apex's detection coverage across MITRE ATT&CK tactics and techniques:</p>
+
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color covered"></div> Covered (detection exists)</div>
+                    <div class="legend-item"><div class="legend-color partial"></div> Partial (some sub-techniques)</div>
+                    <div class="legend-item"><div class="legend-color not-covered"></div> Gap (no detection)</div>
+                    <div class="legend-item"><div class="legend-color not-applicable"></div> N/A (not relevant)</div>
+                </div>
+
+                <div class="alert-example">
+<pre>
+APEX FINANCIAL - MITRE ATT&CK COVERAGE MATRIX (September 2024)
+═══════════════════════════════════════════════════════════════════════════════
+
+             │ Recon │ Resource │ Initial │ Exec │ Persist │ Priv │ Defense │ Cred │ Disc │ Lateral │ Collect │ C2  │ Exfil │ Impact │
+             │       │   Dev    │ Access  │      │         │ Esc  │ Evasion │Access│      │   Move  │         │     │       │        │
+─────────────┼───────┼──────────┼─────────┼──────┼─────────┼──────┼─────────┼──────┼──────┼─────────┼─────────┼─────┼───────┼────────┤
+Coverage %   │  15%  │   N/A    │   85%   │ 72%  │   68%   │ 71%  │   45%   │ 82%  │ 55%  │   75%   │   62%   │ 58% │  48%  │  70%   │
+─────────────┴───────┴──────────┴─────────┴──────┴─────────┴──────┴─────────┴──────┴──────┴─────────┴─────────┴─────┴───────┴────────┘
+
+DETAILED TECHNIQUE COVERAGE:
+═══════════════════════════════════════════════════════════════════════════════
+
+INITIAL ACCESS (85% covered)
+  ✓ T1566.001 Spearphishing Attachment      [APEX-DET-007] Email attachment analysis
+  ✓ T1566.002 Spearphishing Link            [APEX-DET-008] URL reputation + click tracking
+  ✓ T1078     Valid Accounts                [APEX-DET-002] Impossible travel, [APEX-DET-009] Unusual sign-in
+  ✓ T1133     External Remote Services      [APEX-DET-010] VPN anomalies
+  ◐ T1190     Exploit Public-Facing App     Partial - WAF alerts only, no custom detection
+  ✗ T1195     Supply Chain Compromise       Gap - no detection capability
+
+EXECUTION (72% covered)  
+  ✓ T1059.001 PowerShell                    [APEX-DET-011] Encoded commands, [APEX-DET-012] Download cradle
+  ✓ T1059.003 Windows Command Shell         [APEX-DET-013] Suspicious cmd patterns
+  ✓ T1204.001 Malicious Link                [APEX-DET-008] URL analysis
+  ✓ T1204.002 Malicious File                [APEX-DET-007] + MDE
+  ◐ T1059.005 Visual Basic                  Partial - macro detection basic
+  ◐ T1059.006 Python                        Partial - Linux servers not fully monitored
+  ✗ T1059.007 JavaScript                    Gap - browser-based execution
+
+PERSISTENCE (68% covered)
+  ✓ T1053.005 Scheduled Task                [APEX-DET-014] New scheduled tasks
+  ✓ T1543.003 Windows Service               [APEX-DET-015] New service installation
+  ✓ T1547.001 Registry Run Keys             [APEX-DET-016] Run key modifications
+  ✓ T1564.008 Email Hiding Rules            [APEX-DET-001] Inbox rule detection ← First detection built!
+  ◐ T1078     Valid Accounts                Partial - covered in identity detections
+  ✗ T1137     Office Application Startup    Gap - no detection
+  ✗ T1505.003 Web Shell                     Gap - limited web server visibility
+
+CREDENTIAL ACCESS (82% covered)
+  ✓ T1003.001 LSASS Memory                  [APEX-DET-017] LSASS access detection
+  ✓ T1003.003 NTDS                          [APEX-DET-018] ntdsutil, secretsdump detection
+  ✓ T1558.003 Kerberoasting                 [APEX-DET-019] RC4 ticket requests
+  ✓ T1110     Brute Force                   [APEX-DET-020] Failed login threshold
+  ✓ T1556.006 MFA Fatigue                   [APEX-DET-004] Multiple MFA denials
+  ✓ T1539     Steal Web Session             [APEX-DET-021] Token theft indicators
+  ◐ T1552.001 Credentials in Files          Partial - limited file content analysis
+  ✗ T1557     LLMNR/NBT-NS Poisoning        Gap - network-level detection needed
+
+LATERAL MOVEMENT (75% covered)
+  ✓ T1021.001 Remote Desktop                [APEX-DET-022] RDP to unusual targets
+  ✓ T1021.002 SMB/Admin Shares              [APEX-DET-023] Admin share access
+  ✓ T1021.006 Windows Remote Mgmt           [APEX-DET-024] WinRM usage
+  ✓ T1550.002 Pass the Hash                 [APEX-DET-025] Type 9 logon detection
+  ◐ T1550.003 Pass the Ticket               Partial - Kerberos anomaly detection
+  ✗ T1072     Software Deployment           Gap - SCCM abuse detection needed
+
+COLLECTION (62% covered)
+  ✓ T1114.001 Local Email Collection        [APEX-DET-006] Bulk email access
+  ✓ T1114.002 Remote Email Collection       [APEX-DET-005] Unusual email location
+  ✓ T1114.003 Email Forwarding              [APEX-DET-001] Forwarding rules ← The one that would have caught the incident
+  ◐ T1213     Data from Info Repositories   Partial - SharePoint unusual access
+  ✗ T1560     Archive Collected Data        Gap - compression detection needed
+
+EXFILTRATION (48% covered)
+  ✓ T1567.002 Exfil to Cloud Storage        [APEX-DET-026] Cloud upload detection
+  ◐ T1048     Exfil Over Alternative Proto  Partial - DNS exfil only
+  ✗ T1041     Exfil Over C2 Channel         Gap - requires C2 detection first
+  ✗ T1567.001 Exfil to Code Repository      Gap - GitHub/GitLab upload detection
+
+═══════════════════════════════════════════════════════════════════════════════
+SUMMARY: 47 custom detections covering 68% of relevant MITRE techniques
+         13 critical gaps identified for next quarter
+═══════════════════════════════════════════════════════════════════════════════
+</pre>
+                </div>
+
+                <!-- COVERAGE BY THREAT -->
+                <h2 id="threat-coverage"><i class="fas fa-user-secret"></i> Coverage by Threat Actor Profile</h2>
+
+                <p>How well does Apex detect the threats identified in their assessment?</p>
+
+                <h3>🔴 Financially Motivated Criminals (Primary Threat)</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill covered" style="width: 91%;">91% Covered</div>
+                </div>
                 <table>
-                    <thead><tr><th>Data Source</th><th>What It Provides</th><th>Key Techniques Covered</th></tr></thead>
+                    <thead><tr><th>Attack Technique</th><th>Detection</th><th>Status</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td><strong>Windows Security Events</strong></td>
-                            <td>Authentication, account changes, process creation</td>
-                            <td>T1078, T1136, T1098</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Sysmon</strong></td>
-                            <td>Process creation, network, file, registry</td>
-                            <td>T1059, T1055, T1547</td>
-                        </tr>
-                        <tr>
-                            <td><strong>PowerShell Logging</strong></td>
-                            <td>Script block, module logging</td>
-                            <td>T1059.001</td>
-                        </tr>
-                        <tr>
-                            <td><strong>EDR Telemetry</strong></td>
-                            <td>Process tree, behaviors, memory</td>
-                            <td>T1003, T1055, T1106</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Network Traffic</strong></td>
-                            <td>Connections, DNS, protocols</td>
-                            <td>T1071, T1572, T1048</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Cloud Audit Logs</strong></td>
-                            <td>API calls, configuration changes</td>
-                            <td>T1078.004, T1562.001</td>
-                        </tr>
+                        <tr><td>Phishing emails</td><td>APEX-DET-007, 008</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Credential theft</td><td>APEX-DET-002, 009, 020</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>BEC / Email manipulation</td><td>APEX-DET-001, 005, 006</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Ransomware deployment</td><td>APEX-DET-027, 028, MDE</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Wire fraud indicators</td><td>APEX-DET-029 (new vendor detection)</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Cryptominer deployment</td><td>Limited MDE coverage</td><td style="color: #fbbf24;">◐ Partial</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Data Source Gap Analysis</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Check which data sources you're missing</span>
-
-<span style="color: #a78bf6;">Technique:</span> T1055 - Process Injection
-<span style="color: #a78bf6;">Required Data Sources:</span>
-  ✓ Process: Process Creation (Sysmon 1)
-  ✓ Process: Process Access (Sysmon 10)
-  ✗ Process: OS API Execution (EDR required)
-  ✗ Module: Module Load (Sysmon 7 - not configured)
-
-<span style="color: #a78bf6;">Gap:</span> Cannot fully detect process injection without 
-      Sysmon 7 enabled or EDR with API hooking.
-
-<span style="color: #a78bf6;">Remediation:</span> 
-  1. Enable Sysmon Event ID 7 (Image Loaded)
-  2. Consider EDR upgrade for API-level visibility</pre>
+                <h3>🟡 Insider Threats</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill partial" style="width: 72%;">72% Covered</div>
                 </div>
-
-                <h2>Coverage Metrics</h2>
-
-                <h3>Key Metrics to Track</h3>
                 <table>
-                    <thead><tr><th>Metric</th><th>Calculation</th><th>Target</th></tr></thead>
+                    <thead><tr><th>Attack Technique</th><th>Detection</th><th>Status</th></tr></thead>
                     <tbody>
-                        <tr>
-                            <td><strong>Overall Coverage %</strong></td>
-                            <td>Techniques with detection ÷ Total techniques × 100</td>
-                            <td>60%+ for mature SOC</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Tactic Coverage %</strong></td>
-                            <td>Per-tactic coverage percentage</td>
-                            <td>80%+ for critical tactics</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Detection Depth</strong></td>
-                            <td>Avg detections per covered technique</td>
-                            <td>2+ for important techniques</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Threat Actor Coverage</strong></td>
-                            <td>% of threat actor TTPs detected</td>
-                            <td>70%+ for relevant threat actors</td>
-                        </tr>
+                        <tr><td>Bulk data download</td><td>APEX-DET-026, 030</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Email forwarding to personal</td><td>APEX-DET-001</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Unusual database queries</td><td>APEX-DET-031</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>After-hours access</td><td>APEX-DET-032</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>USB data transfer</td><td>Limited MDE coverage</td><td style="color: #fbbf24;">◐ Partial</td></tr>
+                        <tr><td>Printing sensitive documents</td><td>No detection</td><td style="color: #ef4444;">✗ Gap</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Coverage Dashboard Example</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1rem 0;">
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
-                        <div style="font-size: 2rem; font-weight: 700; color: #5ce0c4;">67%</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Overall Coverage</div>
-                    </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
-                        <div style="font-size: 2rem; font-weight: 700; color: #6aa3f7;">142</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Active Detections</div>
-                    </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
-                        <div style="font-size: 2rem; font-weight: 700; color: #f0b756;">48</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Gaps Identified</div>
-                    </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); text-align: center;">
-                        <div style="font-size: 2rem; font-weight: 700; color: #f07070;">12</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Critical Gaps</div>
-                    </div>
+                <h3>🟡 Nation-State / APT</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill partial" style="width: 58%;">58% Covered</div>
                 </div>
-
-                <h2>Threat-Informed Prioritization</h2>
-                <p>Not all techniques are equally important. Focus on threats relevant to your organization:</p>
-
-                <h3>Using Threat Intelligence</h3>
-                <ol>
-                    <li><strong>Identify threat actors</strong> targeting your industry (use MITRE Groups)</li>
-                    <li><strong>Extract their TTPs</strong> from threat reports and ATT&CK mappings</li>
-                    <li><strong>Compare against your coverage</strong> to find critical gaps</li>
-                    <li><strong>Prioritize those gaps</strong> for immediate remediation</li>
-                </ol>
-
-                <h3>Example: Financial Sector Focus</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">Threat Actors Targeting Finance:</span>
-- FIN7, FIN8, Carbanak, Lazarus Group
-
-<span style="color: #a78bf6;">Common Techniques Used:</span>
-- T1566.001 Spearphishing Attachment   <span style="color: #5ce0c4;">✓ Detected</span>
-- T1059.001 PowerShell                  <span style="color: #5ce0c4;">✓ Detected</span>
-- T1003.001 LSASS Memory                <span style="color: #5ce0c4;">✓ Detected</span>
-- T1021.001 Remote Desktop              <span style="color: #f0b756;">⚠ Partial</span>
-- T1486 Data Encrypted for Impact       <span style="color: #f07070;">✗ Gap</span>
-- T1105 Ingress Tool Transfer           <span style="color: #f07070;">✗ Gap</span>
-
-<span style="color: #a78bf6;">Priority Gaps to Address:</span>
-1. T1486 - Ransomware detection (Critical)
-2. T1105 - Tool download detection (High)
-3. T1021.001 - Improve RDP monitoring (Medium)</pre>
-                </div>
-
-                <h2>Continuous Improvement</h2>
-
-                <h3>Coverage Review Cadence</h3>
                 <table>
-                    <thead><tr><th>Activity</th><th>Frequency</th><th>Owner</th></tr></thead>
+                    <thead><tr><th>Attack Technique</th><th>Detection</th><th>Status</th></tr></thead>
                     <tbody>
-                        <tr><td>Update detection inventory</td><td>Weekly</td><td>Detection Engineer</td></tr>
-                        <tr><td>Refresh Navigator layer</td><td>Monthly</td><td>Detection Engineer</td></tr>
-                        <tr><td>Gap analysis review</td><td>Quarterly</td><td>SOC Manager</td></tr>
-                        <tr><td>Threat actor TTP update</td><td>Quarterly</td><td>Threat Intel</td></tr>
-                        <tr><td>Executive coverage report</td><td>Quarterly</td><td>CISO</td></tr>
+                        <tr><td>Spearphishing (targeted)</td><td>APEX-DET-007, 008</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Credential dumping</td><td>APEX-DET-017, 018, 019</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Lateral movement</td><td>APEX-DET-022-025</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Long-term persistence</td><td>APEX-DET-014-016</td><td style="color: #22c55e;">✓ Covered</td></tr>
+                        <tr><td>Living-off-the-land</td><td>APEX-DET-011-013</td><td style="color: #fbbf24;">◐ Partial</td></tr>
+                        <tr><td>Supply chain compromise</td><td>No detection</td><td style="color: #ef4444;">✗ Gap</td></tr>
+                        <tr><td>Zero-day exploitation</td><td>Limited (behavior-based only)</td><td style="color: #fbbf24;">◐ Partial</td></tr>
+                        <tr><td>Covert C2 channels</td><td>DNS only</td><td style="color: #fbbf24;">◐ Partial</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Tools & Resources</h2>
-                <ul>
-                    <li><a href="https://mitre-attack.github.io/attack-navigator/" target="_blank">ATT&CK Navigator</a> - Visualization tool</li>
-                    <li><a href="https://attack.mitre.org/resources/attack-data-and-tools/" target="_blank">ATT&CK Data & Tools</a> - STIX data</li>
-                    <li><a href="https://github.com/center-for-threat-informed-defense/attack-flow" target="_blank">ATT&CK Flow</a> - Attack sequences</li>
-                    <li><a href="https://github.com/mitre-attack/car" target="_blank">Cyber Analytics Repository (CAR)</a> - Reference detections</li>
-                </ul>
+                <!-- GAPS AND PRIORITIES -->
+                <h2 id="gaps"><i class="fas fa-exclamation-circle"></i> Remaining Gaps & Next Quarter Priorities</h2>
+
+                <h3>Critical Gaps to Address</h3>
+                
+                <div class="gap-item">
+                    <strong>Gap 1: Linux Server Monitoring</strong>
+                    <p>45 Linux servers with minimal visibility. Trading platform backend runs on Linux.</p>
+                    <p><strong>Risk:</strong> Attacker could compromise trading system undetected</p>
+                    <p><strong>Plan:</strong> Deploy Defender for Linux, create Linux-specific detections</p>
+                </div>
+
+                <div class="gap-item">
+                    <strong>Gap 2: AWS Cloud Coverage</strong>
+                    <p>Growing AWS footprint with no SIEM integration. S3 buckets, Lambda functions unmonitored.</p>
+                    <p><strong>Risk:</strong> Cloud misconfiguration or compromise undetected</p>
+                    <p><strong>Plan:</strong> Integrate CloudTrail, create AWS-specific detections</p>
+                </div>
+
+                <div class="gap-item">
+                    <strong>Gap 3: Web Shell Detection</strong>
+                    <p>Customer portal runs on IIS with no web shell detection capability.</p>
+                    <p><strong>Risk:</strong> Attacker persistence on web server</p>
+                    <p><strong>Plan:</strong> IIS log analysis, file integrity monitoring</p>
+                </div>
+
+                <div class="gap-item">
+                    <strong>Gap 4: Advanced Exfiltration</strong>
+                    <p>Only basic exfiltration detection. No DNS tunneling, steganography, or encrypted channel detection.</p>
+                    <p><strong>Risk:</strong> Data theft via covert channels</p>
+                    <p><strong>Plan:</strong> Network traffic analysis, DNS analytics</p>
+                </div>
+
+                <h3>Coverage Improvements Completed This Quarter</h3>
+
+                <div class="improvement-item">
+                    <strong>✓ BEC Prevention Suite</strong>
+                    <p>6 detections covering email manipulation, impossible travel, OAuth abuse</p>
+                    <p><strong>Result:</strong> Would have detected the March incident within 15 minutes</p>
+                </div>
+
+                <div class="improvement-item">
+                    <strong>✓ Credential Attack Detection</strong>
+                    <p>8 detections covering LSASS, Kerberoasting, Pass-the-Hash, brute force</p>
+                    <p><strong>Result:</strong> Detected and stopped 2 credential attacks in Month 4</p>
+                </div>
+
+                <div class="improvement-item">
+                    <strong>✓ Ransomware Early Warning</strong>
+                    <p>4 detections covering shadow copy deletion, mass file encryption indicators</p>
+                    <p><strong>Result:</strong> Not triggered yet (good) but validated with red team</p>
+                </div>
+
+                <!-- EXECUTIVE REPORT -->
+                <h2 id="executive"><i class="fas fa-file-alt"></i> Executive Report Template</h2>
+
+                <p>This is the quarterly report Apex's CISO presents to the board:</p>
+
+                <div class="alert-example">
+<pre>
+═══════════════════════════════════════════════════════════════════════════════
+                    APEX FINANCIAL SERVICES
+              SECURITY DETECTION CAPABILITY REPORT
+                      Q3 2024 (September)
+═══════════════════════════════════════════════════════════════════════════════
+
+EXECUTIVE SUMMARY
+─────────────────
+Six months after the BEC incident that cost us $340,000, our detection 
+capabilities have improved dramatically. We can now detect the techniques 
+used in that attack within 15 minutes, compared to "never" before.
+
+KEY METRICS
+───────────
+                            March 2024      September 2024      Change
+Detection Rules:                  12                   47        +292%
+MITRE ATT&CK Coverage:           18%                  68%        +50 pts
+BEC Attack Coverage:              8%                  91%        +83 pts
+True Positive Rate:              31%                  77%        +46 pts
+Mean Time to Detect:          >72 hrs              12 min       Significant
+
+INCIDENTS DETECTED (This Quarter)
+─────────────────────────────────
+• 2 credential stuffing attacks detected and blocked (automated)
+• 1 insider data collection detected (employee downloading client lists 
+  before resignation - HR notified, legal hold placed)
+• 3 phishing campaigns targeting executives detected and contained
+• 0 successful compromises (compared to 1 major incident in Q1)
+
+FINANCIAL IMPACT
+────────────────
+Investment in detection engineering:           $180,000 (6 months)
+Potential losses prevented:                    $500,000+ (estimated)
+   - 2 credential attacks could have led to BEC
+   - 1 insider threat could have caused client data breach
+   - 3 phishing campaigns targeting wire transfer authority
+
+ROI: Program paid for itself in prevented losses within 6 months.
+
+REMAINING GAPS (Board Awareness Required)
+─────────────────────────────────────────
+1. Linux servers (trading platform) - 45 servers with limited monitoring
+   Risk: HIGH | Remediation: Q4 2024 | Budget: Approved
+   
+2. AWS cloud environment - Growing footprint, no visibility
+   Risk: MEDIUM | Remediation: Q4 2024 | Budget: Pending approval ($45K)
+   
+3. Advanced persistent threats - 58% coverage, industry target is 70%+
+   Risk: MEDIUM | Remediation: Ongoing | No additional budget needed
+
+NEXT QUARTER PRIORITIES
+───────────────────────
+1. Linux server monitoring deployment
+2. AWS integration and cloud-native detections
+3. Web application attack detection
+4. Quarterly purple team validation exercise
+
+RECOMMENDATION
+──────────────
+Continue funding detection engineering program. Request approval for 
+$45,000 AWS integration project to close remaining cloud visibility gap.
+
+═══════════════════════════════════════════════════════════════════════════════
+</pre>
+                </div>
+
+                <!-- LESSONS LEARNED -->
+                <h2 id="lessons"><i class="fas fa-lightbulb"></i> Lessons Learned: The Apex Journey</h2>
+
+                <div class="scenario-box apex-story">
+                    <h4>🏢 Key Takeaways from Apex's Detection Journey</h4>
+                    
+                    <p><strong>1. Incidents drive priorities</strong></p>
+                    <p>The BEC incident wasn't just a loss - it was a catalyst for change. Use incidents to justify investment and set priorities.</p>
+                    
+                    <p><strong>2. Prioritize based on threat model, not MITRE coverage</strong></p>
+                    <p>Apex didn't try to cover all 200+ MITRE techniques. They focused on the threats most likely to target them (financial criminals, insiders).</p>
+                    
+                    <p><strong>3. Test before deploying</strong></p>
+                    <p>Every detection was tested against 30 days of historical data. This prevented alert fatigue and built SOC trust.</p>
+                    
+                    <p><strong>4. Document everything</strong></p>
+                    <p>Each detection has investigation steps, FP guidance, and response actions. Analysts can use them effectively.</p>
+                    
+                    <p><strong>5. Measure and report</strong></p>
+                    <p>Regular coverage analysis shows progress and justifies continued investment. The board can see ROI.</p>
+                    
+                    <p><strong>6. It's a journey, not a destination</strong></p>
+                    <p>68% coverage is good, but gaps remain. Detection engineering is ongoing, not a one-time project.</p>
+                </div>
+
+                <!-- STORY COMPLETE -->
+                <div class="nav-story">
+                    <h4>📖 Story Complete!</h4>
+                    <p>You've followed Apex Financial from incident to detection maturity. Review any part of the journey:</p>
+                    <ol>
+                        <li><a href="company-assessment.html">Company Assessment</a> - Where Apex started</li>
+                        <li><a href="lifecycle.html">Detection Engineering</a> - How they built detections</li>
+                        <li><a href="sigma-rules.html">Writing Detections</a> - Actual detection rules</li>
+                        <li><strong>Coverage Analysis</strong> - The results (this page)</li>
+                    </ol>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="company-assessment.html" class="card"><div class="card-icon"><i class="fas fa-building"></i></div><h3>Company Assessment</h3><p>Start the story</p></a>
+                    <a href="testing.html" class="card"><div class="card-icon"><i class="fas fa-vial"></i></div><h3>Testing</h3><p>Validate detections</p></a>
+                    <a href="mitre-attack.html" class="card"><div class="card-icon"><i class="fas fa-crosshairs"></i></div><h3>MITRE ATT&CK</h3><p>Framework details</p></a>
+                </div>
+
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

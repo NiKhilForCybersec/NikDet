@@ -4,80 +4,318 @@
     <base href="/NikDet/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Logs | SOC Compendium</title>
+    <title>Reading Security Logs | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .step-section { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-        .step-section h3 { color: var(--accent-color); margin-top: 0; }
-        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
-    </style>
+    <style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
-    <nav class="main-nav"><a href="pages/foundations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a></nav>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/foundations/index.html">Home</a><span class="separator">/</span><a href="pages/foundations/index.html">Foundations</a><span class="separator">/</span><span>Reading Logs</span></div>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Foundations</a><span class="separator">/</span>
+                <span>Reading Logs</span>
+            </div>
+
+            <h1><i class="fas fa-file-lines"></i> Reading Security Logs</h1>
+            <p class="lead">The foundational skill every SOC analyst must master - understanding what logs tell you and how to extract actionable intelligence from raw data.</p>
+
+            <div class="diagram-box">
+THE LOG READING MENTAL MODEL
+═══════════════════════════════════════════════════════════════════════════════
+
+When you look at ANY log entry, answer these 5 questions:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │   1. WHEN?        → Timestamp (what time, what timezone?)               │
+  │   2. WHERE?       → Source system, IP, hostname                         │
+  │   3. WHO?         → User, account, service account                      │
+  │   4. WHAT?        → Action performed (login, file access, process)      │
+  │   5. OUTCOME?     → Success or failure? What was the result?            │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+LOG ANATOMY - BREAKING DOWN A WINDOWS EVENT:
+─────────────────────────────────────────────────────────────────────────────
+
+Event ID: 4625 (Failed Logon)
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Log Name:      Security                  ← WHERE (which log)            │
+  │ Source:        Microsoft-Windows-Security-Auditing                      │
+  │ Date:          2024-01-15T14:32:45.123Z  ← WHEN (timestamp)             │
+  │ Event ID:      4625                      ← WHAT (event type)            │
+  │ Task Category: Logon                                                    │
+  │ Level:         Information                                              │
+  │ Keywords:      Audit Failure             ← OUTCOME (failed!)            │
+  │ User:          N/A                                                      │
+  │ Computer:      WORKSTATION-01            ← WHERE (target system)        │
+  │                                                                         │
+  │ Description:                                                            │
+  │ An account failed to log on.                                            │
+  │                                                                         │
+  │ Subject:                                                                │
+  │   Security ID:  NULL SID                                                │
+  │   Account Name: -                                                       │
+  │                                                                         │
+  │ Logon Type:    3                         ← HOW (network logon)          │
+  │                                                                         │
+  │ Account For Which Logon Failed:                                         │
+  │   Account Name: admin                    ← WHO (target account)         │
+  │   Account Domain: CORP                                                  │
+  │                                                                         │
+  │ Failure Information:                                                    │
+  │   Failure Reason: Unknown user name      ← WHY it failed                │
+  │   Status:         0xC000006D                                            │
+  │   Sub Status:     0xC0000064                                            │
+  │                                                                         │
+  │ Network Information:                                                    │
+  │   Source Network Address: 192.168.1.50   ← WHERE (source IP)            │
+  │   Source Port:   49521                                                  │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+COMMON LOG FORMATS:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. SYSLOG (Linux, Network Devices):
+   ─────────────────────────────────────────────────────────────────────────
+   Jan 15 14:32:45 webserver sshd[12345]: Failed password for admin from 
+   192.168.1.50 port 22 ssh2
+   
+   │ WHEN          │ WHERE      │ WHAT           │ WHO    │ SOURCE IP
+   └───────────────┴────────────┴────────────────┴────────┴─────────────
+
+2. JSON (Modern APIs, Cloud):
+   ─────────────────────────────────────────────────────────────────────────
+   {
+     "timestamp": "2024-01-15T14:32:45.123Z",     ← WHEN
+     "sourceIP": "192.168.1.50",                  ← WHERE (source)
+     "destinationIP": "10.0.0.5",                 ← WHERE (target)
+     "user": "admin@company.com",                 ← WHO
+     "action": "SignIn",                          ← WHAT
+     "result": "Failure",                         ← OUTCOME
+     "reason": "Invalid credentials"              ← WHY
+   }
+
+3. CEF (Common Event Format):
+   ─────────────────────────────────────────────────────────────────────────
+   CEF:0|Microsoft|Azure|1.0|SignInFailed|Failed Sign-in|7|
+   src=192.168.1.50 dst=login.microsoftonline.com suser=admin@company.com
+   
+   │ Vendor │ Product │ Event │ Severity │ Key=Value pairs
+   └────────┴─────────┴───────┴──────────┴──────────────────
+
+
+LOG READING WORKFLOW:
+═══════════════════════════════════════════════════════════════════════════════
+
+                        RAW LOG EVENT
+                              │
+                              ▼
+         ┌────────────────────────────────────────┐
+         │ 1. IDENTIFY THE LOG TYPE               │
+         │    • Windows Event Log?                │
+         │    • Syslog? JSON? CEF?                │
+         │    • Which product/system?             │
+         └───────────────────┬────────────────────┘
+                             │
+                             ▼
+         ┌────────────────────────────────────────┐
+         │ 2. EXTRACT THE 5 W's                   │
+         │    • When, Where, Who, What, Outcome   │
+         └───────────────────┬────────────────────┘
+                             │
+                             ▼
+         ┌────────────────────────────────────────┐
+         │ 3. CONTEXTUALIZE                       │
+         │    • Is this normal for this user?     │
+         │    • Is this normal for this time?     │
+         │    • Is this normal for this system?   │
+         └───────────────────┬────────────────────┘
+                             │
+                             ▼
+         ┌────────────────────────────────────────┐
+         │ 4. CORRELATE                           │
+         │    • What happened before this?        │
+         │    • What happened after?              │
+         │    • Other logs from same source?      │
+         └───────────────────┬────────────────────┘
+                             │
+                             ▼
+                    SECURITY DECISION
+                   (Alert? Investigate? Ignore?)
+            </div>
+
             <div class="content">
-                <h1><i class="fas fa-file-alt"></i> Reading Logs</h1>
-                <p class="lead">How to read and interpret security logs - the core skill of SOC analysis.</p>
+                <h2 id="log-sources"><i class="fas fa-database"></i> Key Log Sources for SOC</h2>
 
-                <h2><i class="fas fa-search"></i> Log Reading Approach</h2>
-                <div class="step-section">
-                    <ol>
-                        <li><strong>Identify the source:</strong> What system generated this log?</li>
-                        <li><strong>Find the timestamp:</strong> When did this happen?</li>
-                        <li><strong>Identify actors:</strong> Who/what initiated the action?</li>
-                        <li><strong>Identify targets:</strong> What was affected?</li>
-                        <li><strong>Understand the action:</strong> What happened?</li>
-                        <li><strong>Check the result:</strong> Success, failure, blocked?</li>
-                    </ol>
+                <table>
+                    <thead><tr><th>Log Source</th><th>What It Tells You</th><th>Key Fields</th><th>Priority</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Windows Security</strong></td><td>Authentication, access, process execution</td><td>Event ID, Account, Logon Type, Source IP</td><td>🔴 Critical</td></tr>
+                        <tr><td><strong>Sysmon</strong></td><td>Detailed process, network, file activity</td><td>Image, CommandLine, ParentImage, Hash</td><td>🔴 Critical</td></tr>
+                        <tr><td><strong>Firewall</strong></td><td>Network connections allowed/blocked</td><td>Source/Dest IP, Port, Action, Rule</td><td>🔴 Critical</td></tr>
+                        <tr><td><strong>Proxy/Web</strong></td><td>Web traffic, URLs accessed</td><td>URL, User, Method, Response Code</td><td>⚠️ High</td></tr>
+                        <tr><td><strong>DNS</strong></td><td>Name resolution (C2, exfil detection)</td><td>Query, Response, Client IP</td><td>⚠️ High</td></tr>
+                        <tr><td><strong>EDR</strong></td><td>Endpoint detections, behavior</td><td>Process tree, Detection name, Severity</td><td>🔴 Critical</td></tr>
+                        <tr><td><strong>Cloud (Azure AD, AWS)</strong></td><td>Cloud authentication, API calls</td><td>User, Action, Result, IP, User Agent</td><td>🔴 Critical</td></tr>
+                        <tr><td><strong>Email Gateway</strong></td><td>Email threats, phishing</td><td>Sender, Recipient, Subject, Attachment</td><td>⚠️ High</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="patterns"><i class="fas fa-search"></i> Recognizing Attack Patterns in Logs</h2>
+
+                <div class="diagram-box">
+ATTACK PATTERN RECOGNITION IN LOGS
+═══════════════════════════════════════════════════════════════════════════════
+
+BRUTE FORCE ATTACK:
+─────────────────────────────────────────────────────────────────────────────
+What you'll see:
+  • Multiple 4625 (Failed Logon) events
+  • Same target account, same source IP
+  • Rapid succession (seconds apart)
+  • Eventually followed by 4624 (Success) if they crack it
+
+  Timeline:
+  14:32:01  4625  admin  FAILED  192.168.1.50
+  14:32:02  4625  admin  FAILED  192.168.1.50
+  14:32:03  4625  admin  FAILED  192.168.1.50
+  14:32:04  4625  admin  FAILED  192.168.1.50
+  14:32:05  4624  admin  SUCCESS 192.168.1.50  ← 🔴 THEY GOT IN!
+
+
+PASSWORD SPRAY ATTACK:
+─────────────────────────────────────────────────────────────────────────────
+What you'll see:
+  • Multiple 4625 (Failed Logon) events
+  • DIFFERENT accounts, same source IP
+  • Same password being tried (you won't see the password)
+  • Low failures per account (1-2)
+
+  Timeline:
+  14:32:01  4625  user1   FAILED  192.168.1.50
+  14:32:02  4625  user2   FAILED  192.168.1.50
+  14:32:03  4625  user3   FAILED  192.168.1.50
+  14:32:04  4625  admin   FAILED  192.168.1.50
+  14:32:05  4624  admin   SUCCESS 192.168.1.50  ← 🔴 THEY GOT IN!
+
+
+LATERAL MOVEMENT:
+─────────────────────────────────────────────────────────────────────────────
+What you'll see:
+  • 4624 Type 3 (Network Logon) from internal IP
+  • Same account hitting multiple servers
+  • Often uses admin account
+  • May see PsExec, WMI, or PowerShell remoting artifacts
+
+  Timeline:
+  14:32:01  4624 Type 3  admin  SERVER-01  from WORKSTATION-05
+  14:32:15  4624 Type 3  admin  SERVER-02  from WORKSTATION-05
+  14:32:30  4624 Type 3  admin  DC-01      from WORKSTATION-05  ← 🔴 TO DC!
+
+
+MALWARE EXECUTION:
+─────────────────────────────────────────────────────────────────────────────
+What you'll see (Sysmon):
+  • Event 1: Process creation with suspicious patterns
+  • Unusual parent-child relationships
+  • Encoded PowerShell commands
+  • Processes from temp directories
+
+  Timeline (Sysmon Event 1):
+  14:32:01  OUTLOOK.EXE spawned WINWORD.EXE
+  14:32:05  WINWORD.EXE spawned CMD.EXE           ← 🔴 MACRO!
+  14:32:06  CMD.EXE spawned POWERSHELL.EXE -enc   ← 🔴 ENCODED!
+  14:32:10  Network connection to 185.x.x.x:443   ← 🔴 C2!
+
+
+DATA EXFILTRATION:
+─────────────────────────────────────────────────────────────────────────────
+What you'll see:
+  • Unusual outbound data volume
+  • Connections to cloud storage (Mega, Dropbox)
+  • DNS queries with long subdomains (tunneling)
+  • After-hours activity
+
+  Proxy logs:
+  03:15:00  admin  POST  mega.nz/upload  5.2GB   ← 🔴 AFTER HOURS!
+  03:45:00  admin  POST  mega.nz/upload  3.8GB
                 </div>
 
-                <h2><i class="fas fa-windows"></i> Windows Event Log Example</h2>
-                <div class="step-section">
-                    <div class="code-block"><pre>Event ID: 4624
-Source: Microsoft-Windows-Security-Auditing
-Time: 2025-01-03T10:15:32.000Z
-Computer: WORKSTATION01
-Message: An account was successfully logged on.
+                <h2 id="tips"><i class="fas fa-lightbulb"></i> Log Reading Tips</h2>
 
-Subject:
-    Security ID: SYSTEM
-    Account Name: WORKSTATION01$
-    
-Logon Information:
-    Logon Type: 10                    ← Remote Desktop
-    Account Name: jsmith              ← Who logged in
-    Account Domain: CORP
-    Source Network Address: 10.0.1.50 ← Where from
-    Source Port: 49721</pre></div>
-                    <p><strong>Key fields:</strong> Event ID (what happened), Logon Type (how), Account Name (who), Source Network Address (where from)</p>
+                <div class="info-box success">
+                    <div class="info-box-title"><i class="fas fa-check-circle"></i> Pro Tips for Faster Log Analysis</div>
+                    <table>
+                        <tbody>
+                            <tr><td><strong>1. Learn the Event IDs</strong></td><td>Memorize the top 20 Windows Event IDs - they appear in 80% of investigations</td></tr>
+                            <tr><td><strong>2. Follow the Timeline</strong></td><td>Sort by time first. What happened before? What happened after?</td></tr>
+                            <tr><td><strong>3. Pivot on Entities</strong></td><td>Pick a user, IP, or hostname and find ALL logs related to it</td></tr>
+                            <tr><td><strong>4. Know Your Normal</strong></td><td>Understand what normal looks like so abnormal jumps out</td></tr>
+                            <tr><td><strong>5. Use Multiple Sources</strong></td><td>Correlate across Windows, network, and endpoint logs</td></tr>
+                            <tr><td><strong>6. Check Timestamps</strong></td><td>Always verify timezone. UTC vs local time causes confusion</td></tr>
+                            <tr><td><strong>7. Question Everything</strong></td><td>Why is this user on this system at this time doing this?</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h2><i class="fas fa-network-wired"></i> Firewall Log Example</h2>
-                <div class="step-section">
-                    <div class="code-block"><pre>date=2025-01-03 time=10:20:15 action=deny
-srcip=203.0.113.50 srcport=45231
-dstip=10.0.10.25 dstport=3389
-proto=6 service=RDP</pre></div>
-                    <p><strong>Key fields:</strong> action (blocked), srcip (attacker), dstip (target), dstport (service targeted)</p>
-                    <p><strong>Analysis:</strong> External IP tried to RDP to internal server - blocked. Check for other attempts from same source.</p>
+                <h2 id="event-ids"><i class="fas fa-hashtag"></i> Critical Windows Event IDs</h2>
+
+                <table>
+                    <thead><tr><th>Event ID</th><th>Name</th><th>Why It Matters</th><th>Attack Relevance</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>4624</strong></td><td>Successful Logon</td><td>Shows who logged in and how</td><td>Lateral movement, initial access</td></tr>
+                        <tr><td><strong>4625</strong></td><td>Failed Logon</td><td>Credential attacks</td><td>Brute force, password spray</td></tr>
+                        <tr><td><strong>4648</strong></td><td>Explicit Credential Logon</td><td>RunAs, credential use</td><td>Privilege escalation</td></tr>
+                        <tr><td><strong>4672</strong></td><td>Special Privileges Assigned</td><td>Admin logon detected</td><td>Privilege use</td></tr>
+                        <tr><td><strong>4688</strong></td><td>Process Creation</td><td>What programs ran</td><td>Malware execution</td></tr>
+                        <tr><td><strong>4720</strong></td><td>User Account Created</td><td>New accounts</td><td>Persistence</td></tr>
+                        <tr><td><strong>4728/4732</strong></td><td>Member Added to Group</td><td>Privilege changes</td><td>Privilege escalation</td></tr>
+                        <tr><td><strong>4768</strong></td><td>Kerberos TGT Requested</td><td>Authentication</td><td>Golden ticket detection</td></tr>
+                        <tr><td><strong>4769</strong></td><td>Kerberos Service Ticket</td><td>Service access</td><td>Kerberoasting</td></tr>
+                        <tr><td><strong>7045</strong></td><td>Service Installed</td><td>New services</td><td>Persistence, lateral movement</td></tr>
+                    </tbody>
+                </table>
+
+                <h2 id="practice"><i class="fas fa-dumbbell"></i> Practice Exercise</h2>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-clipboard-question"></i> Log Analysis Challenge</div>
+                    <p>Look at these logs and determine: What happened?</p>
+                    <div style="background: #0d1117; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; margin: 1rem 0;">
+14:30:00  4625  jsmith  Type 3  192.168.1.50  Failure: Wrong password
+14:30:01  4625  jsmith  Type 3  192.168.1.50  Failure: Wrong password
+14:30:02  4625  jsmith  Type 3  192.168.1.50  Failure: Wrong password
+14:30:03  4625  jsmith  Type 3  192.168.1.50  Failure: Wrong password
+14:30:04  4624  jsmith  Type 3  192.168.1.50  Success
+14:30:10  4672  jsmith  Special privileges assigned
+14:30:15  4688  jsmith  cmd.exe  Parent: explorer.exe
+14:30:20  4688  jsmith  powershell.exe -enc [base64]  Parent: cmd.exe
+14:30:25  4688  jsmith  net.exe user hacker P@ssw0rd! /add  Parent: cmd.exe
+14:30:30  4720  hacker  User account created
+14:30:35  4732  hacker  Added to Administrators group
+                    </div>
+                    <p><strong>Answer:</strong> Brute force attack succeeded → Attacker ran encoded PowerShell → Created backdoor account "hacker" with admin rights. This is a complete compromise requiring immediate response!</p>
                 </div>
 
-                <h2><i class="fas fa-lightbulb"></i> Tips for Log Analysis</h2>
-                <div class="step-section">
-                    <ul>
-                        <li>Learn the normal patterns for your environment</li>
-                        <li>Keep a reference of important Event IDs</li>
-                        <li>Correlate multiple log sources</li>
-                        <li>Look for what's missing, not just what's present</li>
-                        <li>Timestamps are crucial - ensure time sync across sources</li>
-                    </ul>
-                </div>
+                <h3>Next Steps</h3>
+                <ul>
+                    <li><a href="terminology.html">Learn SOC Terminology</a></li>
+                    <li><a href="tools-overview.html">Security Tools Overview</a></li>
+                    <li><a href="../log-analysis/windows-events.html">Deep Dive: Windows Events</a></li>
+                    <li><a href="../log-analysis/sysmon.html">Deep Dive: Sysmon</a></li>
+                </ul>
             </div>
         </div>
-        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

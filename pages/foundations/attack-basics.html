@@ -4,185 +4,666 @@
     <base href="/NikDet/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>How Attacks Work | SOC Compendium</title>
+    <title>How Attacks Work - Visual Guide | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .why-matters { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .why-matters h4 { margin: 0 0 0.5rem 0; color: #fbbf24; }
+        .analogy-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .analogy-box h4 { margin: 0 0 0.5rem 0; color: #22c55e; }
+        .detection-tip { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .detection-tip h4 { margin: 0 0 0.5rem 0; color: #3b82f6; }
+        .attack-card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #ef4444; }
+        .attack-card h3 { margin-top: 0; color: #ef4444; }
+        .key-insight { background: var(--bg-secondary); border-radius: 8px; padding: 1rem 1.5rem; margin: 1.5rem 0; border: 1px solid var(--accent-primary); }
+        .kill-chain-step { background: var(--card-bg); border-radius: 8px; padding: 1rem 1.5rem; margin: 1rem 0; border-left: 4px solid; }
+        .step-recon { border-color: #6366f1; }
+        .step-weapon { border-color: #8b5cf6; }
+        .step-delivery { border-color: #a855f7; }
+        .step-exploit { border-color: #d946ef; }
+        .step-install { border-color: #ec4899; }
+        .step-c2 { border-color: #f43f5e; }
+        .step-actions { border-color: #ef4444; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/foundations/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/foundations/index.html">Home</a><span class="separator">/</span><a href="pages/foundations/index.html">Foundations</a><span class="separator">/</span><span>How Attacks Work</span></div>
-            <div class="content">
-                <h1>How Cyberattacks Work</h1>
-                <p class="lead">Understanding how attackers operate is essential for detecting and stopping them. This guide covers the attack lifecycle, common attack types, and attacker motivations.</p>
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Foundations</a><span class="separator">/</span>
+                <span>How Attacks Work</span>
+            </div>
 
-                <h2>The Cyber Kill Chain</h2>
-                <p>Attacks don't happen instantly. They follow a sequence of steps. Understanding this helps you detect attacks early and disrupt them.</p>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Reconnaissance</div>
-                            <p>Attacker gathers information about the target. Researches employees on LinkedIn, scans for open ports, discovers technologies used.</p>
-                            <p><strong>Detection:</strong> Port scans, web scraping, unusual DNS queries</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Weaponization</div>
-                            <p>Attacker creates the attack payload. Builds malware, crafts phishing email, develops exploit.</p>
-                            <p><strong>Detection:</strong> Mostly happens outside your visibility</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Delivery</div>
-                            <p>Attacker sends the payload to the victim. Email attachment, malicious link, USB drive, compromised website.</p>
-                            <p><strong>Detection:</strong> Email gateway alerts, web proxy blocks, suspicious file downloads</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Exploitation</div>
-                            <p>Payload executes and exploits a vulnerability. User opens malicious document, exploit triggers, code runs.</p>
-                            <p><strong>Detection:</strong> EDR alerts, process creation, suspicious parent-child relationships</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Installation</div>
-                            <p>Attacker establishes persistence. Creates scheduled task, adds registry key, installs service.</p>
-                            <p><strong>Detection:</strong> Registry changes, new services, scheduled tasks, startup items</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">6</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Command & Control (C2)</div>
-                            <p>Malware phones home to attacker for instructions. HTTP/HTTPS beaconing, DNS tunneling, encrypted channels.</p>
-                            <p><strong>Detection:</strong> Unusual outbound connections, beaconing patterns, DNS anomalies</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">7</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Actions on Objectives</div>
-                            <p>Attacker achieves their goal. Steals data, deploys ransomware, moves laterally, maintains access.</p>
-                            <p><strong>Detection:</strong> Data exfiltration, encryption activity, lateral movement, privilege escalation</p>
-                        </div>
+            <div class="content">
+                <h1><i class="fas fa-skull-crossbones"></i> How Cyberattacks Work - Visual Guide</h1>
+                <p class="lead">To catch attackers, you need to think like one. This guide breaks down attacks step-by-step with visual diagrams so you understand exactly what happens and where you can detect it.</p>
+
+                <div class="why-matters">
+                    <h4>🎯 Why Understanding Attacks Matters</h4>
+                    <p>Every alert you investigate is evidence of someone (or something) doing something. If you understand attack patterns, you can:</p>
+                    <ul>
+                        <li>Recognize real attacks faster</li>
+                        <li>Know what to look for when investigating</li>
+                        <li>Predict what an attacker might do next</li>
+                        <li>Understand why detection rules exist</li>
+                    </ul>
+                </div>
+
+                <!-- ==================== THE CYBER KILL CHAIN ==================== -->
+                <h2><i class="fas fa-link"></i> The Cyber Kill Chain - Attacks Step by Step</h2>
+
+                <p>Attacks don't happen instantly. They follow a sequence. Understanding this sequence means you can stop attacks at multiple points - not just at the end.</p>
+
+                <div class="diagram-box">
+THE CYBER KILL CHAIN - COMPLETE VISUALIZATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Every attack follows this pattern. The earlier you detect, the less damage occurs.
+
+  ATTACKER'S JOURNEY                                       YOUR DETECTION OPPORTUNITIES
+  ─────────────────                                        ────────────────────────────
+  
+  ┌─────────────────┐
+  │ 1. RECON        │ ─────► "Who should I attack?"        Unusual scans, OSINT queries
+  │    Research     │        LinkedIn stalking,             
+  │    the target   │        port scanning                  
+  └────────┬────────┘                                       
+           │                                                
+           ▼                                                
+  ┌─────────────────┐                                       
+  │ 2. WEAPONIZE    │ ─────► "What tool will I use?"       (Happens off your network)
+  │    Build the    │        Creating malware,              
+  │    payload      │        buying exploit                 
+  └────────┬────────┘                                       
+           │                                                
+           ▼                                                
+  ┌─────────────────┐                                       
+  │ 3. DELIVERY     │ ─────► "How do I get it there?"      Email gateway, web proxy,
+  │    Send to      │        Phishing email,                file downloads
+  │    victim       │        malicious website              
+  └────────┬────────┘                                       ⬅️ BEST TIME TO STOP
+           │                                                
+           ▼                                                
+  ┌─────────────────┐                                       
+  │ 4. EXPLOITATION │ ─────► "Run my code!"                EDR alerts, process creation,
+  │    Trigger      │        User clicks, vuln exploited,   suspicious parent-child
+  │    the payload  │        code executes                  
+  └────────┬────────┘                                       
+           │                                                
+           ▼                                                
+  ┌─────────────────┐                                       
+  │ 5. INSTALLATION │ ─────► "Stay forever"                Registry changes, scheduled
+  │    Establish    │        Create persistence,            tasks, new services
+  │    persistence  │        survive reboots                
+  └────────┬────────┘                                       
+           │                                                
+           ▼                                                
+  ┌─────────────────┐                                       
+  │ 6. C2           │ ─────► "Phone home"                  Beaconing patterns, unusual
+  │    Command &    │        Malware connects to            DNS, connections to bad IPs
+  │    Control      │        attacker's server              
+  └────────┬────────┘                                       ⬅️ CRITICAL TO DETECT
+           │                                                
+           ▼                                                
+  ┌─────────────────┐                                       
+  │ 7. ACTIONS      │ ─────► "Get what I came for"         Data exfil, lateral movement,
+  │    Achieve      │        Steal data, ransomware,        encryption, privilege
+  │    objective    │        move laterally                 escalation
+  └─────────────────┘                                       ⬅️ DAMAGE HAPPENING
+
+
+KEY INSIGHT: You have 7 chances to stop the attack. The later you catch it, the worse the damage.
+                </div>
+
+                <!-- ==================== REAL ATTACK EXAMPLE ==================== -->
+                <h2><i class="fas fa-biohazard"></i> Real Attack Walkthrough: Ransomware</h2>
+
+                <p>Let's trace a real ransomware attack through every stage, showing exactly what happens and what you'd see in logs.</p>
+
+                <div class="diagram-box">
+RANSOMWARE ATTACK - COMPLETE TIMELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+TARGET: Acme Corporation
+ATTACKER: Ransomware group "BlackMatter"
+GOAL: Encrypt files, demand $5 million ransom
+
+
+DAY 1 - MONDAY 09:00
+─────────────────────────────────────────────────────────────────────────────
+STAGE: Reconnaissance + Delivery
+
+Attacker sends phishing email:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ From: invoices@acme-billing.com  (spoofed - not real Acme)                 │
+│ To: sarah.jones@acme.com (Accounts Payable)                                │
+│ Subject: Urgent: Invoice #INV-2024-8847 Past Due                           │
+│                                                                             │
+│ Dear Sarah,                                                                 │
+│                                                                             │
+│ Please review the attached invoice which is now 30 days past due.          │
+│ [Attachment: Invoice_INV-2024-8847.xlsm] ← MACRO-ENABLED FILE             │
+│                                                                             │
+│ Best regards,                                                               │
+│ Acme Billing Department                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+WHAT YOU'D SEE:
+• Email logs: New message from external domain "acme-billing.com"
+• Attachment: .xlsm file (macro-enabled)
+
+DETECTION OPPORTUNITY:
+✓ Email gateway could block .xlsm attachments
+✓ Domain check: acme-billing.com registered 2 days ago (suspicious!)
+
+
+DAY 1 - MONDAY 09:15
+─────────────────────────────────────────────────────────────────────────────
+STAGE: Exploitation
+
+Sarah opens the Excel file and clicks "Enable Content" (macros run)
+
+Process chain:
+  EXCEL.EXE
+    └─► spawns CMD.EXE
+          └─► spawns POWERSHELL.EXE
+                └─► downloads Cobalt Strike beacon
+
+WHAT YOU'D SEE:
+• EDR Alert: "Suspicious process chain - Office application spawned shell"
+• Process: powershell.exe -enc [base64 encoded command]
+• Network: Connection to 185.220.101.34:443
+
+DETECTION OPPORTUNITY:
+✓ EDR should alert on Excel → PowerShell
+✓ Encoded PowerShell is almost always suspicious
+
+
+DAY 1 - MONDAY 09:16
+─────────────────────────────────────────────────────────────────────────────
+STAGE: Installation + C2
+
+Cobalt Strike beacon installs persistence:
+
+Registry key added:
+  HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+  Name: "WindowsUpdate"
+  Value: "powershell.exe -w hidden -c [malicious command]"
+
+Beacon starts calling home every 60 seconds:
+  09:16:00 → 185.220.101.34 (check in)
+  09:17:00 → 185.220.101.34 (check in)
+  09:18:00 → 185.220.101.34 (check in)
+  ...
+
+WHAT YOU'D SEE:
+• Registry change alert
+• Regular HTTPS connections to unknown IP
+• "Beaconing" pattern - connections at regular intervals
+
+DETECTION OPPORTUNITY:
+✓ Registry Run key modification alert
+✓ Beacon detection (regular interval connections)
+✓ Threat intel match on C2 IP
+
+
+DAY 1-3 - RECONNAISSANCE INSIDE NETWORK
+─────────────────────────────────────────────────────────────────────────────
+STAGE: Discovery + Lateral Movement
+
+Attacker (via beacon) explores the network:
+
+Commands run:
+  whoami                  → acme\sarah.jones
+  net user /domain        → List all domain users
+  net group "Domain Admins" /domain  → Find admin accounts
+  nltest /dclist:acme.com → Find domain controllers
+
+They find: IT admin "john.admin" has RDP open on several servers
+
+Attacker uses Mimikatz to steal credentials:
+  mimikatz.exe "sekurlsa::logonpasswords"
+  → Harvests john.admin's NTLM hash from memory
+
+WHAT YOU'D SEE:
+• Unusual reconnaissance commands from Sarah's workstation
+• Mimikatz detection (if AV/EDR catches it)
+• LSASS memory access alert
+
+DETECTION OPPORTUNITY:
+✓ Alert on domain enumeration commands
+✓ Alert on LSASS access (credential theft)
+
+
+DAY 4 - THURSDAY 02:00 AM
+─────────────────────────────────────────────────────────────────────────────
+STAGE: Lateral Movement + Privilege Escalation
+
+Using stolen credentials, attacker moves to domain controller:
+
+  From: WORKSTATION-SARAH (10.1.50.42)
+  To: DC01.acme.com (10.1.1.10)
+  Method: RDP with john.admin credentials
+
+They now have DOMAIN ADMIN access!
+
+WHAT YOU'D SEE:
+• RDP login to DC01 from unusual source
+• Login at 2 AM (outside business hours)
+• john.admin logging in from workstation (unusual)
+
+DETECTION OPPORTUNITY:
+✓ Impossible travel / unusual login location
+✓ Off-hours admin login
+✓ Lateral movement detection
+
+
+DAY 5 - FRIDAY 11:00 PM
+─────────────────────────────────────────────────────────────────────────────
+STAGE: Actions on Objectives (RANSOMWARE DEPLOYMENT)
+
+Attacker chose Friday night - less likely to be detected
+
+They disable security tools:
+  sc stop "CrowdStrike Falcon"
+  sc stop "Windows Defender"
+  
+They deploy ransomware to all systems via GPO:
+  - Ransomware.exe pushed to all domain-joined computers
+  - Starts encrypting files across the organization
+  
+Ransom note appears on all machines:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         YOUR FILES HAVE BEEN ENCRYPTED                      │
+│                                                                             │
+│  All your files have been encrypted with military-grade encryption.        │
+│  To recover your files, you must pay $5,000,000 in Bitcoin.               │
+│                                                                             │
+│  Contact: blackmatter@onionmail.com                                         │
+│  Your ID: 8a7f2c...                                                        │
+│                                                                             │
+│  DO NOT contact law enforcement or your files will be permanently lost.    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+WHAT YOU'D SEE:
+• Security service stopped alerts
+• Mass file encryption activity
+• Ransomware detection (if signatures exist)
+• Users calling helpdesk
+
+BY NOW IT'S TOO LATE - DAMAGE IS DONE
+                </div>
+
+                <div class="key-insight">
+                    <strong>💡 The Key Lesson:</strong> This attack had <strong>at least 10 detection opportunities</strong> over 5 days. If ANY of them had triggered an effective response, the ransomware deployment could have been prevented. This is why defense in depth matters - you have multiple chances to catch attackers.
+                </div>
+
+                <!-- ==================== COMMON ATTACK TYPES ==================== -->
+                <h2><i class="fas fa-crosshairs"></i> Common Attack Types You'll See</h2>
+
+                <div class="attack-card">
+                    <h3>🎣 Phishing Attacks</h3>
+                    <p>The #1 way attackers get in. Tricking users into clicking links, opening attachments, or entering credentials.</p>
+                    
+                    <div class="diagram-box">
+PHISHING ATTACK TYPES
+═══════════════════════════════════════════════════════════════════════════════
+
+MASS PHISHING
+─────────────────────────────────────────────────────────────────────────────
+"Your Netflix account is suspended!"
+Sent to millions of people
+Low effort, low success rate per email
+But at scale, some people click
+
+Detection: Known phishing URLs, suspicious sender domains
+
+
+SPEAR PHISHING
+─────────────────────────────────────────────────────────────────────────────
+"Hi Sarah, here's the Q3 report John asked for"
+Targeted at specific individuals
+Researched - uses real names, projects
+Much higher success rate
+
+Detection: Unusual sender, mismatched reply-to address
+
+
+BUSINESS EMAIL COMPROMISE (BEC)
+─────────────────────────────────────────────────────────────────────────────
+"This is CEO Bob. I need you to wire $50,000 urgently.
+ Don't tell anyone, it's confidential."
+
+Impersonates executives
+Often no malware - just social engineering
+Targets finance/HR with access to money
+
+Detection: Display name spoofing, urgent language, unusual requests
+
+
+CREDENTIAL PHISHING
+─────────────────────────────────────────────────────────────────────────────
+
+User clicks link → Lands on fake Microsoft login page:
+
+  Real:  https://login.microsoftonline.com
+  Fake:  https://login.microsoftonline.com.evil.com   ← Different domain!
+         https://1ogin.microsoftonline.com            ← 1 not l
+         https://login-microsoft.com                  ← Hyphen trick
+
+User enters credentials → Attacker captures them → Real login fails
+User thinks "weird" and tries again → By then attacker has access
+
+Detection: Newly registered domains, certificate mismatches
                     </div>
                 </div>
 
-                <h2>Common Attack Types</h2>
+                <div class="attack-card">
+                    <h3>💀 Malware Types</h3>
+                    
+                    <div class="diagram-box">
+MALWARE FAMILY TREE
+═══════════════════════════════════════════════════════════════════════════════
 
-                <h3>Phishing</h3>
-                <p>Tricking users into revealing credentials or executing malware via deceptive emails or messages.</p>
-                <table>
-                    <thead><tr><th>Type</th><th>Description</th><th>Example</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Mass Phishing</strong></td><td>Generic emails to many targets</td><td>"Your bank account has been locked" sent to millions</td></tr>
-                        <tr><td><strong>Spear Phishing</strong></td><td>Targeted at specific individuals</td><td>Email to CFO mentioning real colleagues by name</td></tr>
-                        <tr><td><strong>Whaling</strong></td><td>Targeting executives</td><td>Fake board meeting invite to CEO</td></tr>
-                        <tr><td><strong>BEC (Business Email Compromise)</strong></td><td>Impersonating executives for fraud</td><td>"CEO" asking finance to wire money</td></tr>
-                        <tr><td><strong>Vishing</strong></td><td>Voice phishing via phone</td><td>Fake IT support call asking for password</td></tr>
-                        <tr><td><strong>Smishing</strong></td><td>SMS phishing</td><td>Fake delivery notification text with malicious link</td></tr>
-                    </tbody>
-                </table>
+                             MALWARE
+                                │
+         ┌──────────┬──────────┼──────────┬──────────┐
+         │          │          │          │          │
+         ▼          ▼          ▼          ▼          ▼
+    RANSOMWARE   TROJAN      RAT       WORM     ROOTKIT
+         │          │          │          │          │
+         │          │          │          │          │
+    Encrypts    Disguised   Remote    Self-      Hides
+    your files  as legit    Access    spreads    deep in
+    demands $   software    Trojan    on its     the OS
+                                      own
 
-                <h3>Malware Types</h3>
-                <table>
-                    <thead><tr><th>Type</th><th>What It Does</th><th>Example</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Ransomware</strong></td><td>Encrypts files, demands payment</td><td>LockBit, BlackCat, REvil</td></tr>
-                        <tr><td><strong>Trojan</strong></td><td>Disguised as legitimate software</td><td>Fake software update containing malware</td></tr>
-                        <tr><td><strong>RAT (Remote Access Trojan)</strong></td><td>Gives attacker remote control</td><td>Cobalt Strike, njRAT</td></tr>
-                        <tr><td><strong>Worm</strong></td><td>Self-propagating malware</td><td>WannaCry spreading via SMB</td></tr>
-                        <tr><td><strong>Rootkit</strong></td><td>Hides itself deep in the OS</td><td>Kernel-level rootkits</td></tr>
-                        <tr><td><strong>Keylogger</strong></td><td>Records keystrokes</td><td>Captures passwords as typed</td></tr>
-                        <tr><td><strong>Cryptominer</strong></td><td>Uses your resources to mine crypto</td><td>Hidden mining consuming CPU</td></tr>
-                        <tr><td><strong>Infostealer</strong></td><td>Steals credentials, cookies, data</td><td>RedLine, Raccoon, Vidar</td></tr>
-                    </tbody>
-                </table>
 
-                <h3>Network Attacks</h3>
-                <table>
-                    <thead><tr><th>Attack</th><th>What It Does</th><th>Detection</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Port Scanning</strong></td><td>Discovers open ports/services</td><td>Many connection attempts from single source</td></tr>
-                        <tr><td><strong>DDoS</strong></td><td>Overwhelms with traffic</td><td>Massive traffic spike, service unavailability</td></tr>
-                        <tr><td><strong>Man-in-the-Middle</strong></td><td>Intercepts communication</td><td>Certificate warnings, ARP anomalies</td></tr>
-                        <tr><td><strong>DNS Poisoning</strong></td><td>Redirects DNS queries</td><td>Unexpected DNS responses</td></tr>
-                    </tbody>
-                </table>
+RANSOMWARE - "Pay me or lose your files"
+─────────────────────────────────────────────────────────────────────────────
+How it works:
+1. Malware executes
+2. Encrypts all files it can reach (.docx, .xlsx, .pdf, .jpg...)
+3. Drops ransom note
+4. Demands Bitcoin payment for decryption key
 
-                <h3>Web Application Attacks</h3>
-                <table>
-                    <thead><tr><th>Attack</th><th>What It Does</th><th>Example</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>SQL Injection</strong></td><td>Injects SQL commands via input</td><td>Entering <code>' OR 1=1 --</code> in login form</td></tr>
-                        <tr><td><strong>XSS (Cross-Site Scripting)</strong></td><td>Injects JavaScript into pages</td><td>Script stealing cookies from other users</td></tr>
-                        <tr><td><strong>CSRF</strong></td><td>Tricks user into unwanted actions</td><td>Clicking link that transfers money</td></tr>
-                        <tr><td><strong>Directory Traversal</strong></td><td>Accesses files outside web root</td><td>Using <code>../../</code> to read /etc/passwd</td></tr>
-                    </tbody>
-                </table>
+Famous families: LockBit, BlackCat, Conti, REvil
 
-                <h3>Identity Attacks</h3>
-                <table>
-                    <thead><tr><th>Attack</th><th>What It Does</th><th>Detection</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Brute Force</strong></td><td>Tries many passwords</td><td>Many failed logins, then success</td></tr>
-                        <tr><td><strong>Password Spray</strong></td><td>Tries common passwords across many accounts</td><td>Same password tried against many users</td></tr>
-                        <tr><td><strong>Credential Stuffing</strong></td><td>Uses stolen credentials from breaches</td><td>Login attempts with known breach credentials</td></tr>
-                        <tr><td><strong>Pass-the-Hash</strong></td><td>Uses password hash without knowing password</td><td>Type 3 logons, unusual auth patterns</td></tr>
-                        <tr><td><strong>Kerberoasting</strong></td><td>Extracts service account hashes</td><td>Unusual TGS requests for SPNs</td></tr>
-                        <tr><td><strong>Golden Ticket</strong></td><td>Forges Kerberos tickets with KRBTGT hash</td><td>Tickets with abnormal lifetimes, domain admin access</td></tr>
-                    </tbody>
-                </table>
+What you see:
+• Mass file modification (entropy change)
+• New file extensions (.locked, .encrypted)
+• Ransom note files created (README.txt everywhere)
 
-                <h2>Attacker Motivations</h2>
-                <table>
-                    <thead><tr><th>Attacker Type</th><th>Motivation</th><th>Tactics</th><th>Typical Targets</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Cybercriminals</strong></td><td>Money</td><td>Ransomware, BEC, card fraud</td><td>Anyone with money or data</td></tr>
-                        <tr><td><strong>Nation-States</strong></td><td>Espionage, disruption</td><td>Long-term persistent access, zero-days</td><td>Government, defense, critical infrastructure</td></tr>
-                        <tr><td><strong>Hacktivists</strong></td><td>Political/social causes</td><td>Website defacement, DDoS, data leaks</td><td>Organizations opposing their cause</td></tr>
-                        <tr><td><strong>Insiders</strong></td><td>Revenge, money, ideology</td><td>Data theft, sabotage</td><td>Their own organization</td></tr>
-                        <tr><td><strong>Script Kiddies</strong></td><td>Notoriety, fun</td><td>Pre-made tools, simple attacks</td><td>Easy targets</td></tr>
-                    </tbody>
-                </table>
 
-                <h2>MITRE ATT&CK Framework</h2>
-                <p>The industry-standard knowledge base of adversary tactics and techniques. Every SOC analyst should understand it.</p>
-                <table>
-                    <thead><tr><th>Tactic</th><th>Goal</th><th>Example Techniques</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Reconnaissance</strong></td><td>Gather information</td><td>Active scanning, search open databases</td></tr>
-                        <tr><td><strong>Resource Development</strong></td><td>Prepare attack infrastructure</td><td>Acquire domains, develop malware</td></tr>
-                        <tr><td><strong>Initial Access</strong></td><td>Get into the network</td><td>Phishing, exploit public app, valid accounts</td></tr>
-                        <tr><td><strong>Execution</strong></td><td>Run malicious code</td><td>PowerShell, command line, scripting</td></tr>
-                        <tr><td><strong>Persistence</strong></td><td>Maintain access</td><td>Scheduled tasks, registry keys, accounts</td></tr>
-                        <tr><td><strong>Privilege Escalation</strong></td><td>Get higher permissions</td><td>Exploit vulnerability, token manipulation</td></tr>
-                        <tr><td><strong>Defense Evasion</strong></td><td>Avoid detection</td><td>Disable AV, obfuscation, masquerading</td></tr>
-                        <tr><td><strong>Credential Access</strong></td><td>Steal credentials</td><td>Mimikatz, keylogging, brute force</td></tr>
-                        <tr><td><strong>Discovery</strong></td><td>Learn about environment</td><td>Network scanning, account discovery</td></tr>
-                        <tr><td><strong>Lateral Movement</strong></td><td>Move to other systems</td><td>RDP, SMB, WMI, PsExec</td></tr>
-                        <tr><td><strong>Collection</strong></td><td>Gather data to steal</td><td>Archive data, screen capture, keylogging</td></tr>
-                        <tr><td><strong>Command & Control</strong></td><td>Communicate with malware</td><td>HTTP/S, DNS, encrypted channels</td></tr>
-                        <tr><td><strong>Exfiltration</strong></td><td>Steal data out</td><td>Cloud storage, web services, USB</td></tr>
-                        <tr><td><strong>Impact</strong></td><td>Disrupt, destroy, ransom</td><td>Ransomware, wiper, defacement</td></tr>
-                    </tbody>
-                </table>
+RAT (Remote Access Trojan) - "I control your computer"
+─────────────────────────────────────────────────────────────────────────────
+How it works:
+1. User runs infected file
+2. RAT connects to attacker's server (C2)
+3. Attacker can now:
+   - See your screen
+   - Record keystrokes
+   - Access files
+   - Turn on webcam/mic
+   - Download more malware
 
-                <div class="nav-buttons" style="display: flex; justify-content: space-between; margin-top: 2rem;">
-                    <a href="pages/foundations/operating-systems.html" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Operating Systems</a>
-                    <a href="pages/foundations/tools-overview.html" class="btn btn-primary">Next: SOC Tools <i class="fas fa-arrow-right"></i></a>
+Famous families: Cobalt Strike, njRAT, DarkComet
+
+What you see:
+• Outbound connections to unknown IPs
+• Processes with camera/mic access
+• Screenshot files being created
+
+
+INFOSTEALER - "I want your credentials"
+─────────────────────────────────────────────────────────────────────────────
+How it works:
+1. Malware runs (often quick execution)
+2. Harvests:
+   - Browser saved passwords
+   - Browser cookies (session hijacking)
+   - Crypto wallet files
+   - Autofill data
+3. Exfiltrates to attacker
+4. Often self-deletes
+
+Famous families: RedLine, Raccoon, Vidar
+
+What you see:
+• Browser data file access
+• Archive creation
+• Quick outbound data transfer
+                    </div>
+                </div>
+
+                <div class="attack-card">
+                    <h3>🔑 Credential Attacks</h3>
+                    
+                    <div class="diagram-box">
+CREDENTIAL ATTACK METHODS
+═══════════════════════════════════════════════════════════════════════════════
+
+BRUTE FORCE - "I'll try every password"
+─────────────────────────────────────────────────────────────────────────────
+Attack pattern:
+  sarah.jones → password1     FAIL
+  sarah.jones → password2     FAIL
+  sarah.jones → password3     FAIL
+  sarah.jones → password123   FAIL
+  sarah.jones → Summer2024    SUCCESS!
+
+What you see: Many failed logins from same IP, then success
+Detection: > 5 failed logins followed by success
+
+
+PASSWORD SPRAY - "I'll try common passwords against everyone"
+─────────────────────────────────────────────────────────────────────────────
+Attack pattern:
+  user1 → CompanyName2024!    FAIL
+  user2 → CompanyName2024!    FAIL
+  user3 → CompanyName2024!    SUCCESS!
+  user4 → CompanyName2024!    FAIL
+  
+  (Wait 30 minutes to avoid lockout)
+  
+  user1 → Winter2024!         FAIL
+  user2 → Winter2024!         SUCCESS!
+
+What you see: Same password tried against many users
+Detection: Multiple users failing with identical patterns
+
+
+CREDENTIAL STUFFING - "I have passwords from other breaches"
+─────────────────────────────────────────────────────────────────────────────
+Attack pattern:
+  Attacker has breach data: email + password combos
+  
+  sarah@acme.com + password she used on LinkedIn
+  bob@acme.com + password he used on Adobe
+
+  If user reuses passwords → Attacker gets in
+
+What you see: Failed logins with breach database passwords
+Detection: Integration with breach databases, MFA enforcement
+
+
+PASS-THE-HASH - "I don't need your password, just the hash"
+─────────────────────────────────────────────────────────────────────────────
+Attack pattern:
+  1. Attacker runs Mimikatz on compromised host
+  2. Extracts NTLM hash from memory: aad3b435b51404eeaad3b435b51404ee
+  3. Uses hash to authenticate to other systems
+  4. Never needs the actual password!
+
+What you see: Type 3 logons (network), unusual source systems
+Detection: NTLM authentication from unexpected hosts
+                    </div>
+                </div>
+
+                <!-- ==================== MITRE ATT&CK ==================== -->
+                <h2><i class="fas fa-map"></i> MITRE ATT&CK - The Attack Encyclopedia</h2>
+
+                <div class="diagram-box">
+MITRE ATT&CK FRAMEWORK - THE COMPLETE PICTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+MITRE ATT&CK catalogs EVERY known attack technique. It's organized by TACTIC (goal).
+
+                                    TACTICS (What the attacker wants)
+                                    ────────────────────────────────
+┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
+│   INITIAL    │   EXECUTE    │   PERSIST    │  ESCALATE    │   EVADE      │
+│   ACCESS     │   CODE       │   ACCESS     │  PRIVILEGE   │   DEFENSE    │
+│              │              │              │              │              │
+│  "Get in"    │  "Run stuff" │  "Stay in"   │  "Get power" │  "Hide"      │
+├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+│ Phishing     │ PowerShell   │ Registry     │ Token        │ Disable AV   │
+│ Valid Accts  │ Scripting    │ Sched Tasks  │ Exploitation │ Obfuscation  │
+│ Exploit      │ WMI          │ Services     │ UAC Bypass   │ Masquerading │
+│ Drive-by     │ Cmd Line     │ Startup      │ Sudo/Doas    │ Timestomp    │
+└──────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
+
+┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
+│  CREDENTIAL  │   DISCOVER   │   LATERAL    │   COLLECT    │    C2        │
+│   ACCESS     │   NETWORK    │   MOVEMENT   │   DATA       │   COMMS      │
+│              │              │              │              │              │
+│  "Get creds" │  "Map it"    │  "Spread"    │  "Grab data" │  "Call home" │
+├──────────────┼──────────────┼──────────────┼──────────────┼──────────────┤
+│ Mimikatz     │ Port Scan    │ RDP          │ Keylogging   │ HTTP/S       │
+│ Keylogging   │ AD Recon     │ SMB/PsExec   │ Screenshots  │ DNS          │
+│ Brute Force  │ Net Commands │ WinRM        │ Clipboard    │ Encrypted    │
+│ Kerberoast   │ LDAP Query   │ SSH          │ Archive      │ Steganography│
+└──────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
+
+┌──────────────┬──────────────┐
+│  EXFILTRATE  │   IMPACT     │
+│   DATA       │   TARGET     │
+│              │              │
+│  "Steal it"  │  "Destroy"   │
+├──────────────┼──────────────┤
+│ Cloud Upload │ Ransomware   │
+│ HTTP POST    │ Wiper        │
+│ DNS Tunnel   │ Defacement   │
+│ Physical     │ DoS          │
+└──────────────┴──────────────┘
+
+
+WHY THIS MATTERS:
+─────────────────────────────────────────────────────────────────────────────
+When you write detection rules, map them to ATT&CK:
+
+  "PowerShell Download Cradle Detection"
+  MITRE: T1059.001 (PowerShell) + T1105 (Ingress Tool Transfer)
+
+This helps you understand:
+- What attack you're detecting
+- What other techniques might be used together
+- Where you have coverage gaps
+                </div>
+
+                <div class="analogy-box">
+                    <h4>🏠 Analogy: MITRE ATT&CK is Like a Criminal Playbook</h4>
+                    <p>Imagine police compiled a book of every known criminal technique: lockpicking, social engineering, disguises, escape routes.</p>
+                    <p>MITRE ATT&CK is that book for cyber attacks. When you see a technique, you can look it up and find:</p>
+                    <ul>
+                        <li>How attackers use it</li>
+                        <li>What groups commonly use it</li>
+                        <li>How to detect it</li>
+                        <li>How to mitigate it</li>
+                    </ul>
+                </div>
+
+                <!-- ==================== ATTACKER TYPES ==================== -->
+                <h2><i class="fas fa-user-secret"></i> Know Your Enemy: Attacker Types</h2>
+
+                <div class="diagram-box">
+WHO ATTACKS AND WHY
+═══════════════════════════════════════════════════════════════════════════════
+
+CYBERCRIMINALS (Most common)
+─────────────────────────────────────────────────────────────────────────────
+Motivation: 💰 MONEY
+Methods: Ransomware, BEC, card fraud, infostealers
+Targets: Anyone with money or valuable data
+Sophistication: Varies (script kiddies to organized crime)
+Example: "Pay us $5M Bitcoin or your files are gone forever"
+
+
+NATION-STATES (Most dangerous)
+─────────────────────────────────────────────────────────────────────────────
+Motivation: 🎯 ESPIONAGE, SABOTAGE
+Methods: Long-term access, zero-days, supply chain attacks
+Targets: Government, defense, critical infrastructure, IP
+Sophistication: Very high (unlimited budget, custom tools)
+Example: APT29 (Russia) in SolarWinds supply chain attack
+
+
+HACKTIVISTS
+─────────────────────────────────────────────────────────────────────────────
+Motivation: ✊ POLITICAL/SOCIAL CAUSES
+Methods: DDoS, defacement, data leaks
+Targets: Organizations they disagree with
+Sophistication: Low to medium
+Example: Anonymous attacking companies they disagree with
+
+
+INSIDERS (Often overlooked)
+─────────────────────────────────────────────────────────────────────────────
+Motivation: 💢 REVENGE, MONEY, IDEOLOGY
+Methods: Legitimate access abused
+Targets: Their own organization
+Sophistication: Low (but they have access)
+Example: Disgruntled employee downloading customer database before quitting
+
+
+WHY THIS MATTERS FOR DETECTION:
+─────────────────────────────────────────────────────────────────────────────
+
+Different attackers = Different behaviors
+
+Cybercriminals: Fast, noisy, want quick payout
+  → Often detectable by volume and speed
+
+Nation-states: Slow, stealthy, want long-term access
+  → May live in your network for YEARS
+  → Need behavioral detection, not just signatures
+
+Insiders: Already have legitimate access
+  → Hard to distinguish from normal work
+  → Need user behavior analytics (UBA)
+                </div>
+
+                <!-- ==================== KEY TAKEAWAYS ==================== -->
+                <h2><i class="fas fa-graduation-cap"></i> Key Takeaways</h2>
+
+                <div class="key-insight">
+                    <h4>Remember These Points</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Concept</th><th>Key Point</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Kill Chain</strong></td><td>7 stages - you have 7 chances to stop an attack</td></tr>
+                            <tr><td><strong>Phishing</strong></td><td>#1 entry point - train users AND detect technically</td></tr>
+                            <tr><td><strong>C2</strong></td><td>Block C2 = attacker loses control, even if malware present</td></tr>
+                            <tr><td><strong>MITRE ATT&CK</strong></td><td>The encyclopedia of attacks - use it to understand and map detections</td></tr>
+                            <tr><td><strong>Defense in Depth</strong></td><td>Multiple detection points mean more chances to catch attacks</td></tr>
+                            <tr><td><strong>Think Like Attacker</strong></td><td>"What would I do next?" helps you investigate</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Navigation -->
+                <div class="card-grid">
+                    <a href="operating-systems.html" class="card"><div class="card-icon"><i class="fas fa-desktop"></i></div><h3>Operating Systems</h3><p>Windows & Linux for SOC</p></a>
+                    <a href="tools-overview.html" class="card"><div class="card-icon"><i class="fas fa-toolbox"></i></div><h3>SOC Tools</h3><p>SIEM, EDR, and more</p></a>
+                    <a href="investigation/index.html" class="card"><div class="card-icon"><i class="fas fa-search"></i></div><h3>Investigation Playbooks</h3><p>Apply attack knowledge</p></a>
                 </div>
 
             </div>

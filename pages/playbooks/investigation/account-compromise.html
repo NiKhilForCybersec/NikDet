@@ -7,21 +7,126 @@
     <title>Account Compromise Investigation | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/playbooks/investigation/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/playbooks/investigation/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
                 <span>Account Compromise</span>
             </div>
 
             <h1><i class="fas fa-user-lock"></i> Account Compromise Investigation</h1>
             <p class="lead">Complete investigation workflow when an account is suspected or confirmed compromised.</p>
+
+            <div class="diagram-box">
+ACCOUNT COMPROMISE INVESTIGATION FRAMEWORK
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: IMMEDIATE CONTAINMENT (First 15 minutes)
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  1. RESET PASSWORD immediately                                             │
+│  2. REVOKE all active sessions (Force sign-out)                           │
+│  3. REVOKE OAuth/App tokens                                                │
+│  4. DISABLE MFA temporarily then re-enroll (attacker may have added)      │
+│  5. CHECK for inbox rules forwarding email externally                      │
+│  6. BLOCK any IOCs found (malicious IPs, domains)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 2: ASSESS THE DAMAGE (What did they do?)
+─────────────────────────────────────────────────────────────────────────────
+
+              COMPROMISED ACCOUNT
+                     │
+    ┌────────────────┼────────────────┐
+    │                │                │
+    ▼                ▼                ▼
+┌─────────┐    ┌─────────┐     ┌─────────┐
+│ EMAIL   │    │ SSO     │     │ DATA    │
+│ ACCESS  │    │ ACCESS  │     │ ACCESS  │
+└────┬────┘    └────┬────┘     └────┬────┘
+     │              │               │
+     ▼              ▼               ▼
+• Read emails?  • Which apps?   • Files accessed?
+• Sent emails?  • What actions? • Downloads?
+• Rules added?  • New logins?   • Shares accessed?
+• Contacts      • Data changed? • External shares?
+  exported?
+
+
+STEP 3: CHECK FOR PERSISTENCE (Can they get back in?)
+─────────────────────────────────────────────────────────────────────────────
+
+Common persistence mechanisms to check:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  INBOX RULES          OAUTH APPS              MFA METHODS              │
+  │  ───────────          ──────────              ───────────              │
+  │  • Forwarding to      • Suspicious app        • New phone added?       │
+  │    external?            consents?             • New authenticator?     │
+  │  • Auto-delete        • Apps with mail        • Backup codes used?     │
+  │    keywords?            access?                                        │
+  │  • Move to hidden     • Unfamiliar apps?                               │
+  │    folder?                                                              │
+  │                                                                         │
+  │  DELEGATES            SSO SESSIONS            CONNECTED DEVICES        │
+  │  ─────────            ────────────            ─────────────────        │
+  │  • New delegates      • Active sessions       • New devices?           │
+  │    added?               you don't             • Unknown device         │
+  │  • Calendar             recognize?              names?                  │
+  │    permissions?                                                         │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+STEP 4: SCOPE THE ATTACK (Who else is affected?)
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  SEARCH FOR:                                                            │
+  │                                                                         │
+  │  • Phishing sent FROM compromised account                              │
+  │    - Who received internal phishing?                                   │
+  │    - Did anyone click?                                                 │
+  │                                                                         │
+  │  • Same attacker hitting other accounts                                │
+  │    - Same source IP → other login attempts?                           │
+  │    - Same C2 domain → other systems?                                  │
+  │                                                                         │
+  │  • Credential theft                                                    │
+  │    - Passwords in email?                                               │
+  │    - Access to credential stores?                                      │
+  │    - VPN/SSO creds exposed?                                            │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+TIMELINE OF TYPICAL ACCOUNT COMPROMISE:
+═══════════════════════════════════════════════════════════════════════════════
+
+  Hour 0         Hour 1          Hour 2-4        Day 1+
+  ───────        ───────         ────────        ──────
+  Credential     Login from      Set up          Send BEC
+  phished        new location    persistence     Exfil data
+  │              │               │               │
+  ▼              ▼               ▼               ▼
+  User enters    Attacker        • Inbox rules   • Wire fraud
+  creds on       accesses        • OAuth apps    • Internal phish
+  fake page      mailbox         • MFA enrolled  • Data theft
+                                                 • Access sold
+
+  🔴 RESPONSE WINDOW: The faster you respond, the less damage
+            </div>
 
             <div class="content">
                 <!-- WHY THIS MATTERS -->
@@ -76,7 +181,7 @@
                 <table>
                     <thead><tr><th>Scenario</th><th>Use Instead</th><th>Why</th></tr></thead>
                     <tbody>
-                        <tr><td>Initial phishing still being investigated</td><td><a href="pages/playbooks/investigation/phishing.html">Phishing Playbook</a></td><td>Determine if compromise occurred first</td></tr>
+                        <tr><td>Initial phishing still being investigated</td><td><a href="investigation/phishing.html">Phishing Playbook</a></td><td>Determine if compromise occurred first</td></tr>
                         <tr><td>Service account compromise</td><td>Service Account Incident Playbook</td><td>Different investigation approach, may affect systems</td></tr>
                         <tr><td>Admin account compromise</td><td>Privileged Account Compromise Playbook</td><td>Higher severity, different scope</td></tr>
                         <tr><td>Known false positive pattern</td><td>Document and tune alert</td><td>Don't waste time on known FPs</td></tr>

@@ -7,21 +7,106 @@
     <title>KQL Fundamentals | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/sentinel/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
             <div class="breadcrumb">
-                <a href="pages/sentinel/index.html">Home</a><span class="separator">/</span>
-                <a href="pages/sentinel/index.html">Microsoft Sentinel</a><span class="separator">/</span>
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Microsoft Sentinel</a><span class="separator">/</span>
                 <span>KQL Fundamentals</span>
             </div>
 
             <h1><i class="fas fa-code"></i> KQL Fundamentals</h1>
             <p class="lead">Essential Kusto Query Language skills for SOC analysts - from basic queries to practical investigation techniques.</p>
+
+            <div class="diagram-box">
+KQL QUERY STRUCTURE - THE PIPE MODEL
+═══════════════════════════════════════════════════════════════════════════════
+
+KQL flows data through a PIPELINE (like water through pipes):
+
+  TABLE           FILTER           TRANSFORM        OUTPUT
+    │                │                │               │
+    ▼                ▼                ▼               ▼
+┌────────┐      ┌────────┐      ┌────────┐      ┌────────┐
+│Security│  ──► │ where  │  ──► │project │  ──► │ Results│
+│ Event  │  |   │TimeGen │  |   │Account │  |   │        │
+│        │  |   │> ago(1d│  |   │,Action │  |   │ 15 rows│
+└────────┘      └────────┘      └────────┘      └────────┘
+
+Written as:
+─────────────────────────────────────────────────────────────────────────────
+SecurityEvent                    // Start with table
+| where TimeGenerated > ago(1d)  // Filter: last 24 hours
+| where EventID == 4624          // Filter: successful logons
+| project Account, Computer      // Select columns
+| take 100                       // Limit results
+
+
+ESSENTIAL KQL OPERATORS:
+═══════════════════════════════════════════════════════════════════════════════
+
+FILTERING (reduce rows):
+─────────────────────────────────────────────────────────────────────────────
+  where       Filter rows that match condition
+              | where EventID == 4625
+
+  search      Find text across columns
+              | search "mimikatz"
+
+
+SELECTING (choose columns):
+─────────────────────────────────────────────────────────────────────────────
+  project     Select specific columns
+              | project TimeGenerated, Account, Computer
+
+  extend      Add calculated columns
+              | extend DayOfWeek = dayofweek(TimeGenerated)
+
+
+AGGREGATING (summarize data):
+─────────────────────────────────────────────────────────────────────────────
+  summarize   Group and calculate
+              | summarize count() by Account
+
+  count       Count rows
+              | count
+
+
+SORTING & LIMITING:
+─────────────────────────────────────────────────────────────────────────────
+  sort by     Order results
+              | sort by TimeGenerated desc
+
+  take/limit  Limit rows returned
+              | take 100
+
+
+MOST COMMON PATTERNS FOR SOC:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Failed Logons in Last Hour:
+   SecurityEvent
+   | where TimeGenerated > ago(1h)
+   | where EventID == 4625
+   | summarize FailCount = count() by Account, Computer
+
+2. Find Specific User Activity:
+   SecurityEvent
+   | where Account contains "admin"
+   | project TimeGenerated, Account, Activity, Computer
+
+3. Top Talkers (Most Events):
+   SecurityEvent
+   | summarize EventCount = count() by Computer
+   | sort by EventCount desc
+   | take 10
+            </div>
 
             <div class="content">
                 <!-- WHY LEARN KQL -->

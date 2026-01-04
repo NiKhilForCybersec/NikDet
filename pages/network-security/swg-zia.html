@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWG & Zscaler ZIA Complete Guide | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .config-block { background: #0d1117; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.8rem; overflow-x: auto; white-space: pre; color: #e6edf3; border: 1px solid #30363d; }
+        .config-block .comment { color: #8b949e; }
+        .config-block .keyword { color: #ff7b72; }
+        .config-block .string { color: #a5d6ff; }
+        .config-block .value { color: #7ee787; }
+        .interview-tip { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+        .interview-tip h4 { margin-top: 0; color: #fbbf24; }
+        .feature-card { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid var(--accent-primary); }
+        .feature-card h4 { margin-top: 0; color: var(--accent-primary); }
+        .architecture-diagram { background: #1a1a2e; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.7rem; overflow-x: auto; white-space: pre; }
+        .warning-box { background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 1rem; margin: 1rem 0; }
+        .best-practice { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .policy-flow { display: flex; flex-direction: column; gap: 0.25rem; }
+        .policy-step { background: var(--bg-secondary); padding: 0.75rem 1rem; border-radius: 4px; border-left: 3px solid var(--accent-primary); display: flex; align-items: center; gap: 1rem; }
+        .policy-step .num { background: var(--accent-primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; }
+        .tab-container { margin: 1.5rem 0; }
+        .tab-buttons { display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap; }
+        .tab-btn { background: transparent; border: none; padding: 0.5rem 1rem; cursor: pointer; color: var(--text-secondary); border-radius: 4px 4px 0 0; }
+        .tab-btn.active { background: var(--accent-primary); color: white; }
+        .tab-content { display: none; padding: 1rem 0; }
+        .tab-content.active { display: block; }
+        .log-example { background: #0d1117; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.75rem; overflow-x: auto; color: #c9d1d9; }
+    </style>
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="index.html">Network Security</a><span class="separator">/</span>
+                <span>SWG & ZIA</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-globe"></i> SWG & Zscaler ZIA Complete Guide</h1>
+                <p class="lead">Complete configuration guide for Secure Web Gateway with Zscaler Internet Access. Includes SSL inspection, URL filtering, threat protection, DLP, and policy configuration.</p>
+
+                <!-- TABLE OF CONTENTS -->
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-list"></i> Complete Guide Contents</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong>Fundamentals</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#swg-overview">SWG Overview</a></li>
+                                <li><a href="#zia-architecture">ZIA Architecture</a></li>
+                                <li><a href="#traffic-forwarding">Traffic Forwarding</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Configuration</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#ssl-inspection">SSL Inspection</a></li>
+                                <li><a href="#url-filtering">URL Filtering</a></li>
+                                <li><a href="#firewall-policies">Firewall Policies</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Security</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#threat-protection">Threat Protection</a></li>
+                                <li><a href="#sandbox">Cloud Sandbox</a></li>
+                                <li><a href="#dlp">Data Loss Prevention</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong>Operations</strong>
+                            <ul style="margin: 0.5rem 0;">
+                                <li><a href="#logs-analytics">Logs & Analytics</a></li>
+                                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                                <li><a href="#siem-integration">SIEM Integration</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SWG OVERVIEW -->
+                <h2 id="swg-overview"><i class="fas fa-shield-alt"></i> Secure Web Gateway Overview</h2>
+
+                <div class="interview-tip">
+                    <h4>💡 Interview Answer: What is a Secure Web Gateway?</h4>
+                    <p>"A Secure Web Gateway is a security solution that sits between users and the internet, inspecting all web traffic to protect against threats and enforce policies. Key functions include URL filtering, SSL/TLS inspection, malware scanning, application control, and data loss prevention. Cloud-based SWGs like Zscaler ZIA can protect users regardless of location."</p>
+                </div>
+
+                <h3>SWG Core Functions</h3>
+                <table>
+                    <thead><tr><th>Function</th><th>What It Does</th><th>Example Use Case</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>URL Filtering</strong></td>
+                            <td>Block/allow websites by category</td>
+                            <td>Block gambling, adult content, malware sites</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SSL Inspection</strong></td>
+                            <td>Decrypt HTTPS to inspect content</td>
+                            <td>Find malware hidden in encrypted downloads</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Malware Protection</strong></td>
+                            <td>Scan downloads for threats</td>
+                            <td>Block infected PDF before it reaches user</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Application Control</strong></td>
+                            <td>Control cloud app usage</td>
+                            <td>Allow Box downloads, block uploads</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DLP</strong></td>
+                            <td>Prevent sensitive data upload</td>
+                            <td>Block credit card numbers to webmail</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bandwidth Control</strong></td>
+                            <td>Limit bandwidth by app/category</td>
+                            <td>Throttle YouTube to preserve bandwidth</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Cloud Sandbox</strong></td>
+                            <td>Behavioral analysis of unknown files</td>
+                            <td>Detect zero-day malware via execution</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- ZIA ARCHITECTURE -->
+                <h2 id="zia-architecture"><i class="fas fa-sitemap"></i> Zscaler ZIA Architecture</h2>
+
+                <div class="architecture-diagram">
+═══════════════════════════════════════════════════════════════════════════════════════
+                        ZSCALER INTERNET ACCESS (ZIA) ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════════════
+
+                                     INTERNET
+                                        │
+                                        ▼
+    ┌─────────────────────────────────────────────────────────────────────────────────┐
+    │                              ZSCALER CLOUD                                       │
+    │  ┌─────────────────────────────────────────────────────────────────────────────┐│
+    │  │                    SECURITY INSPECTION STACK                                ││
+    │  │                                                                              ││
+    │  │   ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐  ││
+    │  │   │   URL   │ │   SSL   │ │ Threat  │ │Cloud    │ │   DLP   │ │Bandwidth│  ││
+    │  │   │Filtering│→│Inspect  │→│ Protect │→│Sandbox  │→│         │→│ Control │  ││
+    │  │   └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘  ││
+    │  │                                                                              ││
+    │  │   ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐                          ││
+    │  │   │ Cloud   │ │  DNS    │ │Firewall │ │ Logging │                          ││
+    │  │   │ Apps    │ │Security │ │  (FWaaS)│ │Analytics│                          ││
+    │  │   │ (CASB)  │ │         │ │         │ │         │                          ││
+    │  │   └─────────┘ └─────────┘ └─────────┘ └─────────┘                          ││
+    │  │                                                                              ││
+    │  │                    150+ Data Centers Worldwide                              ││
+    │  └─────────────────────────────────────────────────────────────────────────────┘│
+    └───────────────────────────────────┬─────────────────────────────────────────────┘
+                                        │
+         ┌──────────────────────────────┼──────────────────────────────┐
+         │                              │                              │
+         ▼                              ▼                              ▼
+┌─────────────────┐          ┌─────────────────┐            ┌─────────────────┐
+│   OFFICE USER   │          │   REMOTE USER   │            │   BRANCH SITE   │
+│                 │          │                 │            │                 │
+│  PAC File or    │          │  Zscaler Client │            │  GRE/IPSec      │
+│  Client         │          │  Connector      │            │  Tunnel from    │
+│  Connector      │          │                 │            │  Router         │
+│                 │          │                 │            │                 │
+└─────────────────┘          └─────────────────┘            └─────────────────┘
+
+TRAFFIC FLOW:
+1. User requests website/cloud app
+2. Traffic forwarded to nearest Zscaler DC
+3. Full security stack inspects traffic
+4. Clean traffic forwarded to destination
+5. Response returns same path (inspected again)
+═══════════════════════════════════════════════════════════════════════════════════════
+</div>
+
+                <!-- TRAFFIC FORWARDING -->
+                <h2 id="traffic-forwarding"><i class="fas fa-directions"></i> Traffic Forwarding Methods</h2>
+
+                <div class="tab-container">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="showTab(event, 'client-tab')">Client Connector</button>
+                        <button class="tab-btn" onclick="showTab(event, 'pac-tab')">PAC File</button>
+                        <button class="tab-btn" onclick="showTab(event, 'gre-tab')">GRE Tunnel</button>
+                        <button class="tab-btn" onclick="showTab(event, 'ipsec-tab')">IPSec Tunnel</button>
+                    </div>
+                    
+                    <div id="client-tab" class="tab-content active">
+                        <h4>Zscaler Client Connector (Recommended)</h4>
+                        <p><strong>Best for:</strong> Laptops, mobile devices, remote workers</p>
+                        
+                        <div class="config-block"><span class="comment"># Client Connector Features</span>
+✓ Works anywhere (office, home, airport)
+✓ Pre-authentication (user identity known)
+✓ Device posture checking
+✓ All ports (not just 80/443)
+✓ Single agent for ZIA + ZPA
+
+<span class="comment"># Deployment Options</span>
+<span class="keyword">MDM (Recommended):</span>
+  - Intune, Jamf, Workspace ONE
+  - Pre-configure with company domain
+  - Silent install, auto-enroll
+
+<span class="keyword">GPO (Windows):</span>
+  - Deploy MSI via Group Policy
+  - Set CLOUDNAME=companyname.zscaler.net
+  - Enable SSO with Azure AD
+
+<span class="keyword">Manual:</span>
+  - Download from Zscaler portal
+  - User authenticates on first launch
+
+<span class="comment"># Configuration Profile</span>
+<span class="keyword">Cloud Name:</span> <span class="string">companyname.zscaler.net</span>
+<span class="keyword">User Domain:</span> <span class="string">company.com</span>
+<span class="keyword">SSO:</span> <span class="value">Enabled</span> (Azure AD, Okta)
+<span class="keyword">ZPA:</span> <span class="value">Enabled</span> (same client for private access)
+<span class="keyword">Strict Enforcement:</span> <span class="value">Enabled</span> (can't disable)
+<span class="keyword">Tamper Proof:</span> <span class="value">Enabled</span></div>
+                    </div>
+                    
+                    <div id="pac-tab" class="tab-content">
+                        <h4>PAC File (Proxy Auto-Configuration)</h4>
+                        <p><strong>Best for:</strong> Managed desktops where agent isn't possible</p>
+                        
+                        <div class="config-block"><span class="comment"># PAC File Example</span>
+function FindProxyForURL(url, host) {
+    <span class="comment">// Direct access for internal sites</span>
+    if (isInNet(host, "10.0.0.0", "255.0.0.0")) return "DIRECT";
+    if (isInNet(host, "192.168.0.0", "255.255.0.0")) return "DIRECT";
+    if (isInNet(host, "172.16.0.0", "255.240.0.0")) return "DIRECT";
+    
+    <span class="comment">// Direct for localhost</span>
+    if (host == "localhost" || host == "127.0.0.1") return "DIRECT";
+    
+    <span class="comment">// Direct for specific domains</span>
+    if (shExpMatch(host, "*.company.com")) return "DIRECT";
+    if (shExpMatch(host, "*.internal")) return "DIRECT";
+    
+    <span class="comment">// Use Zscaler for everything else</span>
+    return "PROXY gateway.companyname.zscaler.net:80; DIRECT";
+}
+
+<span class="comment"># PAC File Hosting</span>
+<span class="keyword">Option 1:</span> Zscaler hosted (recommended)
+  URL: https://pac.companyname.zscaler.net/proxy.pac
+  
+<span class="keyword">Option 2:</span> Self-hosted
+  - Host on internal web server
+  - Must be highly available
+  
+<span class="comment"># Deploy via GPO</span>
+User Configuration → Preferences → Internet Settings
+  → Connections → LAN Settings
+  → Use automatic configuration script
+  → Address: [PAC URL]</div>
+                    </div>
+                    
+                    <div id="gre-tab" class="tab-content">
+                        <h4>GRE Tunnel</h4>
+                        <p><strong>Best for:</strong> Branch offices with compatible routers</p>
+                        
+                        <div class="config-block"><span class="comment"># GRE Tunnel Configuration</span>
+
+<span class="comment"># Zscaler Configuration</span>
+Administration → GRE → Add GRE Tunnel
+<span class="keyword">Name:</span> <span class="value">Chicago-Branch-GRE</span>
+<span class="keyword">Source IP:</span> <span class="value">203.0.113.50</span> (Your public IP)
+<span class="keyword">Primary ZEN:</span> <span class="value">yul1-1.sme.zscaler.net</span>
+<span class="keyword">Secondary ZEN:</span> <span class="value">yul2-1.sme.zscaler.net</span>
+
+<span class="comment"># Cisco Router Configuration</span>
+interface Tunnel0
+ description ZIA-GRE-Primary
+ ip address 10.255.0.1 255.255.255.252
+ tunnel source GigabitEthernet0/0
+ tunnel destination <span class="string">[Primary ZEN IP]</span>
+ tunnel mode gre ip
+ ip mtu 1400
+
+<span class="comment"># Route internet traffic through tunnel</span>
+ip route 0.0.0.0 0.0.0.0 Tunnel0
+
+<span class="comment"># Location Configuration in ZIA</span>
+Administration → Location Management → Add
+<span class="keyword">Name:</span> <span class="value">Chicago-Branch</span>
+<span class="keyword">IP Addresses:</span> <span class="value">10.255.0.1</span> (Tunnel IP)
+<span class="keyword">Sub-locations:</span> <span class="value">Use for departments</span></div>
+                    </div>
+                    
+                    <div id="ipsec-tab" class="tab-content">
+                        <h4>IPSec Tunnel</h4>
+                        <p><strong>Best for:</strong> Sites requiring encrypted tunnels</p>
+                        
+                        <div class="config-block"><span class="comment"># IPSec VPN Configuration</span>
+
+<span class="comment"># Zscaler Configuration</span>
+Administration → VPN Credentials → Add
+<span class="keyword">Type:</span> <span class="value">IPSec</span>
+<span class="keyword">Authentication:</span> <span class="value">Pre-Shared Key</span>
+<span class="keyword">Pre-Shared Key:</span> <span class="string">[Generate strong PSK]</span>
+<span class="keyword">Local ID Type:</span> <span class="value">FQDN</span>
+<span class="keyword">Local ID:</span> <span class="string">chicago.vpn.company.com</span>
+
+<span class="comment"># IPSec Parameters</span>
+<span class="keyword">Phase 1 (IKE):</span>
+  Encryption: AES-256
+  Hash: SHA-256
+  DH Group: 14 (2048-bit)
+  Lifetime: 86400 seconds
+
+<span class="keyword">Phase 2 (ESP):</span>
+  Encryption: AES-256
+  Hash: SHA-256
+  PFS: Group 14
+  Lifetime: 3600 seconds
+
+<span class="comment"># Palo Alto Configuration</span>
+Network → IKE Gateways → Add
+  Name: Zscaler-Primary
+  Interface: ethernet1/1
+  Local IP: [Your Public IP]
+  Peer IP: [Zscaler ZEN IP]
+  Pre-Shared Key: [PSK from Zscaler]
+  IKE Version: IKEv2
+
+Network → IPSec Tunnels → Add
+  Name: Zscaler-Tunnel
+  IKE Gateway: Zscaler-Primary
+  Route to Zscaler for 0.0.0.0/0</div>
+                    </div>
+                </div>
+
+                <!-- SSL INSPECTION -->
+                <h2 id="ssl-inspection"><i class="fas fa-lock-open"></i> SSL Inspection Configuration</h2>
+
+                <div class="interview-tip">
+                    <h4>💡 Interview Answer: How does SSL inspection work?</h4>
+                    <p>"SSL inspection performs a man-in-the-middle operation on HTTPS traffic. When a user connects to an HTTPS site, the proxy intercepts and terminates the connection. It establishes a new encrypted session with the destination, decrypts the traffic, inspects it for threats/policy violations, then re-encrypts using its own certificate before sending to the user. The user's device must trust the proxy's CA certificate."</p>
+                </div>
+
+                <h3>SSL Inspection Setup</h3>
+                <div class="config-block"><span class="comment"># Step 1: Download Zscaler Root CA</span>
+Administration → SSL Inspection → Intermediate CA Certificate
+  → Download Zscaler Root CA
+
+<span class="comment"># Step 2: Deploy CA to Devices</span>
+
+<span class="keyword">Windows (GPO):</span>
+Computer Configuration → Policies → Windows Settings
+  → Security Settings → Public Key Policies
+  → Trusted Root Certification Authorities
+  → Import Zscaler Root CA
+
+<span class="keyword">macOS (MDM/Jamf):</span>
+Configuration Profile → Certificate
+  Upload Zscaler Root CA
+  Trust Settings: SSL, Always Trust
+
+<span class="keyword">iOS/Android (MDM):</span>
+Push CA certificate via MDM profile
+Device automatically trusts for SSL
+
+<span class="comment"># Step 3: Enable SSL Inspection Policy</span>
+Policy → SSL Inspection → Add Rule
+
+<span class="keyword">Rule 1: Inspect All (except bypass list)</span>
+<span class="keyword">Name:</span> <span class="value">Inspect-All-Traffic</span>
+<span class="keyword">Action:</span> <span class="value">Inspect</span>
+<span class="keyword">URL Categories:</span> <span class="value">All</span>
+<span class="keyword">Users:</span> <span class="value">All</span>
+
+<span class="keyword">Rule 2: Do Not Inspect (bypass)</span>
+<span class="keyword">Name:</span> <span class="value">SSL-Bypass-List</span>
+<span class="keyword">Action:</span> <span class="value">Do Not Inspect</span>
+<span class="keyword">URL Categories:</span> 
+  - Financial Services
+  - Health
+  - Government
+<span class="keyword">Custom URLs:</span>
+  - *.bankofamerica.com
+  - *.chase.com
+  - *.healthcare.gov</div>
+
+                <h3>SSL Bypass Best Practices</h3>
+                <div class="config-block"><span class="comment"># DO NOT INSPECT (Add to Bypass List)</span>
+
+<span class="keyword">Certificate Pinning Apps:</span>
+  - Windows Update (*.windowsupdate.com)
+  - Apple services (*.apple.com)
+  - Microsoft Office (*.office.com, *.office365.com)
+  - Zoom (*.zoom.us)
+  - Webex (*.webex.com)
+
+<span class="keyword">Compliance/Privacy:</span>
+  - Banking sites (*.bankofamerica.com, *.chase.com)
+  - Healthcare portals (HIPAA compliance)
+  - Government sites (*.gov)
+  - HR/Benefits (employee privacy)
+
+<span class="keyword">Performance:</span>
+  - Video conferencing (already encrypted, adds latency)
+  - Large software downloads (Windows ISO, etc.)
+
+<span class="comment"># ALWAYS INSPECT (Never bypass)</span>
+  - Social media
+  - Webmail
+  - Cloud storage
+  - Unknown/uncategorized sites
+  - High-risk categories</div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Common SSL Inspection Issues:</strong>
+                    <ul>
+                        <li><strong>Certificate errors:</strong> Zscaler CA not trusted on device</li>
+                        <li><strong>App failures:</strong> Certificate pinning (add to bypass)</li>
+                        <li><strong>Performance:</strong> Decrypt/re-encrypt adds latency</li>
+                        <li><strong>Mobile apps:</strong> Some apps don't work with inspection</li>
+                    </ul>
+                </div>
+
+                <!-- URL FILTERING -->
+                <h2 id="url-filtering"><i class="fas fa-filter"></i> URL Filtering Configuration</h2>
+
+                <h3>URL Category Policies</h3>
+                <div class="config-block"><span class="comment"># Navigation: Policy → URL & Cloud App Control → Add Rule</span>
+
+<span class="comment"># Policy 1: Block Security Threats (ALWAYS FIRST)</span>
+<span class="keyword">Name:</span> <span class="value">Block-Security-Threats</span>
+<span class="keyword">Rule Order:</span> <span class="value">1</span>
+<span class="keyword">Action:</span> <span class="value">Block</span>
+<span class="keyword">URL Categories:</span>
+  - Malware
+  - Phishing
+  - Botnet
+  - Command & Control
+  - Cryptomining
+  - Spam URLs
+  - Suspicious Content
+<span class="keyword">Users:</span> <span class="value">All Users</span>
+
+<span class="comment"># Policy 2: Block Legal Liability</span>
+<span class="keyword">Name:</span> <span class="value">Block-Inappropriate-Content</span>
+<span class="keyword">Rule Order:</span> <span class="value">2</span>
+<span class="keyword">Action:</span> <span class="value">Block</span>
+<span class="keyword">URL Categories:</span>
+  - Adult Content
+  - Adult Themes
+  - Gambling
+  - Illegal Drugs
+  - Violence
+  - Weapons
+<span class="keyword">Users:</span> <span class="value">All Users</span>
+
+<span class="comment"># Policy 3: Productivity - Social Media</span>
+<span class="keyword">Name:</span> <span class="value">Social-Media-Caution</span>
+<span class="keyword">Rule Order:</span> <span class="value">3</span>
+<span class="keyword">Action:</span> <span class="value">Caution</span> (warn but allow)
+<span class="keyword">URL Categories:</span>
+  - Social Media
+  - Personal Sites
+<span class="keyword">Users:</span> <span class="value">All Users (except Marketing)</span>
+
+<span class="comment"># Policy 4: Streaming - Time Based</span>
+<span class="keyword">Name:</span> <span class="value">Streaming-Lunch-Only</span>
+<span class="keyword">Rule Order:</span> <span class="value">4</span>
+<span class="keyword">Action:</span> <span class="value">Allow</span>
+<span class="keyword">URL Categories:</span>
+  - Streaming Media
+  - Video Entertainment
+<span class="keyword">Time:</span> <span class="value">12:00-13:00 Local Time</span>
+<span class="keyword">Users:</span> <span class="value">All Users</span>
+
+<span class="comment"># Policy 5: Streaming - Block Otherwise</span>
+<span class="keyword">Name:</span> <span class="value">Block-Streaming-Business-Hours</span>
+<span class="keyword">Rule Order:</span> <span class="value">5</span>
+<span class="keyword">Action:</span> <span class="value">Block</span>
+<span class="keyword">URL Categories:</span>
+  - Streaming Media
+  - Video Entertainment
+<span class="keyword">Time:</span> <span class="value">All other times</span>
+<span class="keyword">Users:</span> <span class="value">All Users</span>
+
+<span class="comment"># Policy 6: Allow Business</span>
+<span class="keyword">Name:</span> <span class="value">Allow-Business</span>
+<span class="keyword">Rule Order:</span> <span class="value">99</span>
+<span class="keyword">Action:</span> <span class="value">Allow</span>
+<span class="keyword">URL Categories:</span> <span class="value">All Others</span>
+<span class="keyword">Users:</span> <span class="value">All Users</span></div>
+
+                <h3>Custom URL Categories</h3>
+                <div class="config-block"><span class="comment"># Navigation: Administration → URL Categories → Custom Categories</span>
+
+<span class="comment"># Custom Category 1: Sanctioned Cloud Storage</span>
+<span class="keyword">Name:</span> <span class="value">Approved-Cloud-Storage</span>
+<span class="keyword">URLs:</span>
+  - *.sharepoint.com
+  - *.onedrive.com
+  - *.box.com
+<span class="keyword">Super Category:</span> <span class="value">Business</span>
+
+<span class="comment"># Custom Category 2: Blocked Cloud Storage</span>
+<span class="keyword">Name:</span> <span class="value">Blocked-Cloud-Storage</span>
+<span class="keyword">URLs:</span>
+  - *.dropbox.com
+  - drive.google.com (personal)
+  - *.wetransfer.com
+  - *.mediafire.com
+<span class="keyword">Super Category:</span> <span class="value">Security Risk</span>
+
+<span class="comment"># Custom Category 3: Executive Bypass</span>
+<span class="keyword">Name:</span> <span class="value">Executive-Allowed-Sites</span>
+<span class="keyword">URLs:</span>
+  - [Sites executives need unrestricted]
+<span class="keyword">Super Category:</span> <span class="value">Business</span></div>
+
+                <!-- THREAT PROTECTION -->
+                <h2 id="threat-protection"><i class="fas fa-shield-virus"></i> Advanced Threat Protection</h2>
+
+                <h3>ATP Configuration</h3>
+                <div class="config-block"><span class="comment"># Navigation: Policy → Advanced Threat Protection</span>
+
+<span class="comment"># Malware Protection</span>
+<span class="keyword">Malware Detection:</span> <span class="value">Block</span>
+<span class="keyword">Known Malware:</span> <span class="value">Block (signature-based)</span>
+<span class="keyword">Unknown Malware:</span> <span class="value">Quarantine for Sandbox</span>
+<span class="keyword">PUAs (Potentially Unwanted Apps):</span> <span class="value">Block</span>
+<span class="keyword">Adware:</span> <span class="value">Block</span>
+
+<span class="comment"># File Type Controls</span>
+<span class="keyword">Block Downloads:</span>
+  - .exe (except from sanctioned sites)
+  - .msi
+  - .bat, .cmd, .ps1
+  - .js, .vbs
+  - .dll
+  - .scr
+  - .hta
+  
+<span class="keyword">Allow with Scanning:</span>
+  - .pdf
+  - .doc, .docx, .xls, .xlsx
+  - .zip, .rar (inspect contents)
+  - .iso (scan if possible)
+
+<span class="comment"># Blocked File Type Policy</span>
+Policy → Advanced Threat Protection → File Type Control
+<span class="keyword">Name:</span> <span class="value">Block-Executable-Downloads</span>
+<span class="keyword">Action:</span> <span class="value">Block</span>
+<span class="keyword">File Types:</span> <span class="value">exe, msi, bat, cmd, ps1, vbs, dll, scr</span>
+<span class="keyword">Exclude Domains:</span>
+  - *.microsoft.com
+  - *.adobe.com
+  - *.company.com (internal)</div>
+
+                <!-- SANDBOX -->
+                <h2 id="sandbox"><i class="fas fa-virus-slash"></i> Cloud Sandbox Configuration</h2>
+
+                <div class="config-block"><span class="comment"># Navigation: Policy → Advanced Threat Protection → Cloud Sandbox</span>
+
+<span class="comment"># Sandbox Settings</span>
+<span class="keyword">Cloud Sandbox:</span> <span class="value">Enabled</span>
+<span class="keyword">Action for Unknown Files:</span> <span class="value">Quarantine and Analyze</span>
+<span class="keyword">AI/ML Analysis:</span> <span class="value">Enabled</span>
+<span class="keyword">Behavioral Analysis:</span> <span class="value">Enabled</span>
+
+<span class="comment"># File Types to Sandbox</span>
+<span class="keyword">Always Sandbox:</span>
+  - Executables (.exe, .dll, .scr)
+  - Scripts (.ps1, .vbs, .js)
+  - Documents with macros (.docm, .xlsm)
+  - Archives (.zip, .rar, .7z)
+  - PDFs
+
+<span class="keyword">Sandbox Timeout:</span> <span class="value">5 minutes</span> (balance security vs user experience)
+
+<span class="comment"># Sandbox Analysis Includes:</span>
+✓ Static analysis (file structure, strings, imports)
+✓ Dynamic analysis (execute in isolated VM)
+✓ Network behavior (C2 communication attempts)
+✓ File system changes (what it writes/modifies)
+✓ Registry modifications
+✓ Process injection attempts
+✓ Anti-analysis detection (VM detection, sleep timers)
+
+<span class="comment"># Sandbox Verdict Actions</span>
+<span class="keyword">Clean:</span> <span class="value">Release to user</span>
+<span class="keyword">Suspicious:</span> <span class="value">Block and alert</span>
+<span class="keyword">Malicious:</span> <span class="value">Block, alert, update threat intel</span></div>
+
+                <!-- DLP -->
+                <h2 id="dlp"><i class="fas fa-file-shield"></i> Data Loss Prevention</h2>
+
+                <h3>DLP Engine Configuration</h3>
+                <div class="config-block"><span class="comment"># Navigation: Policy → DLP → Add DLP Rule</span>
+
+<span class="comment"># DLP Rule 1: Block Credit Card Upload</span>
+<span class="keyword">Name:</span> <span class="value">Block-Credit-Card-Upload</span>
+<span class="keyword">Description:</span> <span class="string">Prevent credit card numbers from being uploaded</span>
+<span class="keyword">Action:</span> <span class="value">Block</span>
+
+<span class="keyword">DLP Engine:</span>
+  <span class="keyword">Pattern:</span> Credit Card Number (Luhn validated)
+  <span class="keyword">Count:</span> 5 or more (avoid single-card FPs)
+  
+<span class="keyword">Destination:</span>
+  <span class="keyword">Exclude:</span>
+    - Sanctioned payment processors (*.stripe.com)
+    - Corporate finance apps
+  <span class="keyword">Include:</span> All other destinations
+
+<span class="keyword">Direction:</span> <span class="value">Upload Only</span>
+<span class="keyword">Users:</span> <span class="value">All (except Finance team)</span>
+
+<span class="comment"># DLP Rule 2: Warn on PII Upload to Webmail</span>
+<span class="keyword">Name:</span> <span class="value">Warn-PII-Webmail</span>
+<span class="keyword">Action:</span> <span class="value">Allow with Warning</span>
+
+<span class="keyword">DLP Engine:</span>
+  <span class="keyword">Patterns:</span>
+    - Social Security Number
+    - Driver License
+    - Passport Number
+  <span class="keyword">Count:</span> 1 or more
+  
+<span class="keyword">Destination:</span>
+  <span class="keyword">URL Categories:</span> Webmail
+  <span class="keyword">Specific URLs:</span>
+    - mail.google.com
+    - outlook.live.com
+    - mail.yahoo.com
+
+<span class="keyword">User Experience:</span>
+  <span class="value">Show warning: "You are about to upload sensitive data. Continue?"</span>
+  <span class="value">User can override with justification</span>
+  <span class="value">Log override reason</span>
+
+<span class="comment"># DLP Rule 3: Block Source Code</span>
+<span class="keyword">Name:</span> <span class="value">Block-Source-Code-Upload</span>
+<span class="keyword">Action:</span> <span class="value">Block</span>
+
+<span class="keyword">DLP Engine:</span>
+  <span class="keyword">File Types:</span> .py, .java, .js, .cpp, .go, .cs, .rb
+  <span class="keyword">Content Match:</span>
+    - "proprietary"
+    - "confidential"
+    - API key patterns (regex)
+    - AWS_SECRET_ACCESS_KEY
+    
+<span class="keyword">Destination:</span>
+  <span class="keyword">Exclude:</span> Corporate GitHub (github.company.com)
+  <span class="keyword">Block:</span>
+    - github.com (personal)
+    - gitlab.com
+    - pastebin.com
+    - AI assistants (chat.openai.com, claude.ai)</div>
+
+                <h3>DLP Dictionaries</h3>
+                <div class="config-block"><span class="comment"># Built-in DLP Dictionaries</span>
+✓ PII (SSN, DL, Passport, DOB)
+✓ PCI (Credit cards, CVV)
+✓ PHI (Medical record numbers, diagnoses)
+✓ Financial (Account numbers, routing numbers)
+✓ Legal (Attorney-client privilege markers)
+
+<span class="comment"># Custom Dictionary: Company Confidential</span>
+<span class="keyword">Name:</span> <span class="value">Company-Confidential-Terms</span>
+<span class="keyword">Terms:</span>
+  - "Project Phoenix" (codename)
+  - "Q4 Earnings" (before public release)
+  - "Merger" + "Acme Corp"
+  - Internal product names
+  - Customer list markers
+
+<span class="comment"># Exact Data Match (EDM)</span>
+<span class="keyword">Name:</span> <span class="value">Customer-Database</span>
+<span class="keyword">Type:</span> <span class="value">Exact Data Match</span>
+<span class="keyword">Source:</span> Upload CSV of customer data
+<span class="keyword">Index Fields:</span> Email, SSN, Account Number
+<span class="keyword">Match:</span> Any 2 fields = positive match</div>
+
+                <!-- LOGS & ANALYTICS -->
+                <h2 id="logs-analytics"><i class="fas fa-chart-bar"></i> Logs & Analytics</h2>
+
+                <h3>Log Types</h3>
+                <table>
+                    <thead><tr><th>Log Type</th><th>Contains</th><th>Use Case</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Web Logs</strong></td><td>All HTTP/HTTPS requests</td><td>Usage audit, investigation</td></tr>
+                        <tr><td><strong>Firewall Logs</strong></td><td>Non-HTTP traffic</td><td>Network forensics</td></tr>
+                        <tr><td><strong>DNS Logs</strong></td><td>DNS queries</td><td>C2 detection, threat hunting</td></tr>
+                        <tr><td><strong>Sandbox Logs</strong></td><td>File analysis results</td><td>Malware investigation</td></tr>
+                        <tr><td><strong>DLP Logs</strong></td><td>Data policy violations</td><td>Compliance, insider threat</td></tr>
+                        <tr><td><strong>Tunnel Logs</strong></td><td>GRE/IPSec status</td><td>Connectivity troubleshooting</td></tr>
+                        <tr><td><strong>Audit Logs</strong></td><td>Admin actions</td><td>Change tracking, compliance</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Sample Web Log</h3>
+                <div class="log-example">{
+  "datetime": "2025-01-04T10:23:45Z",
+  "user": "john.smith@company.com",
+  "department": "Finance",
+  "srcip": "203.0.113.50",
+  "clientpublicip": "198.51.100.25",
+  "action": "Blocked",
+  "reason": "URL Filtering - Malware",
+  "urlcategory": "Malware",
+  "urlsupercategory": "Security Risk",
+  "url": "http://evil-site.com/payload.exe",
+  "hostname": "evil-site.com",
+  "location": "Chicago Office",
+  "devicename": "LAPTOP-JSmith",
+  "devicetype": "Windows 11",
+  "deviceowner": "Corporate",
+  "requestsize": 256,
+  "responsesize": 0,
+  "contenttype": "application/octet-stream",
+  "threatname": "Win32.Trojan.Emotet",
+  "threatclass": "Malware",
+  "dlpengine": null,
+  "dlpdictname": null,
+  "sslinspected": true,
+  "clienttranstime": 15,
+  "servertranstime": 0
+}</div>
+
+                <!-- SIEM INTEGRATION -->
+                <h2 id="siem-integration"><i class="fas fa-plug"></i> SIEM Integration</h2>
+
+                <div class="config-block"><span class="comment"># NSS (Nanolog Streaming Service) Configuration</span>
+<span class="keyword">Navigation:</span> Administration → Log Streaming → Add NSS Feed
+
+<span class="comment"># Option 1: Microsoft Sentinel</span>
+<span class="keyword">Feed Type:</span> <span class="value">Microsoft Sentinel</span>
+<span class="keyword">Log Types:</span> <span class="value">Web, DNS, Firewall, DLP, Sandbox</span>
+<span class="keyword">Workspace ID:</span> <span class="string">[Azure Log Analytics Workspace ID]</span>
+<span class="keyword">Primary Key:</span> <span class="string">[Workspace Primary Key]</span>
+
+<span class="comment"># Option 2: Splunk</span>
+<span class="keyword">Feed Type:</span> <span class="value">Splunk HEC</span>
+<span class="keyword">Log Types:</span> <span class="value">All</span>
+<span class="keyword">Format:</span> <span class="value">JSON</span>
+<span class="keyword">HEC URL:</span> <span class="string">https://splunk.company.com:8088/services/collector</span>
+<span class="keyword">Token:</span> <span class="string">[Splunk HEC Token]</span>
+
+<span class="comment"># Option 3: Syslog/SIEM</span>
+<span class="keyword">Feed Type:</span> <span class="value">NSS for Syslog</span>
+<span class="keyword">Format:</span> <span class="value">CEF or LEEF</span>
+<span class="keyword">Protocol:</span> <span class="value">TCP/TLS</span>
+<span class="keyword">Destination:</span> <span class="string">syslog.company.com:6514</span>
+
+<span class="comment"># Recommended Alerts in SIEM</span>
+1. Malware detected (even if blocked)
+2. DLP violations (high severity)
+3. C2 communication attempts
+4. User accessing high-risk categories repeatedly
+5. Unusual data upload volumes
+6. Connections to newly registered domains
+7. SSL inspection bypass attempts
+8. Sandbox malicious verdicts</div>
+
+                <!-- TROUBLESHOOTING -->
+                <h2 id="troubleshooting"><i class="fas fa-wrench"></i> Troubleshooting Guide</h2>
+
+                <table>
+                    <thead><tr><th>Symptom</th><th>Likely Cause</th><th>Resolution</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>Site blocked incorrectly</td>
+                            <td>URL miscategorized</td>
+                            <td>Submit recategorization, add to custom allow list</td>
+                        </tr>
+                        <tr>
+                            <td>Certificate error</td>
+                            <td>Zscaler CA not trusted</td>
+                            <td>Verify CA deployed to device, check trust store</td>
+                        </tr>
+                        <tr>
+                            <td>App not working</td>
+                            <td>Certificate pinning</td>
+                            <td>Add to SSL bypass list</td>
+                        </tr>
+                        <tr>
+                            <td>Slow browsing</td>
+                            <td>SSL inspection overhead or distant PoP</td>
+                            <td>Check PoP selection, optimize bypass list</td>
+                        </tr>
+                        <tr>
+                            <td>File download blocked</td>
+                            <td>ATP or file type policy</td>
+                            <td>Check ATP logs, verify file type allowed</td>
+                        </tr>
+                        <tr>
+                            <td>Traffic not through Zscaler</td>
+                            <td>Client not running, PAC issue</td>
+                            <td>Visit ip.zscaler.com to verify</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Verification Commands</h3>
+                <div class="config-block"><span class="comment"># Verify traffic is through Zscaler</span>
+curl http://ip.zscaler.com/
+<span class="comment"># Should show: "You are accessing the Internet via Zscaler"</span>
+
+<span class="comment"># Check which Zscaler DC</span>
+curl -v https://gateway.companyname.zscaler.net/
+
+<span class="comment"># Test SSL inspection</span>
+openssl s_client -connect www.google.com:443
+<span class="comment"># Issuer should show Zscaler if inspection is working</span>
+
+<span class="comment"># Check Client Connector status</span>
+<span class="keyword">Windows:</span> System tray → Zscaler → More → Status
+<span class="keyword">macOS:</span> Menu bar → Zscaler → Status
+
+<span class="comment"># Client logs</span>
+<span class="keyword">Windows:</span> %LOCALAPPDATA%\Zscaler\logs
+<span class="keyword">macOS:</span> ~/Library/Logs/Zscaler/</div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related</h2>
+                <div class="card-grid">
+                    <a href="ztna-zpa.html" class="card"><div class="card-icon"><i class="fas fa-user-shield"></i></div><h3>ZTNA & ZPA</h3><p>Private app access</p></a>
+                    <a href="sase-architecture.html" class="card"><div class="card-icon"><i class="fas fa-cloud"></i></div><h3>SASE Architecture</h3><p>Full architecture</p></a>
+                    <a href="interview-qa.html" class="card"><div class="card-icon"><i class="fas fa-comments"></i></div><h3>Interview Q&A</h3><p>Practice questions</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+    <script>
+        function showTab(evt, tabId) {
+            const container = evt.target.closest('.tab-container');
+            container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            container.querySelector('#' + tabId).classList.add('active');
+            evt.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

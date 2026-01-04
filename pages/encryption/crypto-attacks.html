@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptographic Attacks & Vulnerabilities | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+        .code-block { background: #1e1e2e; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; margin: 1rem 0; }
+        .danger-box { background: rgba(239, 68, 68, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid #ef4444; margin: 1rem 0; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="index.html">Encryption</a><span class="separator">/</span><span>Crypto Attacks</span></div>
+            <div class="content">
+                <h1><i class="fas fa-skull-crossbones"></i> Cryptographic Attacks & Vulnerabilities</h1>
+                <p class="lead">Understanding historical and current cryptographic attacks - essential knowledge for SOC analysts and security engineers.</p>
+
+                <div class="diagram-box">
+CRYPTOGRAPHIC ATTACK CATEGORIES
+═══════════════════════════════════════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     ATTACK SURFACE MAP                                  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │ ALGORITHM        │  │ PROTOCOL         │  │ IMPLEMENTATION   │
+  │ ATTACKS          │  │ ATTACKS          │  │ ATTACKS          │
+  │                  │  │                  │  │                  │
+  │ • Brute force    │  │ • Downgrade      │  │ • Timing attacks │
+  │ • Cryptanalysis  │  │ • MITM           │  │ • Side channels  │
+  │ • Collision      │  │ • Replay         │  │ • Padding oracle │
+  │ • Birthday       │  │ • Bleichenbacher │  │ • Memory leaks   │
+  │                  │  │                  │  │                  │
+  │ Targets: DES,    │  │ Targets: SSL/TLS │  │ Targets: OpenSSL │
+  │ MD5, SHA-1, RC4  │  │ handshake, key   │  │ specific bugs    │
+  │                  │  │ exchange         │  │                  │
+  └──────────────────┘  └──────────────────┘  └──────────────────┘
+
+
+MAJOR TLS/SSL VULNERABILITIES TIMELINE:
+═══════════════════════════════════════════════════════════════════════════════
+
+  2011 │ BEAST        │ CBC mode attack on TLS 1.0
+       │              │ Decrypt HTTPS cookies
+       │              │ FIX: TLS 1.1+, RC4 (then RC4 broken too)
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2012 │ CRIME        │ TLS compression leaks data
+       │              │ Decrypt session tokens
+       │              │ FIX: Disable TLS compression
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2013 │ BREACH       │ HTTP compression attack (like CRIME)
+       │              │ Steal CSRF tokens
+       │              │ FIX: Disable HTTP compression for sensitive data
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2013 │ Lucky13      │ Timing attack on CBC padding
+       │              │ Decrypt TLS traffic
+       │              │ FIX: GCM mode, constant-time implementations
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2014 │ HEARTBLEED   │ OpenSSL memory disclosure
+       │ CVE-2014-0160│ Steal private keys, passwords
+       │              │ FIX: Patch OpenSSL, rotate certificates
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2014 │ POODLE       │ SSL 3.0 padding oracle
+       │              │ Decrypt HTTPS traffic
+       │              │ FIX: Disable SSL 3.0 entirely
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2015 │ FREAK        │ Export-grade RSA key exchange
+       │              │ Downgrade to 512-bit RSA
+       │              │ FIX: Disable export ciphers
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2015 │ Logjam       │ Weak DH parameters
+       │              │ Downgrade to 512-bit DH
+       │              │ FIX: 2048-bit DH minimum
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2016 │ DROWN        │ SSLv2 cross-protocol attack
+       │              │ Decrypt TLS using SSLv2
+       │              │ FIX: Disable SSLv2 everywhere
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2017 │ ROBOT        │ Bleichenbacher's attack returns
+       │              │ Decrypt RSA key exchange
+       │              │ FIX: Use ECDHE, not static RSA
+  ─────┼──────────────┼─────────────────────────────────────────────────────
+  2018 │ TLS 1.3      │ Removes all vulnerable mechanisms!
+       │              │ Mandatory forward secrecy
+       │              │ Only AEAD ciphers (GCM, ChaCha20-Poly1305)
+                </div>
+
+                <h2 id="heartbleed"><i class="fas fa-heart-crack"></i> Heartbleed (CVE-2014-0160)</h2>
+
+                <div class="diagram-box">
+HEARTBLEED - THE ATTACK THAT CHANGED EVERYTHING
+═══════════════════════════════════════════════════════════════════════════════
+
+THE VULNERABILITY (OpenSSL Heartbeat Extension Bug):
+─────────────────────────────────────────────────────────────────────────────
+
+  TLS Heartbeat: "Are you still there?" keep-alive mechanism
+  
+  NORMAL REQUEST:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Client: "Please echo back 5 bytes: 'hello'"                            │
+  │ Server: "hello"  ✓ Correct                                             │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  
+  MALICIOUS REQUEST (Heartbleed):
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Attacker: "Please echo back 65535 bytes: 'x'"                          │
+  │                                  ▲                                      │
+  │                                  │                                      │
+  │                   Lie! Only sent 1 byte, but asked for 64KB            │
+  │                                                                         │
+  │ Server reads 64KB from memory, starting at 'x' location:              │
+  │ "x" + [64KB of server memory]                                          │
+  │        │                                                                │
+  │        └── Could contain:                                              │
+  │            • Private keys                                              │
+  │            • Session tokens                                            │
+  │            • Usernames/passwords                                       │
+  │            • Source code                                               │
+  │            • Customer data                                             │
+  │                                                                         │
+  │ Server: "x[PRIVATE KEY DATA][PASSWORD:admin123][SESSION:abc...]"      │
+  │         ─────────────────────────────────────────────────────          │
+  │         Attacker now has your secrets!                                 │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  
+THE BUG (Missing Bounds Check):
+─────────────────────────────────────────────────────────────────────────────
+
+  Vulnerable OpenSSL code (simplified):
+  
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ // Attacker controls 'payload_length' field                            │
+  │ payload_length = request->payload_length;  // Says 65535               │
+  │ payload = request->payload;                 // Actually only 1 byte    │
+  │                                                                         │
+  │ // BUG: No check that payload_length matches actual data!             │
+  │ memcpy(response, payload, payload_length);  // Copies 64KB!           │
+  │                                                                         │
+  │ // SHOULD HAVE BEEN:                                                   │
+  │ if (payload_length > actual_length) {                                 │
+  │     return ERROR;  // Reject invalid request                          │
+  │ }                                                                       │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  
+IMPACT & RESPONSE:
+─────────────────────────────────────────────────────────────────────────────
+
+  AFFECTED: ~17% of all HTTPS servers (500,000+ sites)
+  
+  REQUIRED ACTIONS:
+  1. Patch OpenSSL immediately
+  2. Revoke and replace ALL certificates (private keys may be stolen)
+  3. Reset all user passwords (sessions may be stolen)
+  4. Rotate all secrets (API keys, database passwords)
+  5. Check for signs of exploitation (hard - attack leaves no logs!)
+                </div>
+
+                <h2 id="poodle"><i class="fas fa-dog"></i> POODLE Attack</h2>
+
+                <div class="diagram-box">
+POODLE - PADDING ORACLE ON DOWNGRADED LEGACY ENCRYPTION
+═══════════════════════════════════════════════════════════════════════════════
+
+THE ATTACK:
+─────────────────────────────────────────────────────────────────────────────
+
+  Step 1: DOWNGRADE
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ Attacker (MITM) intercepts TLS handshake                               │
+  │                                                                         │
+  │ Client: "I support TLS 1.2, TLS 1.1, TLS 1.0, SSL 3.0"                │
+  │                        │                                                │
+  │                        ▼                                                │
+  │ Attacker blocks all attempts, forces fallback to SSL 3.0              │
+  │                        │                                                │
+  │                        ▼                                                │
+  │ Client and Server negotiate SSL 3.0 (vulnerable!)                     │
+  └─────────────────────────────────────────────────────────────────────────┘
+  
+  Step 2: EXPLOIT CBC PADDING
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ SSL 3.0 CBC padding is not fully specified                            │
+  │ Server only checks last byte of padding, ignores rest                 │
+  │                                                                         │
+  │ Attacker can:                                                          │
+  │ 1. Capture encrypted HTTPS request (with cookie)                      │
+  │ 2. Move encrypted cookie block to padding position                    │
+  │ 3. Send modified request to server                                    │
+  │ 4. Server decrypts → checks padding → accepts/rejects                 │
+  │ 5. If accepted, attacker learns 1 byte of cookie                     │
+  │ 6. Repeat 256 times per byte                                          │
+  │                                                                         │
+  │ Result: Full session cookie decrypted in ~15 minutes                  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  
+DEFENSE:
+─────────────────────────────────────────────────────────────────────────────
+
+  ✅ Disable SSL 3.0 entirely (no legitimate reason to support it)
+  ✅ Enable TLS_FALLBACK_SCSV (prevents downgrade attacks)
+  ✅ Use TLS 1.2+ with GCM mode (no CBC padding issues)
+                </div>
+
+                <h2 id="mitm"><i class="fas fa-user-secret"></i> Man-in-the-Middle Attacks</h2>
+
+                <div class="diagram-box">
+MAN-IN-THE-MIDDLE (MITM) ATTACK PATTERNS
+═══════════════════════════════════════════════════════════════════════════════
+
+BASIC MITM (Without TLS):
+─────────────────────────────────────────────────────────────────────────────
+
+  Victim                    Attacker                    Server
+    │                          │                          │
+    │ ──── HTTP Request ────►  │                          │
+    │     (plaintext)          │                          │
+    │                          │ ──── HTTP Request ────►  │
+    │                          │                          │
+    │                          │ ◄──── Response ────────  │
+    │ ◄──── Response ────────  │                          │
+    │   (attacker can modify!) │                          │
+
+  Attacker sees ALL traffic, can modify anything.
+  
+  
+SSL STRIPPING (Downgrade HTTPS → HTTP):
+─────────────────────────────────────────────────────────────────────────────
+
+  Victim                    Attacker                    Server
+    │                          │                          │
+    │ ──── http://bank.com ──► │                          │
+    │     (User types HTTP)    │                          │
+    │                          │ ──── https://bank.com ─► │
+    │                          │      (Attacker uses HTTPS)│
+    │                          │                          │
+    │                          │ ◄──── HTTPS Response ──  │
+    │ ◄──── HTTP Response ──── │                          │
+    │    (Attacker serves HTTP)│                          │
+
+  Victim thinks they're on bank.com (no HTTPS warning!)
+  Attacker has full HTTPS to real server
+  
+  DEFENSE: HSTS (HTTP Strict Transport Security)
+           Browser remembers "always use HTTPS for this site"
+  
+  
+CERTIFICATE IMPERSONATION:
+─────────────────────────────────────────────────────────────────────────────
+
+  Attacker must obtain a certificate that browser will accept:
+  
+  Option 1: Self-signed cert ───► Browser warning! User must click through
+  
+  Option 2: Steal real cert's ──► Works until cert revoked/expires
+            private key
+  
+  Option 3: Compromise a CA ────► Can issue any certificate!
+                                  (DigiNotar hack 2011)
+  
+  Option 4: Corporate MITM ─────► Company CA on employee devices
+            (SSL inspection)      Legitimate but contentious
+  
+  
+  DEFENSES:
+  ✅ Certificate Transparency (detect rogue certificates)
+  ✅ HPKP (HTTP Public Key Pinning) - deprecated but concept lives on
+  ✅ CAA (Certificate Authority Authorization) DNS records
+  ✅ Monitor CT logs for your domains
+                </div>
+
+                <h2 id="common-mistakes"><i class="fas fa-times-circle"></i> Common Cryptographic Mistakes</h2>
+
+                <div class="danger-box">
+                    <h4><i class="fas fa-skull-crossbones"></i> Critical Cryptographic Mistakes to Avoid</h4>
+                    <table>
+                        <thead><tr><th>Mistake</th><th>Problem</th><th>Correct Approach</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Using MD5/SHA-1</strong></td><td>Collision attacks proven</td><td>Use SHA-256 or SHA-3</td></tr>
+                            <tr><td><strong>ECB mode encryption</strong></td><td>Patterns visible in ciphertext</td><td>Use GCM or CBC with random IV</td></tr>
+                            <tr><td><strong>Static IV</strong></td><td>Same plaintext = same ciphertext</td><td>Random IV per message</td></tr>
+                            <tr><td><strong>SHA-256 for passwords</strong></td><td>Too fast, enables brute force</td><td>Use bcrypt/Argon2 (slow by design)</td></tr>
+                            <tr><td><strong>Unsalted password hashes</strong></td><td>Rainbow table attacks</td><td>Unique random salt per password</td></tr>
+                            <tr><td><strong>RSA without OAEP</strong></td><td>Padding oracle attacks</td><td>Use RSA-OAEP or ECDH</td></tr>
+                            <tr><td><strong>Hardcoded keys</strong></td><td>Keys in source code leak</td><td>Use HSM, key management system</td></tr>
+                            <tr><td><strong>Math.random() for crypto</strong></td><td>Predictable output</td><td>Use crypto.getRandomValues() or /dev/urandom</td></tr>
+                            <tr><td><strong>Rolling own crypto</strong></td><td>Subtle bugs, missing edge cases</td><td>Use tested libraries (OpenSSL, libsodium)</td></tr>
+                            <tr><td><strong>Allowing TLS 1.0/1.1</strong></td><td>Multiple known attacks</td><td>TLS 1.2 minimum, prefer TLS 1.3</td></tr>
+                            <tr><td><strong>Static RSA key exchange</strong></td><td>No forward secrecy</td><td>Use ECDHE for all connections</td></tr>
+                            <tr><td><strong>Ignoring certificate errors</strong></td><td>Allows MITM</td><td>Fail closed on cert errors</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2><i class="fas fa-shield-alt"></i> Defense Summary</h2>
+
+                <div class="diagram-box">
+CRYPTOGRAPHIC SECURITY CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+TLS CONFIGURATION:
+─────────────────────────────────────────────────────────────────────────────
+  ✅ TLS 1.2 minimum, TLS 1.3 preferred
+  ✅ Disable SSL 2.0, SSL 3.0, TLS 1.0, TLS 1.1
+  ✅ Only AEAD ciphers (AES-GCM, ChaCha20-Poly1305)
+  ✅ ECDHE key exchange (forward secrecy)
+  ✅ HSTS header enabled
+  ✅ OCSP stapling enabled
+  ✅ Certificate Transparency logs monitored
+
+ALGORITHMS:
+─────────────────────────────────────────────────────────────────────────────
+  ✅ AES-256-GCM for symmetric encryption
+  ✅ SHA-256 or SHA-384 for hashing
+  ✅ RSA-2048+ or ECDSA P-256+ for signatures
+  ✅ ECDH P-256+ for key exchange
+  ✅ Argon2id for password hashing
+
+KEY MANAGEMENT:
+─────────────────────────────────────────────────────────────────────────────
+  ✅ Private keys in HSM or secure key management
+  ✅ Regular key rotation
+  ✅ Certificate expiration monitoring (30+ days notice)
+  ✅ Incident response plan for key compromise
+
+MONITORING:
+─────────────────────────────────────────────────────────────────────────────
+  ✅ SSL Labs test score A or A+
+  ✅ Certificate Transparency log monitoring
+  ✅ Automated certificate renewal (Let's Encrypt/ACME)
+  ✅ Security scanning for known vulnerabilities
+                </div>
+
+                <h2><i class="fas fa-link"></i> Related Resources</h2>
+                <ul>
+                    <li><a href="index.html">Encryption Fundamentals</a></li>
+                    <li><a href="tls-ssl.html">TLS/SSL Configuration</a></li>
+                    <li><a href="certificates-guide.html">Certificate Management</a></li>
+                    <li><a href="../playbooks/investigation/data-exfiltration.html">Data Exfiltration Investigation</a></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

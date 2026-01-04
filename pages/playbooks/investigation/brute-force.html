@@ -7,6 +7,9 @@
     <title>Brute Force Investigation Playbook | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: 'Courier New', monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
@@ -16,13 +19,97 @@
         <div class="content-page">
             <div class="breadcrumb">
                 <a href="index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
-                <a href="pages/playbooks/investigation/index.html">Investigation</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
+                <a href="investigation/index.html">Investigation</a><span class="separator">/</span>
                 <span>Brute Force</span>
             </div>
 
             <h1><i class="fas fa-key"></i> Brute Force &amp; Password Spray Investigation Playbook</h1>
             <p class="lead">Complete investigation workflow for credential-based attacks including brute force, password spraying, credential stuffing, and dictionary attacks.</p>
+
+            <div class="diagram-box">
+CREDENTIAL ATTACK TYPES - VISUAL COMPARISON
+═══════════════════════════════════════════════════════════════════════════════
+
+BRUTE FORCE: Many passwords → ONE account
+─────────────────────────────────────────────────────────────────────────────
+
+  Attacker                                    Target Account
+      │                                            │
+      │──── "password123" ─────────────────────────│ ✗ Failed
+      │──── "Password1!" ──────────────────────────│ ✗ Failed
+      │──── "Summer2024" ──────────────────────────│ ✗ Failed
+      │──── "Qwerty123" ───────────────────────────│ ✗ Failed
+      │──── "Company123" ──────────────────────────│ ✓ SUCCESS!
+      │                                            │
+  
+  DETECTION: Same target, many failures, then success
+  LOGS: Multiple 4625 → 4624 (same username, same source)
+
+
+PASSWORD SPRAY: ONE password → MANY accounts
+─────────────────────────────────────────────────────────────────────────────
+
+  Attacker                      
+      │                         
+      │     "Winter2024!"       
+      │           │             
+      ├───────────┼─────────► user1@company.com  ✗ Failed
+      ├───────────┼─────────► user2@company.com  ✗ Failed
+      ├───────────┼─────────► user3@company.com  ✓ SUCCESS!
+      ├───────────┼─────────► user4@company.com  ✗ Failed
+      └───────────┴─────────► user5@company.com  ✗ Failed
+  
+  DETECTION: One failure per account (avoids lockout), many accounts
+  LOGS: 4625 events spread across many usernames, same source
+
+
+CREDENTIAL STUFFING: Known username:password pairs
+─────────────────────────────────────────────────────────────────────────────
+
+  Leaked Database              Your System
+  ──────────────              ───────────
+  john@email.com:Pass123  ──► john.smith@company.com ✗ (different password)
+  jane@email.com:Jane!    ──► jane.doe@company.com   ✓ (same password!)
+  bob@email.com:Qwerty    ──► bob@company.com        ✓ (same password!)
+  
+  DETECTION: Higher success rate than random attacks, often from botnets
+  LOGS: Mix of 4625 and 4624, varied usernames
+
+
+DETECTION MATRIX:
+═══════════════════════════════════════════════════════════════════════════════
+
+                    │ Failures per │ Accounts  │ Source     │ Speed
+                    │ Account      │ Targeted  │            │
+────────────────────┼──────────────┼───────────┼────────────┼──────────
+Brute Force         │ HIGH (100+)  │ ONE       │ Single IP  │ Fast
+Password Spray      │ LOW (1-3)    │ MANY      │ Single/Few │ Slow
+Credential Stuffing │ LOW (1)      │ MANY      │ Many IPs   │ Varies
+Dictionary Attack   │ MEDIUM       │ FEW       │ Single IP  │ Fast
+
+
+IMMEDIATE QUESTIONS TO ANSWER:
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  1. DID ANY ATTEMPT SUCCEED?                                               │
+│     └─► Look for 4624 after multiple 4625 from same source                │
+│                                                                             │
+│  2. WHAT IS THE SOURCE?                                                    │
+│     └─► Internal IP? External? Known VPN? Tor exit node?                  │
+│                                                                             │
+│  3. WHAT IS THE TARGET?                                                    │
+│     └─► Single account (brute force) or many (spray)?                     │
+│     └─► Is target privileged? VIP? Service account?                       │
+│                                                                             │
+│  4. IS IT ONGOING?                                                         │
+│     └─► Are attempts still happening? Block source immediately.           │
+│                                                                             │
+│  5. WHAT SERVICE IS TARGETED?                                              │
+│     └─► VPN? OWA? Azure AD? RDP? SSH?                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+            </div>
 
             <div class="content">
                 <!-- WHY THIS MATTERS -->
@@ -459,10 +546,10 @@ New-MgIdentityConditionalAccessNamedLocation -BodyParameter $params</code></pre>
                 <h3 id="related"><i class="fas fa-link"></i> Related Playbooks</h3>
 
                 <div class="card-grid">
-                    <a href="pages/playbooks/investigation/account-compromise.html" class="card"><div class="card-icon"><i class="fas fa-user-lock"></i></div><h3>Account Compromise</h3><p>When brute force succeeds</p></a>
-                    <a href="pages/playbooks/investigation/lateral-movement.html" class="card"><div class="card-icon"><i class="fas fa-arrows-alt"></i></div><h3>Lateral Movement</h3><p>Post-compromise activity</p></a>
-                    <a href="pages/playbooks/triage/authentication.html" class="card"><div class="card-icon"><i class="fas fa-key"></i></div><h3>Authentication Triage</h3><p>Initial alert handling</p></a>
-                    <a href="pages/playbooks/hunting/credential-access.html" class="card"><div class="card-icon"><i class="fas fa-crosshairs"></i></div><h3>Credential Access Hunt</h3><p>Proactive detection</p></a>
+                    <a href="investigation/account-compromise.html" class="card"><div class="card-icon"><i class="fas fa-user-lock"></i></div><h3>Account Compromise</h3><p>When brute force succeeds</p></a>
+                    <a href="investigation/lateral-movement.html" class="card"><div class="card-icon"><i class="fas fa-arrows-alt"></i></div><h3>Lateral Movement</h3><p>Post-compromise activity</p></a>
+                    <a href="triage/authentication.html" class="card"><div class="card-icon"><i class="fas fa-key"></i></div><h3>Authentication Triage</h3><p>Initial alert handling</p></a>
+                    <a href="hunting/credential-access.html" class="card"><div class="card-icon"><i class="fas fa-crosshairs"></i></div><h3>Credential Access Hunt</h3><p>Proactive detection</p></a>
                 </div>
 
             </div>

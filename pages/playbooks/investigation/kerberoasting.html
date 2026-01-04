@@ -7,6 +7,7 @@
     <title>Kerberoasting Investigation Playbook | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>.diagram-box { background: #0d1117; border-radius: 8px; padding: 1.5rem; margin: 1rem 0; font-family: "Courier New", monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre; color: #e6edf3; line-height: 1.4; }</style>
 </head>
 <body>
     <nav class="main-nav">
@@ -16,13 +17,90 @@
         <div class="content-page">
             <div class="breadcrumb">
                 <a href="index.html">Home</a><span class="separator">/</span>
-                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
-                <a href="pages/playbooks/investigation/index.html">Investigation</a><span class="separator">/</span>
+                <a href="index.html">Playbooks</a><span class="separator">/</span>
+                <a href="investigation/index.html">Investigation</a><span class="separator">/</span>
                 <span>Kerberoasting</span>
             </div>
 
             <h1><i class="fas fa-dog"></i> Kerberoasting &amp; AD Credential Attacks Investigation Playbook</h1>
             <p class="lead">Complete investigation workflow for Kerberoasting, AS-REP Roasting, Pass-the-Hash, Pass-the-Ticket, Golden Ticket, and Silver Ticket attacks.</p>
+
+            <div class="diagram-box">
+KERBEROASTING ATTACK - HOW IT WORKS
+═══════════════════════════════════════════════════════════════════════════════
+
+Normal Kerberos authentication:
+
+  User                  DC (KDC)                  Service
+   │                       │                         │
+   │── 1. AS-REQ ─────────►│                         │
+   │   (I want a TGT)      │                         │
+   │                       │                         │
+   │◄── 2. AS-REP ─────────│                         │
+   │   (Here's your TGT)   │                         │
+   │                       │                         │
+   │── 3. TGS-REQ ─────────►│                         │
+   │   (I want ticket to   │                         │
+   │    access SERVICE-A)  │                         │
+   │                       │                         │
+   │◄── 4. TGS-REP ─────────│                         │
+   │   (Here's service     │                         │
+   │    ticket - encrypted │                         │
+   │    with SERVICE-A's   │                         │
+   │    password hash)     │                         │
+   │                       │                         │
+   │──────────────── 5. AP-REQ ──────────────────────►│
+   │                 (Service ticket)                 │
+
+
+KERBEROASTING ATTACK:
+─────────────────────────────────────────────────────────────────────────────
+
+  Attacker (any domain user)              DC
+        │                                  │
+        │── Request TGS for ──────────────►│
+        │   SQL-Service (SPN)              │
+        │   HR-App-Service (SPN)           │
+        │   Backup-Service (SPN)           │
+        │   (bulk requests!)               │
+        │                                  │
+        │◄── Encrypted tickets ────────────│
+        │    (encrypted with               │
+        │     service account's            │
+        │     password hash)               │
+        │                                  │
+        ▼
+   ┌─────────────────────────────────────┐
+   │  OFFLINE CRACKING (Hashcat/JtR)    │
+   │                                     │
+   │  Ticket encrypted with weak        │
+   │  password like "Summer2023!"       │
+   │                                     │
+   │  Result: Service account password  │
+   │  (often has admin privileges!)     │
+   └─────────────────────────────────────┘
+
+
+DETECTION INDICATORS:
+═══════════════════════════════════════════════════════════════════════════════
+
+  NORMAL: User requests 1-2 service tickets per session
+  
+  KERBEROASTING:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ • 10+ TGS requests in short time                                       │
+  │ • Requests for SPNs the user never accesses                           │
+  │ • RC4 encryption requested (downgrade attack)                          │
+  │ • Tool artifacts: Rubeus, GetUserSPNs, Invoke-Kerberoast              │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  EVENT ID 4769: Kerberos Service Ticket Operation
+  ─────────────────────────────────────────────────
+  Look for:
+  • Ticket Encryption Type: 0x17 (RC4) - attackers prefer this
+  • High volume from single account
+  • Service names with high-privilege SPNs
+            </div>
 
             <div class="content">
                 <!-- WHY THIS MATTERS -->
@@ -343,10 +421,10 @@ New-ADServiceAccount -Name "gMSA_ServiceName" -DNSHostName "server.domain.com" `
                 <h3 id="related"><i class="fas fa-link"></i> Related Playbooks</h3>
 
                 <div class="card-grid">
-                    <a href="pages/playbooks/investigation/lateral-movement.html" class="card"><div class="card-icon"><i class="fas fa-arrows-alt"></i></div><h3>Lateral Movement</h3><p>Credential attacks enable movement</p></a>
-                    <a href="pages/playbooks/investigation/privilege-escalation.html" class="card"><div class="card-icon"><i class="fas fa-arrow-up"></i></div><h3>Privilege Escalation</h3><p>Service accounts often have privileges</p></a>
-                    <a href="pages/playbooks/hunting/credential-access.html" class="card"><div class="card-icon"><i class="fas fa-crosshairs"></i></div><h3>Credential Access Hunt</h3><p>Proactive detection</p></a>
-                    <a href="pages/iam/active-directory.html" class="card"><div class="card-icon"><i class="fas fa-sitemap"></i></div><h3>Active Directory</h3><p>AD security fundamentals</p></a>
+                    <a href="investigation/lateral-movement.html" class="card"><div class="card-icon"><i class="fas fa-arrows-alt"></i></div><h3>Lateral Movement</h3><p>Credential attacks enable movement</p></a>
+                    <a href="investigation/privilege-escalation.html" class="card"><div class="card-icon"><i class="fas fa-arrow-up"></i></div><h3>Privilege Escalation</h3><p>Service accounts often have privileges</p></a>
+                    <a href="hunting/credential-access.html" class="card"><div class="card-icon"><i class="fas fa-crosshairs"></i></div><h3>Credential Access Hunt</h3><p>Proactive detection</p></a>
+                    <a href="active-directory.html" class="card"><div class="card-icon"><i class="fas fa-sitemap"></i></div><h3>Active Directory</h3><p>AD security fundamentals</p></a>
                 </div>
 
             </div>

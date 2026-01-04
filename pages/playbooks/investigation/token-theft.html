@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Theft Investigation Playbook | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="pages/playbooks/investigation/index.html">Investigation</a><span class="separator">/</span>
+                <span>Token Theft</span>
+            </div>
+
+            <h1><i class="fas fa-ticket-alt"></i> Token Theft &amp; Session Hijacking Investigation Playbook</h1>
+            <p class="lead">Complete investigation workflow for OAuth token theft, session hijacking, cookie theft, refresh token abuse, and MFA bypass via token replay.</p>
+
+            <div class="content">
+                <!-- WHY THIS MATTERS -->
+                <h3 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h3>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> Why Token Theft Is Critical</div>
+                    <table>
+                        <thead><tr><th>If You Don't Investigate...</th><th>Potential Outcome</th><th>Real-World Impact</th></tr></thead>
+                        <tbody>
+                            <tr><td>Stolen token undetected</td><td>Attacker has persistent access bypassing MFA</td><td>LAPSUS$ used token theft to bypass MFA at major companies</td></tr>
+                            <tr><td>Session hijacking ignored</td><td>Attacker impersonates legitimate user</td><td>Session cookies used for account takeover</td></tr>
+                            <tr><td>Refresh token not revoked</td><td>Access persists even after password reset</td><td>OAuth tokens valid for days/weeks</td></tr>
+                            <tr><td>Primary Refresh Token (PRT) stolen</td><td>Full device-level impersonation</td><td>Cloud identity completely compromised</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Token Types and Attack Surfaces</h3>
+                <table>
+                    <thead><tr><th>Token Type</th><th>Purpose</th><th>Lifetime</th><th>Theft Method</th><th>Impact</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Access Token</strong></td><td>API authentication</td><td>Minutes to hours</td><td>Memory scraping, network intercept</td><td>Short-term access</td></tr>
+                        <tr><td><strong>Refresh Token</strong></td><td>Obtain new access tokens</td><td>Days to weeks</td><td>Malware, phishing</td><td>Persistent access</td></tr>
+                        <tr><td><strong>Session Cookie</strong></td><td>Web session auth</td><td>Session/hours</td><td>XSS, malware, AitM</td><td>Session takeover</td></tr>
+                        <tr><td><strong>Primary Refresh Token (PRT)</strong></td><td>Azure AD SSO</td><td>14 days</td><td>Mimikatz, AADInternals</td><td>Full identity compromise</td></tr>
+                        <tr><td><strong>SAML Token</strong></td><td>Federated auth</td><td>Hours</td><td>Golden SAML attack</td><td>Any federated app</td></tr>
+                        <tr><td><strong>Kerberos TGT</strong></td><td>AD authentication</td><td>10 hours</td><td>Pass-the-Ticket</td><td>Domain access</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- TRIGGERS -->
+                <h3 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h3>
+
+                <table>
+                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th><th>First Action</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>Impossible travel with valid token</strong></td><td>Identity Protection</td><td>CRITICAL</td><td>Revoke all tokens immediately</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Token used from new device without login</strong></td><td>Sign-in logs</td><td>CRITICAL</td><td>Check for token theft tools</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>AiTM phishing detected</strong></td><td>Email/EDR alert</td><td>HIGH</td><td>Identify all victims, revoke tokens</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Suspicious OAuth app consent</strong></td><td>Audit logs</td><td>HIGH</td><td>Review app permissions</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Mimikatz/token tool detected</strong></td><td>EDR alert</td><td>HIGH</td><td>Isolate endpoint, check for exfil</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Multiple sessions from different locations</strong></td><td>UEBA</td><td>MEDIUM</td><td>Verify with user</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- ATTACK TECHNIQUES -->
+                <h3 id="techniques"><i class="fas fa-skull"></i> Token Theft Techniques</h3>
+
+                <h3>Adversary-in-the-Middle (AiTM) Phishing</h3>
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Most Common Modern Attack</div>
+                    <p><strong>How it works:</strong></p>
+                    <ol>
+                        <li>Attacker sends phishing email with link to proxy site</li>
+                        <li>Victim enters credentials on fake login page</li>
+                        <li>Proxy forwards credentials to real Microsoft/Google login</li>
+                        <li>Victim completes MFA challenge (attacker relays this too)</li>
+                        <li>Attacker captures the resulting session cookie/token</li>
+                        <li>Attacker replays token from their own device - MFA bypassed</li>
+                    </ol>
+                    <p><strong>Tools used:</strong> Evilginx2, Modlishka, Muraena</p>
+                </div>
+
+                <h3>Token Extraction Methods</h3>
+                <table>
+                    <thead><tr><th>Method</th><th>Target</th><th>Tools/Technique</th><th>Detection</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Browser cookie theft</strong></td><td>Session cookies</td><td>Malware, XSS, physical access</td><td>New device with existing session</td></tr>
+                        <tr><td><strong>Memory scraping</strong></td><td>Access/refresh tokens</td><td>Mimikatz, custom malware</td><td>LSASS access, suspicious process</td></tr>
+                        <tr><td><strong>PRT extraction</strong></td><td>Azure AD PRT</td><td>Mimikatz, AADInternals, ROADTools</td><td>Unusual PRT usage pattern</td></tr>
+                        <tr><td><strong>OAuth app abuse</strong></td><td>Delegated permissions</td><td>Malicious app consent</td><td>High-privilege app consent</td></tr>
+                        <tr><td><strong>Token from logs</strong></td><td>Tokens logged by accident</td><td>Log analysis</td><td>Token patterns in logs</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- INVESTIGATION STEPS -->
+                <h3 id="investigation"><i class="fas fa-search"></i> Investigation Steps</h3>
+
+                <h3>Step 1: Identify Token Misuse</h3>
+
+                <h4>KQL - Detect AiTM Session Hijacking</h4>
+                <pre><code>// Detect sign-ins where session was established without interactive auth
+// Indicates potential token replay
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where ResultType == 0  // Successful
+| where AuthenticationRequirement == "singleFactorAuthentication"
+    or IsInteractive == false
+| where TokenIssuerType == "AzureAD"
+| summarize 
+    SignInCount = count(),
+    UniqueIPs = dcount(IPAddress),
+    UniqueDevices = dcount(DeviceDetail.deviceId),
+    IPs = make_set(IPAddress),
+    Locations = make_set(Location)
+    by UserPrincipalName, AppDisplayName
+| where UniqueIPs > 3 or UniqueDevices > 3
+| order by UniqueIPs desc</code></pre>
+
+                <h4>KQL - Impossible Travel with Token</h4>
+                <pre><code>// Find users authenticating from impossible locations
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0
+| project TimeGenerated, UserPrincipalName, IPAddress, Location, 
+    Latitude = toreal(LocationDetails.geoCoordinates.latitude),
+    Longitude = toreal(LocationDetails.geoCoordinates.longitude)
+| order by UserPrincipalName, TimeGenerated asc
+| serialize
+| extend PrevTime = prev(TimeGenerated), PrevLat = prev(Latitude), 
+    PrevLong = prev(Longitude), PrevUser = prev(UserPrincipalName)
+| where UserPrincipalName == PrevUser
+| extend TimeDiffMinutes = datetime_diff('minute', TimeGenerated, PrevTime)
+| extend DistanceKm = geo_distance_2points(Longitude, Latitude, PrevLong, PrevLat) / 1000
+| extend SpeedKmh = DistanceKm / (TimeDiffMinutes / 60.0)
+| where SpeedKmh > 500 and TimeDiffMinutes < 60  // Impossible speed
+| project TimeGenerated, UserPrincipalName, Location, SpeedKmh, DistanceKm, TimeDiffMinutes</code></pre>
+
+                <h4>KQL - Token Used Without Interactive Login</h4>
+                <pre><code>// Find tokens being used from devices that never completed interactive auth
+let TokenUsage = SigninLogs
+| where TimeGenerated > ago(7d)
+| where IsInteractive == false
+| summarize TokenUseCount = count() by UserPrincipalName, DeviceDetail.deviceId, IPAddress
+| where TokenUseCount > 5;
+let InteractiveLogins = SigninLogs
+| where TimeGenerated > ago(30d)
+| where IsInteractive == true
+| where ResultType == 0
+| summarize by UserPrincipalName, DeviceDetail.deviceId;
+TokenUsage
+| join kind=leftanti InteractiveLogins on UserPrincipalName, $left.DeviceDetail_deviceId == $right.DeviceDetail_deviceId
+| project UserPrincipalName, DeviceDetail_deviceId, IPAddress, TokenUseCount</code></pre>
+
+                <h4>SPL - Session Anomaly Detection (Splunk)</h4>
+                <pre><code>index=azure sourcetype=azure:aad:signin
+| stats dc(src_ip) as UniqueIPs dc(device_id) as UniqueDevices count by user
+| where UniqueIPs > 5 OR UniqueDevices > 5
+| sort -UniqueIPs</code></pre>
+
+                <h3>Step 2: Identify Token Source</h3>
+
+                <h4>KQL - Check for AiTM Phishing</h4>
+                <pre><code>// Look for sign-ins immediately after clicking email links
+let SuspiciousUsers = SigninLogs
+| where TimeGenerated > ago(24h)
+| where RiskState == "confirmedCompromised" or RiskLevelDuringSignIn in ("high", "medium")
+| distinct UserPrincipalName;
+// Check email activity before compromise
+OfficeActivity
+| where TimeGenerated > ago(24h)
+| where UserId in (SuspiciousUsers)
+| where Operation == "ClickedUrl" or Operation == "UrlClicked"
+| project TimeGenerated, UserId, Operation, SourceFileName, Url = UrlClickedItem
+| order by TimeGenerated desc</code></pre>
+
+                <h4>KQL - Token Theft Tool Detection</h4>
+                <pre><code>// Detect tools used to extract tokens
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where ProcessCommandLine has_any (
+    "sekurlsa::cloudap",      // Mimikatz PRT
+    "Get-AADIntAccessToken",   // AADInternals
+    "roadrecon",               // ROADTools
+    "TokenTactics",            // TokenTactics
+    "Invoke-RefreshToken",     // Token refresh
+    "browserpassview",         // NirSoft
+    "ChromePass",              // Password dumpers
+    "WebBrowserPassView"
+)
+    or FileName in~ ("mimikatz.exe", "roadrecon.exe", "aadint.ps1")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine, AccountName</code></pre>
+
+                <h3>Step 3: Assess Token Scope and Usage</h3>
+
+                <h4>KQL - What Did Attacker Access with Token?</h4>
+                <pre><code>// Track all activity for compromised user
+let CompromisedUser = "user@domain.com";
+let CompromiseTime = datetime(2024-01-15T10:00:00Z);
+union
+(
+    SigninLogs
+    | where TimeGenerated > CompromiseTime
+    | where UserPrincipalName == CompromisedUser
+    | project TimeGenerated, Activity = "SignIn", 
+        Details = strcat(AppDisplayName, " from ", IPAddress, " (", Location, ")")
+),
+(
+    AuditLogs
+    | where TimeGenerated > CompromiseTime
+    | where InitiatedBy.user.userPrincipalName == CompromisedUser
+    | project TimeGenerated, Activity = OperationName, 
+        Details = tostring(TargetResources)
+),
+(
+    OfficeActivity
+    | where TimeGenerated > CompromiseTime
+    | where UserId == CompromisedUser
+    | project TimeGenerated, Activity = Operation, 
+        Details = strcat(Workload, ": ", OfficeObjectId)
+)
+| order by TimeGenerated asc</code></pre>
+
+                <h4>KQL - Check for Malicious OAuth App</h4>
+                <pre><code>// Find suspicious OAuth app consents
+AuditLogs
+| where TimeGenerated > ago(30d)
+| where OperationName == "Consent to application"
+| extend AppId = tostring(TargetResources[0].id)
+| extend AppName = tostring(TargetResources[0].displayName)
+| extend ConsentUser = tostring(InitiatedBy.user.userPrincipalName)
+| extend Permissions = tostring(TargetResources[0].modifiedProperties)
+| project TimeGenerated, ConsentUser, AppName, AppId, Permissions
+| where Permissions has_any ("Mail.Read", "Mail.Send", "Files.ReadWrite", 
+    "Directory.Read", "User.Read.All")
+| order by TimeGenerated desc</code></pre>
+
+                <!-- CONTAINMENT -->
+                <h3 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h3>
+
+                <table>
+                    <thead><tr><th>Finding</th><th>Immediate Action</th><th>Command/Procedure</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Confirmed token theft</strong></td>
+                            <td>Revoke ALL tokens immediately</td>
+                            <td><code>Revoke-AzureADUserAllRefreshToken</code></td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>AiTM phishing confirmed</strong></td>
+                            <td>Revoke tokens, force re-auth with compliant device</td>
+                            <td>Conditional Access + token revocation</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>Malicious OAuth app</strong></td>
+                            <td>Remove app consent, disable app</td>
+                            <td>Remove-AzureADOAuth2PermissionGrant</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>PRT compromised</strong></td>
+                            <td>Disable device object, revoke tokens</td>
+                            <td>Disable device in Azure AD</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #d29922;"><strong>Session cookie stolen</strong></td>
+                            <td>Terminate sessions, revoke refresh tokens</td>
+                            <td>Admin Center → Revoke sessions</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>PowerShell - Revoke All Tokens</h4>
+                <pre><code># Connect to Microsoft Graph
+Connect-MgGraph -Scopes "User.ReadWrite.All"
+
+# Revoke all refresh tokens for user
+$userId = "user@domain.com"
+Revoke-MgUserSignInSession -UserId $userId
+
+# Also revoke using Azure AD PowerShell
+Connect-AzureAD
+Revoke-AzureADUserAllRefreshToken -ObjectId $userId
+
+# Force password change
+Update-MgUser -UserId $userId -PasswordProfile @{
+    ForceChangePasswordNextSignIn = $true
+}
+
+# Disable user temporarily if needed
+Update-MgUser -UserId $userId -AccountEnabled:$false</code></pre>
+
+                <h4>PowerShell - Remove Malicious OAuth App</h4>
+                <pre><code># Find OAuth grants for user
+Get-MgUserOAuth2PermissionGrant -UserId "user@domain.com"
+
+# Remove specific OAuth grant
+Remove-MgOAuth2PermissionGrant -OAuth2PermissionGrantId "GRANT_ID"
+
+# Disable the malicious app enterprise-wide
+$appId = "MALICIOUS_APP_ID"
+$sp = Get-MgServicePrincipal -Filter "appId eq '$appId'"
+Update-MgServicePrincipal -ServicePrincipalId $sp.Id -AccountEnabled:$false</code></pre>
+
+                <h4>Conditional Access - Require Token Protection</h4>
+                <pre><code>// Create CA policy requiring token binding
+// In Azure Portal:
+// 1. Create new Conditional Access policy
+// 2. Assignments: All users (or targeted group)
+// 3. Cloud apps: All cloud apps
+// 4. Conditions: Any device
+// 5. Grant: Require device to be compliant
+// 6. Session: Sign-in frequency = Every time
+
+// This ensures tokens can only be used from compliant devices</code></pre>
+
+                <!-- INDICATORS -->
+                <h3 id="indicators"><i class="fas fa-fingerprint"></i> Indicators to Collect</h3>
+
+                <table>
+                    <thead><tr><th>Indicator</th><th>Source</th><th>Use For</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Attacker IPs</strong></td><td>Sign-in logs</td><td>Block at firewall, threat intel</td></tr>
+                        <tr><td><strong>Phishing URLs</strong></td><td>Email logs, user reports</td><td>Block at proxy, report to vendor</td></tr>
+                        <tr><td><strong>Malicious app IDs</strong></td><td>Audit logs</td><td>Block app tenant-wide</td></tr>
+                        <tr><td><strong>Affected user accounts</strong></td><td>Investigation</td><td>Token revocation, monitoring</td></tr>
+                        <tr><td><strong>Tool artifacts</strong></td><td>EDR</td><td>Detection rules</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- MITRE -->
+                <h3 id="mitre"><i class="fas fa-map"></i> MITRE ATT&CK Mapping</h3>
+
+                <table>
+                    <thead><tr><th>Technique ID</th><th>Technique Name</th><th>Token Context</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>T1539</strong></td><td>Steal Web Session Cookie</td><td>Session cookie theft via malware/AiTM</td></tr>
+                        <tr><td><strong>T1528</strong></td><td>Steal Application Access Token</td><td>OAuth token theft</td></tr>
+                        <tr><td><strong>T1550.001</strong></td><td>Use Alternate Authentication Material: Application Access Token</td><td>Token replay</td></tr>
+                        <tr><td><strong>T1557</strong></td><td>Adversary-in-the-Middle</td><td>AiTM phishing</td></tr>
+                        <tr><td><strong>T1606.002</strong></td><td>Forge Web Credentials: SAML Tokens</td><td>Golden SAML</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- PREVENTION -->
+                <h3 id="prevention"><i class="fas fa-shield-virus"></i> Prevention Recommendations</h3>
+
+                <table>
+                    <thead><tr><th>Control</th><th>Implementation</th><th>Effectiveness</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Token Binding</strong></td><td>Conditional Access requiring compliant device</td><td>Prevents token replay from other devices</td></tr>
+                        <tr><td><strong>Continuous Access Evaluation</strong></td><td>Enable CAE in Azure AD</td><td>Near real-time token revocation</td></tr>
+                        <tr><td><strong>Phishing-Resistant MFA</strong></td><td>FIDO2 keys, Windows Hello</td><td>Cannot be relayed via AiTM</td></tr>
+                        <tr><td><strong>Reduce Token Lifetime</strong></td><td>Shorter refresh token validity</td><td>Limits window for abuse</td></tr>
+                        <tr><td><strong>App Consent Policies</strong></td><td>Require admin approval for OAuth apps</td><td>Prevents malicious app consent</td></tr>
+                        <tr><td><strong>Sign-in Risk Policies</strong></td><td>Block or require MFA for risky sign-ins</td><td>Catches anomalous usage</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- RELATED -->
+                <h3 id="related"><i class="fas fa-link"></i> Related Playbooks</h3>
+
+                <div class="card-grid">
+                    <a href="pages/playbooks/investigation/phishing.html" class="card"><div class="card-icon"><i class="fas fa-fish"></i></div><h3>Phishing Investigation</h3><p>AiTM phishing delivers tokens</p></a>
+                    <a href="pages/playbooks/investigation/account-compromise.html" class="card"><div class="card-icon"><i class="fas fa-user-lock"></i></div><h3>Account Compromise</h3><p>Token theft is a form of compromise</p></a>
+                    <a href="pages/playbooks/investigation/lateral-movement.html" class="card"><div class="card-icon"><i class="fas fa-arrows-alt"></i></div><h3>Lateral Movement</h3><p>Tokens used for movement</p></a>
+                    <a href="pages/iam/entra-id/conditional-access.html" class="card"><div class="card-icon"><i class="fas fa-shield-alt"></i></div><h3>Conditional Access</h3><p>Token protection policies</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

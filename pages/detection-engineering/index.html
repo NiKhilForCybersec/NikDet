@@ -7,191 +7,291 @@
     <title>Detection Engineering | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .concept-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .concept-box h3 { color: var(--accent-primary); margin-top: 0; }
+        .analogy-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        .analogy-box .label { color: #22c55e; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .key-point { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+        .key-point strong { color: #fbbf24; }
+        .example-box { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; border-left: 4px solid #06b6d4; }
+        .example-box .label { color: #06b6d4; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; }
+        .step-visual { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.5rem 0; }
+        .step-item { flex: 1; min-width: 200px; background: var(--card-bg); padding: 1rem; border-radius: 8px; text-align: center; }
+        .step-item .number { background: var(--accent-primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; font-weight: bold; font-size: 1.2rem; }
+        .good-bad-table td:nth-child(2) { color: #ef4444; }
+        .good-bad-table td:nth-child(3) { color: #22c55e; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/detection-engineering/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/detection-engineering/index.html">Home</a><span class="separator">/</span><span>Detection Engineering</span></div>
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><span>Detection Engineering</span></div>
             <div class="content">
-                <h1>Detection Engineering</h1>
-                <p class="lead">The discipline of building, testing, and maintaining high-quality detection capabilities. Transform threat intelligence into actionable alerts.</p>
+                <h1><i class="fas fa-radar" style="color: var(--accent-primary);"></i> Detection Engineering</h1>
+                <p class="lead">Learn how to build, test, and maintain detection rules that actually catch attackers while minimizing false positives.</p>
+
+                <!-- WHAT IS DETECTION ENGINEERING -->
+                <div class="concept-box">
+                    <h3><i class="fas fa-question-circle"></i> What is Detection Engineering?</h3>
+                    <p><strong>Detection Engineering</strong> is the discipline of creating rules that identify malicious activity in your logs and telemetry. When these rules match suspicious patterns, they create alerts for analysts to investigate.</p>
+                    
+                    <p><strong>In simple terms:</strong> You write a rule like "alert me when someone tries 10 failed logins in 5 minutes" and the SIEM creates an alert whenever that pattern occurs.</p>
+                    
+                    <div class="key-point">
+                        <strong>The Challenge:</strong> Creating rules that catch real attacks (true positives) without creating too many false alerts that waste analyst time (false positives).
+                    </div>
+                </div>
+
+                <!-- REAL WORLD ANALOGY -->
+                <div class="analogy-box">
+                    <div class="label"><i class="fas fa-lightbulb"></i> Think of it like this</div>
+                    <p><strong>Smoke Detector Analogy:</strong></p>
+                    <ul>
+                        <li><strong>True Positive:</strong> Fire starts → smoke detector goes off → you evacuate. Perfect!</li>
+                        <li><strong>False Positive:</strong> You burn toast → smoke detector goes off → annoying but safe</li>
+                        <li><strong>False Negative:</strong> Fire starts → smoke detector doesn't go off → disaster!</li>
+                    </ul>
+                    <p>Detection engineering is about building "smoke detectors" for cyber attacks that alert on real fires but not every time someone burns toast.</p>
+                </div>
+
+                <!-- WHY IT MATTERS -->
+                <h2><i class="fas fa-bullseye"></i> Why Detection Engineering Matters</h2>
+
+                <table>
+                    <thead>
+                        <tr><th>Problem</th><th>Without Detection Engineering</th><th>With Detection Engineering</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Alert Quality</strong></td>
+                            <td>100s of alerts daily, 90% false positives, analysts burned out</td>
+                            <td>Focused alerts, high true positive rate, analysts effective</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Threat Coverage</strong></td>
+                            <td>Random vendor rules, unknown gaps, hope for the best</td>
+                            <td>Mapped to ATT&CK, known coverage, prioritized improvements</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rule Maintenance</strong></td>
+                            <td>Rules decay over time, no one knows what they do</td>
+                            <td>Version controlled, documented, regularly tested</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Incident Response</strong></td>
+                            <td>Miss attacks or drown in noise</td>
+                            <td>Catch attacks early with actionable alerts</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- THE DETECTION LIFECYCLE -->
+                <h2><i class="fas fa-sync-alt"></i> The Detection Lifecycle (Simplified)</h2>
+
+                <p>Every detection goes through these stages:</p>
+
+                <div class="step-visual">
+                    <div class="step-item">
+                        <div class="number">1</div>
+                        <strong>Identify Need</strong>
+                        <p style="font-size: 0.85rem; margin: 0.5rem 0 0;">What attack do you want to detect?</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="number">2</div>
+                        <strong>Check Data</strong>
+                        <p style="font-size: 0.85rem; margin: 0.5rem 0 0;">Do you have the logs to see this attack?</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="number">3</div>
+                        <strong>Write Rule</strong>
+                        <p style="font-size: 0.85rem; margin: 0.5rem 0 0;">Create the query that finds the pattern</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="number">4</div>
+                        <strong>Test It</strong>
+                        <p style="font-size: 0.85rem; margin: 0.5rem 0 0;">Does it catch the attack? Too many FPs?</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="number">5</div>
+                        <strong>Deploy</strong>
+                        <p style="font-size: 0.85rem; margin: 0.5rem 0 0;">Enable in production</p>
+                    </div>
+                    <div class="step-item">
+                        <div class="number">6</div>
+                        <strong>Monitor & Tune</strong>
+                        <p style="font-size: 0.85rem; margin: 0.5rem 0 0;">Adjust based on real-world results</p>
+                    </div>
+                </div>
+
+                <!-- CONCRETE EXAMPLE -->
+                <div class="example-box">
+                    <div class="label"><i class="fas fa-code"></i> Real Example: Detecting Password Spraying</div>
+                    
+                    <p><strong>Step 1 - Identify Need:</strong> We want to detect password spray attacks (trying one password across many accounts).</p>
+                    
+                    <p><strong>Step 2 - Check Data:</strong> We have Azure AD sign-in logs with failed login events.</p>
+                    
+                    <p><strong>Step 3 - Write Rule (KQL):</strong></p>
+                    <pre style="background: #1a1a2e; padding: 1rem; border-radius: 8px; overflow-x: auto;"><code>// Detect password spray: Many users, few failures per user, from one IP
+SigninLogs
+| where ResultType != 0  // Failed logins only
+| where TimeGenerated > ago(1h)
+| summarize 
+    FailedUsers = dcount(UserPrincipalName),  // How many different users?
+    TotalFailures = count()                    // Total failed attempts
+    by IPAddress
+| where FailedUsers > 10          // More than 10 users targeted
+| where TotalFailures < FailedUsers * 3  // But few failures per user (spray pattern)</code></pre>
+                    
+                    <p><strong>Step 4 - Test:</strong> Run against historical data. Did it catch the simulated attack? How many false positives from legitimate systems?</p>
+                    
+                    <p><strong>Step 5 - Deploy:</strong> Create scheduled analytics rule in Sentinel.</p>
+                    
+                    <p><strong>Step 6 - Tune:</strong> Add exclusions for known vulnerability scanners, adjust thresholds.</p>
+                </div>
+
+                <!-- GOOD VS BAD DETECTIONS -->
+                <h2><i class="fas fa-balance-scale"></i> Good vs Bad Detection Rules</h2>
+
+                <table class="good-bad-table">
+                    <thead>
+                        <tr><th>Aspect</th><th>Bad Rule ❌</th><th>Good Rule ✓</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Logic</strong></td>
+                            <td>Looks for "PowerShell" anywhere in logs</td>
+                            <td>Looks for PowerShell with encoded commands from unusual parent process</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Context</strong></td>
+                            <td>Just matches a pattern</td>
+                            <td>Considers who, what, when, where</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exclusions</strong></td>
+                            <td>None - alerts on everything</td>
+                            <td>Has documented exclusions for known legitimate activity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Documentation</strong></td>
+                            <td>"Detects bad stuff"</td>
+                            <td>Explains what it detects, why, MITRE mapping, response steps</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Testing</strong></td>
+                            <td>Never tested against real attack</td>
+                            <td>Validated with Atomic Red Team or purple team exercise</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- KEY CONCEPTS -->
+                <h2><i class="fas fa-key"></i> Key Detection Engineering Concepts</h2>
+
+                <div class="concept-box">
+                    <h3>Understanding Detection Metrics</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Metric</th><th>What It Means</th><th>Why It Matters</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>True Positive (TP)</strong></td>
+                                <td>Alert fires + it's actually malicious</td>
+                                <td>This is what you want!</td>
+                            </tr>
+                            <tr>
+                                <td><strong>False Positive (FP)</strong></td>
+                                <td>Alert fires + it's actually benign</td>
+                                <td>Wastes analyst time, causes alert fatigue</td>
+                            </tr>
+                            <tr>
+                                <td><strong>True Negative (TN)</strong></td>
+                                <td>No alert + nothing malicious happened</td>
+                                <td>Expected normal operation</td>
+                            </tr>
+                            <tr>
+                                <td><strong>False Negative (FN)</strong></td>
+                                <td>No alert + but attack actually happened</td>
+                                <td>WORST CASE - missed the attack!</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="key-point">
+                        <strong>The Trade-off:</strong> Making rules more sensitive catches more attacks (fewer FNs) but also creates more false positives. Making rules more specific reduces FPs but might miss attack variants. Finding the right balance is the art of detection engineering.
+                    </div>
+                </div>
+
+                <!-- DOCUMENTATION LINKS -->
+                <h2><i class="fas fa-book"></i> Deep Dive Topics</h2>
 
                 <div class="card-grid">
-                    <a href="pages/detection-engineering/lifecycle.html" class="card"><div class="card-icon"><i class="fas fa-sync-alt"></i></div><h3>Detection Lifecycle</h3><p>From idea to production to retirement.</p></a>
-                    <a href="pages/detection-engineering/detection-as-code.html" class="card"><div class="card-icon"><i class="fas fa-code-branch"></i></div><h3>Detection-as-Code</h3><p>Version control, CI/CD, testing pipelines.</p></a>
-                    <a href="pages/detection-engineering/testing.html" class="card"><div class="card-icon"><i class="fas fa-vial"></i></div><h3>Detection Testing</h3><p>Atomic Red Team, validation, purple team.</p></a>
-                    <a href="pages/detection-engineering/coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-map"></i></div><h3>Coverage Analysis</h3><p>MITRE ATT&CK mapping, gap identification.</p></a>
-                    <a href="pages/detection-engineering/sigma-rules.html" class="card"><div class="card-icon"><i class="fas fa-file-code"></i></div><h3>Sigma Rules</h3><p>Generic, portable detection format.</p></a>
+                    <a href="pages/detection-engineering/lifecycle.html" class="card">
+                        <div class="card-icon"><i class="fas fa-sync-alt"></i></div>
+                        <h3>Detection Lifecycle</h3>
+                        <p>Complete process from idea to production to retirement.</p>
+                    </a>
+                    <a href="pages/detection-engineering/detection-as-code.html" class="card">
+                        <div class="card-icon"><i class="fas fa-code-branch"></i></div>
+                        <h3>Detection-as-Code</h3>
+                        <p>Version control your detections like software code.</p>
+                    </a>
+                    <a href="pages/detection-engineering/testing.html" class="card">
+                        <div class="card-icon"><i class="fas fa-vial"></i></div>
+                        <h3>Detection Testing</h3>
+                        <p>Atomic Red Team, validation, purple team exercises.</p>
+                    </a>
+                    <a href="pages/detection-engineering/coverage-analysis.html" class="card">
+                        <div class="card-icon"><i class="fas fa-map"></i></div>
+                        <h3>Coverage Analysis</h3>
+                        <p>Map detections to MITRE ATT&CK, find gaps.</p>
+                    </a>
+                    <a href="pages/detection-engineering/sigma-rules.html" class="card">
+                        <div class="card-icon"><i class="fas fa-file-code"></i></div>
+                        <h3>Sigma Rules</h3>
+                        <p>Write once, convert to any SIEM format.</p>
+                    </a>
                 </div>
 
-                <h2>Detection Engineering Process</h2>
-                <div class="step-container">
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">1</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Identify Threat</div>
-                            <p>Threat intelligence, incident learnings, MITRE ATT&CK technique, or vulnerability drives detection need.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">2</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Understand Data</div>
-                            <p>What telemetry is available? What fields contain the indicators? Are there gaps in logging?</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">3</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Develop Detection</div>
-                            <p>Write query, test against historical data, tune for false positives, document logic.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">4</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Test & Validate</div>
-                            <p>Run attack simulation, verify detection fires, confirm entity mapping, check alert quality.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">5</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Deploy & Monitor</div>
-                            <p>Deploy to production, monitor performance, track true positive rate, gather analyst feedback.</p>
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-indicator"><div class="step-number-badge">6</div></div>
-                        <div class="step-content">
-                            <div class="step-title">Tune & Iterate</div>
-                            <p>Reduce false positives, add exclusions, improve entity mapping, update for evasion techniques.</p>
-                        </div>
-                    </div>
+                <!-- QUICK START -->
+                <h2><i class="fas fa-rocket"></i> Getting Started</h2>
+
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Where to Start</div>
+                    <ol>
+                        <li><strong>Pick one attack technique</strong> - Start with something common like "Encoded PowerShell" or "Brute Force Login"</li>
+                        <li><strong>Check your data</strong> - Do you have the logs to detect it?</li>
+                        <li><strong>Find existing rules</strong> - Check Sigma rules repository before writing from scratch</li>
+                        <li><strong>Test with Atomic Red Team</strong> - Run the attack safely and verify your rule catches it</li>
+                        <li><strong>Document everything</strong> - What it detects, how to investigate, known FP sources</li>
+                    </ol>
                 </div>
 
-                <h2>Detection Quality Attributes</h2>
-                <table>
-                    <thead><tr><th>Attribute</th><th>Description</th><th>How to Measure</th><th>Target</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Accuracy</strong></td><td>True positive rate</td><td>TPs / (TPs + FPs)</td><td>>70%</td></tr>
-                        <tr><td><strong>Coverage</strong></td><td>Threats detected vs total</td><td>Techniques with detection / Total relevant techniques</td><td>>60%</td></tr>
-                        <tr><td><strong>Timeliness</strong></td><td>Time from event to alert</td><td>Alert time - Event time</td><td><5 min</td></tr>
-                        <tr><td><strong>Robustness</strong></td><td>Resistance to evasion</td><td>Purple team bypass rate</td><td><20% bypass</td></tr>
-                        <tr><td><strong>Actionability</strong></td><td>Analyst can act on alert</td><td>Analyst survey, escalation rate</td><td>Clear next steps</td></tr>
-                    </tbody>
-                </table>
+                <!-- RELATED SECTIONS -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
 
-                <h2>Detection Types</h2>
-                <table>
-                    <thead><tr><th>Type</th><th>Description</th><th>Pros</th><th>Cons</th><th>Use When</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Signature/IOC</strong></td><td>Match known bad indicators</td><td>High accuracy, low false positives</td><td>Only catches known threats</td><td>Known malware, IPs, domains</td></tr>
-                        <tr><td><strong>Behavioral</strong></td><td>Detect suspicious patterns</td><td>Catches novel threats</td><td>Higher false positives</td><td>Technique detection, anomalies</td></tr>
-                        <tr><td><strong>Statistical</strong></td><td>Deviation from baseline</td><td>Adaptive to environment</td><td>Requires training period</td><td>Volume anomalies, unusual patterns</td></tr>
-                        <tr><td><strong>ML/Anomaly</strong></td><td>Machine learning models</td><td>Finds unknown unknowns</td><td>Black box, needs data</td><td>User behavior, complex patterns</td></tr>
-                        <tr><td><strong>Correlation</strong></td><td>Multiple events combined</td><td>High confidence detections</td><td>Complex, may miss individual</td><td>Kill chain detection</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Detection Development Template</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">## Detection Metadata</span>
-Name: [Descriptive name]
-ID: [DET-YYYY-NNN]
-Author: [Name]
-Created: [Date]
-Modified: [Date]
-Status: [Development/Testing/Production/Deprecated]
-
-<span style="color: #6aa3f7;">## Threat Context</span>
-MITRE ATT&CK: [Tactic/Technique ID]
-Threat Description: [What attack is being detected]
-References: [Threat intel, blog posts, CVEs]
-
-<span style="color: #6aa3f7;">## Technical Details</span>
-Data Sources: [Required log sources]
-Query/Logic: [Detection query]
-Entity Mapping: [How entities are extracted]
-Severity: [Info/Low/Medium/High/Critical]
-Confidence: [Low/Medium/High]
-
-<span style="color: #6aa3f7;">## Validation</span>
-Test Procedure: [How to trigger detection]
-Expected Result: [What alert should look like]
-Atomic Red Team Test: [Test ID if applicable]
-
-<span style="color: #6aa3f7;">## Operational</span>
-False Positive Guidance: [Known FP scenarios]
-Triage Steps: [What analyst should do]
-Response Actions: [Containment/remediation]</pre>
-                </div>
-
-                <h2>Common Detection Pitfalls</h2>
-                <table>
-                    <thead><tr><th>Pitfall</th><th>Problem</th><th>Solution</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Too specific</strong></td><td>Detects only exact IOC, easily evaded</td><td>Detect behavior, not just indicators</td></tr>
-                        <tr><td><strong>Too broad</strong></td><td>High false positive rate</td><td>Add context, baselines, exclusions</td></tr>
-                        <tr><td><strong>No testing</strong></td><td>Detection doesn't work in production</td><td>Validate with attack simulation</td></tr>
-                        <tr><td><strong>No maintenance</strong></td><td>Detection degrades over time</td><td>Regular review cycle, metrics tracking</td></tr>
-                        <tr><td><strong>Missing context</strong></td><td>Analyst can't triage effectively</td><td>Include enrichment, related events</td></tr>
-                        <tr><td><strong>Poor entity mapping</strong></td><td>Incidents don't correlate</td><td>Map all relevant entities correctly</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Detection Metrics Dashboard</h2>
-                <table>
-                    <thead><tr><th>Metric</th><th>Definition</th><th>Target</th><th>Action if Off-Target</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>True Positive Rate</strong></td><td>TPs / Total alerts</td><td>>50%</td><td>Tune rules, add exclusions</td></tr>
-                        <tr><td><strong>Mean Time to Detect</strong></td><td>Event time to alert time</td><td><15 min</td><td>Reduce query latency, add NRT rules</td></tr>
-                        <tr><td><strong>Coverage Score</strong></td><td>% ATT&CK techniques covered</td><td>>60%</td><td>Prioritize gap filling</td></tr>
-                        <tr><td><strong>Detection Velocity</strong></td><td>New detections per month</td><td>10-20</td><td>Allocate more engineering time</td></tr>
-                        <tr><td><strong>Bypass Rate</strong></td><td>% of tests that evade detection</td><td><20%</td><td>Improve rule robustness</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>MITRE ATT&CK Priority Matrix</h2>
-                <p>Focus detection efforts on most impactful techniques:</p>
-                <table>
-                    <thead><tr><th>Priority</th><th>Criteria</th><th>Example Techniques</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Critical</strong></td><td>Used by many threat actors, high impact</td><td>T1059 Command & Scripting, T1053 Scheduled Task, T1021 Remote Services</td></tr>
-                        <tr><td><strong>High</strong></td><td>Common in targeted attacks</td><td>T1003 Credential Dumping, T1055 Process Injection, T1071 Application Layer Protocol</td></tr>
-                        <tr><td><strong>Medium</strong></td><td>Used by specific threat actors</td><td>T1574 Hijack Execution Flow, T1218 System Binary Proxy Execution</td></tr>
-                        <tr><td><strong>Low</strong></td><td>Rare or environment-specific</td><td>Environment-specific based on threat model</td></tr>
-                    </tbody>
-                </table>
-
-                <h2>Detection-as-Code Structure</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;">detections/
-├── rules/
-│   ├── endpoint/
-│   │   ├── process_execution/
-│   │   │   ├── suspicious_powershell.yml
-│   │   │   └── lolbin_execution.yml
-│   │   └── persistence/
-│   │       ├── scheduled_task_created.yml
-│   │       └── registry_run_key.yml
-│   ├── network/
-│   │   ├── c2_beaconing.yml
-│   │   └── dns_tunneling.yml
-│   └── identity/
-│       ├── brute_force.yml
-│       └── password_spray.yml
-├── tests/
-│   ├── atomic_tests/
-│   └── validation_queries/
-├── exclusions/
-│   └── global_exclusions.yml
-└── pipelines/
-    ├── deploy.yml
-    └── test.yml</pre>
+                <div class="card-grid">
+                    <a href="pages/references/kql-library.html" class="card">
+                        <div class="card-icon"><i class="fas fa-code"></i></div>
+                        <h3>KQL Query Library</h3>
+                        <p>Ready-to-use detection queries for Sentinel.</p>
+                    </a>
+                    <a href="pages/references/spl-library.html" class="card">
+                        <div class="card-icon"><i class="fas fa-search"></i></div>
+                        <h3>SPL Query Library</h3>
+                        <p>Ready-to-use detection queries for Splunk.</p>
+                    </a>
+                    <a href="pages/frameworks/mitre-attack.html" class="card">
+                        <div class="card-icon"><i class="fas fa-th"></i></div>
+                        <h3>MITRE ATT&CK</h3>
+                        <p>Framework for mapping detection coverage.</p>
+                    </a>
                 </div>
 
             </div>

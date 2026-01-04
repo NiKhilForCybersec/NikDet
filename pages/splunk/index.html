@@ -7,183 +7,292 @@
     <title>Splunk Security Operations | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .concept-box { background: linear-gradient(135deg, rgba(101, 166, 55, 0.1), rgba(101, 166, 55, 0.05)); border: 1px solid rgba(101, 166, 55, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .concept-box h3 { color: #65a637; margin-top: 0; }
+        .sourcetype-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; border-left: 4px solid #65a637; }
+        .sourcetype-card h4 { margin: 0 0 0.5rem 0; color: #65a637; font-family: var(--font-mono); }
+        .sourcetype-card p { margin: 0; font-size: 0.9rem; }
+        .example-query { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; overflow-x: auto; }
+        .query-explain { background: var(--bg-secondary); padding: 1rem; border-radius: 0 0 8px 8px; margin-top: -0.5rem; font-size: 0.9rem; }
+        .tip-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/splunk/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/splunk/index.html">Home</a><span class="separator">/</span><span>Splunk</span></div>
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><span>Splunk</span></div>
             <div class="content">
-                <h1>Splunk Security Operations</h1>
-                <p class="lead">Advanced SPL techniques, security-focused searches, and Enterprise Security operations for threat detection and investigation.</p>
+                <h1><i class="fas fa-search" style="color: #65a637;"></i> Splunk Security Operations</h1>
+                <p class="lead">Complete guide to Splunk - from understanding how data is organized to writing effective security searches.</p>
 
+                <!-- WHAT IS SPLUNK -->
+                <div class="concept-box">
+                    <h3><i class="fas fa-question-circle"></i> What is Splunk?</h3>
+                    <p><strong>Splunk</strong> is a data platform that indexes logs and lets you search them with SPL (Search Processing Language). For security, Splunk Enterprise Security (ES) adds SIEM capabilities.</p>
+                    
+                    <p><strong>Key concepts:</strong></p>
+                    <ul>
+                        <li><strong>Index</strong> = Where data is stored (like a database table)</li>
+                        <li><strong>Sourcetype</strong> = Tells Splunk how to parse the data (WinEventLog, syslog, etc.)</li>
+                        <li><strong>Source</strong> = Where the data came from (file path, input)</li>
+                        <li><strong>Host</strong> = The machine that generated the event</li>
+                        <li><strong>SPL</strong> = Splunk's query language</li>
+                    </ul>
+                </div>
+
+                <!-- QUICK NAVIGATION -->
+                <h2><i class="fas fa-compass"></i> Quick Navigation</h2>
                 <div class="card-grid">
-                    <a href="pages/splunk/spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>SPL Fundamentals</h3><p>Core search commands, filtering, time ranges, field extraction.</p></a>
-                    <a href="pages/splunk/spl-intermediate.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>SPL Intermediate</h3><p>Stats, eval, transactions, subsearches, lookups.</p></a>
-                    <a href="pages/splunk/spl-advanced.html" class="card"><div class="card-icon"><i class="fas fa-rocket"></i></div><h3>SPL Advanced</h3><p>Machine learning, anomaly detection, advanced correlation.</p></a>
+                    <a href="pages/splunk/spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>SPL Fundamentals</h3><p>Start here - learn the query language</p></a>
+                    <a href="pages/splunk/data-ingestion.html" class="card"><div class="card-icon"><i class="fas fa-database"></i></div><h3>Data Ingestion & Parsing</h3><p>Sourcetypes, props.conf, CIM, index tiers</p></a>
+                    <a href="pages/splunk/spl-intermediate.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>SPL Intermediate</h3><p>Stats, eval, transactions, lookups</p></a>
+                    <a href="pages/splunk/spl-advanced.html" class="card"><div class="card-icon"><i class="fas fa-rocket"></i></div><h3>SPL Advanced</h3><p>Advanced correlation, machine learning</p></a>
                 </div>
 
-                <h2>Splunk Architecture for Security</h2>
+                <!-- HOW SPLUNK ORGANIZES DATA -->
+                <h2><i class="fas fa-database"></i> How Splunk Organizes Data</h2>
+
+                <p>Understanding how data is organized is key to searching effectively:</p>
+
                 <table>
-                    <thead><tr><th>Component</th><th>Role</th><th>Security Considerations</th></tr></thead>
+                    <thead>
+                        <tr><th>Concept</th><th>What It Is</th><th>Example</th></tr>
+                    </thead>
                     <tbody>
-                        <tr><td><strong>Indexers</strong></td><td>Store and search data</td><td>Encryption at rest, retention policies, access control</td></tr>
-                        <tr><td><strong>Search Heads</strong></td><td>Run searches, host dashboards</td><td>Role-based access, search quotas, audit logging</td></tr>
-                        <tr><td><strong>Forwarders</strong></td><td>Collect and send data</td><td>TLS encryption, certificate auth, deployment server</td></tr>
-                        <tr><td><strong>Heavy Forwarders</strong></td><td>Parse, filter, route data</td><td>Data masking, routing rules, intermediate storage</td></tr>
-                        <tr><td><strong>Deployment Server</strong></td><td>Manage forwarder configs</td><td>Centralized app deployment, version control</td></tr>
+                        <tr>
+                            <td><strong>Index</strong></td>
+                            <td>Container where events are stored</td>
+                            <td><code>index=main</code>, <code>index=security</code>, <code>index=firewall</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sourcetype</strong></td>
+                            <td>Defines how data is parsed and what fields exist</td>
+                            <td><code>WinEventLog:Security</code>, <code>pan:traffic</code>, <code>syslog</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Source</strong></td>
+                            <td>File or input that provided the data</td>
+                            <td><code>/var/log/messages</code>, <code>WinEventLog:Security</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Host</strong></td>
+                            <td>Machine that generated the event</td>
+                            <td><code>DC01.company.com</code>, <code>webserver-prod-01</code></td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h2>Critical Security Indexes</h2>
+                <div class="example-query">
+<pre><code>// Basic search structure
+index=security sourcetype=WinEventLog:Security EventCode=4625
+| fields _time, host, Account_Name, Source_Network_Address</code></pre>
+                </div>
+                <div class="query-explain">
+                    <strong>What this means:</strong>
+                    <ul style="margin: 0.5rem 0;">
+                        <li><code>index=security</code> - Look in the "security" index</li>
+                        <li><code>sourcetype=WinEventLog:Security</code> - Only Windows Security events</li>
+                        <li><code>EventCode=4625</code> - Only failed login events</li>
+                        <li><code>| fields</code> - Show only these columns in results</li>
+                    </ul>
+                </div>
+
+                <!-- COMMON SOURCETYPES -->
+                <h2><i class="fas fa-file-alt"></i> Common Sourcetypes You'll Use</h2>
+
+                <h3>Windows Events</h3>
+                <div class="sourcetype-card">
+                    <h4>WinEventLog:Security</h4>
+                    <p><strong>What it contains:</strong> Windows Security Event Log</p>
+                    <p><strong>Key fields:</strong> EventCode, Account_Name, ComputerName, Logon_Type, Source_Network_Address</p>
+                    <p><strong>Use for:</strong> Authentication (4624/4625), process creation (4688), privilege use</p>
+                </div>
+                <div class="example-query">
+<pre><code>// Find failed Windows logins
+index=* sourcetype=WinEventLog:Security EventCode=4625
+| stats count by Account_Name, Source_Network_Address
+| sort -count</code></pre>
+                </div>
+
+                <div class="sourcetype-card">
+                    <h4>WinEventLog:System</h4>
+                    <p><strong>What it contains:</strong> Windows System Event Log</p>
+                    <p><strong>Key fields:</strong> EventCode, ComputerName, SourceName, Message</p>
+                    <p><strong>Use for:</strong> Service changes, system errors, driver issues</p>
+                </div>
+
+                <div class="sourcetype-card">
+                    <h4>XmlWinEventLog:Microsoft-Windows-Sysmon/Operational</h4>
+                    <p><strong>What it contains:</strong> Sysmon detailed endpoint telemetry</p>
+                    <p><strong>Key fields:</strong> EventID, Image, CommandLine, ParentImage, Hashes</p>
+                    <p><strong>Use for:</strong> Process execution, network connections, file creation</p>
+                </div>
+                <div class="example-query">
+<pre><code>// Find PowerShell with encoded commands (Sysmon Event 1)
+index=* sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" EventID=1
+| search Image="*powershell.exe" CommandLine="*-enc*"
+| table _time, ComputerName, User, CommandLine</code></pre>
+                </div>
+
+                <h3>Network & Firewall</h3>
+                <div class="sourcetype-card">
+                    <h4>pan:traffic (Palo Alto)</h4>
+                    <p><strong>What it contains:</strong> Palo Alto firewall traffic logs</p>
+                    <p><strong>Key fields:</strong> src_ip, dest_ip, dest_port, action, app, rule</p>
+                    <p><strong>Use for:</strong> Network traffic analysis, blocked connections</p>
+                </div>
+                <div class="example-query">
+<pre><code>// Find blocked traffic to unusual ports
+index=firewall sourcetype="pan:traffic" action=denied
+| stats count by dest_port
+| sort -count
+| head 20</code></pre>
+                </div>
+
+                <div class="sourcetype-card">
+                    <h4>cisco:asa / cisco:ftd</h4>
+                    <p><strong>What it contains:</strong> Cisco ASA/Firepower logs</p>
+                    <p><strong>Key fields:</strong> src_ip, dest_ip, action, protocol</p>
+                    <p><strong>Use for:</strong> Firewall analysis, VPN connections</p>
+                </div>
+
+                <h3>Linux & Unix</h3>
+                <div class="sourcetype-card">
+                    <h4>linux_secure / linux_audit</h4>
+                    <p><strong>What it contains:</strong> Linux authentication and audit logs</p>
+                    <p><strong>Key fields:</strong> user, src_ip, action, process</p>
+                    <p><strong>Use for:</strong> SSH logins, sudo usage, authentication</p>
+                </div>
+                <div class="example-query">
+<pre><code>// Find SSH login failures
+index=* sourcetype=linux_secure "Failed password"
+| rex "Failed password for (?<user>\S+) from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count by user, src_ip
+| sort -count</code></pre>
+                </div>
+
+                <h3>Web & Proxy</h3>
+                <div class="sourcetype-card">
+                    <h4>access_combined / access_common</h4>
+                    <p><strong>What it contains:</strong> Web server access logs (Apache, Nginx)</p>
+                    <p><strong>Key fields:</strong> clientip, uri_path, status, method, bytes</p>
+                    <p><strong>Use for:</strong> Web attacks, access analysis</p>
+                </div>
+
+                <div class="sourcetype-card">
+                    <h4>bluecoat:proxysg:access:syslog</h4>
+                    <p><strong>What it contains:</strong> Web proxy logs</p>
+                    <p><strong>Key fields:</strong> src_ip, url, category, user, action</p>
+                    <p><strong>Use for:</strong> Web filtering, data exfil, malware callbacks</p>
+                </div>
+
+                <!-- HOW TO FIND SOURCETYPES -->
+                <h2><i class="fas fa-search"></i> How to Find What Data You Have</h2>
+
+                <div class="example-query">
+<pre><code>// List all sourcetypes with event counts
+| metadata type=sourcetypes index=*
+| sort -totalCount
+| table sourcetype, totalCount, lastTime</code></pre>
+                </div>
+                <div class="query-explain">
+                    <strong>What this does:</strong> Shows you all sourcetypes in your Splunk environment with how many events each has. Great for discovering what data is available.
+                </div>
+
+                <div class="example-query">
+<pre><code>// See sample events from a sourcetype
+index=* sourcetype=WinEventLog:Security
+| head 10</code></pre>
+                </div>
+
+                <div class="example-query">
+<pre><code>// List all indexes
+| eventcount summarize=false index=*
+| table index, count</code></pre>
+                </div>
+
+                <!-- FIELD EXTRACTION -->
+                <h2><i class="fas fa-filter"></i> Understanding Field Extraction</h2>
+
+                <p>Splunk automatically extracts some fields, but you often need to extract more:</p>
+
+                <h3>Automatic Fields (Always Available)</h3>
                 <table>
-                    <thead><tr><th>Index</th><th>Data Source</th><th>Key Fields</th><th>Retention</th></tr></thead>
+                    <thead>
+                        <tr><th>Field</th><th>Description</th></tr>
+                    </thead>
                     <tbody>
-                        <tr><td><code>wineventlog</code></td><td>Windows Security, System, Application</td><td>EventCode, Account_Name, ComputerName</td><td>90-365 days</td></tr>
-                        <tr><td><code>sysmon</code></td><td>Sysmon endpoint telemetry</td><td>EventID, Image, CommandLine, ParentImage</td><td>90-180 days</td></tr>
-                        <tr><td><code>firewall</code></td><td>Network firewall logs</td><td>src_ip, dest_ip, dest_port, action</td><td>30-90 days</td></tr>
-                        <tr><td><code>proxy</code></td><td>Web proxy logs</td><td>src_ip, url, category, user</td><td>30-90 days</td></tr>
-                        <tr><td><code>dns</code></td><td>DNS query logs</td><td>query, query_type, src_ip, answer</td><td>30-90 days</td></tr>
-                        <tr><td><code>email</code></td><td>Email gateway logs</td><td>sender, recipient, subject, action</td><td>90-365 days</td></tr>
-                        <tr><td><code>auth</code></td><td>Authentication logs</td><td>user, src_ip, action, app</td><td>365+ days</td></tr>
+                        <tr><td><code>_time</code></td><td>Event timestamp</td></tr>
+                        <tr><td><code>_raw</code></td><td>Original raw event text</td></tr>
+                        <tr><td><code>host</code></td><td>Machine that generated event</td></tr>
+                        <tr><td><code>source</code></td><td>Input/file path</td></tr>
+                        <tr><td><code>sourcetype</code></td><td>Data format type</td></tr>
+                        <tr><td><code>index</code></td><td>Index where event is stored</td></tr>
                     </tbody>
                 </table>
 
-                <h2>Essential Security Searches</h2>
-                <h3>Authentication Analysis</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Brute force detection - failed logins followed by success</span>
-index=wineventlog EventCode=4625 OR EventCode=4624
-| transaction Account_Name maxspan=10m
-| where eventcount > 5
-| search EventCode=4624
-| table _time, Account_Name, src_ip, eventcount
-
-<span style="color: #6aa3f7;">// Password spray detection - same password across accounts</span>
-index=wineventlog EventCode=4625 
-| bucket _time span=5m
-| stats dc(Account_Name) as unique_accounts values(Account_Name) as accounts by _time, Source_Network_Address
-| where unique_accounts > 10
-| sort -unique_accounts
-
-<span style="color: #6aa3f7;">// After-hours privileged access</span>
-index=wineventlog EventCode=4624 Logon_Type=10
-| eval hour=strftime(_time, "%H")
-| where hour < 6 OR hour > 22
-| lookup privileged_users user as Account_Name OUTPUT is_privileged
-| where is_privileged="true"
-| table _time, Account_Name, Source_Network_Address, ComputerName</pre>
+                <h3>Extracting Fields with rex</h3>
+                <div class="example-query">
+<pre><code>// Extract IP and username from a log message
+index=* sourcetype=syslog "Failed password"
+| rex "Failed password for (?<username>\S+) from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| table _time, host, username, src_ip</code></pre>
+                </div>
+                <div class="query-explain">
+                    <strong>The rex command:</strong> Uses regex to extract values into named fields. <code>(?&lt;fieldname&gt;pattern)</code> captures the pattern into that field name.
                 </div>
 
-                <h3>Endpoint Threat Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Suspicious process execution from Office apps</span>
-index=sysmon EventCode=1
-| where match(ParentImage, "(?i)(winword|excel|powerpnt|outlook)\.exe")
-| where match(Image, "(?i)(cmd|powershell|wscript|cscript|mshta|regsvr32)\.exe")
-| table _time, ComputerName, User, ParentImage, Image, CommandLine
+                <!-- QUICK QUERIES -->
+                <h2><i class="fas fa-bolt"></i> Quick Reference Queries</h2>
 
-<span style="color: #6aa3f7;">// LSASS access detection (credential dumping)</span>
-index=sysmon EventCode=10 TargetImage="*\\lsass.exe"
-| where NOT match(SourceImage, "(?i)(MsMpEng|csrss|services|svchost)\.exe$")
-| table _time, ComputerName, SourceImage, GrantedAccess, CallTrace
-
-<span style="color: #6aa3f7;">// Encoded PowerShell execution</span>
-index=sysmon EventCode=1 Image="*powershell.exe"
-| where match(CommandLine, "(?i)(-enc|-encodedcommand|-e\s+[A-Za-z0-9+/=]{20,})")
-| table _time, ComputerName, User, ParentImage, CommandLine
-| eval decoded=base64decode(mvindex(split(CommandLine, " "), -1))</pre>
+                <h3>Check if data is flowing</h3>
+                <div class="example-query">
+<pre><code>index=* earliest=-15m | stats count by index, sourcetype</code></pre>
                 </div>
 
-                <h3>Network Threat Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Beaconing detection - regular interval connections</span>
-index=firewall action=allowed dest_port=443 OR dest_port=80
-| bucket _time span=1m
-| stats count by src_ip, dest_ip, _time
-| stats stdev(count) as stdev avg(count) as avg count as intervals by src_ip, dest_ip
-| where stdev < 1 AND intervals > 60
-| sort -intervals
-
-<span style="color: #6aa3f7;">// DNS tunneling detection - high volume queries</span>
-index=dns
-| rex field=query "(?<subdomain>[^\.]+)\.(?<domain>.+)"
-| stats count dc(subdomain) as unique_subdomains avg(len(subdomain)) as avg_len by domain
-| where unique_subdomains > 100 OR avg_len > 30
-| sort -unique_subdomains
-
-<span style="color: #6aa3f7;">// Data exfiltration - large outbound transfers</span>
-index=firewall direction=outbound
-| stats sum(bytes_out) as total_bytes by src_ip, dest_ip
-| where total_bytes > 100000000
-| eval GB=round(total_bytes/1024/1024/1024, 2)
-| sort -total_bytes</pre>
+                <h3>Find events containing a keyword</h3>
+                <div class="example-query">
+<pre><code>index=* "password" OR "failed" OR "denied"
+| head 100</code></pre>
                 </div>
 
-                <h2>Splunk Enterprise Security (ES)</h2>
-                <table>
-                    <thead><tr><th>Feature</th><th>Purpose</th><th>Key Configuration</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Notable Events</strong></td><td>Correlated security alerts</td><td>Correlation searches, risk scoring, aggregation</td></tr>
-                        <tr><td><strong>Risk-Based Alerting</strong></td><td>Accumulate risk scores</td><td>Risk objects, risk factors, thresholds</td></tr>
-                        <tr><td><strong>Asset & Identity</strong></td><td>Context enrichment</td><td>Asset database, identity correlation, criticality</td></tr>
-                        <tr><td><strong>Threat Intelligence</strong></td><td>IOC matching</td><td>TAXII feeds, STIX import, threat lists</td></tr>
-                        <tr><td><strong>Investigation Workbench</strong></td><td>Incident investigation</td><td>Timeline, artifacts, collaboration</td></tr>
-                        <tr><td><strong>Glass Tables</strong></td><td>Visual investigation</td><td>Entity relationships, kill chain mapping</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>ES Correlation Search Example</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 1rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Multiple authentication failures from single source</span>
-| tstats summariesonly=t count from datamodel=Authentication 
-  where Authentication.action="failure" 
-  by _time, Authentication.src, Authentication.user span=5m
-| rename Authentication.* as *
-| where count > 10
-| sendalert notable_event 
-  param.rule_name="Brute Force Attack"
-  param.security_domain="access"
-  param.severity="high"</pre>
+                <h3>Count by field</h3>
+                <div class="example-query">
+<pre><code>index=security sourcetype=WinEventLog:Security EventCode=4625
+| stats count by Account_Name
+| sort -count</code></pre>
                 </div>
 
-                <h2>Performance Optimization</h2>
-                <table>
-                    <thead><tr><th>Technique</th><th>When to Use</th><th>Impact</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>tstats</strong></td><td>Searching data models</td><td>10-100x faster than raw search</td></tr>
-                        <tr><td><strong>summary indexing</strong></td><td>Pre-computed statistics</td><td>Instant results for common queries</td></tr>
-                        <tr><td><strong>accelerated data models</strong></td><td>Frequent dashboard queries</td><td>Significant speed improvement</td></tr>
-                        <tr><td><strong>bloom filters</strong></td><td>Rare term searches</td><td>Skip buckets without matches</td></tr>
-                        <tr><td><strong>search-time field extraction</strong></td><td>Rarely used fields</td><td>Reduce index size</td></tr>
-                    </tbody>
-                </table>
+                <h3>Time-based analysis</h3>
+                <div class="example-query">
+<pre><code>index=firewall sourcetype="pan:traffic" action=denied
+| timechart span=1h count by dest_port</code></pre>
+                </div>
 
-                <h2>Common Data Models for Security</h2>
-                <table>
-                    <thead><tr><th>Data Model</th><th>Use Case</th><th>Key Fields</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>Authentication</strong></td><td>Login analysis</td><td>action, app, src, dest, user</td></tr>
-                        <tr><td><strong>Network_Traffic</strong></td><td>Connection analysis</td><td>src_ip, dest_ip, bytes, action</td></tr>
-                        <tr><td><strong>Endpoint</strong></td><td>Process/file events</td><td>process, file_path, user, action</td></tr>
-                        <tr><td><strong>Email</strong></td><td>Email security</td><td>src_user, recipient, subject, action</td></tr>
-                        <tr><td><strong>Web</strong></td><td>Web traffic</td><td>url, http_method, status, user</td></tr>
-                        <tr><td><strong>Malware</strong></td><td>Malware detection</td><td>file_hash, file_name, signature</td></tr>
-                    </tbody>
-                </table>
+                <!-- TIPS -->
+                <div class="tip-box">
+                    <strong><i class="fas fa-lightbulb"></i> Pro Tips for Splunk Users</strong>
+                    <ul>
+                        <li><strong>Always specify index and sourcetype</strong> - Makes searches much faster</li>
+                        <li><strong>Use time pickers</strong> - Searching "All Time" is slow and expensive</li>
+                        <li><strong>Click on fields</strong> - The field sidebar shows values and lets you add to search</li>
+                        <li><strong>Use <code>| head 10</code> first</strong> - See sample data before complex queries</li>
+                        <li><strong>Pipe commands sequentially</strong> - Each <code>|</code> passes results to next command</li>
+                    </ul>
+                </div>
 
-                <h2>Splunk Security Best Practices</h2>
-                <ul>
-                    <li><strong>Always specify index and time range</strong> - Never search all indexes without limits</li>
-                    <li><strong>Use data models for dashboards</strong> - tstats is dramatically faster</li>
-                    <li><strong>Limit real-time searches</strong> - They consume significant resources</li>
-                    <li><strong>Create summary indexes</strong> - For frequent aggregate queries</li>
-                    <li><strong>Use event sampling</strong> - For initial query development</li>
-                    <li><strong>Schedule searches during off-peak</strong> - Reduce impact on ad-hoc searches</li>
-                    <li><strong>Monitor search performance</strong> - Use Job Inspector to optimize</li>
-                </ul>
+                <!-- DEEP DIVE -->
+                <h2><i class="fas fa-book"></i> Deep Dive Topics</h2>
+                <div class="card-grid">
+                    <a href="pages/splunk/spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>SPL Fundamentals</h3><p>Core search syntax and operators</p></a>
+                    <a href="pages/splunk/spl-intermediate.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>SPL Intermediate</h3><p>Stats, eval, transactions</p></a>
+                    <a href="pages/splunk/spl-advanced.html" class="card"><div class="card-icon"><i class="fas fa-rocket"></i></div><h3>SPL Advanced</h3><p>Correlation and ML</p></a>
+                    <a href="pages/references/spl-library.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>SPL Library</h3><p>Ready-to-use queries</p></a>
+                </div>
 
             </div>
         </div>

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splunk Data Ingestion & Parsing | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .concept-box { background: linear-gradient(135deg, rgba(101, 166, 55, 0.1), rgba(101, 166, 55, 0.05)); border: 1px solid rgba(101, 166, 55, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .concept-box h3 { color: #65a637; margin-top: 0; }
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid #65a637; }
+        .scenario-box h4 { margin-top: 0; color: #65a637; }
+        .code-block { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; }
+        .file-block { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; margin: 1rem 0; overflow: hidden; }
+        .file-block .header { background: var(--card-bg); padding: 0.5rem 1rem; font-family: var(--font-mono); font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: #65a637; }
+        .file-block pre { margin: 0; padding: 1rem; font-size: 0.85rem; }
+        .tier-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; }
+        .tier-card h4 { margin: 0 0 0.5rem 0; }
+        .tier-card.hot { border-left: 4px solid #ef4444; }
+        .tier-card.warm { border-left: 4px solid #f97316; }
+        .tier-card.cold { border-left: 4px solid #3b82f6; }
+        .tier-card.frozen { border-left: 4px solid #6b7280; }
+        .flow-diagram { background: var(--bg-secondary); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .flow-step { display: inline-block; background: #65a637; color: white; padding: 0.5rem 1rem; border-radius: 8px; margin: 0.25rem; font-size: 0.85rem; }
+        .flow-arrow { color: var(--text-muted); margin: 0 0.5rem; }
+        .tip-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .warning-box { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+        .step-section { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+        .step-section h5 { margin: 0 0 0.5rem 0; color: #65a637; }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/splunk/index.html">Splunk</a><span class="separator">/</span>
+                <span>Data Ingestion & Parsing</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-database" style="color: #65a637;"></i> Splunk Data Ingestion & Parsing</h1>
+                <p class="lead">Complete guide to getting data into Splunk: inputs, sourcetypes, props.conf, transforms.conf, CIM normalization, and index tiers.</p>
+
+                <!-- OVERVIEW -->
+                <div class="concept-box">
+                    <h3><i class="fas fa-route"></i> How Data Gets Into Splunk</h3>
+                    <p>Data flows through Splunk's pipeline:</p>
+                    <div class="flow-diagram">
+                        <span class="flow-step">📊 Log Source</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">📤 Forwarder</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">⚙️ Parsing (props/transforms)</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">💾 Indexer</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">🔍 Search Head</span>
+                    </div>
+                    <p style="margin-top: 1rem;"><strong>Key concepts:</strong></p>
+                    <ul>
+                        <li><strong>Input</strong> = How data enters Splunk (file monitor, syslog, API)</li>
+                        <li><strong>Sourcetype</strong> = Tells Splunk how to parse the data</li>
+                        <li><strong>Index</strong> = Where data is stored (like a database)</li>
+                        <li><strong>props.conf</strong> = Parsing rules for each sourcetype</li>
+                        <li><strong>transforms.conf</strong> = Advanced transformations and field extractions</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 1: INPUTS -->
+                <h2><i class="fas fa-upload"></i> Section 1: Data Inputs</h2>
+
+                <p>The first step is getting data INTO Splunk. There are several input methods:</p>
+
+                <table>
+                    <thead>
+                        <tr><th>Input Type</th><th>Use Case</th><th>Configuration</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>monitor://</strong></td>
+                            <td>Watch files/directories</td>
+                            <td><code>[monitor:///var/log/messages]</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>WinEventLog://</strong></td>
+                            <td>Windows Event Logs</td>
+                            <td><code>[WinEventLog://Security]</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>tcp:// / udp://</strong></td>
+                            <td>Syslog, network inputs</td>
+                            <td><code>[tcp://514]</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>HTTP Event Collector</strong></td>
+                            <td>API-based ingestion</td>
+                            <td>POST to <code>:8088/services/collector</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>scripted://</strong></td>
+                            <td>Custom scripts</td>
+                            <td><code>[script://./bin/myscript.sh]</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Configure Windows Event Log Collection</h4>
+                    
+                    <div class="step-section">
+                        <h5>Step 1: Create inputs.conf on Universal Forwarder</h5>
+                        <div class="file-block">
+                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/inputs.conf</div>
+<pre><code># Collect Windows Security Events
+[WinEventLog://Security]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:Security
+# Only collect specific Event IDs (reduces volume)
+whitelist = 4624,4625,4648,4672,4688,4720,4726,4728,4732,4756
+
+# Collect Windows System Events
+[WinEventLog://System]
+disabled = 0
+index = wineventlog
+sourcetype = WinEventLog:System
+
+# Collect Sysmon Events
+[WinEventLog://Microsoft-Windows-Sysmon/Operational]
+disabled = 0
+index = sysmon
+sourcetype = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
+renderXml = true</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 2: Configure outputs.conf (Where to send)</h5>
+                        <div class="file-block">
+                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/outputs.conf</div>
+<pre><code>[tcpout]
+defaultGroup = indexer_cluster
+
+[tcpout:indexer_cluster]
+server = indexer1.company.com:9997, indexer2.company.com:9997
+compressed = true
+useACK = true</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 3: Restart and Verify</h5>
+                        <div class="code-block">
+<pre># Restart forwarder
+$SPLUNK_HOME/bin/splunk restart
+
+# On search head, verify data
+index=wineventlog sourcetype=WinEventLog:Security | head 10</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: SOURCETYPES -->
+                <h2><i class="fas fa-tags"></i> Section 2: Sourcetypes (Pre-Built Parsing)</h2>
+
+                <div class="concept-box">
+                    <h3>What is a Sourcetype?</h3>
+                    <p>A <strong>sourcetype</strong> tells Splunk:</p>
+                    <ul>
+                        <li>How to break data into events (line breaking)</li>
+                        <li>How to extract the timestamp</li>
+                        <li>What fields to extract</li>
+                    </ul>
+                    <p>For common log formats, <strong>Technology Add-ons (TAs)</strong> provide pre-built sourcetypes with all parsing configured.</p>
+                </div>
+
+                <h3>Common Security Sourcetypes</h3>
+                <table>
+                    <thead>
+                        <tr><th>Sourcetype</th><th>Source</th><th>TA Required</th><th>Key Fields</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>WinEventLog:Security</code></td>
+                            <td>Windows Security Log</td>
+                            <td>Splunk Add-on for Windows</td>
+                            <td>EventCode, Account_Name, Logon_Type, Source_Network_Address</td>
+                        </tr>
+                        <tr>
+                            <td><code>XmlWinEventLog:Microsoft-Windows-Sysmon/Operational</code></td>
+                            <td>Sysmon</td>
+                            <td>Splunk Add-on for Sysmon</td>
+                            <td>EventID, Image, CommandLine, ParentImage, Hashes</td>
+                        </tr>
+                        <tr>
+                            <td><code>pan:traffic</code></td>
+                            <td>Palo Alto Firewall</td>
+                            <td>Palo Alto Networks Add-on</td>
+                            <td>src_ip, dest_ip, dest_port, action, app, rule</td>
+                        </tr>
+                        <tr>
+                            <td><code>cisco:asa</code></td>
+                            <td>Cisco ASA Firewall</td>
+                            <td>Cisco ASA Add-on</td>
+                            <td>src_ip, dest_ip, action, protocol</td>
+                        </tr>
+                        <tr>
+                            <td><code>linux_secure</code></td>
+                            <td>Linux /var/log/secure</td>
+                            <td>Splunk Add-on for Unix</td>
+                            <td>user, src_ip, process, action</td>
+                        </tr>
+                        <tr>
+                            <td><code>aws:cloudtrail</code></td>
+                            <td>AWS CloudTrail</td>
+                            <td>Splunk Add-on for AWS</td>
+                            <td>eventName, userIdentity, sourceIPAddress</td>
+                        </tr>
+                        <tr>
+                            <td><code>ms:o365:management</code></td>
+                            <td>Microsoft 365 Audit</td>
+                            <td>Splunk Add-on for O365</td>
+                            <td>Operation, UserId, ClientIP, Workload</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tip-box">
+                    <strong><i class="fas fa-lightbulb"></i> Best Practice</strong>
+                    <p>Always check Splunkbase for a Technology Add-on (TA) before writing custom parsing. TAs are tested, maintained, and include CIM compliance.</p>
+                </div>
+
+                <!-- SECTION 3: PROPS.CONF -->
+                <h2><i class="fas fa-cog"></i> Section 3: props.conf (Parsing Configuration)</h2>
+
+                <div class="concept-box">
+                    <h3>What is props.conf?</h3>
+                    <p><strong>props.conf</strong> defines how Splunk parses a specific sourcetype:</p>
+                    <ul>
+                        <li><strong>Time extraction</strong> - Where is the timestamp? What format?</li>
+                        <li><strong>Line breaking</strong> - Where does one event end and another begin?</li>
+                        <li><strong>Field extraction</strong> - What fields to extract (at search-time or index-time)</li>
+                        <li><strong>Field aliases</strong> - Map custom names to CIM names</li>
+                    </ul>
+                </div>
+
+                <h3>Key props.conf Settings</h3>
+                <table>
+                    <thead>
+                        <tr><th>Setting</th><th>Purpose</th><th>Example</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>TIME_FORMAT</code></td>
+                            <td>Timestamp format</td>
+                            <td><code>TIME_FORMAT = %Y-%m-%d %H:%M:%S</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>TIME_PREFIX</code></td>
+                            <td>Text before timestamp</td>
+                            <td><code>TIME_PREFIX = ^</code> (start of line)</td>
+                        </tr>
+                        <tr>
+                            <td><code>MAX_TIMESTAMP_LOOKAHEAD</code></td>
+                            <td>How far to look for timestamp</td>
+                            <td><code>MAX_TIMESTAMP_LOOKAHEAD = 25</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>SHOULD_LINEMERGE</code></td>
+                            <td>Merge multiple lines into one event?</td>
+                            <td><code>SHOULD_LINEMERGE = false</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>LINE_BREAKER</code></td>
+                            <td>Regex for event boundaries</td>
+                            <td><code>LINE_BREAKER = ([\r\n]+)</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>EXTRACT-&lt;name&gt;</code></td>
+                            <td>Regex field extraction</td>
+                            <td><code>EXTRACT-user = user=(?&lt;user&gt;\w+)</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>FIELDALIAS-&lt;name&gt;</code></td>
+                            <td>Create field alias</td>
+                            <td><code>FIELDALIAS-src = source_ip AS src_ip</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>REPORT-&lt;name&gt;</code></td>
+                            <td>Use transform from transforms.conf</td>
+                            <td><code>REPORT-fields = my_extraction</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Create Custom Sourcetype for Application Logs</h4>
+                    <p><strong>Your application produces logs like:</strong></p>
+                    <div class="code-block">
+<pre>2025-01-04 10:23:45.123 [INFO] [user=john.doe] [action=login] [status=success] [ip=192.168.1.100] Login completed
+2025-01-04 10:24:12.456 [WARN] [user=jane.smith] [action=file_download] [status=blocked] [ip=10.0.0.50] Download blocked by policy</pre>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 1: Create props.conf</h5>
+                        <div class="file-block">
+                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/props.conf</div>
+<pre><code>[custom_app_log]
+# Timestamp extraction
+TIME_FORMAT = %Y-%m-%d %H:%M:%S.%3N
+TIME_PREFIX = ^
+MAX_TIMESTAMP_LOOKAHEAD = 24
+
+# Line breaking - each line is one event
+SHOULD_LINEMERGE = false
+LINE_BREAKER = ([\r\n]+)
+
+# Field extractions (search-time)
+EXTRACT-level = \[(?&lt;log_level&gt;INFO|WARN|ERROR|DEBUG)\]
+EXTRACT-user = \[user=(?&lt;user&gt;[^\]]+)\]
+EXTRACT-action = \[action=(?&lt;action&gt;[^\]]+)\]
+EXTRACT-status = \[status=(?&lt;status&gt;[^\]]+)\]
+EXTRACT-src_ip = \[ip=(?&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)\]
+
+# CIM field aliases
+FIELDALIAS-src = src_ip AS src
+FIELDALIAS-user_name = user AS user_name
+
+# Add vendor/product for CIM
+EVAL-vendor_product = "MyApp"</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 2: Create inputs.conf</h5>
+                        <div class="file-block">
+                            <div class="header">$SPLUNK_HOME/etc/apps/myapp/local/inputs.conf</div>
+<pre><code>[monitor:///var/log/myapp/app.log]
+disabled = 0
+index = application
+sourcetype = custom_app_log</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 3: Verify Parsing</h5>
+                        <div class="code-block">
+<pre>index=application sourcetype=custom_app_log
+| table _time, log_level, user, action, status, src_ip
+| head 20</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: TRANSFORMS.CONF -->
+                <h2><i class="fas fa-exchange-alt"></i> Section 4: transforms.conf (Advanced Transformations)</h2>
+
+                <div class="concept-box">
+                    <h3>What is transforms.conf?</h3>
+                    <p><strong>transforms.conf</strong> handles complex transformations that can't be done in props.conf alone:</p>
+                    <ul>
+                        <li><strong>Complex regex extractions</strong> with multiple capture groups</li>
+                        <li><strong>Lookups</strong> - enrich events with external data</li>
+                        <li><strong>Routing</strong> - send events to different indexes based on content</li>
+                        <li><strong>Masking</strong> - hide sensitive data (credit cards, SSNs)</li>
+                    </ul>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Route Logs to Different Indexes by Severity</h4>
+                    <p><strong>Goal:</strong> Send ERROR logs to a high-priority index, INFO logs to standard index.</p>
+
+                    <div class="file-block">
+                        <div class="header">transforms.conf</div>
+<pre><code># Route ERROR events to priority index
+[route_errors]
+REGEX = \[(ERROR)\]
+DEST_KEY = _MetaData:Index
+FORMAT = priority_logs
+
+# Route INFO events to standard index
+[route_info]
+REGEX = \[(INFO)\]
+DEST_KEY = _MetaData:Index
+FORMAT = application_logs</code></pre>
+                    </div>
+
+                    <div class="file-block">
+                        <div class="header">props.conf</div>
+<pre><code>[custom_app_log]
+# Apply the routing transforms
+TRANSFORMS-routing = route_errors, route_info</code></pre>
+                    </div>
+                </div>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Mask Credit Card Numbers</h4>
+                    <div class="file-block">
+                        <div class="header">transforms.conf</div>
+<pre><code>[mask_credit_cards]
+REGEX = (\d{4})[- ]?(\d{4})[- ]?(\d{4})[- ]?(\d{4})
+FORMAT = XXXX-XXXX-XXXX-$4
+DEST_KEY = _raw</code></pre>
+                    </div>
+
+                    <div class="file-block">
+                        <div class="header">props.conf</div>
+<pre><code>[payment_logs]
+TRANSFORMS-mask = mask_credit_cards</code></pre>
+                    </div>
+                    <p><strong>Result:</strong> <code>4111-1111-1111-1234</code> becomes <code>XXXX-XXXX-XXXX-1234</code></p>
+                </div>
+
+                <!-- SECTION 5: CIM -->
+                <h2><i class="fas fa-balance-scale"></i> Section 5: CIM Normalization</h2>
+
+                <div class="concept-box">
+                    <h3>What is CIM?</h3>
+                    <p>The <strong>Common Information Model (CIM)</strong> is Splunk's normalization standard. It maps different log formats to common field names.</p>
+                    
+                    <p><strong>Why CIM matters:</strong></p>
+                    <ul>
+                        <li>Splunk Enterprise Security (ES) requires CIM-compliant data</li>
+                        <li>One search works across all sources</li>
+                        <li>Pre-built dashboards and content work automatically</li>
+                    </ul>
+                </div>
+
+                <h3>CIM Data Models</h3>
+                <table>
+                    <thead>
+                        <tr><th>Data Model</th><th>Use For</th><th>Key CIM Fields</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Authentication</strong></td><td>Logins, auth events</td><td>user, src, dest, action, app</td></tr>
+                        <tr><td><strong>Network Traffic</strong></td><td>Firewall, netflow</td><td>src_ip, dest_ip, dest_port, bytes, action</td></tr>
+                        <tr><td><strong>Endpoint</strong></td><td>Process, file, registry</td><td>process, file_name, user, action</td></tr>
+                        <tr><td><strong>Web</strong></td><td>Proxy, web server</td><td>url, http_method, status, src, dest</td></tr>
+                        <tr><td><strong>Malware</strong></td><td>AV, EDR alerts</td><td>signature, file_name, action, dest</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Make Custom Logs CIM-Compliant</h4>
+                    
+                    <div class="file-block">
+                        <div class="header">props.conf - Add CIM field aliases and tags</div>
+<pre><code>[custom_firewall_log]
+# Your custom parsing
+EXTRACT-src = src=(?&lt;source_ip&gt;\d+\.\d+\.\d+\.\d+)
+EXTRACT-dst = dst=(?&lt;destination_ip&gt;\d+\.\d+\.\d+\.\d+)
+EXTRACT-port = dport=(?&lt;destination_port&gt;\d+)
+EXTRACT-act = action=(?&lt;firewall_action&gt;\w+)
+
+# Map to CIM field names
+FIELDALIAS-src_ip = source_ip AS src_ip
+FIELDALIAS-dest_ip = destination_ip AS dest_ip
+FIELDALIAS-dest_port = destination_port AS dest_port
+FIELDALIAS-action = firewall_action AS action
+
+# Add CIM-required fields
+EVAL-vendor_product = "Custom Firewall"
+EVAL-dvc = host</code></pre>
+                    </div>
+
+                    <div class="file-block">
+                        <div class="header">tags.conf - Tag for data model</div>
+<pre><code># Tag this sourcetype for Network Traffic data model
+[sourcetype=custom_firewall_log]
+network = enabled
+communicate = enabled</code></pre>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Verify CIM Compliance</h5>
+                        <div class="code-block">
+<pre># Check if data appears in data model
+| datamodel Network_Traffic All_Traffic search
+| table src_ip, dest_ip, dest_port, action
+| head 20
+
+# Or use tstats (faster)
+| tstats count from datamodel=Network_Traffic by All_Traffic.src_ip, All_Traffic.dest_ip</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 6: INDEX TIERS -->
+                <h2><i class="fas fa-layer-group"></i> Section 6: Index Tiers (SmartStore)</h2>
+
+                <p>Splunk indexes have storage tiers that data moves through over time:</p>
+
+                <div class="tier-card hot">
+                    <h4><i class="fas fa-fire"></i> Hot Bucket</h4>
+                    <p><strong>What:</strong> Actively receiving new data</p>
+                    <p><strong>Storage:</strong> Fast local SSD</p>
+                    <p><strong>Searchable:</strong> Yes, fastest</p>
+                    <p><strong>Typical age:</strong> Current data being indexed</p>
+                </div>
+
+                <div class="tier-card warm">
+                    <h4><i class="fas fa-temperature-half"></i> Warm Bucket</h4>
+                    <p><strong>What:</strong> No longer receiving data, but recent</p>
+                    <p><strong>Storage:</strong> Local disk (SSD or HDD)</p>
+                    <p><strong>Searchable:</strong> Yes, fast</p>
+                    <p><strong>Typical age:</strong> Hours to days old</p>
+                </div>
+
+                <div class="tier-card cold">
+                    <h4><i class="fas fa-snowflake"></i> Cold Bucket</h4>
+                    <p><strong>What:</strong> Older data, accessed less frequently</p>
+                    <p><strong>Storage:</strong> Slower/cheaper storage (HDD, NAS)</p>
+                    <p><strong>Searchable:</strong> Yes, slower</p>
+                    <p><strong>Typical age:</strong> Days to months old</p>
+                </div>
+
+                <div class="tier-card frozen">
+                    <h4><i class="fas fa-box-archive"></i> Frozen Bucket</h4>
+                    <p><strong>What:</strong> Archived data</p>
+                    <p><strong>Storage:</strong> Archive storage, SmartStore (S3)</p>
+                    <p><strong>Searchable:</strong> Must thaw first (restore)</p>
+                    <p><strong>Typical age:</strong> Months to years old</p>
+                </div>
+
+                <h3>Configuring Index Retention</h3>
+                <div class="file-block">
+                    <div class="header">indexes.conf</div>
+<pre><code># Security index - keep longer
+[security]
+homePath = $SPLUNK_DB/security/db
+coldPath = $SPLUNK_DB/security/colddb
+thawedPath = $SPLUNK_DB/security/thaweddb
+
+# Retention settings
+frozenTimePeriodInSecs = 31536000  # 365 days before freezing
+maxTotalDataSizeMB = 500000        # 500 GB max
+
+# Data moves to cold after 7 days
+maxWarmDBCount = 300
+
+# SmartStore for frozen (S3)
+remotePath = volume:s3_archive/security
+
+# Firewall index - shorter retention, high volume
+[firewall]
+homePath = $SPLUNK_DB/firewall/db
+coldPath = $SPLUNK_DB/firewall/colddb
+thawedPath = $SPLUNK_DB/firewall/thaweddb
+
+frozenTimePeriodInSecs = 7776000   # 90 days
+maxTotalDataSizeMB = 1000000       # 1 TB max</code></pre>
+                </div>
+
+                <h3>Recommended Retention by Log Type</h3>
+                <table>
+                    <thead>
+                        <tr><th>Log Type</th><th>Index</th><th>Retention</th><th>Rationale</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Authentication</td><td>security</td><td>365+ days</td><td>Compliance, breach investigation</td></tr>
+                        <tr><td>Windows Events</td><td>wineventlog</td><td>90-180 days</td><td>Endpoint forensics</td></tr>
+                        <tr><td>Sysmon</td><td>sysmon</td><td>90-180 days</td><td>Detailed endpoint telemetry</td></tr>
+                        <tr><td>Firewall Traffic</td><td>firewall</td><td>30-90 days</td><td>High volume, network forensics</td></tr>
+                        <tr><td>Proxy/Web</td><td>proxy</td><td>30-90 days</td><td>High volume</td></tr>
+                        <tr><td>DNS</td><td>dns</td><td>30-90 days</td><td>Very high volume</td></tr>
+                        <tr><td>Email Gateway</td><td>email</td><td>90-365 days</td><td>Phishing investigation</td></tr>
+                        <tr><td>Application Logs</td><td>application</td><td>30-90 days</td><td>Depends on security value</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- SECTION 7: PARSING PIPELINE SUMMARY -->
+                <h2><i class="fas fa-sitemap"></i> Section 7: Complete Parsing Pipeline</h2>
+
+                <div class="scenario-box">
+                    <h4>End-to-End Example: Ingest Palo Alto Firewall Logs</h4>
+
+                    <div class="step-section">
+                        <h5>1. Install Technology Add-on</h5>
+                        <p>Download "Palo Alto Networks Add-on for Splunk" from Splunkbase. Install on:</p>
+                        <ul>
+                            <li>Search Heads (for field extractions at search time)</li>
+                            <li>Indexers (for index-time parsing)</li>
+                            <li>Heavy Forwarder (if doing syslog collection there)</li>
+                        </ul>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>2. Configure Syslog Input</h5>
+                        <div class="file-block">
+                            <div class="header">inputs.conf (on Heavy Forwarder or Indexer)</div>
+<pre><code>[tcp://514]
+connection_host = dns
+sourcetype = pan:traffic
+index = firewall</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>3. Configure Firewall to Send Logs</h5>
+                        <p>On Palo Alto: Device → Server Profiles → Syslog</p>
+                        <ul>
+                            <li>Server: Your Splunk Heavy Forwarder IP</li>
+                            <li>Port: 514</li>
+                            <li>Format: BSD</li>
+                        </ul>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>4. Verify Data</h5>
+                        <div class="code-block">
+<pre>index=firewall sourcetype=pan:traffic
+| stats count by action, app
+| sort -count</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>5. Verify CIM Compliance</h5>
+                        <div class="code-block">
+<pre>| tstats count from datamodel=Network_Traffic where nodename=All_Traffic.Traffic_By_Action by All_Traffic.action</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUMMARY -->
+                <h2><i class="fas fa-check-circle"></i> Summary: When to Use What</h2>
+
+                <table>
+                    <thead>
+                        <tr><th>Scenario</th><th>Approach</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Common log source (Windows, Palo Alto, AWS)</td>
+                            <td>Install TA from Splunkbase → Configure input with correct sourcetype</td>
+                        </tr>
+                        <tr>
+                            <td>Custom application logs</td>
+                            <td>Create custom sourcetype in props.conf with extractions</td>
+                        </tr>
+                        <tr>
+                            <td>Complex parsing with multiple patterns</td>
+                            <td>Use transforms.conf with REPORT in props.conf</td>
+                        </tr>
+                        <tr>
+                            <td>Route logs to different indexes</td>
+                            <td>transforms.conf with DEST_KEY routing</td>
+                        </tr>
+                        <tr>
+                            <td>Enterprise Security compatibility</td>
+                            <td>Add CIM field aliases and tags for data models</td>
+                        </tr>
+                        <tr>
+                            <td>Cost optimization</td>
+                            <td>Configure shorter retention for high-volume, low-value indexes</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+                <div class="card-grid">
+                    <a href="pages/splunk/spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>SPL Fundamentals</h3><p>Query your data</p></a>
+                    <a href="pages/splunk/spl-intermediate.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>SPL Intermediate</h3><p>Stats, eval, lookups</p></a>
+                    <a href="pages/references/spl-library.html" class="card"><div class="card-icon"><i class="fas fa-book"></i></div><h3>SPL Library</h3><p>Ready-to-use queries</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

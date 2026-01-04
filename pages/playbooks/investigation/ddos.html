@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDoS Investigation Playbook | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="pages/playbooks/investigation/index.html">Investigation</a><span class="separator">/</span>
+                <span>DDoS</span>
+            </div>
+
+            <h1><i class="fas fa-server"></i> DDoS Investigation Playbook</h1>
+            <p class="lead">Complete investigation and response workflow for Distributed Denial of Service attacks including volumetric, protocol, and application layer attacks.</p>
+
+            <div class="content">
+                <!-- WHY THIS MATTERS -->
+                <h3 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h3>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> Business Impact of DDoS</div>
+                    <table>
+                        <thead><tr><th>If You Don't Respond...</th><th>Potential Outcome</th><th>Real-World Impact</th></tr></thead>
+                        <tbody>
+                            <tr><td>Services remain down</td><td>Revenue loss, customer impact</td><td>Amazon loses $220K/minute during outage</td></tr>
+                            <tr><td>Attack used as smokescreen</td><td>Miss actual data breach occurring</td><td>DDoS distracts while attackers exfil data</td></tr>
+                            <tr><td>No mitigation activated</td><td>Prolonged outage, SLA breach</td><td>Gaming companies lose millions per hour</td></tr>
+                            <tr><td>Root cause not identified</td><td>Repeat attacks without improvement</td><td>Attackers return knowing you're vulnerable</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>DDoS Attack Types Explained</h3>
+                <table>
+                    <thead><tr><th>Layer</th><th>Attack Type</th><th>Method</th><th>Detection Signature</th></tr></thead>
+                    <tbody>
+                        <tr><td rowspan="3"><strong>L3/L4 Volumetric</strong></td><td>UDP Flood</td><td>Massive UDP packets to random ports</td><td>High PPS, random dst ports</td></tr>
+                        <tr><td>ICMP Flood</td><td>Ping flood overwhelming target</td><td>Massive ICMP traffic spike</td></tr>
+                        <tr><td>Amplification (DNS, NTP, SSDP)</td><td>Small query triggers large response</td><td>High incoming traffic from port 53, 123</td></tr>
+                        <tr><td rowspan="3"><strong>L4 Protocol</strong></td><td>SYN Flood</td><td>Half-open TCP connections exhaust resources</td><td>High SYN count, low established</td></tr>
+                        <tr><td>ACK Flood</td><td>Invalid ACK packets consume resources</td><td>ACK packets without SYN</td></tr>
+                        <tr><td>TCP State Exhaustion</td><td>Fill connection tables</td><td>Max connections reached</td></tr>
+                        <tr><td rowspan="3"><strong>L7 Application</strong></td><td>HTTP Flood</td><td>Legitimate-looking HTTP requests</td><td>High request rate, specific URLs</td></tr>
+                        <tr><td>Slowloris</td><td>Keep connections open slowly</td><td>Many incomplete connections</td></tr>
+                        <tr><td>API Abuse</td><td>Expensive API calls at scale</td><td>Specific endpoint overload</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- TRIGGERS -->
+                <h3 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h3>
+
+                <table>
+                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th><th>First Action</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>Service unavailable</strong></td><td>Monitoring alert, user reports</td><td>CRITICAL</td><td>Confirm DDoS vs other outage</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Bandwidth saturation</strong></td><td>Network monitoring</td><td>CRITICAL</td><td>Engage DDoS mitigation service</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>High CPU/memory on web servers</strong></td><td>Infrastructure monitoring</td><td>HIGH</td><td>Check for L7 attack pattern</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Connection limits reached</strong></td><td>Load balancer alerts</td><td>HIGH</td><td>Identify source pattern</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Unusual traffic spike</strong></td><td>NetFlow, firewall logs</td><td>MEDIUM</td><td>Classify traffic type</td></tr>
+                        <tr><td style="color: #d29922;"><strong>DDoS extortion email received</strong></td><td>Security team, executives</td><td>HIGH</td><td>Do not pay, prepare mitigation</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- INVESTIGATION STEPS -->
+                <h3 id="investigation"><i class="fas fa-search"></i> Investigation Steps</h3>
+
+                <h3>Step 1: Confirm DDoS vs Other Outage</h3>
+
+                <div class="info-box info">
+                    <div class="info-box-title"><i class="fas fa-question-circle"></i> First 5 Minutes - Is This DDoS?</div>
+                    <table>
+                        <thead><tr><th>Check</th><th>DDoS Indicators</th><th>Not DDoS Indicators</th></tr></thead>
+                        <tbody>
+                            <tr><td>Traffic volume</td><td>Massive spike in inbound traffic</td><td>Normal or below normal</td></tr>
+                            <tr><td>Traffic sources</td><td>Many IPs, often geographically distributed</td><td>Normal user distribution</td></tr>
+                            <tr><td>Traffic pattern</td><td>Unusual protocols, ports, request patterns</td><td>Normal protocol mix</td></tr>
+                            <tr><td>Application errors</td><td>Timeouts, connection refused</td><td>Application bugs, misconfig</td></tr>
+                            <tr><td>Affected scope</td><td>All users, external facing</td><td>Specific users or internal</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>KQL - Traffic Volume Analysis</h4>
+                <pre><code>// Identify traffic volume anomaly
+AzureNetworkAnalytics_CL
+| where TimeGenerated > ago(1h)
+| summarize 
+    InboundGB = sum(InboundBytes_d) / 1073741824,
+    OutboundGB = sum(OutboundBytes_d) / 1073741824,
+    FlowCount = count()
+    by bin(TimeGenerated, 5m)
+| render timechart</code></pre>
+
+                <h4>KQL - Identify Attack Type</h4>
+                <pre><code>// Classify DDoS attack type
+AzureNetworkAnalytics_CL
+| where TimeGenerated > ago(1h)
+| summarize 
+    PacketCount = sum(FlowCount_d),
+    UniqueSourceIPs = dcount(SrcIP_s),
+    TopPorts = make_set(DestPort_d, 10)
+    by L4Protocol_s, bin(TimeGenerated, 5m)
+| extend AttackType = case(
+    L4Protocol_s == "U" and PacketCount > 1000000, "UDP Flood",
+    L4Protocol_s == "T" and PacketCount > 1000000, "TCP Flood",
+    L4Protocol_s == "I", "ICMP Flood",
+    "Unknown"
+)
+| order by PacketCount desc</code></pre>
+
+                <h4>SPL - NetFlow Analysis (Splunk)</h4>
+                <pre><code>index=netflow
+| stats sum(bytes) as TotalBytes dc(src_ip) as UniqueIPs by dest_port, protocol
+| eval GB=round(TotalBytes/1073741824, 2)
+| where GB > 1
+| sort -TotalBytes</code></pre>
+
+                <h3>Step 2: Identify Attack Characteristics</h3>
+
+                <h4>KQL - Source IP Analysis</h4>
+                <pre><code>// Identify top attacking sources
+AzureNetworkAnalytics_CL
+| where TimeGenerated > ago(1h)
+| where FlowDirection_s == "I"  // Inbound
+| summarize 
+    Bytes = sum(BytesSent_d),
+    Flows = count()
+    by SrcIP_s, SrcCountry_s
+| top 100 by Bytes
+| extend GeoDistribution = strcat(SrcCountry_s, ": ", Bytes)</code></pre>
+
+                <h4>KQL - HTTP Flood Detection (L7)</h4>
+                <pre><code>// Detect HTTP flood attacks
+AzureDiagnostics
+| where TimeGenerated > ago(1h)
+| where ResourceType == "APPLICATIONGATEWAYS"
+| summarize 
+    RequestCount = count(),
+    UniqueIPs = dcount(clientIp_s),
+    AvgResponseTime = avg(toint(timeTaken_s))
+    by requestUri_s, bin(TimeGenerated, 1m)
+| where RequestCount > 1000
+| order by RequestCount desc</code></pre>
+
+                <h4>SPL - L7 Attack Detection (Splunk)</h4>
+                <pre><code>index=web sourcetype=access_combined
+| stats count as Requests dc(clientip) as UniqueIPs by uri_path
+| where Requests > 10000
+| eval RequestsPerIP = Requests / UniqueIPs
+| where RequestsPerIP > 100
+| sort -Requests</code></pre>
+
+                <h3>Step 3: Impact Assessment</h3>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-chart-line"></i> Measure Attack Impact</div>
+                    <ul>
+                        <li><strong>Bandwidth consumption:</strong> What % of capacity is used?</li>
+                        <li><strong>Server resources:</strong> CPU, memory, connection table status</li>
+                        <li><strong>Service availability:</strong> Which services are affected?</li>
+                        <li><strong>User impact:</strong> Error rates, response times</li>
+                        <li><strong>Business impact:</strong> Revenue loss, SLA breach</li>
+                    </ul>
+                </div>
+
+                <h4>KQL - Service Impact</h4>
+                <pre><code>// Check service availability during attack
+AzureDiagnostics
+| where TimeGenerated > ago(1h)
+| where ResourceType == "APPLICATIONGATEWAYS"
+| summarize 
+    Total = count(),
+    Success = countif(httpStatus_s startswith "2"),
+    ClientError = countif(httpStatus_s startswith "4"),
+    ServerError = countif(httpStatus_s startswith "5"),
+    Timeout = countif(httpStatus_s == "504")
+    by bin(TimeGenerated, 1m)
+| extend SuccessRate = round(100.0 * Success / Total, 2)
+| render timechart</code></pre>
+
+                <!-- MITIGATION -->
+                <h3 id="mitigation"><i class="fas fa-shield-alt"></i> Mitigation Actions</h3>
+
+                <h3>Immediate Response by Attack Type</h3>
+                <table>
+                    <thead><tr><th>Attack Type</th><th>Immediate Action</th><th>Implementation</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Volumetric (L3/L4)</strong></td>
+                            <td>Activate upstream DDoS protection</td>
+                            <td>Enable Azure DDoS Protection, Cloudflare, Akamai</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>SYN Flood</strong></td>
+                            <td>Enable SYN cookies, rate limit</td>
+                            <td>Firewall SYN protection, connection limits</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>HTTP Flood (L7)</strong></td>
+                            <td>Enable WAF rate limiting, CAPTCHA</td>
+                            <td>WAF rules, bot management</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>Amplification</strong></td>
+                            <td>Work with ISP for upstream filtering</td>
+                            <td>BGP blackhole, ISP scrubbing</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #d29922;"><strong>Slowloris</strong></td>
+                            <td>Reduce timeout values, limit connections per IP</td>
+                            <td>Web server configuration</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Azure DDoS Protection Commands</h4>
+                <pre><code># Check DDoS Protection status
+az network ddos-protection show --resource-group MyRG --name MyDDoSPlan
+
+# Enable DDoS Protection on VNet
+az network vnet update --resource-group MyRG --name MyVNet \
+    --ddos-protection true --ddos-protection-plan MyDDoSPlan
+
+# View DDoS mitigation reports
+az network ddos-protection show-mitigation-reports \
+    --resource-group MyRG --ddos-plan-name MyDDoSPlan</code></pre>
+
+                <h4>Emergency Geo-Blocking (if attack from specific regions)</h4>
+                <pre><code># Azure WAF geo-filtering
+az network application-gateway waf-policy custom-rule create \
+    --policy-name MyWAFPolicy --resource-group MyRG \
+    --name BlockCountry --priority 5 --rule-type MatchRule \
+    --action Block \
+    --match-conditions field=RemoteAddr operator=GeoMatch values=CN RU</code></pre>
+
+                <h3>Communication During Attack</h3>
+                <table>
+                    <thead><tr><th>Stakeholder</th><th>What to Communicate</th><th>When</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>NOC/IT Ops</strong></td><td>Attack confirmed, mitigation in progress</td><td>Immediately</td></tr>
+                        <tr><td><strong>Management</strong></td><td>Service impact, estimated resolution</td><td>Within 15 minutes</td></tr>
+                        <tr><td><strong>ISP/DDoS Provider</strong></td><td>Attack details, request assistance</td><td>Immediately</td></tr>
+                        <tr><td><strong>Customers (if public)</strong></td><td>Status update, expected recovery</td><td>If outage > 30 minutes</td></tr>
+                        <tr><td><strong>Legal (if extortion)</strong></td><td>Extortion demand received</td><td>Immediately</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- POST-ATTACK -->
+                <h3 id="post-attack"><i class="fas fa-clipboard-check"></i> Post-Attack Analysis</h3>
+
+                <h4>KQL - Attack Summary Report</h4>
+                <pre><code>// Generate attack summary
+let AttackStart = datetime(2024-01-15T10:00:00Z);  // Adjust
+let AttackEnd = datetime(2024-01-15T12:00:00Z);    // Adjust
+AzureNetworkAnalytics_CL
+| where TimeGenerated between (AttackStart .. AttackEnd)
+| summarize 
+    TotalFlows = count(),
+    TotalGB = round(sum(BytesSent_d) / 1073741824, 2),
+    UniqueSourceIPs = dcount(SrcIP_s),
+    PeakFlowsPerMin = max(FlowCount_d),
+    TopSourceCountries = make_set(SrcCountry_s, 10),
+    TopDestPorts = make_set(DestPort_d, 10)
+| extend AttackDuration = AttackEnd - AttackStart</code></pre>
+
+                <h3>Lessons Learned Checklist</h3>
+                <ul>
+                    <li>☐ Was DDoS protection enabled and working?</li>
+                    <li>☐ How quickly was the attack detected?</li>
+                    <li>☐ How quickly was mitigation activated?</li>
+                    <li>☐ Was communication timely and effective?</li>
+                    <li>☐ What was the total downtime/impact?</li>
+                    <li>☐ What improvements are needed?</li>
+                </ul>
+
+                <!-- PREVENTION -->
+                <h3 id="prevention"><i class="fas fa-shield-virus"></i> Prevention Recommendations</h3>
+
+                <table>
+                    <thead><tr><th>Control</th><th>Implementation</th><th>Protection Level</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Cloud DDoS Protection</strong></td><td>Azure DDoS Standard, AWS Shield Advanced</td><td>L3/L4 attacks</td></tr>
+                        <tr><td><strong>CDN with DDoS</strong></td><td>Cloudflare, Akamai, Fastly</td><td>L3/L4 + L7 attacks</td></tr>
+                        <tr><td><strong>WAF with Bot Protection</strong></td><td>Rate limiting, CAPTCHA, bot score</td><td>L7 attacks</td></tr>
+                        <tr><td><strong>Anycast DNS</strong></td><td>Distributed DNS infrastructure</td><td>DNS-based attacks</td></tr>
+                        <tr><td><strong>Overprovision Bandwidth</strong></td><td>Have headroom for traffic spikes</td><td>Volumetric attacks</td></tr>
+                        <tr><td><strong>ISP Coordination</strong></td><td>Pre-arranged scrubbing, blackhole routing</td><td>Large attacks</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- MITRE -->
+                <h3 id="mitre"><i class="fas fa-map"></i> MITRE ATT&CK Mapping</h3>
+
+                <table>
+                    <thead><tr><th>Technique ID</th><th>Technique Name</th><th>DDoS Type</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>T1498.001</strong></td><td>Network Denial of Service: Direct Network Flood</td><td>Volumetric, Protocol</td></tr>
+                        <tr><td><strong>T1498.002</strong></td><td>Network Denial of Service: Reflection Amplification</td><td>DNS/NTP Amplification</td></tr>
+                        <tr><td><strong>T1499.001</strong></td><td>Endpoint Denial of Service: OS Exhaustion Flood</td><td>TCP State Exhaustion</td></tr>
+                        <tr><td><strong>T1499.002</strong></td><td>Endpoint Denial of Service: Service Exhaustion Flood</td><td>HTTP Flood</td></tr>
+                        <tr><td><strong>T1499.003</strong></td><td>Endpoint Denial of Service: Application Exhaustion Flood</td><td>API Abuse, Slowloris</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- RELATED -->
+                <h3 id="related"><i class="fas fa-link"></i> Related Playbooks</h3>
+
+                <div class="card-grid">
+                    <a href="pages/playbooks/incident-response/ddos-ir.html" class="card"><div class="card-icon"><i class="fas fa-fire-extinguisher"></i></div><h3>DDoS IR Playbook</h3><p>Full incident response</p></a>
+                    <a href="pages/playbooks/investigation/web-attacks.html" class="card"><div class="card-icon"><i class="fas fa-globe"></i></div><h3>Web Application Attacks</h3><p>If L7 attack detected</p></a>
+                    <a href="pages/security-architecture/network-security.html" class="card"><div class="card-icon"><i class="fas fa-network-wired"></i></div><h3>Network Security</h3><p>Architecture guidance</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

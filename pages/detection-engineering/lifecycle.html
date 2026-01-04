@@ -7,311 +7,306 @@
     <title>Detection Lifecycle | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .lifecycle-visual { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin: 2rem 0; padding: 1rem; background: var(--card-bg); border-radius: 12px; }
+        .lifecycle-stage { text-align: center; padding: 1rem; min-width: 120px; }
+        .lifecycle-stage .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .lifecycle-stage .number { background: var(--accent-primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-bottom: 0.25rem; }
+        .lifecycle-stage .title { font-weight: 600; font-size: 0.9rem; }
+        .lifecycle-arrow { display: flex; align-items: center; color: var(--text-muted); font-size: 1.5rem; }
+        .stage-detail { background: var(--card-bg); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .stage-detail h3 { margin-top: 0; display: flex; align-items: center; gap: 0.75rem; }
+        .stage-detail .stage-num { background: var(--accent-primary); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .checklist { background: rgba(34, 197, 94, 0.1); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .checklist li { margin: 0.5rem 0; }
+        .example-scenario { background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1rem 0; }
+        .example-scenario .label { color: #3b82f6; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem; }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/detection-engineering/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/detection-engineering/index.html">Home</a><span class="separator">/</span><a href="pages/detection-engineering/index.html">Detection Engineering</a><span class="separator">/</span><span>Lifecycle</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-sync-alt" style="color: var(--accent-tertiary);"></i> Detection Lifecycle</h1>
-                <p class="lead">A systematic approach to creating, testing, deploying, and maintaining security detections.</p>
-            </div>
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/detection-engineering/index.html">Detection Engineering</a><span class="separator">/</span><span>Detection Lifecycle</span></div>
             <div class="content">
-                <h2>The Detection Lifecycle</h2>
-                <p>Effective detection engineering follows a structured lifecycle to ensure high-quality, maintainable detections:</p>
+                <h1><i class="fas fa-sync-alt" style="color: var(--accent-primary);"></i> Detection Lifecycle</h1>
+                <p class="lead">The complete journey of a detection rule: from identifying a threat to retiring an outdated rule.</p>
 
-                <!-- Visual Lifecycle -->
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin: 2rem 0; padding: 1.5rem; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 100px; padding: 0.75rem; text-align: center; background: linear-gradient(135deg, rgba(240,112,112,0.3), rgba(240,112,112,0.1)); border-radius: var(--radius-md); border: 1px solid rgba(240,112,112,0.3);">
-                            <i class="fas fa-search" style="color: #f07070; font-size: 1.25rem;"></i>
-                            <div style="font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem;">Research</div>
-                        </div>
-                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                <!-- OVERVIEW -->
+                <div class="concept-box">
+                    <h3><i class="fas fa-question-circle"></i> What is the Detection Lifecycle?</h3>
+                    <p>The <strong>Detection Lifecycle</strong> is a structured process for creating, maintaining, and eventually retiring detection rules. Just like software has a development lifecycle, detections need proper management to stay effective.</p>
+                    
+                    <p><strong>Why it matters:</strong> Without a lifecycle process, you end up with:</p>
+                    <ul>
+                        <li>Outdated rules that no longer catch attacks</li>
+                        <li>Rules nobody understands or maintains</li>
+                        <li>Alert fatigue from untested/untuned rules</li>
+                        <li>Gaps in coverage you don't know about</li>
+                    </ul>
+                </div>
+
+                <!-- VISUAL LIFECYCLE -->
+                <h2><i class="fas fa-project-diagram"></i> The Six Stages</h2>
+
+                <div class="lifecycle-visual">
+                    <div class="lifecycle-stage">
+                        <div class="icon">🎯</div>
+                        <div class="number">1</div>
+                        <div class="title">Identify</div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 100px; padding: 0.75rem; text-align: center; background: linear-gradient(135deg, rgba(240,183,86,0.3), rgba(240,183,86,0.1)); border-radius: var(--radius-md); border: 1px solid rgba(240,183,86,0.3);">
-                            <i class="fas fa-pencil-ruler" style="color: #f0b756; font-size: 1.25rem;"></i>
-                            <div style="font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem;">Design</div>
-                        </div>
-                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-stage">
+                        <div class="icon">📊</div>
+                        <div class="number">2</div>
+                        <div class="title">Research</div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 100px; padding: 0.75rem; text-align: center; background: linear-gradient(135deg, rgba(106,163,247,0.3), rgba(106,163,247,0.1)); border-radius: var(--radius-md); border: 1px solid rgba(106,163,247,0.3);">
-                            <i class="fas fa-code" style="color: #6aa3f7; font-size: 1.25rem;"></i>
-                            <div style="font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem;">Implement</div>
-                        </div>
-                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-stage">
+                        <div class="icon">✍️</div>
+                        <div class="number">3</div>
+                        <div class="title">Develop</div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 100px; padding: 0.75rem; text-align: center; background: linear-gradient(135deg, rgba(167,139,246,0.3), rgba(167,139,246,0.1)); border-radius: var(--radius-md); border: 1px solid rgba(167,139,246,0.3);">
-                            <i class="fas fa-vial" style="color: #a78bf6; font-size: 1.25rem;"></i>
-                            <div style="font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem;">Test</div>
-                        </div>
-                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-stage">
+                        <div class="icon">🧪</div>
+                        <div class="number">4</div>
+                        <div class="title">Test</div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 100px; padding: 0.75rem; text-align: center; background: linear-gradient(135deg, rgba(92,224,196,0.3), rgba(92,224,196,0.1)); border-radius: var(--radius-md); border: 1px solid rgba(92,224,196,0.3);">
-                            <i class="fas fa-rocket" style="color: #5ce0c4; font-size: 1.25rem;"></i>
-                            <div style="font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem;">Deploy</div>
-                        </div>
-                        <i class="fas fa-arrow-right" style="color: var(--text-muted);"></i>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-stage">
+                        <div class="icon">🚀</div>
+                        <div class="number">5</div>
+                        <div class="title">Deploy</div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 100px; padding: 0.75rem; text-align: center; background: linear-gradient(135deg, rgba(240,112,112,0.2), rgba(92,224,196,0.2)); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                            <i class="fas fa-wrench" style="color: var(--text-primary); font-size: 1.25rem;"></i>
-                            <div style="font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem;">Maintain</div>
-                        </div>
+                    <div class="lifecycle-arrow">→</div>
+                    <div class="lifecycle-stage">
+                        <div class="icon">📈</div>
+                        <div class="number">6</div>
+                        <div class="title">Maintain</div>
                     </div>
                 </div>
 
-                <!-- Phase 1: Research -->
-                <h2 id="research"><span style="color: #f07070;">1.</span> Research</h2>
-                <p>Understand the threat before building a detection.</p>
-                
-                <h3>Inputs</h3>
-                <ul>
-                    <li>Threat intelligence reports</li>
-                    <li>MITRE ATT&CK technique documentation</li>
-                    <li>Incident post-mortems (what did we miss?)</li>
-                    <li>Vulnerability disclosures</li>
-                    <li>Red team findings</li>
-                    <li>Gap analysis results</li>
-                </ul>
+                <!-- STAGE 1: IDENTIFY -->
+                <div class="stage-detail">
+                    <h3><span class="stage-num">1</span> Identify - "What should we detect?"</h3>
+                    
+                    <p>Before writing any code, you need to identify WHAT threat you're trying to detect and WHY it matters to your organization.</p>
+                    
+                    <h4>Where Detection Ideas Come From:</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Source</th><th>Example</th><th>Priority</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Incidents</strong></td><td>"We got hit by ransomware - how do we detect this earlier?"</td><td>High - proven threat</td></tr>
+                            <tr><td><strong>Threat Intel</strong></td><td>"New APT campaign targeting our industry"</td><td>Medium - potential threat</td></tr>
+                            <tr><td><strong>MITRE ATT&CK</strong></td><td>"We have no coverage for T1059.001 (PowerShell)"</td><td>Medium - gap filling</td></tr>
+                            <tr><td><strong>Compliance</strong></td><td>"Audit requires we detect admin account usage"</td><td>Varies - compliance driven</td></tr>
+                            <tr><td><strong>Purple Team</strong></td><td>"Red team bypassed our detections with this technique"</td><td>High - known gap</td></tr>
+                        </tbody>
+                    </table>
 
-                <h3>Research Questions</h3>
-                <table>
-                    <thead><tr><th>Question</th><th>Why It Matters</th></tr></thead>
-                    <tbody>
-                        <tr><td>What is the attack technique?</td><td>Understanding the "what"</td></tr>
-                        <tr><td>How is it executed technically?</td><td>Specific artifacts to detect</td></tr>
-                        <tr><td>What data sources capture it?</td><td>Feasibility check</td></tr>
-                        <tr><td>Who uses this technique?</td><td>Threat relevance</td></tr>
-                        <tr><td>What are legitimate uses?</td><td>False positive assessment</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Research Output</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
-                    <strong>Detection Research Document</strong><br><br>
-                    <strong>Technique:</strong> T1059.001 - PowerShell<br>
-                    <strong>Description:</strong> Adversaries use PowerShell to execute commands and scripts<br>
-                    <strong>Data Sources:</strong> Process creation (4688), Script Block Logging (4104), Module Logging<br>
-                    <strong>Legitimate Use:</strong> Admin scripts, SCCM, management tools<br>
-                    <strong>Malicious Indicators:</strong> Encoded commands, download cradles, bypass flags<br>
-                    <strong>Priority:</strong> High (commonly used, good detection fidelity)
+                    <div class="example-scenario">
+                        <div class="label"><i class="fas fa-lightbulb"></i> Real Example</div>
+                        <p><strong>Situation:</strong> Threat intel reports a new ransomware group using encoded PowerShell to download their payload.</p>
+                        <p><strong>Detection Need:</strong> We need to detect PowerShell with encoded commands making network connections.</p>
+                        <p><strong>MITRE Mapping:</strong> T1059.001 (PowerShell), T1105 (Ingress Tool Transfer)</p>
+                    </div>
                 </div>
 
-                <!-- Phase 2: Design -->
-                <h2 id="design"><span style="color: #f0b756;">2.</span> Design</h2>
-                <p>Plan the detection logic before writing code.</p>
+                <!-- STAGE 2: RESEARCH -->
+                <div class="stage-detail">
+                    <h3><span class="stage-num">2</span> Research - "Do we have the data?"</h3>
+                    
+                    <p>Before writing a rule, verify you have the telemetry (logs/data) needed to see the attack.</p>
 
-                <h3>Detection Strategy</h3>
-                <table>
-                    <thead><tr><th>Approach</th><th>Pros</th><th>Cons</th><th>Use When</th></tr></thead>
-                    <tbody>
-                        <tr>
-                            <td><strong>Signature-based</strong></td>
-                            <td>Low FP, fast, precise</td>
-                            <td>Easy to evade, brittle</td>
-                            <td>Known IOCs, specific tools</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Behavior-based</strong></td>
-                            <td>Catches variants, harder to evade</td>
-                            <td>More FPs, complex</td>
-                            <td>TTPs, technique patterns</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Anomaly-based</strong></td>
-                            <td>Catches unknown threats</td>
-                            <td>High FP, needs baseline</td>
-                            <td>Rare activities, deviations</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Correlation</strong></td>
-                            <td>High confidence from multiple signals</td>
-                            <td>Complex, slower</td>
-                            <td>Attack chains, multi-stage</td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <h4>Key Questions to Answer:</h4>
+                    <div class="checklist">
+                        <ul>
+                            <li>☐ What logs/events would show this attack? (Process creation? Network connection?)</li>
+                            <li>☐ Are those logs being collected in our SIEM?</li>
+                            <li>☐ What fields are available? (CommandLine? ParentProcess?)</li>
+                            <li>☐ Are there gaps in logging we need to fix first?</li>
+                            <li>☐ Has someone already written this detection? (Check SigmaHQ, vendor rules)</li>
+                        </ul>
+                    </div>
 
-                <h3>Design Document Template</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
-                    <strong>Detection Design: Encoded PowerShell Execution</strong><br><br>
-                    <strong>ATT&CK ID:</strong> T1059.001, T1027<br>
-                    <strong>Objective:</strong> Detect PowerShell commands using Base64 encoding<br>
-                    <strong>Data Source:</strong> DeviceProcessEvents (MDE)<br>
-                    <strong>Logic:</strong><br>
-                    - Process = powershell.exe OR pwsh.exe<br>
-                    - CommandLine contains -enc, -encoded, -e followed by base64<br>
-                    - Exclude known admin scripts by hash<br>
-                    <strong>Expected FP Rate:</strong> Medium (will need tuning)<br>
-                    <strong>Severity:</strong> Medium (adjust to High if decoded content is suspicious)<br>
-                    <strong>Response:</strong> Triage playbook PB-TRI-005
+                    <div class="example-scenario">
+                        <div class="label"><i class="fas fa-lightbulb"></i> Continuing Our Example</div>
+                        <p><strong>Research Findings:</strong></p>
+                        <ul>
+                            <li>✓ We have Sysmon Event ID 1 (Process Creation) with CommandLine</li>
+                            <li>✓ We have Sysmon Event ID 3 (Network Connection)</li>
+                            <li>✓ Data is in Sentinel, indexed properly</li>
+                            <li>✓ SigmaHQ has a basic encoded PowerShell rule we can build on</li>
+                        </ul>
+                    </div>
                 </div>
 
-                <!-- Phase 3: Implement -->
-                <h2 id="implement"><span style="color: #6aa3f7;">3.</span> Implement</h2>
-                <p>Write the detection query/rule.</p>
+                <!-- STAGE 3: DEVELOP -->
+                <div class="stage-detail">
+                    <h3><span class="stage-num">3</span> Develop - "Write the detection"</h3>
+                    
+                    <p>Now write the actual detection query. Start simple, then add complexity.</p>
 
-                <h3>Implementation Best Practices</h3>
-                <ul>
-                    <li><strong>Start broad, then narrow:</strong> Get the basic logic working first</li>
-                    <li><strong>Comment your code:</strong> Explain the "why" not just "what"</li>
-                    <li><strong>Use variables:</strong> Make thresholds easy to adjust</li>
-                    <li><strong>Consider performance:</strong> Time filters first, expensive operations last</li>
-                    <li><strong>Include metadata:</strong> ATT&CK mapping, author, version</li>
-                </ul>
+                    <h4>Development Process:</h4>
+                    <ol>
+                        <li><strong>Start broad:</strong> Find all instances of the behavior</li>
+                        <li><strong>Analyze results:</strong> What's malicious vs legitimate?</li>
+                        <li><strong>Add filters:</strong> Exclude known good patterns</li>
+                        <li><strong>Test against historical data:</strong> How many alerts would this generate?</li>
+                        <li><strong>Document:</strong> Write description, false positive notes, response steps</li>
+                    </ol>
 
-                <h3>Example Implementation</h3>
-                <div class="query-example">
-                    <div class="query-header"><span class="query-platform"><i class="fab fa-microsoft"></i> KQL Detection Rule</span></div>
-                    <div class="query-body">
-<pre class="code-block"><code>// Detection: Encoded PowerShell Execution
-// ATT&CK: T1059.001, T1027
-// Author: Security Team
-// Version: 1.0
-// Last Updated: 2025-01-01
-
-let EncodingFlags = dynamic(["-enc", "-encoded", "-e ", "-encodedcommand"]);
-let ExcludedHashes = dynamic(["abc123...", "def456..."]); // Known good scripts
-
-DeviceProcessEvents
-| where TimeGenerated > ago(1h)
+                    <div class="example-scenario">
+                        <div class="label"><i class="fas fa-code"></i> Our Detection (KQL)</div>
+<pre style="background: #1a1a2e; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; font-size: 0.85rem;"><code>// Encoded PowerShell with Network Connection
+let EncodedPS = DeviceProcessEvents
 | where FileName in~ ("powershell.exe", "pwsh.exe")
-| where ProcessCommandLine has_any (EncodingFlags)
-| where not(SHA256 in (ExcludedHashes))
-| extend DecodedCommand = base64_decode_tostring(
-    extract(@"-e[ncodedcommand]*\s+([A-Za-z0-9+/=]+)", 1, ProcessCommandLine))
-| project 
-    TimeGenerated,
-    DeviceName,
-    AccountName,
-    ProcessCommandLine,
-    DecodedCommand,
-    InitiatingProcessFileName,
-    SHA256</code></pre>
+| where ProcessCommandLine has_any ("-enc", "-encodedcommand", "-e ")
+| project DeviceId, EncodedTime = Timestamp, CommandLine = ProcessCommandLine;
+
+DeviceNetworkEvents
+| where InitiatingProcessFileName in~ ("powershell.exe", "pwsh.exe")
+| where RemoteUrl !endswith ".microsoft.com"  // Exclude MS updates
+| join kind=inner EncodedPS on DeviceId
+| where Timestamp between (EncodedTime .. (EncodedTime + 5m))
+| project Timestamp, DeviceName, CommandLine, RemoteUrl, RemoteIP</code></pre>
+                        <p><strong>Logic:</strong> Find encoded PowerShell that makes network connections (excluding Microsoft) within 5 minutes.</p>
                     </div>
                 </div>
 
-                <!-- Phase 4: Test -->
-                <h2 id="test"><span style="color: #a78bf6;">4.</span> Test</h2>
-                <p>Validate the detection works and doesn't create excessive noise.</p>
+                <!-- STAGE 4: TEST -->
+                <div class="stage-detail">
+                    <h3><span class="stage-num">4</span> Test - "Does it actually work?"</h3>
+                    
+                    <p>A detection that isn't tested is just a guess. You must verify it catches real attacks.</p>
 
-                <h3>Testing Types</h3>
+                    <h4>Testing Methods:</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Method</th><th>How It Works</th><th>When to Use</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Atomic Red Team</strong></td><td>Run pre-built attack simulations</td><td>Quick validation of common techniques</td></tr>
+                            <tr><td><strong>Manual Testing</strong></td><td>Execute the attack yourself in a lab</td><td>When no atomic test exists</td></tr>
+                            <tr><td><strong>Historical Data</strong></td><td>Run query against past incidents</td><td>Verify would have caught known attacks</td></tr>
+                            <tr><td><strong>Purple Team</strong></td><td>Red team runs attack while blue watches</td><td>Realistic validation</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="checklist">
+                        <h4>Testing Checklist:</h4>
+                        <ul>
+                            <li>☐ Does it catch the attack it's designed for? (True Positive)</li>
+                            <li>☐ Does it catch variations of the attack?</li>
+                            <li>☐ What's the false positive rate? (Run against 7-30 days of data)</li>
+                            <li>☐ Is the alert actionable? (Can analyst understand what happened?)</li>
+                            <li>☐ Are the right entities extracted? (User, device, IP, etc.)</li>
+                        </ul>
+                    </div>
+
+                    <div class="example-scenario">
+                        <div class="label"><i class="fas fa-vial"></i> Testing Our Detection</div>
+                        <p><strong>Atomic Test:</strong> <code>Invoke-AtomicTest T1059.001 -TestNumbers 1</code></p>
+                        <p><strong>Result:</strong> ✓ Detection fired within 30 seconds</p>
+                        <p><strong>Historical Check:</strong> 3 alerts over 30 days - all were legitimate admin activity</p>
+                        <p><strong>Adjustment:</strong> Added exclusion for IT admin accounts doing approved maintenance</p>
+                    </div>
+                </div>
+
+                <!-- STAGE 5: DEPLOY -->
+                <div class="stage-detail">
+                    <h3><span class="stage-num">5</span> Deploy - "Put it into production"</h3>
+                    
+                    <p>Tested detection goes live. But don't just flip it on and walk away!</p>
+
+                    <h4>Deployment Steps:</h4>
+                    <ol>
+                        <li><strong>Start in monitoring mode:</strong> Alert fires but doesn't page anyone</li>
+                        <li><strong>Watch for 1-2 weeks:</strong> Track true positive vs false positive rate</li>
+                        <li><strong>Tune as needed:</strong> Add exclusions for legitimate activity</li>
+                        <li><strong>Promote to production:</strong> Enable full alerting once confident</li>
+                        <li><strong>Train analysts:</strong> Brief the team on what the detection catches and how to respond</li>
+                    </ol>
+
+                    <h4>Deployment Documentation (Required):</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Field</th><th>Example</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Detection Name</strong></td><td>Encoded PowerShell with Network Activity</td></tr>
+                            <tr><td><strong>MITRE Mapping</strong></td><td>T1059.001, T1105</td></tr>
+                            <tr><td><strong>Severity</strong></td><td>High</td></tr>
+                            <tr><td><strong>What It Detects</strong></td><td>PowerShell with encoded commands making network connections</td></tr>
+                            <tr><td><strong>Known False Positives</strong></td><td>IT automation scripts, SCCM deployments</td></tr>
+                            <tr><td><strong>Response Steps</strong></td><td>1. Decode command, 2. Check destination, 3. Isolate if malicious</td></tr>
+                            <tr><td><strong>Owner</strong></td><td>Detection Engineering Team</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- STAGE 6: MAINTAIN -->
+                <div class="stage-detail">
+                    <h3><span class="stage-num">6</span> Maintain - "Keep it working"</h3>
+                    
+                    <p>Detections degrade over time. Attackers evolve, environments change, false positives emerge.</p>
+
+                    <h4>Ongoing Maintenance Activities:</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Activity</th><th>Frequency</th><th>Purpose</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><strong>Review Alert Volume</strong></td><td>Weekly</td><td>Catch sudden spikes in FPs</td></tr>
+                            <tr><td><strong>Check True Positive Rate</strong></td><td>Monthly</td><td>Ensure detection is still effective</td></tr>
+                            <tr><td><strong>Re-test with Atomics</strong></td><td>Quarterly</td><td>Verify still catches attacks</td></tr>
+                            <tr><td><strong>Review for Evasions</strong></td><td>When threat intel arrives</td><td>Update for new attacker techniques</td></tr>
+                            <tr><td><strong>Retirement Review</strong></td><td>Annually</td><td>Retire obsolete detections</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h4>When to Retire a Detection:</h4>
+                    <ul>
+                        <li>The attack technique is no longer used</li>
+                        <li>Better detection exists</li>
+                        <li>The detection never fires (and testing shows it should)</li>
+                        <li>Technology it monitors is decommissioned</li>
+                    </ul>
+                </div>
+
+                <!-- METRICS -->
+                <h2><i class="fas fa-chart-bar"></i> Measuring Detection Health</h2>
+
                 <table>
-                    <thead><tr><th>Test Type</th><th>Purpose</th><th>How</th></tr></thead>
+                    <thead>
+                        <tr><th>Metric</th><th>What It Measures</th><th>Target</th></tr>
+                    </thead>
                     <tbody>
-                        <tr>
-                            <td><strong>True Positive Test</strong></td>
-                            <td>Does it catch the attack?</td>
-                            <td>Run atomic test, verify alert fires</td>
-                        </tr>
-                        <tr>
-                            <td><strong>False Positive Test</strong></td>
-                            <td>Does it fire on legitimate activity?</td>
-                            <td>Run against historical data, review hits</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Evasion Test</strong></td>
-                            <td>Can it be bypassed?</td>
-                            <td>Try variations of the technique</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Performance Test</strong></td>
-                            <td>Does it run efficiently?</td>
-                            <td>Check query execution time</td>
-                        </tr>
+                        <tr><td><strong>True Positive Rate</strong></td><td>% of alerts that are actual threats</td><td>>70%</td></tr>
+                        <tr><td><strong>Mean Time to Detect (MTTD)</strong></td><td>How fast detection catches attack</td><td><15 minutes</td></tr>
+                        <tr><td><strong>Coverage %</strong></td><td>MITRE techniques with detections</td><td>Increasing over time</td></tr>
+                        <tr><td><strong>Alert Actionability</strong></td><td>% of alerts analysts can investigate</td><td>>90%</td></tr>
+                        <tr><td><strong>Detection Age</strong></td><td>Last time detection was validated</td><td><90 days</td></tr>
                     </tbody>
                 </table>
 
-                <h3>Atomic Red Team Testing</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
-                    # Test T1059.001 - Encoded PowerShell<br>
-                    Invoke-AtomicTest T1059.001 -TestNumbers 1<br><br>
-                    # Verify detection fired<br>
-                    # Check SIEM for alert within 5 minutes
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+
+                <div class="card-grid">
+                    <a href="pages/detection-engineering/testing.html" class="card"><div class="card-icon"><i class="fas fa-vial"></i></div><h3>Detection Testing</h3><p>Atomic Red Team, validation methods</p></a>
+                    <a href="pages/detection-engineering/sigma-rules.html" class="card"><div class="card-icon"><i class="fas fa-file-code"></i></div><h3>Sigma Rules</h3><p>Portable detection format</p></a>
+                    <a href="pages/detection-engineering/coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-map"></i></div><h3>Coverage Analysis</h3><p>MITRE ATT&CK mapping</p></a>
                 </div>
 
-                <!-- Phase 5: Deploy -->
-                <h2 id="deploy"><span style="color: #5ce0c4;">5.</span> Deploy</h2>
-                <p>Move to production with appropriate controls.</p>
-
-                <h3>Deployment Checklist</h3>
-                <ul>
-                    <li>☐ Detection tested and validated</li>
-                    <li>☐ Runbook/playbook created</li>
-                    <li>☐ ATT&CK mapping documented</li>
-                    <li>☐ Severity level appropriate</li>
-                    <li>☐ Initial exclusions configured</li>
-                    <li>☐ Alert routing configured</li>
-                    <li>☐ Peer review completed</li>
-                    <li>☐ Change ticket submitted</li>
-                </ul>
-
-                <h3>Phased Rollout</h3>
-                <ol>
-                    <li><strong>Monitor Mode (1-2 weeks):</strong> Rule fires but doesn't alert, gather data</li>
-                    <li><strong>Low Severity (1 week):</strong> Alerts at informational level</li>
-                    <li><strong>Production:</strong> Full severity with automated response if applicable</li>
-                </ol>
-
-                <!-- Phase 6: Maintain -->
-                <h2 id="maintain">6. Maintain</h2>
-                <p>Detections require ongoing care and feeding.</p>
-
-                <h3>Maintenance Activities</h3>
-                <table>
-                    <thead><tr><th>Activity</th><th>Frequency</th><th>Purpose</th></tr></thead>
-                    <tbody>
-                        <tr><td>FP Review</td><td>Weekly</td><td>Add exclusions, reduce noise</td></tr>
-                        <tr><td>Coverage Validation</td><td>Monthly</td><td>Retest with atomic tests</td></tr>
-                        <tr><td>ATT&CK Update Review</td><td>Quarterly</td><td>Align with framework updates</td></tr>
-                        <tr><td>Performance Check</td><td>Monthly</td><td>Ensure query efficiency</td></tr>
-                        <tr><td>Relevance Review</td><td>Annually</td><td>Is this detection still needed?</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Detection Health Metrics</h3>
-                <ul>
-                    <li><strong>Alert Volume:</strong> Is it generating too many/few alerts?</li>
-                    <li><strong>TP Rate:</strong> What % of alerts are actionable?</li>
-                    <li><strong>Time Since Last TP:</strong> Is it still catching real threats?</li>
-                    <li><strong>Query Performance:</strong> Is it still running efficiently?</li>
-                </ul>
-
-                <h2>Detection Documentation Template</h2>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem;">
-                    <strong>---</strong><br>
-                    <strong>name:</strong> Encoded PowerShell Execution<br>
-                    <strong>id:</strong> DET-2025-001<br>
-                    <strong>status:</strong> production<br>
-                    <strong>author:</strong> Security Team<br>
-                    <strong>created:</strong> 2025-01-01<br>
-                    <strong>modified:</strong> 2025-01-15<br>
-                    <strong>version:</strong> 1.2<br><br>
-                    <strong>description:</strong> |<br>
-                    &nbsp;&nbsp;Detects PowerShell execution with Base64 encoded commands,<br>
-                    &nbsp;&nbsp;commonly used by attackers to obfuscate malicious scripts.<br><br>
-                    <strong>mitre_attack:</strong><br>
-                    &nbsp;&nbsp;- T1059.001<br>
-                    &nbsp;&nbsp;- T1027<br><br>
-                    <strong>data_sources:</strong><br>
-                    &nbsp;&nbsp;- DeviceProcessEvents<br><br>
-                    <strong>severity:</strong> medium<br>
-                    <strong>false_positive_rate:</strong> medium<br><br>
-                    <strong>playbook:</strong> PB-TRI-005<br>
-                    <strong>---</strong>
-                </div>
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

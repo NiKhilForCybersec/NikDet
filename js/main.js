@@ -67,6 +67,14 @@ function injectSidebar() {
                     <li><a href="pages/soc-operations/metrics.html">Metrics & KPIs</a></li>
                 </ul>
             </div>
+            <!-- SIEM PLATFORMS -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-header"><i class="fas fa-database section-icon"></i><span>SIEM & Monitoring</span><i class="fas fa-chevron-down chevron"></i></div>
+                <ul class="sidebar-links">
+                    <li><a href="pages/sentinel/index.html">Microsoft Sentinel</a></li>
+                    <li><a href="pages/splunk/index.html">Splunk</a></li>
+                </ul>
+            </div>
             <!-- SOC MATURITY -->
             <div class="sidebar-section">
                 <div class="sidebar-section-header"><i class="fas fa-stairs section-icon"></i><span>SOC Maturity</span><i class="fas fa-chevron-down chevron"></i></div>
@@ -101,8 +109,10 @@ function injectSidebar() {
                 <ul class="sidebar-links">
                     <li><a href="pages/playbooks/investigation/index.html">Investigation Overview</a></li>
                     <li><a href="pages/playbooks/investigation/phishing.html">Phishing</a></li>
+                    <li><a href="pages/playbooks/investigation/brute-force.html">Brute Force &amp; Password Spray</a></li>
                     <li><a href="pages/playbooks/investigation/malware.html">Malware</a></li>
                     <li><a href="pages/playbooks/investigation/ransomware.html">Ransomware</a></li>
+                    <li><a href="pages/playbooks/investigation/web-attacks.html">Web Application Attacks</a></li>
                     <li><a href="pages/playbooks/investigation/account-compromise.html">Account Compromise</a></li>
                     <li><a href="pages/playbooks/investigation/bec.html">Business Email Compromise</a></li>
                     <li><a href="pages/playbooks/investigation/lateral-movement.html">Lateral Movement</a></li>
@@ -110,6 +120,13 @@ function injectSidebar() {
                     <li><a href="pages/playbooks/investigation/data-exfiltration.html">Data Exfiltration</a></li>
                     <li><a href="pages/playbooks/investigation/insider-threat.html">Insider Threat</a></li>
                     <li><a href="pages/playbooks/investigation/c2-detection.html">C2 Detection</a></li>
+                    <li><a href="pages/playbooks/investigation/ddos.html">DDoS Attack</a></li>
+                    <li><a href="pages/playbooks/investigation/dns-tunneling.html">DNS Tunneling</a></li>
+                    <li><a href="pages/playbooks/investigation/cryptomining.html">Cryptomining</a></li>
+                    <li><a href="pages/playbooks/investigation/supply-chain.html">Supply Chain Attack</a></li>
+                    <li><a href="pages/playbooks/investigation/lolbins.html">LOLBins</a></li>
+                    <li><a href="pages/playbooks/investigation/token-theft.html">Token Theft</a></li>
+                    <li><a href="pages/playbooks/investigation/kerberoasting.html">Kerberoasting</a></li>
                 </ul>
             </div>
             <!-- PLAYBOOKS - INCIDENT RESPONSE -->
@@ -174,6 +191,7 @@ function injectSidebar() {
                     <li><a href="pages/sentinel/index.html">Sentinel Overview</a></li>
                     <li><a href="pages/sentinel/architecture.html">Architecture</a></li>
                     <li><a href="pages/sentinel/data-connectors.html">Data Connectors</a></li>
+                    <li><a href="pages/sentinel/data-ingestion.html">Data Ingestion & Parsing</a></li>
                     <li><a href="pages/sentinel/analytics-rules.html">Analytics Rules</a></li>
                     <li><a href="pages/sentinel/workbooks.html">Workbooks</a></li>
                     <li><a href="pages/sentinel/automation.html">Automation</a></li>
@@ -188,6 +206,7 @@ function injectSidebar() {
                 <div class="sidebar-section-header"><i class="fas fa-chart-line section-icon"></i><span>Splunk</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
                     <li><a href="pages/splunk/index.html">Splunk Overview</a></li>
+                    <li><a href="pages/splunk/data-ingestion.html">Data Ingestion & Parsing</a></li>
                     <li><a href="pages/splunk/spl-fundamentals.html">SPL Fundamentals</a></li>
                     <li><a href="pages/splunk/spl-intermediate.html">SPL Intermediate</a></li>
                     <li><a href="pages/splunk/spl-advanced.html">SPL Advanced</a></li>
@@ -414,6 +433,7 @@ function injectSidebar() {
                 <div class="sidebar-section-header"><i class="fas fa-code section-icon"></i><span>Infrastructure as Code</span><i class="fas fa-chevron-down chevron"></i></div>
                 <ul class="sidebar-links">
                     <li><a href="pages/iac/index.html">IaC Overview</a></li>
+                    <li><a href="pages/iac/learning-path/index.html">📚 Learning Path</a></li>
                     <li><a href="pages/iac/terraform-guide.html">Terraform Guide</a></li>
                     <li><a href="pages/iac/ansible-guide.html">Ansible Guide</a></li>
                     <li><a href="pages/iac/security-scanning.html">Security Scanning</a></li>

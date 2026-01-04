@@ -7,366 +7,412 @@
     <title>Sigma Rules Guide | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .concept-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .concept-box h3 { color: var(--accent-primary); margin-top: 0; }
+        .analogy-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem 1.5rem; margin: 1rem 0; border-radius: 0 8px 8px 0; }
+        .analogy-box .label { color: #22c55e; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .code-explained { background: var(--card-bg); border-radius: 8px; margin: 1rem 0; overflow: hidden; }
+        .code-explained .code-section { background: #1a1a2e; padding: 1rem; }
+        .code-explained .explain-section { padding: 1rem; border-top: 1px solid var(--border-color); }
+        .line-explain { display: grid; grid-template-columns: auto 1fr; gap: 1rem; margin: 0.5rem 0; align-items: start; }
+        .line-explain code { background: #1a1a2e; padding: 0.25rem 0.5rem; border-radius: 4px; white-space: nowrap; }
+        .conversion-box { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+        .conversion-flow { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; padding: 1rem; }
+        .conversion-flow .item { background: var(--accent-primary); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; text-align: center; }
+        .conversion-flow .arrow { font-size: 1.5rem; color: var(--text-muted); }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/detection-engineering/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/detection-engineering/index.html">Home</a><span class="separator">/</span><a href="pages/detection-engineering/index.html">Detection Engineering</a><span class="separator">/</span><span>Sigma Rules</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-file-code" style="color: var(--accent-warning);"></i> Sigma Rules Complete Guide</h1>
-                <p class="lead">Write once, convert anywhere. The universal detection rule format for sharing and portability.</p>
-            </div>
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/detection-engineering/index.html">Detection Engineering</a><span class="separator">/</span><span>Sigma Rules</span></div>
             <div class="content">
-                <h2>What is Sigma?</h2>
-                <p>Sigma is an open, vendor-agnostic format for writing detection rules. Think of it as "YARA for logs" - you write a rule once in Sigma format, then convert it to your SIEM's native query language (Splunk SPL, Microsoft KQL, Elastic Query DSL, etc.).</p>
+                <h1><i class="fas fa-file-code" style="color: var(--accent-primary);"></i> Sigma Rules - Complete Guide</h1>
+                <p class="lead">Learn how to write detection rules that work across any SIEM platform.</p>
 
-                <div class="info-box info">
-                    <div class="info-box-title"><i class="fas fa-info-circle"></i> Why Sigma Matters</div>
-                    <ul style="margin: 0.5rem 0 0 1rem;">
-                        <li><strong>Portability:</strong> Rules work across different SIEM platforms</li>
-                        <li><strong>Community:</strong> Thousands of pre-built rules from the community</li>
-                        <li><strong>Standardization:</strong> Consistent format for documentation</li>
-                        <li><strong>Sharing:</strong> Easy to share rules between organizations</li>
-                        <li><strong>Version Control:</strong> YAML format works well with Git</li>
+                <!-- WHAT IS SIGMA -->
+                <div class="concept-box">
+                    <h3><i class="fas fa-question-circle"></i> What is Sigma?</h3>
+                    <p><strong>Sigma</strong> is a universal language for writing detection rules. You write a rule once in Sigma format, then convert it to work in any SIEM (Splunk, Sentinel, Elastic, QRadar, etc.).</p>
+                    
+                    <p><strong>The Problem Sigma Solves:</strong></p>
+                    <ul>
+                        <li>Every SIEM has its own query language (SPL, KQL, Lucene, AQL...)</li>
+                        <li>Sharing rules between teams/organizations is hard</li>
+                        <li>Switching SIEMs means rewriting all your rules</li>
                     </ul>
+                    
+                    <p><strong>Sigma's Solution:</strong> Write once, convert to any format!</p>
                 </div>
 
-                <h2>Sigma Rule Structure</h2>
-                <p>Every Sigma rule consists of these sections:</p>
-
-                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; margin: 1rem 0;">
-<pre style="margin: 0; white-space: pre-wrap;"><span style="color: #a78bf6;">title:</span> <span style="color: #5ce0c4;">Rule Name Here</span>
-<span style="color: #a78bf6;">id:</span> <span style="color: #5ce0c4;">12345678-1234-1234-1234-123456789012</span>  <span style="color: #6aa3f7;"># UUID</span>
-<span style="color: #a78bf6;">status:</span> <span style="color: #5ce0c4;">experimental | test | stable | deprecated | unsupported</span>
-<span style="color: #a78bf6;">description:</span> <span style="color: #5ce0c4;">|</span>
-    <span style="color: #5ce0c4;">Detailed description of what this rule detects</span>
-    <span style="color: #5ce0c4;">and why it matters.</span>
-<span style="color: #a78bf6;">references:</span>
-    <span style="color: #5ce0c4;">- https://attack.mitre.org/techniques/T1059/001/</span>
-    <span style="color: #5ce0c4;">- https://blog.example.com/analysis</span>
-<span style="color: #a78bf6;">author:</span> <span style="color: #5ce0c4;">Your Name</span>
-<span style="color: #a78bf6;">date:</span> <span style="color: #5ce0c4;">2025/01/01</span>
-<span style="color: #a78bf6;">modified:</span> <span style="color: #5ce0c4;">2025/01/15</span>
-<span style="color: #a78bf6;">tags:</span>
-    <span style="color: #5ce0c4;">- attack.execution</span>
-    <span style="color: #5ce0c4;">- attack.t1059.001</span>
-<span style="color: #a78bf6;">logsource:</span>
-    <span style="color: #a78bf6;">category:</span> <span style="color: #5ce0c4;">process_creation</span>
-    <span style="color: #a78bf6;">product:</span> <span style="color: #5ce0c4;">windows</span>
-<span style="color: #a78bf6;">detection:</span>
-    <span style="color: #a78bf6;">selection:</span>
-        <span style="color: #5ce0c4;">field_name: value</span>
-    <span style="color: #a78bf6;">condition:</span> <span style="color: #5ce0c4;">selection</span>
-<span style="color: #a78bf6;">falsepositives:</span>
-    <span style="color: #5ce0c4;">- Legitimate admin activity</span>
-    <span style="color: #5ce0c4;">- Specific software that exhibits this behavior</span>
-<span style="color: #a78bf6;">level:</span> <span style="color: #5ce0c4;">low | medium | high | critical</span></pre>
+                <!-- ANALOGY -->
+                <div class="analogy-box">
+                    <div class="label"><i class="fas fa-lightbulb"></i> Think of it like this</div>
+                    <p><strong>Sigma is like a universal translator for security rules:</strong></p>
+                    <ul>
+                        <li>You write a document in "Universal Security Language" (Sigma)</li>
+                        <li>A converter translates it to "Splunk-ese", "Sentinel-speak", or "Elastic-lingo"</li>
+                        <li>The meaning stays the same, just the language changes</li>
+                    </ul>
+                    <p>Like writing a book once and having it automatically translated into every language!</p>
                 </div>
 
-                <h2>Rule Sections Explained</h2>
+                <!-- HOW CONVERSION WORKS -->
+                <h2><i class="fas fa-exchange-alt"></i> How Sigma Conversion Works</h2>
 
-                <h3>Metadata Section</h3>
+                <div class="conversion-flow">
+                    <div class="item">📝 Sigma Rule<br><small>(YAML format)</small></div>
+                    <div class="arrow">→</div>
+                    <div class="item">⚙️ Converter<br><small>(sigma-cli)</small></div>
+                    <div class="arrow">→</div>
+                    <div class="item">🔍 SIEM Query<br><small>(KQL/SPL/etc)</small></div>
+                </div>
+
                 <table>
-                    <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+                    <thead>
+                        <tr><th>Your SIEM</th><th>Sigma Converts To</th><th>Example Output</th></tr>
+                    </thead>
                     <tbody>
-                        <tr><td><code>title</code></td><td>Yes</td><td>Short, descriptive name (max 256 chars)</td></tr>
-                        <tr><td><code>id</code></td><td>Yes</td><td>Unique UUID for the rule</td></tr>
-                        <tr><td><code>status</code></td><td>Yes</td><td>experimental → test → stable → deprecated</td></tr>
-                        <tr><td><code>description</code></td><td>No</td><td>Detailed explanation of detection</td></tr>
-                        <tr><td><code>references</code></td><td>No</td><td>Links to relevant documentation, research</td></tr>
-                        <tr><td><code>author</code></td><td>No</td><td>Rule creator</td></tr>
-                        <tr><td><code>date</code></td><td>No</td><td>Creation date (YYYY/MM/DD)</td></tr>
-                        <tr><td><code>modified</code></td><td>No</td><td>Last modification date</td></tr>
-                        <tr><td><code>tags</code></td><td>No</td><td>MITRE ATT&CK mappings, categories</td></tr>
+                        <tr><td><strong>Microsoft Sentinel</strong></td><td>KQL</td><td><code>SecurityEvent | where EventID == 4625</code></td></tr>
+                        <tr><td><strong>Splunk</strong></td><td>SPL</td><td><code>index=windows EventCode=4625</code></td></tr>
+                        <tr><td><strong>Elastic</strong></td><td>Lucene/EQL</td><td><code>event.code:4625</code></td></tr>
+                        <tr><td><strong>QRadar</strong></td><td>AQL</td><td><code>SELECT * WHERE EventID=4625</code></td></tr>
                     </tbody>
                 </table>
 
-                <h3>Logsource Section</h3>
-                <p>Defines what type of log data the rule applies to:</p>
+                <!-- SIGMA RULE ANATOMY -->
+                <h2><i class="fas fa-microscope"></i> Anatomy of a Sigma Rule</h2>
+
+                <p>Let's break down a real Sigma rule piece by piece:</p>
+
+                <div class="code-explained">
+                    <div class="code-section">
+<pre style="margin: 0; font-size: 0.8rem;"><code>title: Failed Login Attempts
+id: 12345678-1234-1234-1234-123456789012
+status: production
+description: Detects multiple failed login attempts which may indicate brute force
+author: Your Name
+date: 2024/01/15
+references:
+    - https://attack.mitre.org/techniques/T1110/
+
+logsource:
+    product: windows
+    service: security
+
+detection:
+    selection:
+        EventID: 4625
+    condition: selection | count() > 5
+
+falsepositives:
+    - Users forgetting passwords
+    - Service accounts with expired credentials
+
+level: medium
+
+tags:
+    - attack.credential_access
+    - attack.t1110</code></pre>
+                    </div>
+                    <div class="explain-section">
+                        <h4 style="margin-top: 0;">Line-by-Line Explanation:</h4>
+                        
+                        <div class="line-explain">
+                            <code>title:</code>
+                            <span>Human-readable name for the rule</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>id:</code>
+                            <span>Unique identifier (UUID) - never changes even if rule is updated</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>status:</code>
+                            <span>experimental → test → production (maturity level)</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>logsource:</code>
+                            <span>What type of logs this rule searches (Windows Security logs)</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>detection:</code>
+                            <span>The actual detection logic - what pattern to find</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>selection:</code>
+                            <span>Name for this part of the logic (look for EventID 4625)</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>condition:</code>
+                            <span>When to alert: when selection matches more than 5 times</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>falsepositives:</code>
+                            <span>Known legitimate reasons this might fire (helps analysts)</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>level:</code>
+                            <span>Severity: informational → low → medium → high → critical</span>
+                        </div>
+                        <div class="line-explain">
+                            <code>tags:</code>
+                            <span>MITRE ATT&CK mapping for categorization</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DETECTION LOGIC -->
+                <h2><i class="fas fa-brain"></i> Understanding Detection Logic</h2>
+
+                <h3>Basic Matching</h3>
+                <div class="code-explained">
+                    <div class="code-section">
+<pre style="margin: 0;"><code>detection:
+    selection:
+        EventID: 4625
+        TargetUserName: 'Administrator'
+    condition: selection</code></pre>
+                    </div>
+                    <div class="explain-section">
+                        <strong>Meaning:</strong> Alert when EventID is 4625 AND TargetUserName is 'Administrator'
+                        <br><strong>Plain English:</strong> "Someone failed to log in as Administrator"
+                    </div>
+                </div>
+
+                <h3>OR Logic (Multiple Values)</h3>
+                <div class="code-explained">
+                    <div class="code-section">
+<pre style="margin: 0;"><code>detection:
+    selection:
+        EventID:
+            - 4625
+            - 4771
+            - 4776
+    condition: selection</code></pre>
+                    </div>
+                    <div class="explain-section">
+                        <strong>Meaning:</strong> Alert when EventID is 4625 OR 4771 OR 4776
+                        <br><strong>Plain English:</strong> "Any of these authentication failure event types"
+                    </div>
+                </div>
+
+                <h3>AND + OR Combined</h3>
+                <div class="code-explained">
+                    <div class="code-section">
+<pre style="margin: 0;"><code>detection:
+    selection:
+        EventID: 1
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+    filter:
+        ParentImage|endswith: '\explorer.exe'
+    condition: selection and not filter</code></pre>
+                    </div>
+                    <div class="explain-section">
+                        <strong>Meaning:</strong> Alert when:
+                        <ul style="margin: 0.5rem 0;">
+                            <li>EventID is 1 (Process Creation) AND</li>
+                            <li>Process is PowerShell AND</li>
+                            <li>Parent is NOT Explorer (user-initiated is normal)</li>
+                        </ul>
+                        <strong>Plain English:</strong> "PowerShell launched by something other than a user clicking it"
+                    </div>
+                </div>
+
+                <!-- MODIFIERS -->
+                <h2><i class="fas fa-filter"></i> String Modifiers (Pattern Matching)</h2>
+
                 <table>
-                    <thead><tr><th>Field</th><th>Description</th><th>Examples</th></tr></thead>
+                    <thead>
+                        <tr><th>Modifier</th><th>What It Does</th><th>Example</th><th>Matches</th></tr>
+                    </thead>
                     <tbody>
-                        <tr><td><code>category</code></td><td>Log category</td><td>process_creation, network_connection, file_event</td></tr>
-                        <tr><td><code>product</code></td><td>Operating system or product</td><td>windows, linux, macos, aws, azure</td></tr>
-                        <tr><td><code>service</code></td><td>Specific log service</td><td>sysmon, security, powershell</td></tr>
+                        <tr>
+                            <td><code>|contains</code></td>
+                            <td>Value appears anywhere in field</td>
+                            <td><code>CommandLine|contains: '-enc'</code></td>
+                            <td>"powershell <strong>-enc</strong> ABC123"</td>
+                        </tr>
+                        <tr>
+                            <td><code>|startswith</code></td>
+                            <td>Field starts with value</td>
+                            <td><code>Image|startswith: 'C:\Temp'</code></td>
+                            <td>"<strong>C:\Temp</strong>\malware.exe"</td>
+                        </tr>
+                        <tr>
+                            <td><code>|endswith</code></td>
+                            <td>Field ends with value</td>
+                            <td><code>Image|endswith: '.exe'</code></td>
+                            <td>"C:\Windows\notepad<strong>.exe</strong>"</td>
+                        </tr>
+                        <tr>
+                            <td><code>|re</code></td>
+                            <td>Regular expression match</td>
+                            <td><code>CommandLine|re: '\d{4,}'</code></td>
+                            <td>Any 4+ digit number</td>
+                        </tr>
+                        <tr>
+                            <td><code>|base64</code></td>
+                            <td>Decode and match Base64</td>
+                            <td><code>CommandLine|base64: 'http'</code></td>
+                            <td>Encoded URLs</td>
+                        </tr>
+                        <tr>
+                            <td><code>|all</code></td>
+                            <td>ALL values must match</td>
+                            <td><code>CommandLine|all|contains: ['-enc', '-w', 'hidden']</code></td>
+                            <td>Must have ALL three</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h4>Common Logsource Categories</h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--accent-primary);">process_creation</strong>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Sysmon 1, 4688</p>
+                <!-- REAL EXAMPLES -->
+                <h2><i class="fas fa-code"></i> Real-World Examples</h2>
+
+                <h3>Example 1: Detect Encoded PowerShell</h3>
+                <div class="code-explained">
+                    <div class="code-section">
+<pre style="margin: 0;"><code>title: Suspicious Encoded PowerShell Command
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith:
+            - '\powershell.exe'
+            - '\pwsh.exe'
+        CommandLine|contains:
+            - ' -enc '
+            - ' -encodedcommand '
+            - ' -e '
+    condition: selection
+level: high
+tags:
+    - attack.execution
+    - attack.t1059.001</code></pre>
                     </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--accent-secondary);">network_connection</strong>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Sysmon 3</p>
-                    </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--accent-tertiary);">file_event</strong>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Sysmon 11, 23</p>
-                    </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--accent-warning);">registry_event</strong>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Sysmon 12, 13, 14</p>
-                    </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: var(--accent-danger);">dns_query</strong>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Sysmon 22</p>
-                    </div>
-                    <div style="background: var(--bg-card); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <strong style="color: #a78bf6;">image_load</strong>
-                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Sysmon 7</p>
+                    <div class="explain-section">
+                        <strong>What This Detects:</strong> PowerShell running with encoded commands - a common attacker technique to hide malicious scripts.
+                        <br><strong>Why It's Suspicious:</strong> Normal users rarely use encoded commands. Attackers use them to bypass simple string matching.
                     </div>
                 </div>
 
-                <h3>Detection Section</h3>
-                <p>The core logic of the rule. Consists of selections and a condition:</p>
-
-                <h4>Selection Types</h4>
-                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem; margin: 1rem 0;">
-<pre style="margin: 0; white-space: pre-wrap;"><span style="color: #6aa3f7;"># Basic equality</span>
-<span style="color: #a78bf6;">selection:</span>
-    <span style="color: #f0b756;">Image|endswith:</span> <span style="color: #5ce0c4;">'\powershell.exe'</span>
-
-<span style="color: #6aa3f7;"># Multiple values (OR)</span>
-<span style="color: #a78bf6;">selection:</span>
-    <span style="color: #f0b756;">Image|endswith:</span>
-        <span style="color: #5ce0c4;">- '\powershell.exe'</span>
-        <span style="color: #5ce0c4;">- '\pwsh.exe'</span>
-        <span style="color: #5ce0c4;">- '\cmd.exe'</span>
-
-<span style="color: #6aa3f7;"># Multiple fields (AND)</span>
-<span style="color: #a78bf6;">selection:</span>
-    <span style="color: #f0b756;">Image|endswith:</span> <span style="color: #5ce0c4;">'\powershell.exe'</span>
-    <span style="color: #f0b756;">CommandLine|contains:</span> <span style="color: #5ce0c4;">'-enc'</span>
-
-<span style="color: #6aa3f7;"># Multiple selections</span>
-<span style="color: #a78bf6;">selection_process:</span>
-    <span style="color: #f0b756;">Image|endswith:</span> <span style="color: #5ce0c4;">'\powershell.exe'</span>
-<span style="color: #a78bf6;">selection_args:</span>
-    <span style="color: #f0b756;">CommandLine|contains:</span>
-        <span style="color: #5ce0c4;">- '-enc'</span>
-        <span style="color: #5ce0c4;">- '-nop'</span>
-        <span style="color: #5ce0c4;">- '-w hidden'</span>
-<span style="color: #a78bf6;">condition:</span> <span style="color: #5ce0c4;">selection_process and selection_args</span></pre>
+                <h3>Example 2: Detect certutil Download</h3>
+                <div class="code-explained">
+                    <div class="code-section">
+<pre style="margin: 0;"><code>title: Certutil Used to Download File
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        Image|endswith: '\certutil.exe'
+        CommandLine|contains:
+            - 'urlcache'
+            - '-f http'
+            - '-f https'
+    condition: selection
+level: high
+tags:
+    - attack.command_and_control
+    - attack.t1105</code></pre>
+                    </div>
+                    <div class="explain-section">
+                        <strong>What This Detects:</strong> Using certutil.exe to download files - a Living-off-the-Land technique.
+                        <br><strong>Why It's Suspicious:</strong> certutil is meant for certificate management, not downloading files. Attackers abuse it because it's signed by Microsoft.
+                    </div>
                 </div>
 
-                <h4>Field Modifiers</h4>
+                <!-- CONVERTING RULES -->
+                <h2><i class="fas fa-exchange-alt"></i> Converting Sigma Rules</h2>
+
+                <h3>Using sigma-cli (Command Line)</h3>
+                <div class="code-explained">
+                    <div class="code-section">
+<pre style="margin: 0;"><code># Install sigma-cli
+pip install sigma-cli
+
+# Convert to Splunk SPL
+sigma convert -t splunk rule.yml
+
+# Convert to Microsoft Sentinel KQL
+sigma convert -t microsoft365defender rule.yml
+
+# Convert to Elastic Query
+sigma convert -t elasticsearch rule.yml
+
+# Convert entire folder
+sigma convert -t splunk ./rules/ -o splunk_rules.txt</code></pre>
+                    </div>
+                    <div class="explain-section">
+                        <strong>Output Example (Splunk):</strong>
+                        <pre style="background: #1a1a2e; padding: 0.5rem; margin-top: 0.5rem; font-size: 0.8rem;"><code>index=windows EventCode=1 (Image="*\\powershell.exe" OR Image="*\\pwsh.exe") (CommandLine="* -enc *" OR CommandLine="* -encodedcommand *")</code></pre>
+                    </div>
+                </div>
+
+                <!-- WHERE TO FIND RULES -->
+                <h2><i class="fas fa-download"></i> Where to Find Sigma Rules</h2>
+
                 <table>
-                    <thead><tr><th>Modifier</th><th>Description</th><th>Example</th></tr></thead>
+                    <thead>
+                        <tr><th>Source</th><th>Description</th><th>Best For</th></tr>
+                    </thead>
                     <tbody>
-                        <tr><td><code>contains</code></td><td>String contains value</td><td><code>CommandLine|contains: '-enc'</code></td></tr>
-                        <tr><td><code>startswith</code></td><td>String starts with</td><td><code>Image|startswith: 'C:\Windows'</code></td></tr>
-                        <tr><td><code>endswith</code></td><td>String ends with</td><td><code>Image|endswith: '\cmd.exe'</code></td></tr>
-                        <tr><td><code>re</code></td><td>Regular expression</td><td><code>CommandLine|re: '.*-e[nc]+.*'</code></td></tr>
-                        <tr><td><code>all</code></td><td>All values must match</td><td><code>CommandLine|contains|all:</code></td></tr>
-                        <tr><td><code>base64</code></td><td>Match base64 encoded</td><td><code>CommandLine|base64:</code></td></tr>
-                        <tr><td><code>cidr</code></td><td>IP in CIDR range</td><td><code>DestinationIp|cidr: '10.0.0.0/8'</code></td></tr>
+                        <tr>
+                            <td><strong>SigmaHQ</strong></td>
+                            <td>Official repository with 1000s of community rules</td>
+                            <td>Starting point, comprehensive coverage</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Atomic Red Team</strong></td>
+                            <td>Rules paired with attack simulations</td>
+                            <td>Testing and validation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SOC Prime</strong></td>
+                            <td>Community + commercial rules marketplace</td>
+                            <td>Emerging threats, premium content</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Your Own</strong></td>
+                            <td>Rules based on your incidents and environment</td>
+                            <td>Custom threats, environment-specific</td>
+                        </tr>
                     </tbody>
                 </table>
 
-                <h4>Condition Logic</h4>
-                <table>
-                    <thead><tr><th>Operator</th><th>Description</th><th>Example</th></tr></thead>
-                    <tbody>
-                        <tr><td><code>and</code></td><td>Both must match</td><td><code>selection1 and selection2</code></td></tr>
-                        <tr><td><code>or</code></td><td>Either must match</td><td><code>selection1 or selection2</code></td></tr>
-                        <tr><td><code>not</code></td><td>Must not match</td><td><code>selection and not filter</code></td></tr>
-                        <tr><td><code>1 of selection*</code></td><td>Any selection matching pattern</td><td><code>1 of selection*</code></td></tr>
-                        <tr><td><code>all of selection*</code></td><td>All selections matching pattern</td><td><code>all of selection*</code></td></tr>
-                        <tr><td><code>1 of them</code></td><td>Any selection</td><td><code>1 of them</code></td></tr>
-                    </tbody>
-                </table>
+                <!-- BEST PRACTICES -->
+                <h2><i class="fas fa-check-circle"></i> Best Practices</h2>
 
-                <h2>Complete Rule Examples</h2>
-
-                <h3>Example 1: Encoded PowerShell Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 1rem 0;">
-<pre style="margin: 0; white-space: pre-wrap;"><span style="color: #a78bf6;">title:</span> <span style="color: #5ce0c4;">Encoded PowerShell Command Line</span>
-<span style="color: #a78bf6;">id:</span> <span style="color: #5ce0c4;">fb843269-508c-4b76-8b8d-88679db22ce7</span>
-<span style="color: #a78bf6;">status:</span> <span style="color: #5ce0c4;">stable</span>
-<span style="color: #a78bf6;">description:</span> <span style="color: #5ce0c4;">|</span>
-    <span style="color: #5ce0c4;">Detects PowerShell commands with Base64 encoded arguments,</span>
-    <span style="color: #5ce0c4;">commonly used by attackers to obfuscate malicious scripts.</span>
-<span style="color: #a78bf6;">references:</span>
-    <span style="color: #5ce0c4;">- https://attack.mitre.org/techniques/T1059/001/</span>
-    <span style="color: #5ce0c4;">- https://attack.mitre.org/techniques/T1027/</span>
-<span style="color: #a78bf6;">author:</span> <span style="color: #5ce0c4;">Security Team</span>
-<span style="color: #a78bf6;">date:</span> <span style="color: #5ce0c4;">2025/01/01</span>
-<span style="color: #a78bf6;">tags:</span>
-    <span style="color: #5ce0c4;">- attack.execution</span>
-    <span style="color: #5ce0c4;">- attack.t1059.001</span>
-    <span style="color: #5ce0c4;">- attack.defense_evasion</span>
-    <span style="color: #5ce0c4;">- attack.t1027</span>
-<span style="color: #a78bf6;">logsource:</span>
-    <span style="color: #a78bf6;">category:</span> <span style="color: #5ce0c4;">process_creation</span>
-    <span style="color: #a78bf6;">product:</span> <span style="color: #5ce0c4;">windows</span>
-<span style="color: #a78bf6;">detection:</span>
-    <span style="color: #a78bf6;">selection_process:</span>
-        <span style="color: #f0b756;">Image|endswith:</span>
-            <span style="color: #5ce0c4;">- '\powershell.exe'</span>
-            <span style="color: #5ce0c4;">- '\pwsh.exe'</span>
-    <span style="color: #a78bf6;">selection_encoded:</span>
-        <span style="color: #f0b756;">CommandLine|contains:</span>
-            <span style="color: #5ce0c4;">- ' -e '</span>
-            <span style="color: #5ce0c4;">- ' -enc '</span>
-            <span style="color: #5ce0c4;">- ' -encoded'</span>
-            <span style="color: #5ce0c4;">- ' -encodedcommand'</span>
-    <span style="color: #a78bf6;">filter_legitimate:</span>
-        <span style="color: #f0b756;">ParentImage|endswith:</span>
-            <span style="color: #5ce0c4;">- '\sccm.exe'</span>  <span style="color: #6aa3f7;"># SCCM legitimate usage</span>
-    <span style="color: #a78bf6;">condition:</span> <span style="color: #5ce0c4;">selection_process and selection_encoded and not filter_legitimate</span>
-<span style="color: #a78bf6;">falsepositives:</span>
-    <span style="color: #5ce0c4;">- SCCM scripts</span>
-    <span style="color: #5ce0c4;">- Legitimate admin automation</span>
-<span style="color: #a78bf6;">level:</span> <span style="color: #5ce0c4;">medium</span></pre>
-                </div>
-
-                <h3>Example 2: Suspicious Parent Process</h3>
-                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 1rem 0;">
-<pre style="margin: 0; white-space: pre-wrap;"><span style="color: #a78bf6;">title:</span> <span style="color: #5ce0c4;">Suspicious Shell Spawned by Office Application</span>
-<span style="color: #a78bf6;">id:</span> <span style="color: #5ce0c4;">438025f9-5856-4663-83f7-52f878a70a50</span>
-<span style="color: #a78bf6;">status:</span> <span style="color: #5ce0c4;">stable</span>
-<span style="color: #a78bf6;">description:</span> <span style="color: #5ce0c4;">|</span>
-    <span style="color: #5ce0c4;">Detects Office applications spawning command line interpreters,</span>
-    <span style="color: #5ce0c4;">which often indicates macro-based malware or exploits.</span>
-<span style="color: #a78bf6;">references:</span>
-    <span style="color: #5ce0c4;">- https://attack.mitre.org/techniques/T1566/001/</span>
-<span style="color: #a78bf6;">author:</span> <span style="color: #5ce0c4;">Security Team</span>
-<span style="color: #a78bf6;">date:</span> <span style="color: #5ce0c4;">2025/01/01</span>
-<span style="color: #a78bf6;">tags:</span>
-    <span style="color: #5ce0c4;">- attack.initial_access</span>
-    <span style="color: #5ce0c4;">- attack.t1566.001</span>
-    <span style="color: #5ce0c4;">- attack.execution</span>
-    <span style="color: #5ce0c4;">- attack.t1059</span>
-<span style="color: #a78bf6;">logsource:</span>
-    <span style="color: #a78bf6;">category:</span> <span style="color: #5ce0c4;">process_creation</span>
-    <span style="color: #a78bf6;">product:</span> <span style="color: #5ce0c4;">windows</span>
-<span style="color: #a78bf6;">detection:</span>
-    <span style="color: #a78bf6;">selection_parent:</span>
-        <span style="color: #f0b756;">ParentImage|endswith:</span>
-            <span style="color: #5ce0c4;">- '\winword.exe'</span>
-            <span style="color: #5ce0c4;">- '\excel.exe'</span>
-            <span style="color: #5ce0c4;">- '\powerpnt.exe'</span>
-            <span style="color: #5ce0c4;">- '\outlook.exe'</span>
-            <span style="color: #5ce0c4;">- '\msaccess.exe'</span>
-            <span style="color: #5ce0c4;">- '\mspub.exe'</span>
-            <span style="color: #5ce0c4;">- '\onenote.exe'</span>
-    <span style="color: #a78bf6;">selection_child:</span>
-        <span style="color: #f0b756;">Image|endswith:</span>
-            <span style="color: #5ce0c4;">- '\cmd.exe'</span>
-            <span style="color: #5ce0c4;">- '\powershell.exe'</span>
-            <span style="color: #5ce0c4;">- '\pwsh.exe'</span>
-            <span style="color: #5ce0c4;">- '\wscript.exe'</span>
-            <span style="color: #5ce0c4;">- '\cscript.exe'</span>
-            <span style="color: #5ce0c4;">- '\mshta.exe'</span>
-            <span style="color: #5ce0c4;">- '\regsvr32.exe'</span>
-            <span style="color: #5ce0c4;">- '\rundll32.exe'</span>
-    <span style="color: #a78bf6;">condition:</span> <span style="color: #5ce0c4;">selection_parent and selection_child</span>
-<span style="color: #a78bf6;">falsepositives:</span>
-    <span style="color: #5ce0c4;">- Legitimate Office automation (rare)</span>
-    <span style="color: #5ce0c4;">- Some add-ins may trigger this</span>
-<span style="color: #a78bf6;">level:</span> <span style="color: #5ce0c4;">high</span></pre>
-                </div>
-
-                <h3>Example 3: LSASS Access Detection</h3>
-                <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.8rem; margin: 1rem 0;">
-<pre style="margin: 0; white-space: pre-wrap;"><span style="color: #a78bf6;">title:</span> <span style="color: #5ce0c4;">LSASS Memory Access by Suspicious Process</span>
-<span style="color: #a78bf6;">id:</span> <span style="color: #5ce0c4;">32d0d3e2-e58d-4d41-926b-18b520b2b32d</span>
-<span style="color: #a78bf6;">status:</span> <span style="color: #5ce0c4;">stable</span>
-<span style="color: #a78bf6;">description:</span> <span style="color: #5ce0c4;">|</span>
-    <span style="color: #5ce0c4;">Detects processes accessing LSASS memory, which is the primary</span>
-    <span style="color: #5ce0c4;">technique for credential dumping tools like Mimikatz.</span>
-<span style="color: #a78bf6;">references:</span>
-    <span style="color: #5ce0c4;">- https://attack.mitre.org/techniques/T1003/001/</span>
-<span style="color: #a78bf6;">author:</span> <span style="color: #5ce0c4;">Security Team</span>
-<span style="color: #a78bf6;">date:</span> <span style="color: #5ce0c4;">2025/01/01</span>
-<span style="color: #a78bf6;">tags:</span>
-    <span style="color: #5ce0c4;">- attack.credential_access</span>
-    <span style="color: #5ce0c4;">- attack.t1003.001</span>
-<span style="color: #a78bf6;">logsource:</span>
-    <span style="color: #a78bf6;">category:</span> <span style="color: #5ce0c4;">process_access</span>
-    <span style="color: #a78bf6;">product:</span> <span style="color: #5ce0c4;">windows</span>
-<span style="color: #a78bf6;">detection:</span>
-    <span style="color: #a78bf6;">selection:</span>
-        <span style="color: #f0b756;">TargetImage|endswith:</span> <span style="color: #5ce0c4;">'\lsass.exe'</span>
-        <span style="color: #f0b756;">GrantedAccess|contains:</span>
-            <span style="color: #5ce0c4;">- '0x1010'</span>  <span style="color: #6aa3f7;"># PROCESS_QUERY_LIMITED_INFORMATION + PROCESS_VM_READ</span>
-            <span style="color: #5ce0c4;">- '0x1038'</span>
-            <span style="color: #5ce0c4;">- '0x1410'</span>
-            <span style="color: #5ce0c4;">- '0x1438'</span>
-            <span style="color: #5ce0c4;">- '0x143a'</span>
-            <span style="color: #5ce0c4;">- '0x1fffff'</span>  <span style="color: #6aa3f7;"># PROCESS_ALL_ACCESS</span>
-    <span style="color: #a78bf6;">filter_legitimate:</span>
-        <span style="color: #f0b756;">SourceImage|endswith:</span>
-            <span style="color: #5ce0c4;">- '\csrss.exe'</span>
-            <span style="color: #5ce0c4;">- '\wininit.exe'</span>
-            <span style="color: #5ce0c4;">- '\wmiprvse.exe'</span>
-            <span style="color: #5ce0c4;">- '\svchost.exe'</span>
-            <span style="color: #5ce0c4;">- '\services.exe'</span>
-            <span style="color: #5ce0c4;">- '\MsMpEng.exe'</span>  <span style="color: #6aa3f7;"># Windows Defender</span>
-    <span style="color: #a78bf6;">condition:</span> <span style="color: #5ce0c4;">selection and not filter_legitimate</span>
-<span style="color: #a78bf6;">falsepositives:</span>
-    <span style="color: #5ce0c4;">- Legitimate security tools</span>
-    <span style="color: #5ce0c4;">- EDR agents</span>
-<span style="color: #a78bf6;">level:</span> <span style="color: #5ce0c4;">critical</span></pre>
-                </div>
-
-                <h2>Converting Sigma Rules</h2>
-                <p>Use sigma-cli or pySigma to convert rules to your SIEM format:</p>
-
-                <h3>Installation</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
-                    # Install sigma-cli<br>
-                    pip install sigma-cli<br><br>
-                    # Install backends for your SIEM<br>
-                    pip install pysigma-backend-splunk<br>
-                    pip install pysigma-backend-microsoft365defender<br>
-                    pip install pysigma-backend-elasticsearch
-                </div>
-
-                <h3>Conversion Examples</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.85rem;">
-                    # Convert to Splunk SPL<br>
-                    sigma convert -t splunk rule.yml<br><br>
-                    # Convert to Microsoft Sentinel KQL<br>
-                    sigma convert -t microsoft365defender rule.yml<br><br>
-                    # Convert to Elasticsearch<br>
-                    sigma convert -t elasticsearch rule.yml<br><br>
-                    # Convert with specific pipeline (field mappings)<br>
-                    sigma convert -t splunk -p sysmon rule.yml<br><br>
-                    # Convert entire directory<br>
-                    sigma convert -t splunk rules/ -o converted/
-                </div>
-
-                <h2>Best Practices</h2>
                 <div class="info-box tip">
                     <div class="info-box-title"><i class="fas fa-lightbulb"></i> Writing Good Sigma Rules</div>
-                    <ol style="margin: 0.5rem 0 0 1rem;">
-                        <li><strong>Always include falsepositives:</strong> Document known legitimate triggers</li>
-                        <li><strong>Use appropriate level:</strong> Reserve "critical" for high-fidelity detections</li>
-                        <li><strong>Tag with ATT&CK:</strong> Always map to MITRE techniques</li>
-                        <li><strong>Test before sharing:</strong> Validate converted queries work</li>
-                        <li><strong>Be specific:</strong> Narrow conditions reduce false positives</li>
-                        <li><strong>Use filters:</strong> Exclude known legitimate behavior</li>
-                        <li><strong>Document thoroughly:</strong> Future you will thank present you</li>
+                    <ol>
+                        <li><strong>Be specific:</strong> Include enough conditions to reduce false positives</li>
+                        <li><strong>Document well:</strong> Future you will thank past you for good descriptions</li>
+                        <li><strong>Test before deploying:</strong> Convert and run against historical data first</li>
+                        <li><strong>Include false positives:</strong> List known legitimate matches to help analysts</li>
+                        <li><strong>Map to MITRE:</strong> Always tag with ATT&CK techniques</li>
+                        <li><strong>Start with existing rules:</strong> Don't reinvent the wheel - check SigmaHQ first</li>
                     </ol>
                 </div>
 
-                <h2>Resources</h2>
-                <ul>
-                    <li><a href="https://github.com/SigmaHQ/sigma" target="_blank">Sigma GitHub Repository</a></li>
-                    <li><a href="https://sigmahq.io/" target="_blank">Sigma Rule Search</a></li>
-                    <li><a href="https://github.com/SigmaHQ/pySigma" target="_blank">pySigma Documentation</a></li>
-                </ul>
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+
+                <div class="card-grid">
+                    <a href="pages/detection-engineering/testing.html" class="card"><div class="card-icon"><i class="fas fa-vial"></i></div><h3>Detection Testing</h3><p>Validate your rules work</p></a>
+                    <a href="pages/detection-engineering/coverage-analysis.html" class="card"><div class="card-icon"><i class="fas fa-map"></i></div><h3>Coverage Analysis</h3><p>Map rules to ATT&CK</p></a>
+                    <a href="pages/references/kql-library.html" class="card"><div class="card-icon"><i class="fas fa-code"></i></div><h3>KQL Library</h3><p>Ready-to-use Sentinel queries</p></a>
+                </div>
+
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

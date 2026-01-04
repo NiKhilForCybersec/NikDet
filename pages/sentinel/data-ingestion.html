@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Data Ingestion & Parsing | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .concept-box { background: linear-gradient(135deg, rgba(0, 120, 212, 0.1), rgba(0, 120, 212, 0.05)); border: 1px solid rgba(0, 120, 212, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .concept-box h3 { color: #0078d4; margin-top: 0; }
+        .scenario-box { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; border-left: 4px solid var(--accent-primary); }
+        .scenario-box h4 { margin-top: 0; color: var(--accent-primary); }
+        .code-block { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; overflow-x: auto; font-family: var(--font-mono); font-size: 0.85rem; }
+        .tier-card { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 0.5rem 0; }
+        .tier-card h4 { margin: 0 0 0.5rem 0; }
+        .tier-card.analytics { border-left: 4px solid #0078d4; }
+        .tier-card.basic { border-left: 4px solid #65a637; }
+        .tier-card.archive { border-left: 4px solid #6b7280; }
+        .flow-diagram { background: var(--bg-secondary); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+        .flow-step { display: inline-block; background: var(--accent-primary); color: white; padding: 0.5rem 1rem; border-radius: 8px; margin: 0.25rem; font-size: 0.85rem; }
+        .flow-arrow { color: var(--text-muted); margin: 0 0.5rem; }
+        .comparison-table { width: 100%; }
+        .comparison-table th { background: var(--card-bg); }
+        .tip-box { background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; padding: 1rem; margin: 1rem 0; }
+        .warning-box { background: rgba(251, 191, 36, 0.1); border-left: 4px solid #fbbf24; padding: 1rem; margin: 1rem 0; }
+        .step-section { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+        .step-section h5 { margin: 0 0 0.5rem 0; color: var(--accent-primary); }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/sentinel/index.html">Sentinel</a><span class="separator">/</span>
+                <span>Data Ingestion & Parsing</span>
+            </div>
+
+            <div class="content">
+                <h1><i class="fas fa-database" style="color: #0078d4;"></i> Sentinel Data Ingestion & Parsing</h1>
+                <p class="lead">Complete guide to getting data into Sentinel: default tables, custom parsing, Data Collection Rules, ASIM normalization, and storage tiers.</p>
+
+                <!-- OVERVIEW -->
+                <div class="concept-box">
+                    <h3><i class="fas fa-route"></i> How Data Gets Into Sentinel</h3>
+                    <p>Data flows into Sentinel through this pipeline:</p>
+                    <div class="flow-diagram">
+                        <span class="flow-step">📊 Log Source</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">🔌 Data Connector / DCR</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">⚙️ Transformation (Optional)</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">📋 Table</span>
+                        <span class="flow-arrow">→</span>
+                        <span class="flow-step">💾 Storage Tier</span>
+                    </div>
+                    <p style="margin-top: 1rem;"><strong>Key concepts:</strong></p>
+                    <ul>
+                        <li><strong>Data Connector</strong> = Pre-built integration for common sources (Azure AD, M365, etc.)</li>
+                        <li><strong>Data Collection Rule (DCR)</strong> = Configuration for how data is collected, transformed, and stored</li>
+                        <li><strong>Table</strong> = Where data is stored (can be default or custom)</li>
+                        <li><strong>Storage Tier</strong> = Analytics, Basic, or Archive (affects cost and query capability)</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION 1: DEFAULT TABLES -->
+                <h2><i class="fas fa-table"></i> Section 1: Default Tables (Pre-Parsed)</h2>
+                
+                <p>When you enable Microsoft data connectors, logs go into <strong>default tables</strong> that are already parsed with proper fields. This is the easiest path - no configuration needed.</p>
+
+                <h3>How Default Tables Work</h3>
+                <div class="scenario-box">
+                    <h4>Scenario: Enable Azure AD Sign-in Logs</h4>
+                    <p><strong>What you do:</strong></p>
+                    <ol>
+                        <li>Go to Data Connectors → Azure Active Directory</li>
+                        <li>Check "Sign-in logs" and click Connect</li>
+                    </ol>
+                    <p><strong>What happens automatically:</strong></p>
+                    <ul>
+                        <li>Logs flow to the <code>SigninLogs</code> table</li>
+                        <li>Fields are pre-extracted: UserPrincipalName, IPAddress, ResultType, Location, etc.</li>
+                        <li>No parsing configuration needed</li>
+                    </ul>
+                    <p><strong>Immediately queryable:</strong></p>
+                    <div class="code-block">
+<pre>SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType != 0
+| project TimeGenerated, UserPrincipalName, IPAddress, ResultDescription</pre>
+                    </div>
+                </div>
+
+                <h3>Complete Default Table Reference</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr><th>Table</th><th>Source</th><th>Key Fields</th><th>Storage Tier</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>SigninLogs</code></td>
+                            <td>Azure AD interactive sign-ins</td>
+                            <td>UserPrincipalName, IPAddress, ResultType, Location, AppDisplayName, ConditionalAccessStatus</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>AADNonInteractiveUserSignInLogs</code></td>
+                            <td>Azure AD service/token sign-ins</td>
+                            <td>Same as SigninLogs</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>AuditLogs</code></td>
+                            <td>Azure AD changes</td>
+                            <td>OperationName, InitiatedBy, TargetResources, Result</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>SecurityEvent</code></td>
+                            <td>Windows Security Event Log</td>
+                            <td>EventID, Account, Computer, Activity, IpAddress, LogonType</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>DeviceProcessEvents</code></td>
+                            <td>MDE - Process execution</td>
+                            <td>DeviceName, FileName, ProcessCommandLine, AccountName, SHA256</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>DeviceNetworkEvents</code></td>
+                            <td>MDE - Network connections</td>
+                            <td>DeviceName, RemoteIP, RemotePort, RemoteUrl, InitiatingProcessFileName</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>DeviceFileEvents</code></td>
+                            <td>MDE - File operations</td>
+                            <td>DeviceName, FileName, FolderPath, ActionType, SHA256</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>DeviceLogonEvents</code></td>
+                            <td>MDE - Logon events</td>
+                            <td>DeviceName, AccountName, LogonType, RemoteIP</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>EmailEvents</code></td>
+                            <td>MDO - Email metadata</td>
+                            <td>SenderFromAddress, RecipientEmailAddress, Subject, DeliveryAction</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>OfficeActivity</code></td>
+                            <td>M365 audit logs</td>
+                            <td>Operation, UserId, ClientIP, OfficeWorkload, ResultStatus</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>AzureActivity</code></td>
+                            <td>Azure management plane</td>
+                            <td>OperationName, Caller, ResourceGroup, ActivityStatus</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>CommonSecurityLog</code></td>
+                            <td>CEF-formatted devices</td>
+                            <td>DeviceVendor, DeviceProduct, Activity, SourceIP, DestinationIP</td>
+                            <td>Analytics</td>
+                        </tr>
+                        <tr>
+                            <td><code>Syslog</code></td>
+                            <td>Linux syslog</td>
+                            <td>Facility, SeverityLevel, SyslogMessage, Computer</td>
+                            <td>Analytics or Basic</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tip-box">
+                    <strong><i class="fas fa-lightbulb"></i> Best Practice</strong>
+                    <p>For Microsoft sources (Azure AD, M365, MDE, MDO), always use the native data connectors. The tables are pre-parsed, optimized, and often included in your license at no additional ingestion cost.</p>
+                </div>
+
+                <!-- SECTION 2: DATA COLLECTION RULES -->
+                <h2><i class="fas fa-cog"></i> Section 2: Data Collection Rules (DCRs)</h2>
+
+                <div class="concept-box">
+                    <h3>What is a DCR?</h3>
+                    <p>A <strong>Data Collection Rule (DCR)</strong> defines:</p>
+                    <ul>
+                        <li><strong>What to collect</strong> - Which logs, which events</li>
+                        <li><strong>How to transform</strong> - Parse, filter, enrich at ingestion</li>
+                        <li><strong>Where to send</strong> - Which table, which workspace</li>
+                    </ul>
+                    <p>DCRs are used for: Azure Monitor Agent (AMA), custom logs, and log transformation.</p>
+                </div>
+
+                <h3>When to Use DCRs</h3>
+                <table>
+                    <thead>
+                        <tr><th>Scenario</th><th>Use DCR?</th><th>Why</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Azure AD, M365, MDE logs</td>
+                            <td>No</td>
+                            <td>Native connectors handle everything</td>
+                        </tr>
+                        <tr>
+                            <td>Windows Event Logs via AMA</td>
+                            <td>Yes</td>
+                            <td>DCR specifies which Event IDs to collect</td>
+                        </tr>
+                        <tr>
+                            <td>Linux Syslog via AMA</td>
+                            <td>Yes</td>
+                            <td>DCR specifies facilities and severity levels</td>
+                        </tr>
+                        <tr>
+                            <td>Custom application logs</td>
+                            <td>Yes</td>
+                            <td>DCR defines parsing and destination table</td>
+                        </tr>
+                        <tr>
+                            <td>Transform/filter existing logs</td>
+                            <td>Yes</td>
+                            <td>Ingestion-time transformation</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Collect Windows Security Events via AMA</h4>
+                    <p><strong>Goal:</strong> Collect only important security events (not all 50+ event types)</p>
+                    
+                    <div class="step-section">
+                        <h5>Step 1: Create Data Collection Rule</h5>
+                        <p>Azure Portal → Monitor → Data Collection Rules → Create</p>
+                        <ul>
+                            <li>Name: <code>DCR-Windows-Security</code></li>
+                            <li>Platform: Windows</li>
+                            <li>Data Collection Endpoint: Select or create one</li>
+                        </ul>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 2: Add Data Source</h5>
+                        <p>Data source type: Windows Event Logs</p>
+                        <div class="code-block">
+<pre>// XPath queries for specific events
+Security!*[System[(EventID=4624 or EventID=4625 or EventID=4648 or EventID=4672 or EventID=4688 or EventID=4720 or EventID=4726)]]</pre>
+                        </div>
+                        <p>This collects: Logon success (4624), Logon failure (4625), Explicit credentials (4648), Special privileges (4672), Process creation (4688), User created (4720), User deleted (4726)</p>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 3: Set Destination</h5>
+                        <ul>
+                            <li>Destination type: Azure Monitor Logs</li>
+                            <li>Workspace: Your Sentinel workspace</li>
+                            <li>Table: SecurityEvent (default)</li>
+                        </ul>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 4: Associate VMs</h5>
+                        <p>Resources → Add resources → Select VMs to collect from</p>
+                        <p>AMA will be installed automatically on selected VMs.</p>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: CUSTOM TABLES & PARSING -->
+                <h2><i class="fas fa-code"></i> Section 3: Custom Tables & Ingestion-Time Parsing</h2>
+
+                <p>For non-standard log sources, you can create custom tables with your own schema and parse logs at ingestion time.</p>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Ingest Custom Application Logs</h4>
+                    <p><strong>Your application produces logs like:</strong></p>
+                    <div class="code-block">
+<pre>2025-01-04 10:23:45 INFO user=john.doe action=login status=success ip=192.168.1.100 duration=1.23s
+2025-01-04 10:24:12 WARN user=jane.smith action=file_download status=blocked ip=10.0.0.50 duration=0.45s</pre>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 1: Create Custom Table</h5>
+                        <p>Log Analytics workspace → Tables → Create → New custom log (DCR-based)</p>
+                        <div class="code-block">
+<pre>// Table name: CustomAppLogs_CL
+// Define schema:
+{
+  "columns": [
+    {"name": "TimeGenerated", "type": "datetime"},
+    {"name": "LogLevel", "type": "string"},
+    {"name": "User", "type": "string"},
+    {"name": "Action", "type": "string"},
+    {"name": "Status", "type": "string"},
+    {"name": "SourceIP", "type": "string"},
+    {"name": "Duration", "type": "real"}
+  ]
+}</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 2: Create DCR with Transformation</h5>
+                        <p>The transformation uses KQL to parse raw logs:</p>
+                        <div class="code-block">
+<pre>// Transformation query
+source
+| parse RawData with TimeStamp:datetime " " LogLevel:string " user=" User:string " action=" Action:string " status=" Status:string " ip=" SourceIP:string " duration=" DurationStr:string
+| extend Duration = todouble(replace_string(DurationStr, "s", ""))
+| project TimeGenerated=TimeStamp, LogLevel, User, Action, Status, SourceIP, Duration</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 3: Configure Log Collection</h5>
+                        <p>Use Logs Ingestion API or AMA to send logs through the DCR.</p>
+                        <div class="code-block">
+<pre># Using Logs Ingestion API
+POST https://&lt;DCE-endpoint&gt;/dataCollectionRules/&lt;DCR-ID&gt;/streams/Custom-CustomAppLogs_CL?api-version=2023-01-01
+Content-Type: application/json
+Authorization: Bearer &lt;token&gt;
+
+[
+  {"RawData": "2025-01-04 10:23:45 INFO user=john.doe action=login status=success ip=192.168.1.100 duration=1.23s"}
+]</pre>
+                        </div>
+                    </div>
+
+                    <div class="step-section">
+                        <h5>Step 4: Query Your Parsed Data</h5>
+                        <div class="code-block">
+<pre>CustomAppLogs_CL
+| where TimeGenerated > ago(24h)
+| where Status == "blocked"
+| summarize BlockedActions = count() by User, Action
+| order by BlockedActions desc</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 4: ASIM -->
+                <h2><i class="fas fa-balance-scale"></i> Section 4: ASIM Normalization (Optional)</h2>
+
+                <div class="concept-box">
+                    <h3>What is ASIM?</h3>
+                    <p><strong>ASIM (Advanced Security Information Model)</strong> is Microsoft's normalization framework. It maps different log formats to common field names so ONE query works across ALL sources.</p>
+                    
+                    <p><strong>Important:</strong> ASIM is <strong>optional</strong>. You can absolutely work with default tables directly. ASIM is useful when:</p>
+                    <ul>
+                        <li>You have multiple sources for the same data type (e.g., 3 different firewalls)</li>
+                        <li>You want to write detection rules that work across sources</li>
+                        <li>You're building content for multiple environments</li>
+                    </ul>
+                </div>
+
+                <h3>ASIM vs Default Tables</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr><th>Approach</th><th>When to Use</th><th>Pros</th><th>Cons</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Default Tables</strong></td>
+                            <td>Single source, simple queries, learning</td>
+                            <td>Direct access, simpler queries, all fields available</td>
+                            <td>Different field names per source</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ASIM</strong></td>
+                            <td>Multiple sources, cross-source analytics</td>
+                            <td>One query for all sources, standard field names</td>
+                            <td>Parser overhead, some fields may not map</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="scenario-box">
+                    <h4>Scenario: Query Authentication Across Multiple Sources</h4>
+                    
+                    <p><strong>Without ASIM (querying each table separately):</strong></p>
+                    <div class="code-block">
+<pre>// Query 1: Azure AD
+SigninLogs | where ResultType != 0 | project User=UserPrincipalName, IP=IPAddress, Result="Failure"
+| union (
+// Query 2: Windows
+SecurityEvent | where EventID == 4625 | project User=TargetUserName, IP=IpAddress, Result="Failure"
+)
+| union (
+// Query 3: Linux
+Syslog | where SyslogMessage contains "Failed password" | extend User=extract(@"for (\w+)", 1, SyslogMessage)...
+)</pre>
+                    </div>
+
+                    <p><strong>With ASIM (single query):</strong></p>
+                    <div class="code-block">
+<pre>_Im_Authentication
+| where EventResult == "Failure"
+| summarize FailureCount = count() by TargetUsername, SrcIpAddr
+| where FailureCount > 10</pre>
+                    </div>
+                    <p>The <code>_Im_Authentication</code> function automatically queries all authentication sources and normalizes fields.</p>
+                </div>
+
+                <h3>ASIM Schemas Available</h3>
+                <table>
+                    <thead>
+                        <tr><th>Schema</th><th>Function</th><th>Covers</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Authentication</td><td><code>_Im_Authentication</code></td><td>SigninLogs, SecurityEvent, Syslog auth</td></tr>
+                        <tr><td>Network Session</td><td><code>_Im_NetworkSession</code></td><td>Firewalls, netflow, proxy</td></tr>
+                        <tr><td>DNS</td><td><code>_Im_Dns</code></td><td>DNS query logs</td></tr>
+                        <tr><td>Process Event</td><td><code>_Im_ProcessCreate</code></td><td>DeviceProcessEvents, SecurityEvent 4688</td></tr>
+                        <tr><td>File Event</td><td><code>_Im_FileEvent</code></td><td>DeviceFileEvents, Sysmon</td></tr>
+                        <tr><td>Web Session</td><td><code>_Im_WebSession</code></td><td>Proxy logs, web server logs</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="tip-box">
+                    <strong><i class="fas fa-lightbulb"></i> Recommendation</strong>
+                    <p><strong>Start with default tables.</strong> Learn the native field names first. Add ASIM later when you have multiple sources and need cross-source detection. Most SOC teams use default tables for 90% of their work.</p>
+                </div>
+
+                <!-- SECTION 5: STORAGE TIERS -->
+                <h2><i class="fas fa-layer-group"></i> Section 5: Storage Tiers</h2>
+
+                <p>Sentinel/Log Analytics offers different storage tiers that affect cost and query capabilities:</p>
+
+                <div class="tier-card analytics">
+                    <h4><i class="fas fa-bolt"></i> Analytics Tier (Default)</h4>
+                    <p><strong>Cost:</strong> ~$2.76/GB ingestion + retention costs</p>
+                    <p><strong>Retention:</strong> 30 days free, up to 2 years paid</p>
+                    <p><strong>Capabilities:</strong></p>
+                    <ul>
+                        <li>Full KQL query support</li>
+                        <li>Analytics rules can query this data</li>
+                        <li>Workbooks, hunting, all Sentinel features</li>
+                    </ul>
+                    <p><strong>Use for:</strong> Security-critical logs (authentication, endpoint, alerts)</p>
+                </div>
+
+                <div class="tier-card basic">
+                    <h4><i class="fas fa-leaf"></i> Basic Tier (Low Cost)</h4>
+                    <p><strong>Cost:</strong> ~$0.65/GB ingestion (76% cheaper than Analytics)</p>
+                    <p><strong>Retention:</strong> 8 days interactive, up to 2 years archive</p>
+                    <p><strong>Capabilities:</strong></p>
+                    <ul>
+                        <li>Limited KQL - only basic operators</li>
+                        <li>Cannot use in Analytics rules</li>
+                        <li>Good for ad-hoc searches</li>
+                    </ul>
+                    <p><strong>Use for:</strong> High-volume, low-security-value logs (verbose app logs, netflow)</p>
+                </div>
+
+                <div class="tier-card archive">
+                    <h4><i class="fas fa-archive"></i> Archive Tier (Long-term)</h4>
+                    <p><strong>Cost:</strong> ~$0.02/GB/month storage</p>
+                    <p><strong>Retention:</strong> Up to 12 years</p>
+                    <p><strong>Capabilities:</strong></p>
+                    <ul>
+                        <li>Not directly queryable</li>
+                        <li>Must restore to Analytics tier to query</li>
+                        <li>Restore takes minutes to hours</li>
+                    </ul>
+                    <p><strong>Use for:</strong> Compliance retention, historical forensics</p>
+                </div>
+
+                <h3>Configuring Table Tiers</h3>
+                <div class="code-block">
+<pre># Set table to Basic tier (Azure CLI)
+az monitor log-analytics workspace table update \
+  --resource-group MyRG \
+  --workspace-name MySentinelWorkspace \
+  --name Syslog \
+  --plan Basic
+
+# Set retention and archive
+az monitor log-analytics workspace table update \
+  --resource-group MyRG \
+  --workspace-name MySentinelWorkspace \
+  --name SecurityEvent \
+  --retention-time 90 \
+  --total-retention-time 365</pre>
+                </div>
+
+                <h3>Recommended Tier Strategy</h3>
+                <table>
+                    <thead>
+                        <tr><th>Log Type</th><th>Recommended Tier</th><th>Retention</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>SigninLogs, AuditLogs</td><td>Analytics</td><td>90 days + 1 year archive</td></tr>
+                        <tr><td>SecurityEvent</td><td>Analytics</td><td>90 days + 1 year archive</td></tr>
+                        <tr><td>DeviceProcessEvents (MDE)</td><td>Analytics</td><td>30-90 days</td></tr>
+                        <tr><td>Syslog (verbose)</td><td>Basic</td><td>30 days</td></tr>
+                        <tr><td>Heartbeat, Perf</td><td>Basic</td><td>8 days</td></tr>
+                        <tr><td>High-volume netflow</td><td>Basic</td><td>8 days</td></tr>
+                        <tr><td>Compliance data</td><td>Analytics → Archive</td><td>7 years</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- SUMMARY -->
+                <h2><i class="fas fa-check-circle"></i> Summary: When to Use What</h2>
+
+                <table>
+                    <thead>
+                        <tr><th>Scenario</th><th>Approach</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Microsoft sources (Azure AD, M365, MDE)</td>
+                            <td>Enable data connector → Query default tables</td>
+                        </tr>
+                        <tr>
+                            <td>Windows/Linux via agent</td>
+                            <td>Create DCR → Filter events → Send to SecurityEvent/Syslog</td>
+                        </tr>
+                        <tr>
+                            <td>CEF/Syslog devices (firewalls)</td>
+                            <td>AMA + DCR → CommonSecurityLog or Syslog</td>
+                        </tr>
+                        <tr>
+                            <td>Custom application logs</td>
+                            <td>Create custom table → DCR with transformation → Logs Ingestion API</td>
+                        </tr>
+                        <tr>
+                            <td>Cross-source detection</td>
+                            <td>Use ASIM functions in analytics rules</td>
+                        </tr>
+                        <tr>
+                            <td>Cost optimization</td>
+                            <td>Move high-volume, low-value logs to Basic tier</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+                <div class="card-grid">
+                    <a href="pages/sentinel/data-connectors.html" class="card"><div class="card-icon"><i class="fas fa-plug"></i></div><h3>Data Connectors</h3><p>Enable specific data sources</p></a>
+                    <a href="pages/sentinel/kql-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Fundamentals</h3><p>Query your data</p></a>
+                    <a href="pages/sentinel/analytics-rules.html" class="card"><div class="card-icon"><i class="fas fa-bell"></i></div><h3>Analytics Rules</h3><p>Create detections</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <base href="/NikDet/">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptomining Investigation Playbook | SOC Compendium</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="main-nav">
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+    </nav>
+    <main class="main-content">
+        <div class="content-page">
+            <div class="breadcrumb">
+                <a href="index.html">Home</a><span class="separator">/</span>
+                <a href="pages/playbooks/index.html">Playbooks</a><span class="separator">/</span>
+                <a href="pages/playbooks/investigation/index.html">Investigation</a><span class="separator">/</span>
+                <span>Cryptomining</span>
+            </div>
+
+            <h1><i class="fas fa-coins"></i> Cryptomining/Cryptojacking Investigation Playbook</h1>
+            <p class="lead">Complete investigation workflow for unauthorized cryptocurrency mining on endpoints, servers, cloud infrastructure, and containers.</p>
+
+            <div class="content">
+                <!-- WHY THIS MATTERS -->
+                <h3 id="why-matters"><i class="fas fa-exclamation-circle"></i> Why This Investigation Matters</h3>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title"><i class="fas fa-skull-crossbones"></i> Why Cryptomining Is More Than Just Resource Theft</div>
+                    <table>
+                        <thead><tr><th>If You Don't Investigate...</th><th>Potential Outcome</th><th>Hidden Risk</th></tr></thead>
+                        <tbody>
+                            <tr><td>Dismiss as "just mining"</td><td>Miss the initial access vector</td><td>Same access could deploy ransomware tomorrow</td></tr>
+                            <tr><td>Don't scope the compromise</td><td>Other systems also infected</td><td>Miners spread laterally like other malware</td></tr>
+                            <tr><td>Ignore cloud mining</td><td>Massive unexpected cloud bills</td><td>$50K+ cloud bills from mining have occurred</td></tr>
+                            <tr><td>Don't identify persistence</td><td>Mining returns after cleanup</td><td>Scheduled tasks, cron jobs reinstall miners</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Cryptomining Attack Types</h3>
+                <table>
+                    <thead><tr><th>Type</th><th>Method</th><th>Detection Approach</th><th>Common Targets</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Endpoint Mining</strong></td><td>Malware installs miner on workstations</td><td>High CPU, known miner processes</td><td>User workstations</td></tr>
+                        <tr><td><strong>Server Compromise</strong></td><td>Exploit web app to deploy miner</td><td>Server CPU spike, unusual processes</td><td>Web servers, databases</td></tr>
+                        <tr><td><strong>Cloud Cryptojacking</strong></td><td>Compromised credentials spin up VMs</td><td>Unusual VM creation, high compute usage</td><td>AWS, Azure, GCP</td></tr>
+                        <tr><td><strong>Container Mining</strong></td><td>Malicious container images or compromised orchestrator</td><td>Container resource anomalies</td><td>Kubernetes, Docker</td></tr>
+                        <tr><td><strong>Browser Mining</strong></td><td>JavaScript miner in browser (Coinhive-style)</td><td>Browser CPU usage, WebSocket connections</td><td>User browsers</td></tr>
+                        <tr><td><strong>Fileless Mining</strong></td><td>PowerShell/script-based, no file dropped</td><td>Memory analysis, script logging</td><td>Any system</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- TRIGGERS -->
+                <h3 id="when-to-use"><i class="fas fa-clock"></i> When to Use This Playbook</h3>
+
+                <table>
+                    <thead><tr><th>Trigger</th><th>Source</th><th>Priority</th><th>First Action</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color: #f85149;"><strong>EDR detects known miner</strong></td><td>EDR alert (XMRig, etc.)</td><td>HIGH</td><td>Identify infection vector</td></tr>
+                        <tr><td style="color: #f85149;"><strong>Unexplained cloud cost spike</strong></td><td>Cloud billing alert</td><td>CRITICAL</td><td>Inventory new resources immediately</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Sustained high CPU usage</strong></td><td>Performance monitoring</td><td>HIGH</td><td>Identify consuming process</td></tr>
+                        <tr><td style="color: #f0883e;"><strong>Connection to mining pool</strong></td><td>Network/firewall logs</td><td>HIGH</td><td>Block pool, identify source</td></tr>
+                        <tr><td style="color: #d29922;"><strong>Stratum protocol detected</strong></td><td>Network inspection</td><td>MEDIUM</td><td>Identify communicating host</td></tr>
+                        <tr><td style="color: #d29922;"><strong>User reports slow computer</strong></td><td>Help desk ticket</td><td>MEDIUM</td><td>Check resource usage</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- INDICATORS -->
+                <h3 id="indicators"><i class="fas fa-fingerprint"></i> Key Detection Indicators</h3>
+
+                <h3>Process Indicators</h3>
+                <table>
+                    <thead><tr><th>Miner</th><th>Process Names</th><th>Command Line Indicators</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>XMRig</strong></td><td>xmrig.exe, xmrig, xmr-stak</td><td>--donate-level, -o pool, stratum+tcp://</td></tr>
+                        <tr><td><strong>NBMiner</strong></td><td>nbminer.exe</td><td>-a ethash, -o stratum</td></tr>
+                        <tr><td><strong>PhoenixMiner</strong></td><td>PhoenixMiner.exe</td><td>-pool, -wal</td></tr>
+                        <tr><td><strong>T-Rex</strong></td><td>t-rex.exe</td><td>-a kawpow, -o stratum</td></tr>
+                        <tr><td><strong>Custom/Renamed</strong></td><td>svchost.exe, csrss.exe (wrong path)</td><td>High CPU, network to pools</td></tr>
+                    </tbody>
+                </table>
+
+                <h3>Network Indicators</h3>
+                <table>
+                    <thead><tr><th>Indicator</th><th>Example</th><th>Detection Method</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Mining Pool Domains</strong></td><td>*pool.com, *pool.org, minexmr.com</td><td>DNS logs, proxy logs</td></tr>
+                        <tr><td><strong>Stratum Protocol</strong></td><td>Port 3333, 4444, 14444, 45700</td><td>Network flow, firewall</td></tr>
+                        <tr><td><strong>JSON-RPC Mining</strong></td><td>{"method":"mining.subscribe"}</td><td>Deep packet inspection</td></tr>
+                        <tr><td><strong>Wallet Addresses</strong></td><td>4-prefix (Monero), 0x (Ethereum)</td><td>Packet inspection, logs</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- INVESTIGATION STEPS -->
+                <h3 id="investigation"><i class="fas fa-search"></i> Investigation Steps</h3>
+
+                <h3>Step 1: Identify Mining Activity</h3>
+
+                <h4>KQL - Detect Known Miners (MDE)</h4>
+                <pre><code>// Detect known cryptocurrency miners
+DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("xmrig.exe", "xmrig", "xmr-stak.exe", "minerd.exe", 
+    "cpuminer.exe", "cgminer.exe", "bfgminer.exe", "nbminer.exe", 
+    "phoenixminer.exe", "t-rex.exe", "gminer.exe", "lolminer.exe")
+    or ProcessCommandLine has_any ("stratum+tcp", "stratum+ssl", "mining.subscribe",
+        "--donate-level", "-o pool.", "pool.minexmr", "xmrpool", "moneroocean")
+| project TimeGenerated, DeviceName, FileName, ProcessCommandLine, 
+    AccountName, InitiatingProcessFileName
+| order by TimeGenerated desc</code></pre>
+
+                <h4>KQL - High CPU Processes</h4>
+                <pre><code>// Find processes with sustained high CPU (potential miners)
+DeviceProcessEvents
+| where TimeGenerated > ago(24h)
+| join kind=inner (
+    DevicePerformanceEvents
+    | where TimeGenerated > ago(24h)
+    | where CounterName == "% Processor Time"
+    | where CounterValue > 80
+    | summarize HighCPUCount = count() by DeviceName
+    | where HighCPUCount > 10  // Sustained high CPU
+) on DeviceName
+| summarize count() by DeviceName, FileName, ProcessCommandLine
+| order by count_ desc</code></pre>
+
+                <h4>KQL - Mining Pool Connections</h4>
+                <pre><code>// Detect connections to mining pools
+DeviceNetworkEvents
+| where TimeGenerated > ago(7d)
+| where RemotePort in (3333, 4444, 5555, 7777, 8888, 9999, 14444, 45700)
+    or RemoteUrl has_any ("pool", "mining", "xmr", "monero", "nicehash", 
+        "ethermine", "f2pool", "antpool", "poolin")
+| summarize 
+    ConnectionCount = count(),
+    FirstSeen = min(TimeGenerated),
+    LastSeen = max(TimeGenerated),
+    Processes = make_set(InitiatingProcessFileName)
+    by DeviceName, RemoteIP, RemotePort, RemoteUrl
+| order by ConnectionCount desc</code></pre>
+
+                <h4>SPL - Cryptominer Detection (Splunk)</h4>
+                <pre><code>index=endpoint sourcetype=sysmon EventCode=1
+| where process_name IN ("xmrig.exe", "xmrig", "minerd.exe", "cpuminer.exe")
+    OR match(command_line, "(?i)(stratum|mining\.subscribe|pool\.|donate-level)")
+| stats count by host, process_name, command_line, parent_process_name
+| sort -count</code></pre>
+
+                <h3>Step 2: Identify Infection Vector</h3>
+
+                <div class="info-box warning">
+                    <div class="info-box-title"><i class="fas fa-question-circle"></i> How Did the Miner Get There?</div>
+                    <table>
+                        <thead><tr><th>Vector</th><th>Evidence to Look For</th><th>Query Focus</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Phishing/Malware</strong></td><td>Email attachment, downloaded file</td><td>File creation events before miner</td></tr>
+                            <tr><td><strong>Exploit</strong></td><td>Vulnerable service, web shell</td><td>Process spawned by web server</td></tr>
+                            <tr><td><strong>Compromised credentials</strong></td><td>RDP, SSH from unusual source</td><td>Authentication logs</td></tr>
+                            <tr><td><strong>Supply chain</strong></td><td>Malicious package, image</td><td>Package manager logs, container pulls</td></tr>
+                            <tr><td><strong>Insider</strong></td><td>Direct installation by user</td><td>User-initiated installation</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h4>KQL - Trace Infection Source</h4>
+                <pre><code>// Find what created/downloaded the miner
+let MinerDevices = DeviceProcessEvents
+| where TimeGenerated > ago(7d)
+| where FileName in~ ("xmrig.exe", "xmrig") or ProcessCommandLine has "stratum"
+| distinct DeviceName, FileName;
+DeviceFileEvents
+| where TimeGenerated > ago(7d)
+| where DeviceName in ((MinerDevices | project DeviceName))
+| where FileName has_any ("xmrig", "miner", "cpu", "gpu")
+| project TimeGenerated, DeviceName, ActionType, FileName, FolderPath, 
+    InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by TimeGenerated asc</code></pre>
+
+                <h3>Step 3: Cloud Infrastructure Check</h3>
+
+                <h4>KQL - Azure Unauthorized VM Creation</h4>
+                <pre><code>// Detect unauthorized VM creation (potential cryptojacking)
+AzureActivity
+| where TimeGenerated > ago(7d)
+| where OperationNameValue == "Microsoft.Compute/virtualMachines/write"
+| where ActivityStatusValue == "Success"
+| project TimeGenerated, Caller, CallerIpAddress, 
+    Resource, ResourceGroup, SubscriptionId
+| join kind=leftouter (
+    AzureActivity
+    | where OperationNameValue == "Microsoft.Compute/virtualMachines/delete"
+    | project DeleteTime = TimeGenerated, Resource
+) on Resource
+| where isnull(DeleteTime) or DeleteTime > TimeGenerated + 1h
+| order by TimeGenerated desc</code></pre>
+
+                <h4>AWS CloudTrail - Unauthorized EC2</h4>
+                <pre><code>// CloudTrail query for unauthorized instances
+fields @timestamp, userIdentity.arn, sourceIPAddress, 
+    requestParameters.instanceType, responseElements.instancesSet.items.0.instanceId
+| filter eventName = "RunInstances"
+| filter requestParameters.instanceType like /p3|p4|g4|g5|c5|c6/  // GPU/compute optimized
+| sort @timestamp desc
+| limit 100</code></pre>
+
+                <h3>Step 4: Scope the Compromise</h3>
+
+                <h4>KQL - Find All Affected Systems</h4>
+                <pre><code>// Identify all systems with mining indicators
+union 
+(
+    DeviceProcessEvents
+    | where TimeGenerated > ago(7d)
+    | where ProcessCommandLine has_any ("stratum", "pool.", "mining")
+    | distinct DeviceName
+    | extend Source = "Process"
+),
+(
+    DeviceNetworkEvents
+    | where TimeGenerated > ago(7d)
+    | where RemotePort in (3333, 4444, 5555, 14444)
+    | distinct DeviceName
+    | extend Source = "Network"
+),
+(
+    DeviceFileEvents
+    | where TimeGenerated > ago(7d)
+    | where FileName has_any ("xmrig", "miner")
+    | distinct DeviceName
+    | extend Source = "File"
+)
+| summarize Sources = make_set(Source) by DeviceName</code></pre>
+
+                <!-- CONTAINMENT -->
+                <h3 id="containment"><i class="fas fa-shield-alt"></i> Containment Actions</h3>
+
+                <table>
+                    <thead><tr><th>Finding</th><th>Immediate Action</th><th>Implementation</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Active miner on endpoint</strong></td>
+                            <td>Kill process, isolate if needed</td>
+                            <td>EDR response action, network isolation</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f85149;"><strong>Unauthorized cloud VMs</strong></td>
+                            <td>Terminate instances, revoke credentials</td>
+                            <td>Stop/delete VMs, rotate API keys</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>Mining pool connections</strong></td>
+                            <td>Block pool domains/IPs at firewall</td>
+                            <td>Firewall rules, DNS sinkhole</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #f0883e;"><strong>Persistence mechanism found</strong></td>
+                            <td>Remove scheduled task/service</td>
+                            <td>autoruns cleanup, registry removal</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #d29922;"><strong>Malicious container</strong></td>
+                            <td>Kill container, remove image</td>
+                            <td>kubectl delete, docker rm</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>PowerShell - Kill Mining Process</h4>
+                <pre><code># Find and kill mining processes
+Get-Process | Where-Object {
+    $_.ProcessName -match "xmrig|miner|cgminer|cpuminer" -or
+    $_.Path -match "temp|appdata" -and $_.CPU -gt 50
+} | Stop-Process -Force
+
+# Remove common persistence
+Get-ScheduledTask | Where-Object {
+    $_.Actions.Execute -match "xmrig|miner|powershell.*hidden.*http"
+} | Unregister-ScheduledTask -Confirm:$false
+
+# Check and remove services
+Get-Service | Where-Object {
+    $_.DisplayName -match "miner|update service" -and 
+    $_.BinaryPathName -match "temp|appdata"
+} | Stop-Service -Force
+sc.exe delete $_.Name</code></pre>
+
+                <h4>Block Mining Pools</h4>
+                <pre><code># Common mining pool domains to block
+*.pool.com
+*.minexmr.com
+*.xmrpool.eu
+*.moneroocean.stream
+*.nicehash.com
+*.ethermine.org
+*.f2pool.com
+*.antpool.com
+*.poolin.com
+*.nanopool.org
+*.supportxmr.com
+*.hashvault.pro
+
+# Stratum ports to block outbound
+3333, 4444, 5555, 7777, 8888, 9999, 14433, 14444, 45700</code></pre>
+
+                <!-- MITRE MAPPING -->
+                <h3 id="mitre"><i class="fas fa-map"></i> MITRE ATT&CK Mapping</h3>
+
+                <table>
+                    <thead><tr><th>Technique ID</th><th>Technique Name</th><th>Cryptomining Context</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>T1496</strong></td><td>Resource Hijacking</td><td>Core technique - using compute for mining</td></tr>
+                        <tr><td><strong>T1059.001</strong></td><td>PowerShell</td><td>Fileless miners using PowerShell</td></tr>
+                        <tr><td><strong>T1053.005</strong></td><td>Scheduled Task</td><td>Persistence for miners</td></tr>
+                        <tr><td><strong>T1543.003</strong></td><td>Windows Service</td><td>Miner installed as service</td></tr>
+                        <tr><td><strong>T1190</strong></td><td>Exploit Public-Facing Application</td><td>Initial access via vulnerable web apps</td></tr>
+                        <tr><td><strong>T1078.004</strong></td><td>Cloud Accounts</td><td>Compromised cloud credentials for VM creation</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- PREVENTION -->
+                <h3 id="prevention"><i class="fas fa-shield-virus"></i> Prevention Recommendations</h3>
+
+                <table>
+                    <thead><tr><th>Control</th><th>Implementation</th><th>Effectiveness</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Block mining pools</strong></td><td>DNS filtering, firewall rules</td><td>Prevents payout, makes mining useless</td></tr>
+                        <tr><td><strong>Application whitelisting</strong></td><td>AppLocker, Windows Defender Application Control</td><td>Blocks unauthorized executables</td></tr>
+                        <tr><td><strong>Cloud spend alerts</strong></td><td>Budget alerts, anomaly detection</td><td>Catches cloud cryptojacking quickly</td></tr>
+                        <tr><td><strong>Container image scanning</strong></td><td>Scan images before deployment</td><td>Catches malicious base images</td></tr>
+                        <tr><td><strong>Endpoint monitoring</strong></td><td>EDR with mining detection rules</td><td>Detects miners at runtime</td></tr>
+                        <tr><td><strong>Network segmentation</strong></td><td>Limit outbound from servers</td><td>Prevents pool connections</td></tr>
+                    </tbody>
+                </table>
+
+                <!-- RELATED -->
+                <h3 id="related"><i class="fas fa-link"></i> Related Playbooks</h3>
+
+                <div class="card-grid">
+                    <a href="pages/playbooks/investigation/malware.html" class="card"><div class="card-icon"><i class="fas fa-virus"></i></div><h3>Malware Investigation</h3><p>Miners are malware</p></a>
+                    <a href="pages/playbooks/investigation/web-attacks.html" class="card"><div class="card-icon"><i class="fas fa-globe"></i></div><h3>Web Application Attacks</h3><p>Common initial access</p></a>
+                    <a href="pages/playbooks/hunting/persistence.html" class="card"><div class="card-icon"><i class="fas fa-anchor"></i></div><h3>Persistence Hunting</h3><p>Find miner persistence</p></a>
+                    <a href="pages/cloud-security/azure-security.html" class="card"><div class="card-icon"><i class="fas fa-cloud"></i></div><h3>Cloud Security</h3><p>Cloud cryptojacking prevention</p></a>
+                </div>
+
+            </div>
+        </div>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
+    </main>
+    <script src="js/main.js"></script>
+</body>
+</html>

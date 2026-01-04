@@ -7,296 +7,293 @@
     <title>Log Parsing | SOC Compendium</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .concept-box { background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .concept-box h3 { color: var(--accent-primary); margin-top: 0; }
+        .before-after { display: grid; grid-template-columns: 1fr; gap: 1rem; margin: 1.5rem 0; }
+        .before-after .panel { background: var(--card-bg); border-radius: 8px; padding: 1rem; }
+        .before-after .before { border-left: 4px solid #ef4444; }
+        .before-after .after { border-left: 4px solid #22c55e; }
+        .before-after h4 { margin-top: 0; }
+        .before-after .before h4 { color: #ef4444; }
+        .before-after .after h4 { color: #22c55e; }
+        .example-block { background: #1a1a2e; border-radius: 8px; padding: 1rem; margin: 1rem 0; overflow-x: auto; }
+        .platform-section { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+        .platform-section.sentinel { border-left: 4px solid #0078d4; }
+        .platform-section.splunk { border-left: 4px solid #65a637; }
+        .step-box { background: var(--bg-secondary); border-radius: 8px; padding: 1rem; margin: 0.75rem 0; }
+        .step-box h5 { margin: 0 0 0.5rem 0; color: var(--accent-primary); }
+    </style>
 </head>
 <body>
     <nav class="main-nav">
-        <a href="pages/infrastructure/index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection &amp; Operations</span></div></a>
+        <a href="index.html" class="nav-brand"><div class="brand-icon"><i class="fas fa-shield-halved"></i></div><div class="brand-text"><span class="brand-title">SOC Compendium</span><span class="brand-subtitle">Detection & Operations</span></div></a>
     </nav>
     <main class="main-content">
         <div class="content-page">
-            <div class="breadcrumb"><a href="pages/infrastructure/index.html">Home</a><span class="separator">/</span><a href="pages/infrastructure/index.html">Infrastructure</a><span class="separator">/</span><span>Parsing</span></div>
-            <div class="page-header">
-                <h1><i class="fas fa-code" style="color: var(--accent-warning);"></i> Log Parsing & Normalization</h1>
-                <p class="lead">Transform raw logs into structured, searchable data for effective detection and analysis.</p>
-            </div>
+            <div class="breadcrumb"><a href="index.html">Home</a><span class="separator">/</span><a href="pages/infrastructure/index.html">Log Infrastructure</a><span class="separator">/</span><span>Parsing</span></div>
             <div class="content">
+                <h1><i class="fas fa-code" style="color: var(--accent-primary);"></i> Log Parsing - Complete Guide</h1>
+                <p class="lead">Understand how raw logs become searchable data. Learn parsing in both Sentinel (KQL) and Splunk (SPL).</p>
 
-                <h2>What is Log Parsing?</h2>
-                <p>Log parsing is the process of extracting structured fields from raw log data. Without parsing, logs are just text strings that are difficult to search and analyze.</p>
-
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #a78bf6;">BEFORE PARSING (Raw Log)</span>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Jan 15 10:23:45 webserver01 sshd[12345]: Failed password for invalid user admin from 192.168.1.100 port 52413 ssh2
-
-<span style="color: #5ce0c4;">AFTER PARSING (Structured Fields)</span>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-{
-  "timestamp": "2025-01-15T10:23:45",
-  "host": "webserver01",
-  "process": "sshd",
-  "pid": 12345,
-  "action": "Failed password",
-  "user": "admin",
-  "user_type": "invalid",
-  "src_ip": "192.168.1.100",
-  "src_port": 52413,
-  "protocol": "ssh2"
-}</pre>
+                <!-- WHAT IS PARSING -->
+                <div class="concept-box">
+                    <h3><i class="fas fa-question-circle"></i> What is Log Parsing?</h3>
+                    <p><strong>Parsing</strong> is extracting useful fields from raw log text so you can search and filter by specific values.</p>
+                    
+                    <p><strong>Without parsing:</strong> Logs are just long text strings - you can only search for keywords</p>
+                    <p><strong>With parsing:</strong> Logs have structured fields - you can filter by IP, user, action, etc.</p>
                 </div>
 
-                <h2>Why Parsing Matters</h2>
+                <!-- BEFORE AND AFTER -->
+                <h2><i class="fas fa-exchange-alt"></i> Before vs After Parsing</h2>
+
+                <div class="before-after">
+                    <div class="panel before">
+                        <h4>❌ Raw Log (Unparsed)</h4>
+                        <div class="example-block">
+<pre style="margin: 0;"><code>Jan 15 10:23:45 webserver01 sshd[12345]: Failed password for invalid user admin from 192.168.1.100 port 52413 ssh2</code></pre>
+                        </div>
+                        <p><strong>Problem:</strong> To find all failed logins from 192.168.1.100, you'd have to search for "192.168.1.100" as text - but this might match other fields too!</p>
+                    </div>
+                    <div class="panel after">
+                        <h4>✓ Parsed Log (Structured)</h4>
+                        <div class="example-block">
+<pre style="margin: 0;"><code>timestamp: 2025-01-15 10:23:45
+host: webserver01
+process: sshd
+action: Failed password
+user: admin
+src_ip: 192.168.1.100
+src_port: 52413</code></pre>
+                        </div>
+                        <p><strong>Benefit:</strong> Now you can query <code>src_ip == "192.168.1.100"</code> to get ONLY events from that source IP!</p>
+                    </div>
+                </div>
+
+                <!-- WHEN PARSING HAPPENS -->
+                <h2><i class="fas fa-clock"></i> When Does Parsing Happen?</h2>
+
                 <table>
-                    <thead><tr><th>Without Parsing</th><th>With Parsing</th></tr></thead>
+                    <thead>
+                        <tr><th>Timing</th><th>Description</th><th>Pros</th><th>Cons</th></tr>
+                    </thead>
                     <tbody>
                         <tr>
-                            <td>Search entire log text with wildcards</td>
-                            <td>Query specific fields: <code>src_ip = "192.168.1.100"</code></td>
+                            <td><strong>Ingest-Time</strong></td>
+                            <td>Parsing happens when log is received</td>
+                            <td>Faster searches, fields always available</td>
+                            <td>Can't change later, costs storage</td>
                         </tr>
                         <tr>
-                            <td>Slow, inefficient searches</td>
-                            <td>Fast, indexed field lookups</td>
-                        </tr>
-                        <tr>
-                            <td>Can't aggregate or group data</td>
-                            <td>Easy aggregation: <code>stats count by src_ip</code></td>
-                        </tr>
-                        <tr>
-                            <td>Difficult to correlate across sources</td>
-                            <td>Normalized fields enable correlation</td>
+                            <td><strong>Query-Time</strong></td>
+                            <td>Parsing happens when you search</td>
+                            <td>Flexible, can change parsing anytime</td>
+                            <td>Slower searches, must parse each time</td>
                         </tr>
                     </tbody>
                 </table>
 
-                <h2>Parsing Methods</h2>
-
-                <h3>1. Regular Expressions (Regex)</h3>
-                <p>Most flexible but complex. Extract fields by matching patterns.</p>
-
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># SSH Failed Login Regex</span>
-<span style="color: #a78bf6;">Pattern:</span> Failed password for (?:invalid user )?(?P&lt;user&gt;\S+) from (?P&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+) port (?P&lt;src_port&gt;\d+)
-
-<span style="color: #6aa3f7;"># Splunk rex command</span>
-| rex field=_raw "Failed password for (?:invalid user )?(?P&lt;user&gt;\S+) from (?P&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)"
-
-<span style="color: #6aa3f7;"># Sentinel KQL parse</span>
-| parse RawData with * "Failed password for " UserType:string " " User:string " from " SrcIP:string " port " *</pre>
+                <div class="info-box">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> In Practice</div>
+                    <p><strong>Most parsing is done at ingest-time</strong> by data connectors, agents, and SIEM configurations. You typically only do query-time parsing for:</p>
+                    <ul>
+                        <li>Ad-hoc analysis of unusual fields</li>
+                        <li>Testing new parsing logic before deploying</li>
+                        <li>Fields that weren't extracted at ingest</li>
+                    </ul>
                 </div>
 
-                <h3>2. Key-Value Extraction</h3>
-                <p>For logs with key=value pairs.</p>
+                <!-- SENTINEL PARSING -->
+                <div class="platform-section sentinel">
+                    <h2><i class="fas fa-shield-alt" style="color: #0078d4;"></i> Parsing in Microsoft Sentinel (KQL)</h2>
+                    
+                    <p>In Sentinel, most common log sources come pre-parsed through data connectors. For custom logs or additional extraction, use KQL.</p>
 
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Sample log with key-value pairs</span>
-action=login user=admin src=192.168.1.100 result=failure reason="invalid password"
+                    <h3>Pre-Parsed Tables (Already Done for You)</h3>
+                    <p>When you enable data connectors, logs arrive in tables with fields already extracted:</p>
+                    <div class="example-block">
+<pre><code>// SigninLogs - already parsed by Azure AD connector
+SigninLogs
+| where TimeGenerated > ago(1h)
+| project TimeGenerated, UserPrincipalName, IPAddress, ResultType, Location
+// These fields are automatically available - no parsing needed!</code></pre>
+                    </div>
 
-<span style="color: #6aa3f7;"># Splunk automatic extraction</span>
-| extract auto=true
+                    <h3>Query-Time Parsing with KQL</h3>
+                    <p>For logs that need additional parsing, use these KQL operators:</p>
 
-<span style="color: #6aa3f7;"># Splunk spath for JSON</span>
+                    <div class="step-box">
+                        <h5>parse - Extract fields using pattern</h5>
+                        <div class="example-block">
+<pre><code>// Parse a syslog message
+Syslog
+| where SyslogMessage contains "Failed password"
+| parse SyslogMessage with * "Failed password for " user " from " src_ip " port " src_port:int " " *
+| project TimeGenerated, user, src_ip, src_port</code></pre>
+                        </div>
+                        <p><strong>How it works:</strong> <code>*</code> matches any text, named fields (user, src_ip) capture the values between patterns.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h5>extract - Regex extraction</h5>
+                        <div class="example-block">
+<pre><code>// Extract IP address using regex
+Syslog
+| extend src_ip = extract(@"from (\d+\.\d+\.\d+\.\d+)", 1, SyslogMessage)
+| where isnotempty(src_ip)</code></pre>
+                        </div>
+                        <p><strong>How it works:</strong> Uses regex pattern to extract matching text. The <code>1</code> means capture group 1.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h5>parse_json - Parse JSON data</h5>
+                        <div class="example-block">
+<pre><code>// Parse JSON in a field
+AzureActivity
+| extend Properties = parse_json(Properties)
+| extend statusCode = Properties.statusCode
+| extend requestUri = Properties.requestUri</code></pre>
+                        </div>
+                    </div>
+
+                    <div class="step-box">
+                        <h5>split - Split by delimiter</h5>
+                        <div class="example-block">
+<pre><code>// Split a comma-separated field
+CommonSecurityLog
+| extend IPList = split(DestinationIP, ",")
+| mv-expand IPList  // Creates row for each IP</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPLUNK PARSING -->
+                <div class="platform-section splunk">
+                    <h2><i class="fas fa-search" style="color: #65a637;"></i> Parsing in Splunk (SPL)</h2>
+                    
+                    <p>In Splunk, parsing is configured through sourcetypes. Technology Add-ons (TAs) provide pre-built parsing for common sources.</p>
+
+                    <h3>Pre-Parsed Data (via Sourcetypes)</h3>
+                    <p>When you set up inputs with the right sourcetype, fields are automatically extracted:</p>
+                    <div class="example-block">
+<pre><code>// WinEventLog - parsed automatically
+index=security sourcetype=WinEventLog:Security EventCode=4625
+| table _time, Account_Name, Source_Network_Address, Logon_Type
+// Fields already available because sourcetype handles parsing</code></pre>
+                    </div>
+
+                    <h3>Query-Time Parsing with SPL</h3>
+
+                    <div class="step-box">
+                        <h5>rex - Regex field extraction</h5>
+                        <div class="example-block">
+<pre><code>// Extract username and IP from syslog
+index=linux sourcetype=linux_secure "Failed password"
+| rex "Failed password for (?<user>\S+) from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count by user, src_ip</code></pre>
+                        </div>
+                        <p><strong>How it works:</strong> <code>(?&lt;fieldname&gt;pattern)</code> captures matching text into named field.</p>
+                    </div>
+
+                    <div class="step-box">
+                        <h5>spath - Parse JSON/XML</h5>
+                        <div class="example-block">
+<pre><code>// Parse JSON log
+index=app sourcetype=json_logs
 | spath input=_raw
+| table user, action, status</code></pre>
+                        </div>
+                    </div>
 
-<span style="color: #6aa3f7;"># KQL parse_json</span>
-| extend parsed = parse_json(RawData)</pre>
-                </div>
+                    <div class="step-box">
+                        <h5>rex mode=sed - Find and replace</h5>
+                        <div class="example-block">
+<pre><code>// Clean up a field value
+| rex mode=sed field=username "s/DOMAIN\\\\//g"  // Remove domain prefix</code></pre>
+                        </div>
+                    </div>
 
-                <h3>3. Delimited Parsing</h3>
-                <p>For CSV, TSV, or other delimited formats.</p>
+                    <h3>Ingest-Time Parsing (props.conf)</h3>
+                    <p>For permanent parsing, configure in props.conf:</p>
+                    <div class="example-block">
+<pre><code># $SPLUNK_HOME/etc/apps/myapp/local/props.conf
 
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># CSV log</span>
-2025-01-15,10:23:45,webserver01,login,admin,192.168.1.100,failure
-
-<span style="color: #6aa3f7;"># Splunk - specify fields</span>
-| makemv delim="," _raw
-| eval date=mvindex(_raw,0), time=mvindex(_raw,1), host=mvindex(_raw,2)
-
-<span style="color: #6aa3f7;"># KQL - split</span>
-| extend fields = split(RawData, ",")
-| extend date = fields[0], time = fields[1], host = fields[2]</pre>
-                </div>
-
-                <h3>4. Grok Patterns (Logstash/Elastic)</h3>
-                <p>Pre-built regex patterns for common log formats.</p>
-
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Logstash grok filter</span>
-filter {
-  grok {
-    match => { "message" => "%{SYSLOGTIMESTAMP:timestamp} %{HOSTNAME:host} %{PROG:program}\[%{POSINT:pid}\]: %{GREEDYDATA:message}" }
-  }
-}
-
-<span style="color: #6aa3f7;"># Common grok patterns</span>
-%{IP:src_ip}              <span style="color: #6aa3f7;"># IP address</span>
-%{HOSTNAME:hostname}      <span style="color: #6aa3f7;"># Hostname</span>
-%{EMAILADDRESS:email}     <span style="color: #6aa3f7;"># Email</span>
-%{URIPATH:path}           <span style="color: #6aa3f7;"># URL path</span>
-%{NUMBER:bytes}           <span style="color: #6aa3f7;"># Numeric value</span></pre>
-                </div>
-
-                <h2>Common Log Formats</h2>
-
-                <h3>Syslog (RFC 5424)</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Format:</span>
-&lt;priority&gt;version timestamp hostname app-name procid msgid structured-data msg
-
-<span style="color: #6aa3f7;"># Example:</span>
-&lt;34&gt;1 2025-01-15T10:23:45.123Z webserver01 nginx 12345 - - GET /index.html 200
-
-<span style="color: #6aa3f7;"># Fields:</span>
-priority = 34 (facility=4/auth, severity=2/critical)
-version = 1
-timestamp = 2025-01-15T10:23:45.123Z
-hostname = webserver01
-app-name = nginx
-procid = 12345</pre>
-                </div>
-
-                <h3>CEF (Common Event Format)</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Format:</span>
-CEF:Version|Device Vendor|Device Product|Device Version|Signature ID|Name|Severity|Extension
-
-<span style="color: #6aa3f7;"># Example:</span>
-CEF:0|Palo Alto|NGFW|10.0|threat|Malware Detected|9|src=192.168.1.100 dst=10.0.0.5 act=blocked
-
-<span style="color: #6aa3f7;"># Common CEF extensions:</span>
-src = source IP
-dst = destination IP
-spt = source port
-dpt = destination port
-act = action taken
-msg = message
-cs1-cs6 = custom strings
-cn1-cn3 = custom numbers</pre>
-                </div>
-
-                <h3>JSON Logs</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.7rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># Native JSON is easiest to parse</span>
-{
-  "timestamp": "2025-01-15T10:23:45Z",
-  "level": "error",
-  "service": "auth-service",
-  "message": "Authentication failed",
-  "user": "admin",
-  "source_ip": "192.168.1.100",
-  "error_code": "AUTH_001"
-}
-
-<span style="color: #6aa3f7;"># Splunk - automatic JSON extraction</span>
-| spath
-
-<span style="color: #6aa3f7;"># KQL - parse_json</span>
-| extend data = parse_json(RawData)
-| extend user = data.user, source_ip = data.source_ip</pre>
-                </div>
-
-                <h2>Field Normalization</h2>
-                <p>Different sources use different field names for the same concept. Normalization maps them to common names.</p>
-
-                <table>
-                    <thead><tr><th>Concept</th><th>Source A</th><th>Source B</th><th>Normalized Name</th></tr></thead>
-                    <tbody>
-                        <tr><td>Source IP</td><td>src_ip</td><td>SourceAddress</td><td><strong>src_ip</strong></td></tr>
-                        <tr><td>Destination IP</td><td>dst</td><td>DestinationIP</td><td><strong>dst_ip</strong></td></tr>
-                        <tr><td>Username</td><td>user</td><td>AccountName</td><td><strong>user</strong></td></tr>
-                        <tr><td>Action</td><td>action</td><td>EventType</td><td><strong>action</strong></td></tr>
-                        <tr><td>Hostname</td><td>host</td><td>ComputerName</td><td><strong>host</strong></td></tr>
-                    </tbody>
-                </table>
-
-                <h3>ASIM (Advanced Security Information Model) - Sentinel</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;">// Use ASIM parsers for normalized queries across sources</span>
-
-<span style="color: #6aa3f7;">// Instead of querying specific tables:</span>
-SigninLogs | where ResultType != 0
-SecurityEvent | where EventID == 4625
-
-<span style="color: #6aa3f7;">// Use normalized ASIM parser:</span>
-imAuthentication
-| where EventResult == "Failure"
-| summarize FailedAttempts = count() by TargetUsername, SrcIpAddr
-
-<span style="color: #6aa3f7;">// ASIM schemas: Authentication, NetworkSession, ProcessEvent, FileEvent, etc.</span></pre>
-                </div>
-
-                <h2>Splunk Parsing Configuration</h2>
-
-                <h3>props.conf - Field Extractions</h3>
-                <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 0.75rem;">
-<pre style="margin: 0;"><span style="color: #6aa3f7;"># $SPLUNK_HOME/etc/apps/myapp/local/props.conf</span>
-
-[my_custom_sourcetype]
+[my_custom_log]
+# Timestamp extraction
 TIME_FORMAT = %Y-%m-%d %H:%M:%S
-TIME_PREFIX = timestamp=
-MAX_TIMESTAMP_LOOKAHEAD = 30
+TIME_PREFIX = ^
+
+# Line breaking
 SHOULD_LINEMERGE = false
 LINE_BREAKER = ([\r\n]+)
 
-<span style="color: #6aa3f7;"># Field extractions using regex</span>
-EXTRACT-user = user=(?P&lt;user&gt;[^\s]+)
-EXTRACT-src_ip = src=(?P&lt;src_ip&gt;\d+\.\d+\.\d+\.\d+)
-EXTRACT-action = action=(?P&lt;action&gt;[^\s]+)
-
-<span style="color: #6aa3f7;"># Field aliases (normalization)</span>
-FIELDALIAS-source = SourceIP AS src_ip
-FIELDALIAS-dest = DestinationIP AS dst_ip
-
-<span style="color: #6aa3f7;"># Calculated fields</span>
-EVAL-bytes_kb = bytes / 1024</pre>
+# Field extractions
+EXTRACT-user = user=(?<user>\w+)
+EXTRACT-action = action=(?<action>\w+)
+EXTRACT-src_ip = src=(?<src_ip>\d+\.\d+\.\d+\.\d+)</code></pre>
+                    </div>
                 </div>
 
-                <h2>Troubleshooting Parsing Issues</h2>
+                <!-- COMMON PATTERNS -->
+                <h2><i class="fas fa-puzzle-piece"></i> Common Parsing Patterns</h2>
+
                 <table>
-                    <thead><tr><th>Problem</th><th>Cause</th><th>Solution</th></tr></thead>
+                    <thead>
+                        <tr><th>Pattern</th><th>KQL (Sentinel)</th><th>SPL (Splunk)</th></tr>
+                    </thead>
                     <tbody>
                         <tr>
-                            <td>Fields not extracted</td>
-                            <td>Regex doesn't match log format</td>
-                            <td>Test regex against sample logs, check for variations</td>
+                            <td><strong>Extract IP address</strong></td>
+                            <td><code>extract(@"(\d+\.\d+\.\d+\.\d+)", 1, field)</code></td>
+                            <td><code>rex field=_raw "(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code></td>
                         </tr>
                         <tr>
-                            <td>Wrong timestamp</td>
-                            <td>TIME_FORMAT doesn't match</td>
-                            <td>Verify timestamp format, use strptime format codes</td>
+                            <td><strong>Extract key=value</strong></td>
+                            <td><code>parse field with * "user=" user " " *</code></td>
+                            <td><code>rex "user=(?&lt;user&gt;\S+)"</code></td>
                         </tr>
                         <tr>
-                            <td>Multi-line logs broken</td>
-                            <td>LINE_BREAKER incorrect</td>
-                            <td>Adjust line breaking, use SHOULD_LINEMERGE</td>
+                            <td><strong>Parse JSON</strong></td>
+                            <td><code>parse_json(field)</code></td>
+                            <td><code>spath</code></td>
                         </tr>
                         <tr>
-                            <td>Truncated fields</td>
-                            <td>Field length limits</td>
-                            <td>Increase TRUNCATE setting, check field limits</td>
+                            <td><strong>Split by comma</strong></td>
+                            <td><code>split(field, ",")</code></td>
+                            <td><code>makemv delim="," field</code></td>
                         </tr>
                         <tr>
-                            <td>Special characters</td>
-                            <td>Encoding issues</td>
-                            <td>Verify UTF-8, escape special chars in regex</td>
+                            <td><strong>Extract between quotes</strong></td>
+                            <td><code>extract(@'"([^"]+)"', 1, field)</code></td>
+                            <td><code>rex "\"(?&lt;value&gt;[^\"]+)\""</code></td>
                         </tr>
                     </tbody>
                 </table>
 
-                <h2>Best Practices</h2>
-                <ul>
-                    <li><strong>Parse at ingest time:</strong> Extract fields during indexing, not search time</li>
-                    <li><strong>Use standard formats:</strong> Prefer JSON or CEF over custom formats</li>
-                    <li><strong>Normalize field names:</strong> Use consistent names across all sources</li>
-                    <li><strong>Document your parsers:</strong> Explain what each extraction does</li>
-                    <li><strong>Test with variations:</strong> Logs change over time, test edge cases</li>
-                    <li><strong>Monitor parsing errors:</strong> Alert on logs that fail to parse</li>
-                </ul>
+                <!-- TIPS -->
+                <div class="info-box tip">
+                    <div class="info-box-title"><i class="fas fa-lightbulb"></i> Parsing Best Practices</div>
+                    <ol>
+                        <li><strong>Check if fields already exist</strong> - Don't re-parse what's already parsed!</li>
+                        <li><strong>Use existing TAs/Connectors</strong> - Don't write custom parsing if a solution exists</li>
+                        <li><strong>Test with sample data first</strong> - Make sure your pattern works before deploying</li>
+                        <li><strong>Handle missing data</strong> - Not every log will match; use <code>isnotempty()</code></li>
+                        <li><strong>Document your parsing</strong> - Future you will thank present you</li>
+                    </ol>
+                </div>
+
+                <!-- RELATED -->
+                <h2><i class="fas fa-link"></i> Related Topics</h2>
+                <div class="card-grid">
+                    <a href="pages/sentinel/kql-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-terminal"></i></div><h3>KQL Fundamentals</h3><p>Learn Sentinel's query language</p></a>
+                    <a href="pages/splunk/spl-fundamentals.html" class="card"><div class="card-icon"><i class="fas fa-search"></i></div><h3>SPL Fundamentals</h3><p>Learn Splunk's query language</p></a>
+                    <a href="pages/infrastructure/collection.html" class="card"><div class="card-icon"><i class="fas fa-download"></i></div><h3>Log Collection</h3><p>Getting logs into your SIEM</p></a>
+                </div>
 
             </div>
         </div>
-        <footer class="main-footer"><div class="footer-bottom"><p>© 2025 SOC & Detection Engineering Compendium</p></div></footer>
+        <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>
     </main>
     <script src="js/main.js"></script>
 </body>

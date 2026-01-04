@@ -964,6 +964,938 @@ SENIOR-LEVEL INTERVIEW ANSWER:
    using the Logs Ingestion API and Azure Functions."
                 </div>
 
+                <!-- COMPREHENSIVE STORAGE TIERS SECTION -->
+                <h2 id="storage-tiers"><i class="fas fa-layer-group"></i> Storage Tiers & Data Lifecycle (Interview-Ready)</h2>
+
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+     SENTINEL / LOG ANALYTICS STORAGE TIERS (CRITICAL FOR INTERVIEWS!)
+═══════════════════════════════════════════════════════════════════════════════
+
+UNDERSTANDING LOG ANALYTICS STORAGE TIERS:
+─────────────────────────────────────────────────────────────────────────────
+Microsoft Sentinel uses Log Analytics which has DIFFERENT log tiers with
+vastly different costs and query capabilities. Understanding this is
+CRITICAL for cost management and architecture decisions.
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     LOG TIERS COMPARISON                                 │
+  │                                                                          │
+  │   ANALYTICS LOGS ──► BASIC LOGS ──► AUXILIARY LOGS ──► ARCHIVE         │
+  │      (Full)          (Limited)       (Minimal)         (Offline)        │
+  │        │                │                │                │              │
+  │        ▼                ▼                ▼                ▼              │
+  │    $$$$$$$            $$                $               $               │
+  │    Full Query      Limited Query    Very Limited    Query = $$         │
+  │    30 day min      8 day min        30 day min      Restore needed     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY DO STORAGE TIERS COST DIFFERENTLY? (THE TECHNICAL TRUTH)
+═══════════════════════════════════════════════════════════════════════════════
+
+Understanding WHY costs differ helps you make better architecture decisions
+and answer interview questions with depth.
+
+WHAT MAKES "HOT" STORAGE EXPENSIVE?
+─────────────────────────────────────────────────────────────────────────────
+
+When data is ingested into Analytics Logs (hot), Microsoft does A LOT:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     ANALYTICS LOG INGESTION                              │
+  │                                                                          │
+  │   RAW LOG ──────────────────────────────────────────────────────────►   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 1. PARSING & SCHEMA VALIDATION                                  │   │
+  │   │    • Parse JSON/CEF/Syslog                                      │   │
+  │   │    • Validate against table schema                              │   │
+  │   │    • Extract and type all fields                                │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 2. FULL-TEXT INDEXING (THIS IS EXPENSIVE!)                      │   │
+  │   │    • Every field is indexed for fast search                     │   │
+  │   │    • Inverted indexes built (like a book index)                 │   │
+  │   │    • Enables: where FieldName contains "value"                  │   │
+  │   │    • Enables: search "keyword" across all fields                │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 3. COLUMNAR STORAGE OPTIMIZATION                                │   │
+  │   │    • Data stored in columns (not rows)                          │   │
+  │   │    • Enables fast aggregations (sum, count, avg)                │   │
+  │   │    • Compressed for each data type                              │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 4. HOT STORAGE (SSD / HIGH-IOPS)                                │   │
+  │   │    • Stored on fast SSD storage                                 │   │
+  │   │    • Multiple replicas for availability                         │   │
+  │   │    • Ready for instant queries                                  │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   RESULT: Fast, full-featured queries but EXPENSIVE                     │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+COST BREAKDOWN (What you're paying for):
+  • Compute: Parsing, indexing, compression
+  • Storage: Fast SSD with replicas
+  • Query compute: Reserved capacity for instant queries
+  • Index storage: Inverted indexes can be 30-50% of raw data size!
+
+
+WHAT MAKES "BASIC LOGS" CHEAPER?
+─────────────────────────────────────────────────────────────────────────────
+
+Basic Logs skip the expensive parts:
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     BASIC LOG INGESTION                              │
+  │                                                                      │
+  │   RAW LOG ──────────────────────────────────────────────────────►   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ 1. BASIC PARSING (same as Analytics)                        │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ 2. ❌ NO FULL-TEXT INDEXING                                 │   │
+  │   │    • No inverted indexes built                              │   │
+  │   │    • Cannot use: contains, has, search                      │   │
+  │   │    • Only exact matches on indexed columns (TimeGenerated)  │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ 3. CHEAPER STORAGE                                          │   │
+  │   │    • Less redundancy                                        │   │
+  │   │    • Optimized for write, not read                          │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   RESULT: 76% cheaper but LIMITED query capability                  │
+  │                                                                      │
+  │   WHY LIMITED?                                                       │
+  │   • No index = must SCAN entire table (slow, pay per GB scanned)   │
+  │   • Can't do joins (would require scanning multiple tables)        │
+  │   • Can't run Sentinel rules (rules need fast indexed queries)     │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+WHAT MAKES "ARCHIVE" THE CHEAPEST?
+─────────────────────────────────────────────────────────────────────────────
+
+Archive is essentially cold blob storage:
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     ARCHIVE STORAGE                                  │
+  │                                                                      │
+  │   After Interactive Retention Period:                                │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   ┌─────────────────────────────────────────────────────────────┐   │
+  │   │ DATA MOVED TO COLD BLOB STORAGE                             │   │
+  │   │                                                             │   │
+  │   │ • ❌ Indexes REMOVED (saves storage)                        │   │
+  │   │ • ❌ NOT in query engine memory                             │   │
+  │   │ • ✅ Compressed and stored cheaply                          │   │
+  │   │ • ✅ Azure Blob Cool/Archive tier (~$0.01/GB/month)         │   │
+  │   └─────────────────────────────────────────────────────────────┘   │
+  │      │                                                               │
+  │      ▼                                                               │
+  │   TO QUERY: Must RESTORE or use SEARCH JOB                          │
+  │                                                                      │
+  │   Think of it like:                                                  │
+  │   • Analytics = Books on your desk (instant access)                 │
+  │   • Basic = Books on your shelf (need to get up)                    │
+  │   • Archive = Books in warehouse (need to request delivery)         │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+HOW TO QUERY ARCHIVED DATA (CRITICAL FOR FORENSICS!)
+═══════════════════════════════════════════════════════════════════════════════
+
+You CANNOT directly query archived data. You have TWO options:
+
+OPTION 1: SEARCH JOBS (Async Query - Recommended)
+─────────────────────────────────────────────────────────────────────────────
+
+Search Jobs let you query archived data WITHOUT restoring it first.
+Results are saved to a new table you can then query.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     SEARCH JOB FLOW                                  │
+  │                                                                      │
+  │   YOU ──► Create Search Job ──► Job runs async (minutes to hours)   │
+  │                                        │                             │
+  │                                        ▼                             │
+  │                              Scans archived data                     │
+  │                                        │                             │
+  │                                        ▼                             │
+  │                              Results saved to:                       │
+  │                              SearchJobName_SRCH table                │
+  │                                        │                             │
+  │                                        ▼                             │
+  │   YOU ◄── Query results table ◄── Results available for 7 days      │
+  └─────────────────────────────────────────────────────────────────────┘
+
+HOW TO CREATE A SEARCH JOB:
+─────────────────────────────────────────────────────────────────────────────
+
+Azure Portal Method:
+  1. Log Analytics workspace → Logs
+  2. Write your KQL query
+  3. Set time range to include archived period
+  4. Click "Search job" button (not "Run")
+  5. Name your job (e.g., "Incident2024_Investigation")
+  6. Wait for completion (check Jobs tab)
+  7. Query results: SearchJobName_SRCH
+
+KQL Method (API):
+  // Create search job via API
+  POST https://api.loganalytics.io/v1/workspaces/{workspace}/search
+  
+  {
+    "query": "SecurityEvent | where EventID == 4625",
+    "timespan": "P90D",  // 90 days back (into archive)
+    "searchJobName": "FailedLogons_Investigation"
+  }
+
+QUERY THE RESULTS:
+  // After job completes, query the results table
+  FailedLogons_Investigation_SRCH
+  | where TimeGenerated > ago(90d)
+  | summarize count() by TargetUserName
+
+SEARCH JOB COSTS:
+  • $0.007 per GB scanned in archive
+  • Results table counts against retention costs
+  • Much cheaper than restoring!
+
+
+OPTION 2: RESTORE (Bring Back to Hot - Expensive)
+─────────────────────────────────────────────────────────────────────────────
+
+Restore physically moves data back to hot storage for a period.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │                     RESTORE FLOW                                     │
+  │                                                                      │
+  │   Archived Data ──► Restore Request ──► Data copied to hot storage  │
+  │                                                │                     │
+  │                                                ▼                     │
+  │                                    Available for direct query        │
+  │                                    (acts like Analytics tier)        │
+  │                                                │                     │
+  │                                                ▼                     │
+  │                                    After restore period expires:     │
+  │                                    Data returns to archive           │
+  └─────────────────────────────────────────────────────────────────────┘
+
+HOW TO RESTORE:
+  1. Log Analytics workspace → Tables
+  2. Find table with archived data
+  3. Click "..." → "Restore"
+  4. Select time range to restore
+  5. Set restore duration (how long to keep in hot)
+  6. Wait for restore (can take hours for large datasets)
+
+RESTORE COSTS:
+  • $0.12 per GB restored
+  • Plus Analytics tier costs while restored
+  • Use only when you need FULL query capability
+  • Prefer Search Jobs for most investigations!
+
+
+WHEN TO USE WHICH:
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────┬─────────────────────────────────────────────┐
+│ Scenario                    │ Use                                         │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Need specific events from   │ SEARCH JOB - cheaper, sufficient           │
+│ 6 months ago                │                                             │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Full forensic investigation │ RESTORE - need joins, aggregations,        │
+│ with complex queries        │ full KQL capability                         │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Legal discovery request     │ SEARCH JOB first, RESTORE if needed        │
+│ (need to export data)       │                                             │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ Quick check if data exists  │ SEARCH JOB - fast, cheap                   │
+└─────────────────────────────┴─────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+AZURE EVENT HUB INTEGRATION (HIGH-VOLUME STREAMING)
+═══════════════════════════════════════════════════════════════════════════════
+
+Event Hub is Azure's high-throughput streaming platform. Use it when you
+need to ingest MASSIVE volumes or need real-time streaming.
+
+WHEN TO USE EVENT HUB VS DIRECT INGESTION:
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────┬─────────────────────────────────────────────┐
+│ Direct Ingestion (AMA, API) │ Event Hub Streaming                         │
+├─────────────────────────────┼─────────────────────────────────────────────┤
+│ < 1 GB/hour                 │ > 1 GB/hour or millions of events          │
+│ Standard sources            │ Custom high-volume sources                  │
+│ Simple setup                │ Need buffering/replay capability           │
+│ Built-in connectors exist   │ Multiple consumers need same data          │
+│                             │ Real-time processing before SIEM           │
+└─────────────────────────────┴─────────────────────────────────────────────┘
+
+
+EVENT HUB ARCHITECTURE FOR SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     HIGH-VOLUME DATA SOURCES                            │
+  │                                                                         │
+  │   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐  │
+  │   │ Defender XDR │ │ Firewall     │ │ Custom App   │ │ IoT Devices  │  │
+  │   │ Raw Tables   │ │ Traffic Logs │ │ Telemetry    │ │ Millions/sec │  │
+  │   └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘  │
+  │          │                │                │                │          │
+  │          └────────────────┴────────────────┴────────────────┘          │
+  │                                    │                                    │
+  │                                    ▼                                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+                                       │
+                                       ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                         AZURE EVENT HUB                                 │
+  │                                                                         │
+  │   ┌─────────────────────────────────────────────────────────────────┐  │
+  │   │ EVENT HUB NAMESPACE                                             │  │
+  │   │                                                                 │  │
+  │   │   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐              │  │
+  │   │   │ Partition 0 │ │ Partition 1 │ │ Partition 2 │  ...         │  │
+  │   │   │             │ │             │ │             │              │  │
+  │   │   │ [events]    │ │ [events]    │ │ [events]    │              │  │
+  │   │   └─────────────┘ └─────────────┘ └─────────────┘              │  │
+  │   │                                                                 │  │
+  │   │   CAPABILITIES:                                                 │  │
+  │   │   • Millions of events/second                                   │  │
+  │   │   • 24-hour to 7-day retention (buffer)                        │  │
+  │   │   • Multiple consumers can read same data                       │  │
+  │   │   • Replay capability if consumer fails                         │  │
+  │   └─────────────────────────────────────────────────────────────────┘  │
+  │                                    │                                    │
+  │          ┌─────────────────────────┼─────────────────────────┐         │
+  │          │                         │                         │         │
+  │          ▼                         ▼                         ▼         │
+  │   ┌─────────────┐          ┌─────────────┐          ┌─────────────┐   │
+  │   │ Consumer 1  │          │ Consumer 2  │          │ Consumer 3  │   │
+  │   │ Sentinel    │          │ Splunk      │          │ Real-time   │   │
+  │   │ Ingestion   │          │ HEC         │          │ Alerting    │   │
+  │   └─────────────┘          └─────────────┘          └─────────────┘   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+HOW TO SET UP EVENT HUB → SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+STEP 1: CREATE EVENT HUB NAMESPACE
+  Azure Portal → Event Hubs → Create
+  
+  Settings:
+  • Pricing tier: Standard or Premium (based on volume)
+  • Throughput units: Start with 1, auto-inflate enabled
+  • Partitions: 4-32 based on expected throughput
+
+STEP 2: CREATE EVENT HUB (TOPIC)
+  Within namespace → + Event Hub
+  
+  Name: security-logs (or per-source: firewall-logs, defender-raw, etc.)
+  Partitions: 4+ for high volume
+  Retention: 1-7 days
+
+STEP 3: GET CONNECTION STRING
+  Event Hub → Shared access policies → Add policy
+  • Name: sentinel-consumer
+  • Claims: Listen (read-only for Sentinel)
+  Copy connection string
+
+STEP 4: CONFIGURE SENTINEL DATA CONNECTOR
+  Sentinel → Data connectors → Search "Event Hub"
+  
+  For custom logs: Use "Azure Event Hub" connector
+  
+  Configuration:
+  • Event Hub connection string
+  • Consumer group: $Default or create dedicated
+  • Target table: Custom table (MyLogs_CL) or existing
+
+STEP 5: SEND DATA TO EVENT HUB
+  From your source, send JSON events:
+  
+  // Example: Send via SDK (Python)
+  from azure.eventhub import EventHubProducerClient, EventData
+  
+  producer = EventHubProducerClient.from_connection_string(
+      conn_str="Endpoint=sb://...",
+      eventhub_name="security-logs"
+  )
+  
+  event_data = EventData(json.dumps({
+      "TimeGenerated": "2024-01-15T10:30:00Z",
+      "SourceIP": "192.168.1.100",
+      "Action": "blocked",
+      "Message": "Firewall deny"
+  }))
+  
+  producer.send_batch([event_data])
+
+
+DEFENDER XDR → EVENT HUB → SENTINEL (ADVANCED PATTERN):
+─────────────────────────────────────────────────────────────────────────────
+
+For Defender XDR raw tables at scale, stream via Event Hub:
+
+  ┌─────────────────────┐
+  │ Defender XDR Portal │
+  │                     │
+  │ Settings → Streaming│──────────────────────────────────────┐
+  │ API                 │                                      │
+  └─────────────────────┘                                      │
+                                                               ▼
+                                              ┌─────────────────────────────┐
+                                              │ Event Hub Namespace         │
+                                              │                             │
+                                              │ • defender-raw-events       │
+                                              │ • 32 partitions             │
+                                              │ • 7 day retention           │
+                                              └──────────────┬──────────────┘
+                                                             │
+                                    ┌────────────────────────┼────────────────┐
+                                    │                        │                │
+                                    ▼                        ▼                ▼
+                          ┌─────────────────┐    ┌─────────────────┐  ┌──────────────┐
+                          │ Azure Function  │    │ Sentinel        │  │ Splunk HEC   │
+                          │ (Transform/     │    │ Direct          │  │ (Parallel    │
+                          │  Filter)        │    │ Ingestion       │  │  SIEM)       │
+                          │                 │    │                 │  │              │
+                          │ • Drop noisy    │    │ • DeviceProcess │  │ • Same data  │
+                          │   events        │    │   Events_CL     │  │   to both    │
+                          │ • Enrich        │    │ • Basic Logs    │  │   SIEMs      │
+                          │ • Route to      │    │   tier          │  │              │
+                          │   correct tier  │    │                 │  │              │
+                          └────────┬────────┘    └─────────────────┘  └──────────────┘
+                                   │
+                                   ▼
+                          ┌─────────────────┐
+                          │ Sentinel        │
+                          │ Processed       │
+                          │ Events          │
+                          │                 │
+                          │ • Analytics tier│
+                          │ • Only high-    │
+                          │   value events  │
+                          └─────────────────┘
+
+WHY THIS PATTERN?
+  • Filter/transform BEFORE ingestion (reduce costs)
+  • Buffer capability (if Sentinel is slow/down)
+  • Send same data to multiple SIEMs
+  • Replay if something fails
+
+
+EVENT HUB COSTS:
+─────────────────────────────────────────────────────────────────────────────
+  • Ingress: Free (data coming in)
+  • Throughput Unit: ~$22/month per TU (1 MB/s in, 2 MB/s out)
+  • Capture to Blob: ~$0.10/hour + storage
+  • Premium tier: Higher cost, better isolation
+
+TOTAL COST EXAMPLE (100 GB/day):
+  • Event Hub: ~$50/month
+  • Plus Sentinel ingestion costs
+  • But SAVINGS from filtering/routing to Basic Logs can offset
+
+
+═══════════════════════════════════════════════════════════════════════════════
+RETENTION CONFIGURATION
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW RETENTION WORKS:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     DATA LIFECYCLE                                       │
+  │                                                                          │
+  │   INGEST ──► INTERACTIVE RETENTION ──► ARCHIVE RETENTION ──► DELETE    │
+  │               (queryable directly)     (search job/restore)             │
+  │                                                                          │
+  │   Example: 90 days interactive + 2 years archive                        │
+  │                                                                          │
+  │   Day 1-90:     Full Analytics queries, rules fire                      │
+  │   Day 91-730:   Archived, use search job or restore                     │
+  │   Day 731+:     Data deleted                                            │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+CONFIGURE RETENTION:
+  Log Analytics workspace → Tables → Select table → Manage table
+  
+  Settings:
+  • Interactive retention: 30-730 days (default 30)
+  • Total retention: Up to 12 years (default = interactive)
+  • Archive = Total - Interactive
+
+RETENTION BY TABLE (Override workspace default):
+  
+  // Set via Azure CLI
+  az monitor log-analytics workspace table update \
+    --resource-group MyRG \
+    --workspace-name MyWorkspace \
+    --name SecurityEvent \
+    --retention-time 90 \        # Interactive
+    --total-retention-time 730   # Total (archive = 730-90 = 640 days)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW QUESTIONS - STORAGE TIERS
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: "Why is Analytics tier so much more expensive than Basic Logs?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Analytics tier builds full-text indexes on every field during ingestion.
+    This indexing is compute-intensive and the indexes themselves take
+    storage space - sometimes 30-50% of the raw data size. The data is also
+    stored on fast SSD with replicas for high availability. All this enables
+    sub-second queries with complex operations like joins and aggregations.
+    Basic Logs skips the indexing step - data is just parsed and stored.
+    Without indexes, queries must scan the entire table, which is why you
+    pay per GB scanned and can't do complex operations. The 76% cost
+    difference reflects skipping that expensive indexing."
+
+
+Q: "How do you access archived data in Sentinel?"
+─────────────────────────────────────────────────────────────────────────────
+A: "There are two methods. First, Search Jobs - you submit an async query
+    that scans the archived data and saves results to a temporary table.
+    This takes minutes to hours but is cheap at about $0.007 per GB scanned.
+    Second, Restore - you physically move data back to hot storage for a
+    period, which costs $0.12 per GB plus Analytics tier costs while
+    restored. I use Search Jobs for most investigations since it's cheaper
+    and sufficient for finding specific events. I only use Restore when I
+    need full KQL capability with joins and complex aggregations."
+
+
+Q: "When would you use Event Hub instead of direct ingestion?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Event Hub makes sense for three scenarios. First, high volume - if I'm
+    ingesting millions of events per second, like IoT telemetry or Defender
+    XDR raw tables, Event Hub handles that scale better. Second, when I need
+    to filter or transform before ingestion - I put an Azure Function between
+    Event Hub and Sentinel to drop noisy events or route to different tiers,
+    reducing costs. Third, when multiple systems need the same data - Event
+    Hub lets Sentinel and Splunk both consume from the same stream. The
+    buffering capability is also valuable - if Sentinel has issues, events
+    wait in Event Hub instead of being lost."
+
+
+DETAILED TIER BREAKDOWN:
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ANALYTICS LOGS (Default - Full Featured)                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$2.76/GB ingestion + retention (varies by region)            │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ✅ Full KQL query support                                                │
+│   ✅ Sentinel analytics rules can query                                    │
+│   ✅ Workbooks, dashboards, alerts                                         │
+│   ✅ All operators and functions                                           │
+│   ✅ Joins, aggregations, machine learning                                 │
+│   ✅ Interactive retention: 30 days - 2 years                              │
+│   ✅ Archive retention: up to 12 years                                     │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • Security events requiring detection rules                              │
+│   • Alert-generating tables (SecurityEvent, SigninLogs)                   │
+│   • Investigation data (need full query)                                   │
+│   • Compliance data with audit requirements                                │
+│                                                                             │
+│ EXAMPLE TABLES:                                                             │
+│   SecurityEvent, SigninLogs, AuditLogs, DeviceProcessEvents               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ BASIC LOGS (76% Cheaper - Limited Query)                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$0.65/GB ingestion (76% savings!)                            │
+│              + $0.007/GB scanned when querying                             │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ✅ Basic KQL queries (simple filters)                                    │
+│   ❌ NO Sentinel analytics rules                                           │
+│   ❌ NO joins across tables                                                │
+│   ❌ NO aggregations (summarize, count, etc.)                              │
+│   ❌ NO workbook visualizations (directly)                                 │
+│   ✅ Interactive retention: 8 days only                                    │
+│   ✅ Archive retention: up to 12 years                                     │
+│                                                                             │
+│ QUERY LIMITATIONS:                                                          │
+│   • Can only query single table                                            │
+│   • Time range limit (30 days)                                             │
+│   • Simple where, project, extend only                                     │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • High-volume, low-value logs                                            │
+│   • Troubleshooting/debugging logs                                         │
+│   • Verbose telemetry you rarely search                                    │
+│   • Logs kept for compliance but rarely queried                            │
+│                                                                             │
+│ EXAMPLE USE CASES:                                                          │
+│   ContainerLog, AppTraces, high-volume custom logs                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ AUXILIARY LOGS (Cheapest - Minimal Query) [Preview as of 2024]             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$0.11/GB ingestion (96% savings!)                            │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ✅ Very basic queries only                                               │
+│   ❌ Even more limited than Basic Logs                                     │
+│   ❌ NO analytics rules                                                    │
+│   ✅ Retention: 30 days - 12 years                                         │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • Logs kept purely for compliance/legal                                  │
+│   • Rarely if ever queried                                                 │
+│   • Verbose diagnostic data                                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ARCHIVE TIER (Long-term Storage - Offline)                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ COST:        ~$0.023/GB/month storage only                                 │
+│              + Search job: $0.007/GB scanned                               │
+│              + Restore: $0.12/GB restored                                  │
+│                                                                             │
+│ CAPABILITIES:                                                               │
+│   ❌ NOT directly queryable (no instant queries)                           │
+│   ✅ Search Jobs (async, results to temp table)                            │
+│   ✅ Restore (bring back to hot for full query)                            │
+│   ✅ Retention: up to 12 years                                             │
+│                                                                             │
+│ USE FOR:                                                                    │
+│   • Long-term compliance retention                                         │
+│   • Legal hold                                                              │
+│   • Forensic investigation (search job when needed)                        │
+│   • Disaster recovery (restore critical data)                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ENTERPRISE LOG PLACEMENT STRATEGY
+═══════════════════════════════════════════════════════════════════════════════
+
+WHICH LOGS GO TO WHICH TIER?
+─────────────────────────────────────────────────────────────────────────────
+
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                    RECOMMENDED TIER ASSIGNMENT                                  │
+├───────────────────────┬──────────────┬──────────────┬──────────────────────────┤
+│ LOG TYPE              │ TABLE        │ TIER         │ RATIONALE                │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Entra ID Sign-ins     │ SigninLogs   │ ANALYTICS    │ Detection rules need     │
+│                       │              │              │ full query capability    │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Windows Security      │ SecurityEvent│ ANALYTICS    │ Core security events,    │
+│ (filtered to key IDs) │              │              │ rules fire on these      │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Defender XDR Alerts   │ SecurityAlert│ ANALYTICS    │ HIGH VALUE - must have   │
+│                       │              │              │ full query + rules       │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ MDE Process Events    │ DeviceProcess│ Consider     │ HIGH VOLUME - evaluate   │
+│ (raw telemetry)       │ Events       │ BASIC or     │ if you actually need     │
+│                       │              │ Filter first │ every process event      │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ MDE Network Events    │ DeviceNetwork│ BASIC        │ VERY HIGH VOLUME         │
+│                       │ Events       │              │ Rarely need full query   │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Firewall Allow logs   │ CommonSecurity│ BASIC       │ High volume, rarely      │
+│                       │ Log (custom) │              │ need complex queries     │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Firewall Deny logs    │ CommonSecurity│ ANALYTICS   │ Lower volume, more       │
+│                       │ Log          │              │ valuable for detection   │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ DNS Queries           │ DnsEvents    │ BASIC or     │ EXTREMELY HIGH VOLUME    │
+│                       │              │ AUXILIARY    │ Keep for forensics only  │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Container/App Logs    │ ContainerLog │ BASIC        │ Troubleshooting only     │
+│                       │              │              │ No security rules        │
+├───────────────────────┼──────────────┼──────────────┼──────────────────────────┤
+│ Compliance Archive    │ Any          │ ARCHIVE      │ Long-term storage only   │
+│ (after 90 days)       │              │ (after 90d)  │ Restore when needed      │
+└───────────────────────┴──────────────┴──────────────┴──────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+MICROSOFT DEFENDER XDR → SENTINEL DATA FLOW (CRITICAL!)
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW DEFENDER XDR DATA GETS TO SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    MICROSOFT DEFENDER XDR SUITE                         │
+  │                                                                         │
+  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐      │
+  │  │ Defender    │ │ Defender    │ │ Defender    │ │ Defender    │      │
+  │  │ for         │ │ for         │ │ for         │ │ for Cloud   │      │
+  │  │ Endpoint    │ │ Office 365  │ │ Identity    │ │ Apps        │      │
+  │  │ (MDE)       │ │ (MDO)       │ │ (MDI)       │ │ (MDCA)      │      │
+  │  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘      │
+  │         │               │               │               │             │
+  │         └───────────────┴───────────────┴───────────────┘             │
+  │                                 │                                      │
+  │                                 ▼                                      │
+  │                    ┌─────────────────────────┐                        │
+  │                    │   DEFENDER XDR PORTAL   │                        │
+  │                    │   (security.microsoft.  │                        │
+  │                    │    com)                 │                        │
+  │                    └────────────┬────────────┘                        │
+  └─────────────────────────────────│─────────────────────────────────────┘
+                                    │
+                                    │ Native Connector
+                                    │ (Content Hub)
+                                    ▼
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                         MICROSOFT SENTINEL                              │
+  │                                                                         │
+  │  ┌──────────────────────────────────────────────────────────────────┐  │
+  │  │                         DATA TABLES                              │  │
+  │  │                                                                  │  │
+  │  │  ALERTS & INCIDENTS (Always Analytics Tier):                    │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ SecurityAlert     - All Defender alerts                     ││  │
+  │  │  │ SecurityIncident  - Correlated incidents                    ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  RAW TELEMETRY (High Volume - Consider Tier Carefully!):        │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ DeviceProcessEvents    - Process creation (HUGE VOLUME)     ││  │
+  │  │  │ DeviceNetworkEvents    - Network connections (HUGE VOLUME)  ││  │
+  │  │  │ DeviceFileEvents       - File operations (HIGH VOLUME)      ││  │
+  │  │  │ DeviceLogonEvents      - Logon events (MEDIUM VOLUME)       ││  │
+  │  │  │ DeviceRegistryEvents   - Registry changes (HIGH VOLUME)     ││  │
+  │  │  │ DeviceImageLoadEvents  - DLL loads (VERY HIGH VOLUME)       ││  │
+  │  │  │ DeviceEvents           - Misc events (HIGH VOLUME)          ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  OFFICE 365 (MDO):                                               │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ EmailEvents            - Email metadata (MEDIUM VOLUME)     ││  │
+  │  │  │ EmailPostDeliveryEvents- Post-delivery actions              ││  │
+  │  │  │ EmailUrlInfo           - URLs in emails                     ││  │
+  │  │  │ EmailAttachmentInfo    - Attachment info                    ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  IDENTITY (MDI):                                                 │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ IdentityLogonEvents    - AD logons (MEDIUM VOLUME)          ││  │
+  │  │  │ IdentityQueryEvents    - AD queries (HIGH VOLUME)           ││  │
+  │  │  │ IdentityDirectoryEvents- Directory changes                  ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  │                                                                  │  │
+  │  │  CLOUD APPS (MDCA):                                              │  │
+  │  │  ┌─────────────────────────────────────────────────────────────┐│  │
+  │  │  │ CloudAppEvents         - SaaS activity (MEDIUM VOLUME)      ││  │
+  │  │  └─────────────────────────────────────────────────────────────┘│  │
+  │  └──────────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+STEP-BY-STEP: CONNECT DEFENDER XDR TO SENTINEL
+─────────────────────────────────────────────────────────────────────────────
+
+1. INSTALL SOLUTION FROM CONTENT HUB:
+   Content Hub → Search "Microsoft Defender XDR" → Install
+
+2. CONFIGURE DATA CONNECTOR:
+   Data Connectors → Microsoft Defender XDR → Open connector page
+
+3. CONNECT INCIDENTS AND ALERTS (Always do this):
+   ✅ Connect incidents and alerts
+   
+   This gives you:
+   • SecurityAlert table (all Defender alerts)
+   • SecurityIncident table (correlated incidents)
+   • Bi-directional sync (changes in Sentinel reflect in Defender)
+
+4. SELECT RAW DATA TABLES (Carefully consider each!):
+   ┌─────────────────────────────────────────────────────────────────────────┐
+   │ ⚠️ WARNING: Raw tables are HIGH VOLUME and EXPENSIVE!                  │
+   │                                                                         │
+   │ BEFORE ENABLING, ASK:                                                   │
+   │   1. Do I need this data in Sentinel? (Or is Defender portal enough?) │
+   │   2. Will I write detection rules on this data?                        │
+   │   3. Can I afford the ingestion cost?                                   │
+   │   4. Should I use Basic Logs tier instead?                             │
+   └─────────────────────────────────────────────────────────────────────────┘
+
+   RECOMMENDED APPROACH:
+   • Start with alerts only (free with Defender license)
+   • Add DeviceProcessEvents if you need custom detection
+   • Consider Basic Logs for DeviceNetworkEvents if needed
+   • Don't enable everything "just in case"
+
+
+DEFENDER XDR DATA - ANALYTICS VS BASIC LOG DECISION:
+─────────────────────────────────────────────────────────────────────────────
+
+┌───────────────────────────┬─────────────────────────────────────────────────┐
+│ IF YOU NEED...            │ THEN USE...                                     │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Sentinel analytics rules  │ Analytics Logs (no choice - Basic doesn't work)│
+│ to fire on this data      │                                                 │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Join with other tables    │ Analytics Logs (Basic can't join)              │
+│ (e.g., correlate with     │                                                 │
+│ SigninLogs)               │                                                 │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Complex KQL (summarize,   │ Analytics Logs (Basic is limited)              │
+│ aggregations)             │                                                 │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Simple lookups during     │ Basic Logs is fine                              │
+│ investigation only        │ (saves 76% on ingestion)                        │
+├───────────────────────────┼─────────────────────────────────────────────────┤
+│ Compliance/archive only   │ Basic Logs + Archive tier                       │
+│ (rarely query)            │ (cheapest option)                               │
+└───────────────────────────┴─────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+THIRD-PARTY EDR → SENTINEL
+═══════════════════════════════════════════════════════════════════════════════
+
+CROWDSTRIKE → SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┐                    ┌─────────────────────────────┐
+  │ CrowdStrike Falcon  │                    │ Sentinel                    │
+  │                     │                    │                             │
+  │ API Credentials     │  Azure Function    │ ┌─────────────────────────┐ │
+  │   ↓                 │ ─────────────────► │ │ Custom Table:           │ │
+  │ Event Streams API   │                    │ │ CrowdStrike_CL          │ │
+  │                     │                    │ └─────────────────────────┘ │
+  └─────────────────────┘                    └─────────────────────────────┘
+
+  SETUP:
+  1. Content Hub → Install "CrowdStrike Falcon Endpoint Protection"
+  2. Deploy Azure Function (provided in solution)
+  3. Configure CrowdStrike API credentials
+  4. Data appears in custom table
+
+  DATA TYPES:
+  • DetectionSummaryEvent (alerts) → Keep LONG retention
+  • ProcessRollup events (telemetry) → Consider shorter retention
+
+
+CORTEX XDR → SENTINEL:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────┐                    ┌─────────────────────────────┐
+  │ Cortex XDR          │                    │ Sentinel                    │
+  │                     │                    │                             │
+  │ XSIAM Collector OR  │  Azure Function    │ ┌─────────────────────────┐ │
+  │ API Integration     │ ─────────────────► │ │ Custom Table:           │ │
+  │                     │                    │ │ PaloAltoXDR_CL          │ │
+  └─────────────────────┘                    └─────────────────────────────┘
+
+  OPTIONS:
+  1. Content Hub → "Palo Alto Networks" solutions
+  2. Custom integration via Logs Ingestion API
+
+
+═══════════════════════════════════════════════════════════════════════════════
+COST OPTIMIZATION STRATEGIES
+═══════════════════════════════════════════════════════════════════════════════
+
+Sentinel costs can grow rapidly. Key strategies:
+
+1. USE BASIC LOGS FOR HIGH-VOLUME DATA
+   • DeviceNetworkEvents, DeviceImageLoadEvents → Basic Logs
+   • Saves 76% on ingestion
+   • Still searchable for investigations
+
+2. FILTER AT INGESTION TIME (DCR Transformations)
+   • Drop noisy fields you'll never use
+   • Filter out specific Event IDs
+   • Summarize before ingesting
+
+3. USE COMMITMENT TIERS
+   • 100 GB/day → 50% discount
+   • 200 GB/day → 52% discount
+   • 500 GB/day → 56% discount
+   • Commit to predictable usage
+
+4. DON'T DUPLICATE DATA
+   • If it's in Defender XDR, do you need it in Sentinel too?
+   • Query Defender directly with Advanced Hunting
+   • Only bring to Sentinel what you'll write rules on
+
+5. ARCHIVE AGGRESSIVELY
+   • After 90 days interactive, archive it
+   • Restore when needed for forensics
+   • Archive storage is very cheap
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW QUESTIONS & ANSWERS
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: "Explain Sentinel storage tiers and when to use each"
+─────────────────────────────────────────────────────────────────────────────
+A: "Sentinel has Analytics Logs which are full-featured but expensive, and
+    Basic Logs which are 76% cheaper but have limited query capability -
+    no joins, no analytics rules, simple filters only. I use Analytics for
+    data I'll write detection rules on, like SecurityEvent and SigninLogs.
+    I use Basic Logs for high-volume telemetry I only need for
+    investigations, like DeviceNetworkEvents. There's also Archive tier
+    for long-term compliance storage that requires restoration to query."
+
+
+Q: "How does Defender XDR data flow to Sentinel?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Defender XDR has a native connector in Content Hub. Once enabled, it
+    syncs alerts and incidents bi-directionally - changes in one portal
+    reflect in the other. For raw telemetry like DeviceProcessEvents, you
+    optionally enable specific tables. I'm careful here because raw
+    telemetry is high volume - I only enable tables I'll actually write
+    detection rules on. For tables I just need for investigation, I
+    consider using Basic Logs tier or querying directly in Defender portal."
+
+
+Q: "How would you optimize Sentinel costs for a large enterprise?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Multiple strategies. First, use Basic Logs for high-volume, low-value
+    data like container logs or network telemetry - 76% savings. Second,
+    use DCR transformations to filter or drop data before ingestion.
+    Third, commitment tiers for predictable usage give 50%+ discounts.
+    Fourth, avoid data duplication - if it's already in Defender XDR,
+    query it there instead of ingesting to Sentinel. Fifth, archive
+    aggressively after 90 days. I'd create a cost dashboard to track
+    ingestion by table and identify optimization opportunities."
+                </div>
+
                 <h2 id="tables"><i class="fas fa-table"></i> Table Types</h2>
 
                 <div class="diagram-box">

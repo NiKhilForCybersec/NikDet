@@ -2700,6 +2700,672 @@ WHY THIS MATTERS FOR ENTERPRISE SECURITY:
 
                 <h2 id="indexes"><i class="fas fa-hdd"></i> Index Configuration</h2>
 
+                <!-- COMPREHENSIVE STORAGE TIERS SECTION -->
+                <div class="diagram-box">
+═══════════════════════════════════════════════════════════════════════════════
+     SPLUNK STORAGE TIERS & DATA LIFECYCLE (INTERVIEW-READY)
+═══════════════════════════════════════════════════════════════════════════════
+
+UNDERSTANDING SPLUNK STORAGE TIERS:
+─────────────────────────────────────────────────────────────────────────────
+Splunk uses a tiered storage model where data "ages" through different
+storage tiers based on time and usage patterns.
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     DATA LIFECYCLE FLOW                                  │
+  │                                                                          │
+  │   INGEST ──► HOT ──► WARM ──► COLD ──► FROZEN ──► (DELETE or ARCHIVE)  │
+  │              │        │        │         │                               │
+  │              ▼        ▼        ▼         ▼                               │
+  │           Minutes   Hours    Days     Months                             │
+  │           to Hours  to Days  to Months to Years                          │
+  │                                                                          │
+  │   COST:   $$$$$    $$$$     $$$       $         (storage cost)          │
+  │   SPEED:  Fastest  Fast     Medium    Must Thaw                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+WHY DO STORAGE TIERS COST DIFFERENTLY? (THE TECHNICAL TRUTH)
+═══════════════════════════════════════════════════════════════════════════════
+
+Understanding WHY helps you make architecture decisions and ace interviews.
+
+WHAT HAPPENS DURING SPLUNK INDEXING (WHY IT'S EXPENSIVE):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                     SPLUNK INDEXING PIPELINE                             │
+  │                                                                          │
+  │   RAW EVENT ──────────────────────────────────────────────────────────► │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 1. PARSING (props.conf)                                         │   │
+  │   │    • Line breaking (separate events)                            │   │
+  │   │    • Timestamp extraction                                       │   │
+  │   │    • Host/source/sourcetype assignment                          │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 2. SEGMENTATION (THIS IS EXPENSIVE!)                            │   │
+  │   │    • Break event into searchable segments (tokens)              │   │
+  │   │    • Create segment dictionary                                  │   │
+  │   │    • Build inverted index for each segment                      │   │
+  │   │    • Example: "user=admin" → segments: "user", "admin"          │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 3. INDEX CREATION (BUCKET)                                      │   │
+  │   │    • rawdata/ → Compressed raw events (journal.gz)              │   │
+  │   │    • db/ → Time-based indexes (tsidx files)                     │   │
+  │   │    • Bloom filters for fast "not found" responses               │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  │      │                                                                   │
+  │      ▼                                                                   │
+  │   ┌─────────────────────────────────────────────────────────────────┐   │
+  │   │ 4. HOT BUCKET (ACTIVE WRITES)                                   │   │
+  │   │    • Stored on fast SSD (NVMe)                                  │   │
+  │   │    • Can receive new events                                     │   │
+  │   │    • Multiple replicas for search affinity                      │   │
+  │   └─────────────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+WHAT'S IN A BUCKET? (File Structure)
+─────────────────────────────────────────────────────────────────────────────
+
+  bucket_name/
+    ├── rawdata/
+    │   └── journal.gz          ← Compressed raw events (~10:1 ratio)
+    │
+    ├── db/
+    │   ├── *.tsidx             ← Time-series index files (THE INDEX!)
+    │   ├── Hosts.data          ← Host metadata
+    │   ├── Sources.data        ← Source metadata
+    │   ├── SourceTypes.data    ← Sourcetype metadata
+    │   └── bloomfilter         ← Fast "term not in bucket" checks
+    │
+    └── .splunk/
+        └── bucket_info.csv     ← Bucket metadata
+
+INDEX SIZE vs RAW SIZE:
+  • Raw data (journal.gz): 10-15% of original
+  • Index files (tsidx): 10-100% of raw size (depends on cardinality)
+  • TOTAL: Can be 20-115% of original data size!
+  
+  High cardinality = BIG indexes (unique IPs, UUIDs, etc.)
+  Low cardinality = Small indexes (status codes, event types)
+
+
+WHY HOT/WARM IS FAST (AND EXPENSIVE):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ SEARCH: index=security "failed login"                                   │
+  │                                                                          │
+  │   1. Check bloom filter → Bucket MIGHT contain "failed" and "login"    │
+  │   2. Search tsidx → Find which events contain these segments           │
+  │   3. Retrieve from rawdata → Get actual events from journal.gz         │
+  │                                                                          │
+  │ ALL THIS DATA IS ON FAST SSD:                                           │
+  │   • Bloom filter: ~1KB per bucket (instant check)                       │
+  │   • tsidx: Sequential read from SSD (milliseconds)                      │
+  │   • rawdata: Decompress specific events (fast on SSD)                   │
+  │                                                                          │
+  │ RESULT: Sub-second searches across billions of events                   │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+WHY COLD IS SLOWER (BUT STILL SEARCHABLE):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ COLD STORAGE (coldPath)                                                 │
+  │                                                                          │
+  │ • Same bucket structure (rawdata/, db/, bloom)                          │
+  │ • BUT stored on slower media (HDD, NAS, SAN)                            │
+  │ • Index files still exist → Still searchable                            │
+  │ • Just SLOWER to read                                                   │
+  │                                                                          │
+  │ TRADE-OFF:                                                               │
+  │   HDD: ~$0.03/GB vs SSD: ~$0.20/GB (7x cheaper!)                        │
+  │   Search: seconds instead of milliseconds (acceptable for old data)    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+WHY FROZEN IS CHEAPEST (NOT DIRECTLY SEARCHABLE):
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ FROZEN DATA                                                              │
+  │                                                                          │
+  │ Default behavior: DATA IS DELETED when frozen!                          │
+  │                                                                          │
+  │ To keep frozen data, configure:                                         │
+  │   coldToFrozenDir = /archive/splunk/frozen                              │
+  │   OR                                                                     │
+  │   coldToFrozenScript = /opt/splunk/bin/archive_to_s3.py                 │
+  │                                                                          │
+  │ WHAT HAPPENS:                                                            │
+  │   • Bucket moved/copied to archive location                             │
+  │   • ❌ INDEX FILES (tsidx) ARE DELETED!                                 │
+  │   • ✅ rawdata/journal.gz is kept                                       │
+  │   • Result: Raw data preserved but NOT searchable                       │
+  │                                                                          │
+  │ TO SEARCH: Must "THAW" (rebuild indexes)                                │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+HOW TO SEARCH FROZEN DATA (THAWING)
+═══════════════════════════════════════════════════════════════════════════════
+
+When you need to search archived/frozen data:
+
+STEP 1: LOCATE FROZEN BUCKET
+─────────────────────────────────────────────────────────────────────────────
+  # Frozen buckets are named like:
+  # db_<newest_time>_<oldest_time>_<id>
+  
+  ls /archive/splunk/frozen/security/
+  # db_1704067200_1703980800_12
+  # db_1703980800_1703894400_11
+
+
+STEP 2: COPY TO THAWED DIRECTORY
+─────────────────────────────────────────────────────────────────────────────
+  # Copy bucket to thawedPath (defined in indexes.conf)
+  cp -r /archive/splunk/frozen/security/db_1704067200_1703980800_12 \
+        $SPLUNK_DB/security/thaweddb/
+
+
+STEP 3: REBUILD INDEXES
+─────────────────────────────────────────────────────────────────────────────
+  # Splunk automatically rebuilds tsidx when it detects bucket in thaweddb
+  # OR force rebuild:
+  
+  $SPLUNK_HOME/bin/splunk rebuild /path/to/bucket
+
+
+STEP 4: SEARCH
+─────────────────────────────────────────────────────────────────────────────
+  # Thawed data is now searchable!
+  index=security earliest=01/01/2024:00:00:00 latest=01/02/2024:00:00:00
+
+
+STEP 5: CLEAN UP (Important!)
+─────────────────────────────────────────────────────────────────────────────
+  # Thawed data stays forever - you must manually remove it
+  rm -rf $SPLUNK_DB/security/thaweddb/db_1704067200_1703980800_12
+
+
+THAWING COSTS/TIME:
+  • Rebuilding tsidx takes CPU time (minutes to hours per bucket)
+  • Thawed data counts against license (if you search it!)
+  • Uses disk space (until you delete)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SMARTSTORE: MODERN APPROACH (S3 BACKEND)
+═══════════════════════════════════════════════════════════════════════════════
+
+SmartStore changes everything - warm/cold data lives in S3!
+
+TRADITIONAL vs SMARTSTORE:
+─────────────────────────────────────────────────────────────────────────────
+
+TRADITIONAL:
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ INDEXER LOCAL STORAGE                                                    │
+  │                                                                          │
+  │   Hot (SSD) ──► Warm (SSD) ──► Cold (HDD) ──► Frozen (Archive/Delete)  │
+  │                                                                          │
+  │ PROBLEM: Need LOTS of local storage on each indexer                     │
+  │          Scaling = Adding expensive disk to every indexer               │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+SMARTSTORE:
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ INDEXER (Minimal Local Storage)     │     S3 / AZURE BLOB / GCS         │
+  │                                     │                                    │
+  │   Hot (SSD) ──► Cache (SSD) ────────┼────► Remote Store                 │
+  │        │              │             │       (Warm/Cold data)             │
+  │        │              │             │                                    │
+  │        ▼              │             │       • Unlimited capacity         │
+  │   Write to S3 ────────┼─────────────┼────► • ~$0.02/GB/month            │
+  │   immediately         │             │       • Highly durable            │
+  │                       │             │                                    │
+  │   Cache evicts old ◄──┘             │                                    │
+  │   data as needed                    │                                    │
+  └─────────────────────────────────────┴────────────────────────────────────┘
+
+HOW SMARTSTORE SEARCH WORKS:
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ SEARCH: index=security earliest=-30d                                    │
+  │                                                                          │
+  │   1. Check LOCAL CACHE for required buckets                             │
+  │                                                                          │
+  │   2. If bucket NOT in cache:                                            │
+  │      → Download from S3 to local cache                                  │
+  │      → This adds latency (seconds for first query)                      │
+  │                                                                          │
+  │   3. Search proceeds on cached data                                     │
+  │                                                                          │
+  │   4. Cache management:                                                   │
+  │      → LRU eviction (least recently used)                               │
+  │      → Frequently searched data stays in cache                          │
+  │      → Rarely searched data fetched on demand                           │
+  │                                                                          │
+  │ RESULT: Near-infinite storage, searches work, but "cold" data has       │
+  │         initial latency when not cached                                  │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+SMARTSTORE CONFIGURATION:
+─────────────────────────────────────────────────────────────────────────────
+
+# server.conf - Define remote storage
+[cachemanager]
+max_cache_size = 500  # GB of local cache
+
+# indexes.conf - Enable SmartStore for index
+[volume:s3_remote]
+storageType = remote
+path = s3://my-splunk-bucket
+remote.s3.endpoint = https://s3.amazonaws.com
+remote.s3.access_key = ACCESS_KEY
+remote.s3.secret_key = SECRET_KEY
+
+[security]
+remotePath = volume:s3_remote/security
+repFactor = auto
+maxDataSize = auto
+
+SMARTSTORE COSTS:
+─────────────────────────────────────────────────────────────────────────────
+  • S3 storage: ~$0.023/GB/month (vs $0.10-0.20/GB for SSD)
+  • S3 requests: ~$0.005/1000 GET requests
+  • Data transfer: $0.09/GB (within region)
+  
+  TOTAL SAVINGS: 60-80% reduction in storage costs for large deployments
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW QUESTIONS - SPLUNK STORAGE
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: "Explain Splunk storage tiers and why they cost differently"
+─────────────────────────────────────────────────────────────────────────────
+A: "Splunk has four tiers: hot, warm, cold, and frozen. Hot buckets are
+    actively receiving new events and stored on fast SSD with full indexes
+    for instant searches. Warm is read-only but same fast storage. Cold
+    moves to cheaper HDD - still searchable because indexes exist, just
+    slower disk access. Frozen is the cheapest because by default the
+    index files are deleted, only raw compressed data is kept. To search
+    frozen data, you must 'thaw' it - copy back and rebuild the indexes.
+    The cost difference is primarily storage media cost plus whether
+    indexes are maintained."
+
+
+Q: "What is SmartStore and when would you use it?"
+─────────────────────────────────────────────────────────────────────────────
+A: "SmartStore is Splunk's cloud-native storage architecture where warm
+    and cold data lives in S3 instead of local indexer disk. Indexers keep
+    a local cache for hot data and frequently searched warm data. When you
+    search data not in cache, it's fetched from S3 on demand. Use SmartStore
+    when you have large data volumes and want to reduce storage costs - S3
+    is about $0.02/GB versus $0.20/GB for SSD. It also simplifies scaling
+    since indexers don't need massive local storage. The trade-off is
+    slightly higher latency for searches that hit uncached data."
+
+
+Q: "How do you search frozen/archived data in Splunk?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Frozen data must be 'thawed' before searching. First, locate the frozen
+    bucket in your archive - buckets are named with time range and ID. Copy
+    the bucket to the thawedPath directory configured in indexes.conf.
+    Splunk automatically detects it and rebuilds the tsidx index files -
+    this takes time depending on bucket size. Once rebuilt, the data appears
+    in searches. Important: thawed data stays forever until you manually
+    delete it, and searching thawed data counts against your license."
+
+
+STORAGE TIER DETAILS:
+─────────────────────────────────────────────────────────────────────────────
+
+┌─────────────┬───────────────────────────────────────────────────────────────┐
+│ HOT BUCKET  │ ACTIVE INDEXING                                               │
+├─────────────┼───────────────────────────────────────────────────────────────┤
+│ Storage     │ Fast SSD (NVMe recommended)                                   │
+│ Purpose     │ Active writes, real-time ingestion                            │
+│ Searchable  │ Yes - Fastest search performance                              │
+│ Location    │ homePath in indexes.conf (local to indexer)                   │
+│ Duration    │ Until bucket is full or time limit reached                    │
+│ Indexes     │ ✅ Full tsidx indexes maintained                              │
+│                                                                              │
+│ SIZING:     │ Hot bucket size = (daily ingest / # hot buckets) × days      │
+│             │ Recommend: 2-7 days of data in hot                            │
+└─────────────┴───────────────────────────────────────────────────────────────┘
+
+┌─────────────┬───────────────────────────────────────────────────────────────┐
+│ WARM BUCKET │ RECENT SEARCHABLE DATA                                        │
+├─────────────┼───────────────────────────────────────────────────────────────┤
+│ Storage     │ SSD or fast HDD                                               │
+│ Purpose     │ Recently indexed data, still frequently searched              │
+│ Searchable  │ Yes - Good search performance                                 │
+│ Location    │ homePath (same as hot, different bucket state)                │
+│ Duration    │ Configurable - typically 7-30 days                            │
+│ Indexes     │ ✅ Full tsidx indexes maintained                              │
+│                                                                              │
+│ KEY:        │ Data rolls from hot to warm when hot bucket is "rolled"       │
+│             │ Warm data is read-only (no new writes)                        │
+└─────────────┴───────────────────────────────────────────────────────────────┘
+
+┌─────────────┬───────────────────────────────────────────────────────────────┐
+│ COLD BUCKET │ ARCHIVED SEARCHABLE DATA                                      │
+├─────────────┼───────────────────────────────────────────────────────────────┤
+│ Storage     │ Cheap HDD, SAN, NAS (slower storage OK)                       │
+│ Purpose     │ Long-term retention, compliance, forensics                    │
+│ Searchable  │ Yes - Slower search, but still queryable                      │
+│ Location    │ coldPath in indexes.conf (can be different volume)            │
+│ Duration    │ Until frozen (based on frozenTimePeriodInSecs)                │
+│ Indexes     │ ✅ Full tsidx indexes maintained                              │
+│                                                                              │
+│ COST:       │ HDD: ~$0.03/GB vs SSD: ~$0.20/GB (7x cheaper!)               │
+│             │ Consider moving coldPath to NAS/SAN for cost savings          │
+└─────────────┴───────────────────────────────────────────────────────────────┘
+
+┌─────────────┬───────────────────────────────────────────────────────────────┐
+│ FROZEN      │ ARCHIVED (NOT DIRECTLY SEARCHABLE)                            │
+├─────────────┼───────────────────────────────────────────────────────────────┤
+│ Storage     │ S3, Azure Blob, GCS, NAS, or DELETED                          │
+│ Purpose     │ Compliance archive, disaster recovery                         │
+│ Searchable  │ ❌ NO - Must be "thawed" to search                            │
+│ Location    │ coldToFrozenDir or coldToFrozenScript                         │
+│ Duration    │ Until manually deleted                                        │
+│ Indexes     │ ❌ tsidx files DELETED (only rawdata kept)                    │
+│                                                                              │
+│ TO SEARCH:  │ Copy to thawedPath → Splunk rebuilds indexes → Search        │
+│                                                                              │
+│ SMARTSTORE: │ Modern approach - S3 backend for warm/cold                    │
+│             │ Local cache for hot, S3 for everything else                   │
+│             │ Search still works (data fetched from S3 as needed)           │
+└─────────────┴───────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+ENTERPRISE LOG PLACEMENT STRATEGY
+═══════════════════════════════════════════════════════════════════════════════
+
+WHICH LOGS GO WHERE? (INDEX + RETENTION STRATEGY)
+─────────────────────────────────────────────────────────────────────────────
+
+The key principle: SEPARATE INDEXES based on:
+  1. Retention requirements (compliance vs operational)
+  2. Search patterns (frequently searched vs rarely)
+  3. Volume (high volume = shorter retention OR separate index)
+  4. Data value (high value = longer retention)
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                    RECOMMENDED INDEX STRUCTURE                                 │
+├───────────────────┬──────────────────┬──────────────┬─────────────────────────┤
+│ INDEX NAME        │ LOG TYPES        │ RETENTION    │ RATIONALE               │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ security          │ Auth logs        │ 365+ days    │ Compliance, forensics   │
+│                   │ AD events        │              │ PCI/SOX may require     │
+│                   │ PAM events       │              │ 1+ year retention       │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ endpoint_edr      │ EDR alerts       │ 180-365 days │ High value detection    │
+│                   │ CrowdStrike      │              │ data, investigation     │
+│                   │ Carbon Black     │              │                         │
+│                   │ Cortex XDR       │              │                         │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ endpoint_telemetry│ Process events   │ 30-90 days   │ HIGH VOLUME but useful  │
+│                   │ Network events   │              │ for hunting/forensics   │
+│                   │ File events      │              │ Shorter retention OK    │
+│                   │ Registry events  │              │                         │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ sysmon            │ Sysmon events    │ 90 days      │ Very high value for     │
+│                   │ (all Event IDs)  │              │ detection engineering   │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ wineventlog       │ Windows Security │ 180 days     │ 4624, 4625, 4688, etc   │
+│                   │ Windows System   │              │ Core Windows events     │
+│                   │ Windows App      │              │                         │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ firewall          │ PAN traffic      │ 30-90 days   │ VERY HIGH VOLUME        │
+│                   │ Fortinet         │              │ Keep short, or filter   │
+│                   │ Cisco ASA        │              │ Only log denies/alerts  │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ proxy             │ Web proxy logs   │ 30-90 days   │ High volume, useful     │
+│                   │ Zscaler          │              │ for investigations      │
+│                   │ BlueCoat         │              │                         │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ dns               │ DNS queries      │ 30 days      │ EXTREMELY HIGH VOLUME   │
+│                   │ DNS responses    │              │ Consider sampling or    │
+│                   │                  │              │ summary indexing        │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ email             │ O365 message     │ 90-180 days  │ Phishing investigation  │
+│                   │ trace            │              │ BEC detection           │
+│                   │ Exchange logs    │              │                         │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ cloud             │ AWS CloudTrail   │ 180-365 days │ Cloud security          │
+│                   │ Azure Activity   │              │ Compliance required     │
+│                   │ GCP Audit        │              │                         │
+├───────────────────┼──────────────────┼──────────────┼─────────────────────────┤
+│ network_ids       │ Suricata/Snort   │ 90 days      │ IDS/IPS alerts          │
+│                   │ Zeek logs        │              │ Network detection       │
+└───────────────────┴──────────────────┴──────────────┴─────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+EDR/XDR DATA FLOW TO SPLUNK (CRITICAL FOR INTERVIEWS!)
+═══════════════════════════════════════════════════════════════════════════════
+
+HOW EDR/XDR DATA GETS TO SPLUNK:
+─────────────────────────────────────────────────────────────────────────────
+
+OPTION 1: DIRECT API INTEGRATION (RECOMMENDED)
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+  │  EDR CONSOLE    │        │ HEAVY FORWARDER │        │    SPLUNK       │
+  │                 │        │                 │        │    INDEXERS     │
+  │ • CrowdStrike   │  API   │ Modular Input   │ TCP    │                 │
+  │ • Cortex XDR    │ ─────► │ (TA runs here)  │ ─────► │ index=edr       │
+  │ • Carbon Black  │        │                 │ 9997   │                 │
+  │ • SentinelOne   │        │ Polls API       │        │                 │
+  └─────────────────┘        │ Formats data    │        └─────────────────┘
+                              └─────────────────┘
+
+  CROWDSTRIKE EXAMPLE:
+    TA: CrowdStrike Falcon Event Streams (Splunkbase ID: 5082)
+    
+    DATA TYPES INGESTED:
+    ┌────────────────────────┬───────────────────────────────────────────────┐
+    │ Sourcetype             │ What It Contains                              │
+    ├────────────────────────┼───────────────────────────────────────────────┤
+    │ crowdstrike:events:    │ Detection alerts, incidents                   │
+    │ sensor                 │ (HIGH VALUE - keep 365 days)                  │
+    ├────────────────────────┼───────────────────────────────────────────────┤
+    │ crowdstrike:events:    │ Process creation, network connections         │
+    │ endpoint               │ (HIGH VOLUME - keep 30-90 days)               │
+    ├────────────────────────┼───────────────────────────────────────────────┤
+    │ crowdstrike:events:    │ Indicators of Compromise                      │
+    │ ioc                    │ (MEDIUM VOLUME - keep 180 days)               │
+    └────────────────────────┴───────────────────────────────────────────────┘
+
+  CORTEX XDR EXAMPLE:
+    TA: Palo Alto Networks Add-on for Splunk
+    
+    DATA TYPES INGESTED:
+    ┌────────────────────────┬───────────────────────────────────────────────┐
+    │ Sourcetype             │ What It Contains                              │
+    ├────────────────────────┼───────────────────────────────────────────────┤
+    │ pan:xdr:alert          │ XDR alerts and incidents                      │
+    │                        │ (HIGH VALUE - keep 365 days)                  │
+    ├────────────────────────┼───────────────────────────────────────────────┤
+    │ pan:xdr:endpoint       │ Endpoint telemetry events                     │
+    │                        │ (HIGH VOLUME - keep 30-60 days)               │
+    └────────────────────────┴───────────────────────────────────────────────┘
+
+
+OPTION 2: SYSLOG FORWARDING
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+  │  EDR CONSOLE    │ Syslog │ HEAVY FORWARDER │ TCP    │    SPLUNK       │
+  │                 │ ─────► │ (rsyslog)       │ ─────► │    INDEXERS     │
+  │ Configure       │ 514    │                 │ 9997   │                 │
+  │ syslog output   │        │ TA for parsing  │        │                 │
+  └─────────────────┘        └─────────────────┘        └─────────────────┘
+
+  WHEN TO USE:
+    • EDR doesn't have good API integration
+    • Need real-time streaming
+    • Legacy EDR products
+
+
+OPTION 3: FILE-BASED INGESTION
+─────────────────────────────────────────────────────────────────────────────
+
+  ┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+  │  EDR CONSOLE    │  SFTP  │ HEAVY FORWARDER │ TCP    │    SPLUNK       │
+  │                 │ ─────► │                 │ ─────► │    INDEXERS     │
+  │ Export logs     │ or     │ monitor://      │ 9997   │                 │
+  │ to file share   │ NFS    │ path/to/logs    │        │                 │
+  └─────────────────┘        └─────────────────┘        └─────────────────┘
+
+  WHEN TO USE:
+    • Batch processing acceptable
+    • Air-gapped environments
+    • Legacy systems
+
+
+═══════════════════════════════════════════════════════════════════════════════
+MICROSOFT DEFENDER XDR → SPLUNK
+═══════════════════════════════════════════════════════════════════════════════
+
+SPECIAL CASE: Microsoft has native Sentinel integration, but for Splunk:
+
+OPTION A: MICROSOFT GRAPH SECURITY API
+─────────────────────────────────────────────────────────────────────────────
+  TA: Microsoft 365 Defender Add-on for Splunk
+
+  ┌─────────────────────┐                    ┌─────────────────────────────┐
+  │ Microsoft 365       │                    │ Splunk                      │
+  │ Defender Portal     │                    │                             │
+  │                     │  Graph API         │ ┌─────────────────────────┐ │
+  │ • MDE Alerts        │ ─────────────────► │ │ Heavy Forwarder         │ │
+  │ • MDO Alerts        │                    │ │ (runs modular input)    │ │
+  │ • MCAS Alerts       │                    │ └───────────┬─────────────┘ │
+  │ • Defender Identity │                    │             │               │
+  └─────────────────────┘                    │             ▼               │
+                                              │ ┌─────────────────────────┐ │
+                                              │ │ Index: microsoft365     │ │
+                                              │ │ defender                │ │
+                                              │ └─────────────────────────┘ │
+                                              └─────────────────────────────┘
+
+OPTION B: AZURE EVENT HUB STREAMING
+─────────────────────────────────────────────────────────────────────────────
+  For high-volume raw telemetry (Advanced Hunting tables)
+
+  ┌─────────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+  │ Defender XDR        │     │ Azure Event Hub │     │ Splunk HEC      │
+  │                     │────►│                 │────►│                 │
+  │ Streaming API       │     │ Stream events   │     │ HTTP input      │
+  │ (raw tables)        │     │ to consumer     │     │                 │
+  └─────────────────────┘     └─────────────────┘     └─────────────────┘
+
+  RAW TABLES AVAILABLE:
+  ┌─────────────────────────┬─────────────────────────────────────────────┐
+  │ DeviceProcessEvents     │ All process creation (VERY HIGH VOLUME)     │
+  │ DeviceNetworkEvents     │ All network connections (VERY HIGH VOLUME)  │
+  │ DeviceFileEvents        │ File operations (HIGH VOLUME)               │
+  │ DeviceLogonEvents       │ Logon events (MEDIUM VOLUME)                │
+  │ EmailEvents             │ Email metadata (MEDIUM VOLUME)              │
+  │ IdentityLogonEvents     │ Entra ID sign-ins (MEDIUM VOLUME)           │
+  └─────────────────────────┴─────────────────────────────────────────────┘
+
+  RETENTION RECOMMENDATION:
+    • Alerts: 365 days (compliance, investigation)
+    • Raw telemetry: 30-90 days (very high volume, hunting only)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+COST OPTIMIZATION STRATEGIES
+═══════════════════════════════════════════════════════════════════════════════
+
+Splunk licensing is based on DAILY INGESTION VOLUME. Key strategies:
+
+1. FILTER AT SOURCE
+   • Don't send debug/info logs if you only need warnings/errors
+   • Whitelist specific Event IDs instead of all events
+   • Filter noisy firewall "allow" logs, keep "deny" logs
+
+2. USE SEPARATE INDEXES WITH DIFFERENT RETENTION
+   • High-value, low-volume → Long retention (365 days)
+   • High-volume, low-value → Short retention (30 days)
+   • Don't keep firewall traffic logs for a year!
+
+3. SUMMARY INDEXING
+   • Create summary indexes for long-term trends
+   • Keep raw data 30 days, summaries for 365 days
+   • Example: Daily count of auth failures by user (not every event)
+
+4. SMARTSTORE (S3 BACKEND)
+   • Reduces local storage costs dramatically
+   • Hot data stays local (fast), warm/cold goes to S3
+   • Search still works (fetches from S3 as needed)
+
+5. DATA SAMPLING FOR EXTREME VOLUMES
+   • For DNS logs: Sample 1 in 10 queries
+   • For NetFlow: Summarize instead of raw
+   • Document what's sampled for investigators!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+INTERVIEW QUESTIONS & ANSWERS
+═══════════════════════════════════════════════════════════════════════════════
+
+Q: "Explain Splunk storage tiers and when data moves between them"
+─────────────────────────────────────────────────────────────────────────────
+A: "Splunk has four storage tiers: hot, warm, cold, and frozen. Hot is for
+    active indexing on fast SSD storage. When a hot bucket fills or ages,
+    it rolls to warm - still on fast storage but read-only. Warm data ages
+    to cold based on time or size thresholds - this can be on cheaper
+    storage since it's less frequently searched. Finally, frozen data is
+    either deleted or archived to S3/SmartStore. The key is matching
+    storage cost to access frequency - hot data needs speed, cold data
+    needs capacity."
+
+
+Q: "How would you structure indexes for a large enterprise?"
+─────────────────────────────────────────────────────────────────────────────
+A: "I'd separate indexes by retention requirement, volume, and search
+    pattern. Security and compliance logs like authentication events get
+    their own index with 365-day retention. High-volume logs like firewall
+    traffic get a separate index with 30-day retention. EDR alerts go to
+    one index with long retention, but EDR telemetry - which is massive -
+    gets a separate index with shorter retention. This lets me tune storage
+    costs while meeting compliance requirements."
+
+
+Q: "How does EDR/XDR data flow into Splunk?"
+─────────────────────────────────────────────────────────────────────────────
+A: "Typically via API integration using a Technology Add-on. For CrowdStrike,
+    I install the Falcon Event Streams TA on a Heavy Forwarder. The TA's
+    modular input polls CrowdStrike's Streaming API for detection events
+    and endpoint telemetry. The data comes in as structured JSON with
+    sourcetypes like crowdstrike:events:sensor. I route alerts to an EDR
+    index with long retention, and high-volume telemetry to a separate
+    index with shorter retention. For Microsoft Defender, I'd use the
+    Graph Security API integration or Event Hub streaming for raw tables."
+                </div>
+
                 <div class="file-block">
                     <div class="header">indexes.conf - Complete Example</div>
 <pre># ═══════════════════════════════════════════════════════════════════════════

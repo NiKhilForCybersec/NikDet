@@ -352,6 +352,42 @@ New-NetFirewallRule -DisplayName "Block External DNS" `
                     <a href="investigation/malware.html" class="card"><div class="card-icon"><i class="fas fa-virus"></i></div><h3>Malware Investigation</h3><p>DGA malware analysis</p></a>
                     <a href="hunting/exfiltration.html" class="card"><div class="card-icon"><i class="fas fa-crosshairs"></i></div><h3>Exfiltration Hunt</h3><p>Proactive detection</p></a>
                 </div>
+                <!-- INTERVIEW-READY ANSWER -->
+                <h2 id="interview-answer"><i class="fas fa-microphone"></i> Interview-Ready Answer</h2>
+                
+                <div style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(8, 145, 178, 0.1)); border: 1px solid #06b6d440; border-radius: 12px; padding: 1.5rem; margin: 1rem 0;">
+                    <h3 style="color: #06b6d4; margin-top: 0;"><i class="fas fa-question-circle"></i> "How do you detect DNS tunneling?"</h3>
+                    
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.25rem; border-radius: 8px; margin-top: 1rem; line-height: 1.8;">
+                        <p><strong style="color: #10b981;">My Answer:</strong></p>
+                        
+                        <p>"DNS tunneling is a covert channel technique that's easy to overlook because DNS is everywhere. My detection approach focuses on <strong>volume anomalies, query characteristics, and entropy analysis</strong>.</p>
+                        
+                        <p><strong style="color: #06b6d4;">What DNS Tunneling Looks Like:</strong><br>
+                        Attackers encode data in DNS queries, typically in very long subdomain names - something like <code>aGVsbG8gd29ybGQ.evil.com</code>. Normal DNS queries are short and readable. Tunneling queries are long, random-looking strings. I look for: unusually long domain names, high query volume to a single domain, high entropy in subdomain names, and TXT record queries which can carry more data.</p>
+                        
+                        <p><strong style="color: #06b6d4;">Detection Approach:</strong><br>
+                        I use a combination of methods: <em>Volume-based</em> - an endpoint making thousands of DNS queries to the same domain is suspicious. <em>Length-based</em> - queries with subdomains over 50 characters are rare in normal traffic. <em>Entropy-based</em> - base64-encoded data has distinctive entropy patterns. Tools like Zeek can calculate these metrics automatically.</p>
+                        
+                        <p><strong style="color: #06b6d4;">Investigation Process:</strong><br>
+                        When I suspect DNS tunneling, I examine the destination domain - is it newly registered? What's its reputation? I analyze the query patterns from the source endpoint - when did it start, what process is generating DNS queries? I decode sample queries to see if they contain recognizable data patterns.</p>
+                        
+                        <p><strong style="color: #06b6d4;">Response:</strong><br>
+                        Confirmed DNS tunneling means the endpoint is compromised. I isolate it, block the domain at DNS level, and investigate what data was exfiltrated. DNS tunneling is slow, so large data theft takes time - I can often determine how long the tunnel was active and estimate data volume."</p>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 0 8px 8px 0;">
+                        <strong style="color: #fbbf24;">💡 Pro Tips for Interview:</strong>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem;">
+                            <li>Know the technical indicators: long subdomains, TXT queries, high entropy</li>
+                            <li>Mention specific tools: Zeek, passive DNS analysis</li>
+                            <li>Understand that DNS tunneling is slow - useful for C2, less for mass exfiltration</li>
+                            <li>Know that blocking at DNS level is effective containment</li>
+                        </ul>
+                    </div>
+                </div>
+
+            
 
             </div>
         </div>

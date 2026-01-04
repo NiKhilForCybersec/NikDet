@@ -426,6 +426,42 @@ New-ADServiceAccount -Name "gMSA_ServiceName" -DNSHostName "server.domain.com" `
                     <a href="hunting/credential-access.html" class="card"><div class="card-icon"><i class="fas fa-crosshairs"></i></div><h3>Credential Access Hunt</h3><p>Proactive detection</p></a>
                     <a href="active-directory.html" class="card"><div class="card-icon"><i class="fas fa-sitemap"></i></div><h3>Active Directory</h3><p>AD security fundamentals</p></a>
                 </div>
+                <!-- INTERVIEW-READY ANSWER -->
+                <h2 id="interview-answer"><i class="fas fa-microphone"></i> Interview-Ready Answer</h2>
+                
+                <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(202, 138, 4, 0.1)); border: 1px solid #eab30840; border-radius: 12px; padding: 1.5rem; margin: 1rem 0;">
+                    <h3 style="color: #eab308; margin-top: 0;"><i class="fas fa-question-circle"></i> "How do you detect and investigate Kerberoasting?"</h3>
+                    
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.25rem; border-radius: 8px; margin-top: 1rem; line-height: 1.8;">
+                        <p><strong style="color: #10b981;">My Answer:</strong></p>
+                        
+                        <p>"Kerberoasting is an attack against Active Directory where attackers request service tickets for accounts with SPNs, then crack the tickets offline. It's <strong>low-noise and highly effective against weak service account passwords</strong>.</p>
+                        
+                        <p><strong style="color: #eab308;">Understanding the Attack:</strong><br>
+                        Any authenticated user can request a Kerberos service ticket (TGS) for any service in the domain. The ticket is encrypted with the service account's password hash. Attackers extract these tickets and crack them offline - no failed login attempts, no lockouts, completely silent if you're not watching for it.</p>
+                        
+                        <p><strong style="color: #eab308;">Detection Methods:</strong><br>
+                        I look for Event ID 4769 (TGS requests) with specific patterns: requests for services with weak encryption (RC4/0x17 instead of AES), requests from unusual sources, or a single user requesting tickets for many different services in a short time. Normal users rarely request service tickets directly - applications do that transparently.</p>
+                        
+                        <p><strong style="color: #eab308;">Investigation:</strong><br>
+                        When I see suspicious TGS requests, I identify which accounts were targeted - these are the accounts whose passwords the attacker is trying to crack. I check if those accounts have weak passwords or old password ages. I investigate the requesting account - is it compromised? What system made the requests?</p>
+                        
+                        <p><strong style="color: #eab308;">Response and Prevention:</strong><br>
+                        For response, I assume any targeted service account with a weak password is compromised and reset it. Long-term, I work with identity team to: use managed service accounts (MSAs) or group managed service accounts (gMSAs) that have automatically rotating passwords, enforce long complex passwords on legacy service accounts, and reduce the number of accounts with SPNs."</p>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 0 8px 8px 0;">
+                        <strong style="color: #fbbf24;">💡 Pro Tips for Interview:</strong>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem;">
+                            <li>Know Event ID 4769 and what to look for (encryption type 0x17)</li>
+                            <li>Understand why attackers use RC4 - it's faster to crack than AES</li>
+                            <li>Mention gMSA/MSA as the solution - automatically rotating passwords</li>
+                            <li>Know that detection is about anomalous patterns, not individual requests</li>
+                        </ul>
+                    </div>
+                </div>
+
+            
 
             </div>
         </div>

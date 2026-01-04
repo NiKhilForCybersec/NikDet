@@ -404,6 +404,43 @@ AuditLogs
                     </ul>
                 </div>
 
+                <!-- INTERVIEW-READY ANSWER -->
+                <h2 id="interview-answer"><i class="fas fa-microphone"></i> Interview-Ready Answer</h2>
+                
+                <div style="background: linear-gradient(135deg, rgba(251, 146, 60, 0.1), rgba(245, 158, 11, 0.1)); border: 1px solid rgba(251, 146, 60, 0.3); border-radius: 12px; padding: 1.5rem; margin: 1rem 0;">
+                    <h3 style="color: #fb923c; margin-top: 0;"><i class="fas fa-question-circle"></i> "Walk me through investigating a compromised account"</h3>
+                    
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.25rem; border-radius: 8px; margin-top: 1rem; line-height: 1.8;">
+                        <p><strong style="color: #10b981;">My Answer:</strong></p>
+                        
+                        <p>"Account compromise investigations are one of the most common scenarios in a SOC. I approach them in four phases: <strong>Confirm, Contain, Investigate, and Remediate</strong>.</p>
+                        
+                        <p><strong style="color: #fb923c;">Phase 1 - Confirm the Compromise:</strong><br>
+                        First, I need to verify this isn't a false positive. I check the sign-in logs for the suspicious activity - is it an impossible travel alert, a new device, or credential stuffing detection? I look at the IP reputation, the user agent, and whether the authentication succeeded. If the user is traveling or using a VPN, that might explain a foreign location. I'll often do a quick user verification - send them a Slack or call their known number to ask 'Did you just sign in from Russia?'</p>
+                        
+                        <p><strong style="color: #fb923c;">Phase 2 - Contain Immediately:</strong><br>
+                        If I confirm compromise, I don't wait - I reset their password and revoke all sessions. In Azure AD, that's a password reset plus 'Revoke Sessions' in the portal, or I use <code>Revoke-AzureADUserAllRefreshToken</code>. This kicks the attacker out instantly. I might also apply a Conditional Access policy to block the account temporarily if needed.</p>
+                        
+                        <p><strong style="color: #fb923c;">Phase 3 - Investigate What They Did:</strong><br>
+                        Now I pivot to understanding the damage. I check four key areas: <em>First</em>, sign-in logs - when did the compromise start, what did they access? <em>Second</em>, email activity - did they send phishing emails, set up forwarding rules, or search for sensitive keywords? <em>Third</em>, MFA changes - attackers love adding their own authenticator. <em>Fourth</em>, OAuth app consents - they might have granted permissions to a malicious app for persistent access.</p>
+                        
+                        <p><strong style="color: #fb923c;">Phase 4 - Full Remediation:</strong><br>
+                        Remediation is more than just password reset. I remove any inbox rules they created - these are often used to hide their tracks. I revoke suspicious OAuth apps. I have the user re-register MFA because the attacker may have registered their device. And I check for email forwarding rules at both the mailbox and transport level.</p>
+                        
+                        <p>Finally, I document the timeline, determine if any sensitive data was accessed, and if they sent BEC emails or internal phishing, that becomes a larger incident requiring broader notification."</p>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 0 8px 8px 0;">
+                        <strong style="color: #fbbf24;">💡 Pro Tips for Interview:</strong>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem;">
+                            <li>Mention "revoke sessions" not just password reset - shows you know attackers cache tokens</li>
+                            <li>Talk about inbox rules and OAuth apps - these are persistence mechanisms interviewers love to hear</li>
+                            <li>Show awareness of BEC risk - compromised accounts are often used for fraud</li>
+                            <li>Mention the importance of timeline reconstruction for scope determination</li>
+                        </ul>
+                    </div>
+                </div>
+
             </div>
         </div>
         <footer class="main-footer"><p>© 2025 SOC & Detection Engineering Compendium</p></footer>

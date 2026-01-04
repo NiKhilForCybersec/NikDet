@@ -392,6 +392,42 @@ Add-MpPreference -AttackSurfaceReductionRules_Ids 5BEB7EFE-FD9A-4556-801D-275E5F
                     <a href="hunting/persistence.html" class="card"><div class="card-icon"><i class="fas fa-anchor"></i></div><h3>Persistence Hunt</h3><p>LOLBins in persistence</p></a>
                     <a href="windows-events.html" class="card"><div class="card-icon"><i class="fab fa-windows"></i></div><h3>Windows Events</h3><p>Process logging reference</p></a>
                 </div>
+                <!-- INTERVIEW-READY ANSWER -->
+                <h2 id="interview-answer"><i class="fas fa-microphone"></i> Interview-Ready Answer</h2>
+                
+                <div style="background: linear-gradient(135deg, rgba(132, 204, 22, 0.1), rgba(101, 163, 13, 0.1)); border: 1px solid #84cc1640; border-radius: 12px; padding: 1.5rem; margin: 1rem 0;">
+                    <h3 style="color: #84cc16; margin-top: 0;"><i class="fas fa-question-circle"></i> "How do you detect and investigate Living-off-the-Land (LOLBins) attacks?"</h3>
+                    
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.25rem; border-radius: 8px; margin-top: 1rem; line-height: 1.8;">
+                        <p><strong style="color: #10b981;">My Answer:</strong></p>
+                        
+                        <p>"LOLBins are challenging because attackers use legitimate system tools for malicious purposes - PowerShell, certutil, bitsadmin, mshta. Detection requires <strong>understanding normal vs abnormal use of these tools</strong>.</p>
+                        
+                        <p><strong style="color: #84cc16;">Understanding LOLBins:</strong><br>
+                        Attackers love LOLBins because they're signed Microsoft binaries that won't trigger antivirus. Common ones: PowerShell for scripting attacks, certutil for downloading files, bitsadmin for transfers, mshta for running scripts, regsvr32 for proxy execution. The tools are legitimate - it's the context that makes them malicious.</p>
+                        
+                        <p><strong style="color: #84cc16;">Detection Approach:</strong><br>
+                        I focus on behavioral patterns rather than just tool execution. PowerShell with encoded commands (-enc), certutil downloading files from the internet, mshta running with URL arguments - these are suspicious patterns. I also look at parent-child process relationships. Excel spawning PowerShell? Word spawning cmd.exe? That's likely malicious.</p>
+                        
+                        <p><strong style="color: #84cc16;">Investigation:</strong><br>
+                        When I see suspicious LOLBin usage, I decode any obfuscation - base64 encoded PowerShell commands for example. I trace the execution chain: what triggered this? If it's from a user application, was there a phishing document? I check what the tool did - network connections, file writes, additional process spawning.</p>
+                        
+                        <p><strong style="color: #84cc16;">Challenges:</strong><br>
+                        The hard part is false positives - IT legitimately uses these tools. I maintain baselines of normal usage patterns. PowerShell from a sysadmin workstation is expected. PowerShell from a finance user's PC downloading from pastebin is not. Context and baselining are everything."</p>
+                    </div>
+                    
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border-left: 3px solid #fbbf24; border-radius: 0 8px 8px 0;">
+                        <strong style="color: #fbbf24;">💡 Pro Tips for Interview:</strong>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem;">
+                            <li>Name specific LOLBins: PowerShell, certutil, bitsadmin, mshta, regsvr32</li>
+                            <li>Emphasize context and parent process relationships</li>
+                            <li>Know that detection is about anomalous patterns, not blocking the tools</li>
+                            <li>Mention LOLBAS project as a reference</li>
+                        </ul>
+                    </div>
+                </div>
+
+            
 
             </div>
         </div>
